@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>position</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .rect {
+                background-color: #2E8DE4;
+                width: 50px;
+                height: 50px;
+            }
+            #center {
+                background-color: #C73546;
+                width: 150px;
+                height: 150px;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div id="center" class="rect"></div>
+
+        <div id="top-left" class="rect"></div>
+        <div id="top-center" class="rect"></div>
+        <div id="top-right" class="rect"></div>
+
+        <div id="middle-left" class="rect"></div>
+        <div id="middle-center" class="rect"></div>
+        <div id="middle-right" class="rect"></div>
+
+        <div id="bottom-left" class="rect"></div>
+        <div id="bottom-center" class="rect"></div>
+        <div id="bottom-right" class="rect"></div>
+
+        <script>
+
+        require(
+
+            [ 'fe/position' ],
+
+            function (position) {
+                var center = $('#center');
+
+                position.middleCenter({
+                    element: center
+                });
+
+                position.topLeft({
+                    element: $('#top-left'),
+                    attachment: center
+                });
+
+                position.topCenter({
+                    element: $('#top-center'),
+                    attachment: center
+                });
+
+                position.topRight({
+                    element: $('#top-right'),
+                    attachment: center
+                });
+
+                position.middleLeft({
+                    element: $('#middle-left'),
+                    attachment: center
+                });
+
+                position.middleCenter({
+                    element: $('#middle-center'),
+                    attachment: center
+                });
+
+                position.middleRight({
+                    element: $('#middle-right'),
+                    attachment: center
+                });
+
+                position.bottomLeft({
+                    element: $('#bottom-left'),
+                    attachment: center
+                });
+
+                position.bottomCenter({
+                    element: $('#bottom-center'),
+                    attachment: center
+                });
+
+                position.bottomRight({
+                    element: $('#bottom-right'),
+                    attachment: center
+                });
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

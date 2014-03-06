@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Popup</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                height: 1000px;
+            }
+
+            #select {
+                display: inline-block;
+            }
+            #trigger {
+                border: 1px solid #DDD;
+                background-color: #EEE;
+                cursor: pointer;
+                display: inline-block;
+                padding: 5px 10px;
+                width: 100px;
+                border-radius: 2px;
+            }
+            #layer {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                display: none;
+
+                border: 1px solid #DDD;
+                background-color: #FBFBFB;
+            }
+            li {
+                padding: 5px 10px;
+                border-top: 1px solid #EEE;
+            }
+            li:first-child {
+                border-top: none;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div id="select">
+            <span id="trigger">请选择</span>
+            <ul id="layer">
+                <li>11111111111</li>
+                <li>22222222222</li>
+                <li>33333333333</li>
+                <li>44444444444</li>
+            </ul>
+        </div>
+
+        <script>
+
+        require(
+
+            [ 'fe/Popup' ],
+
+            function (Popup) {
+                var layer = $('#layer');
+
+                var popup = new Popup({
+                    trigger: $('#trigger'),
+                    element: layer,
+                    showBy: 'click',
+                    hideBy: 'blur',
+                    show: function () {
+                        layer.slideDown(50);
+                    },
+                    hide: function () {
+                        layer.slideUp(50);
+                    },
+                    onBeforeShow: function () {
+                        console.log('beforeShow');
+                    },
+                    onAfterShow: function () {
+                        console.log('afterShow');
+                    },
+                    onBeforeHide:function () {
+                        console.log('beforeHide');
+                    },
+                    onAfterHide: function () {
+                        console.log('afterHide');
+                    }
+                });
+
+                layer.on('click', 'li', function () {
+                    popup.hide();
+                });
+
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

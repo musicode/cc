@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Uploader</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                height: 1000px;
+            }
+            img {
+                width: 100px;
+                height: 100px;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <span id="file"></span>
+
+        <script>
+
+        require(
+
+            [
+                'fe/AjaxUploader',
+                'fe/FlashUploader'
+            ],
+
+            function (AjaxUploader, FlashUploader) {
+
+                new FlashUploader({
+                    element: $('#file'),
+                    action: '/upload',
+                    multiple: true,
+                    accept: ['jpg', 'png', 'gif', 'bmp'],
+                    onFileChange: function () {
+                        this.upload();
+                    },
+                    onUploadStart: function (data) {
+                        console.log('upload start:');
+                        console.log(data.fileItem);
+                    },
+                    onUploadProgress: function (data) {
+                        console.log('upload progress:');
+                        console.log((100 * data.uploaded / data.total) + '%');
+                    },
+                    onUploadSuccess: function (data) {
+                        console.log('upload success');
+                        console.log(data.responseText);
+                    },
+                    onUploadError: function (data) {
+                        console.log('upload error');
+                    },
+                    onUploadComplete: function (data) {
+                        console.log('upload complete');
+                    }
+                });
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

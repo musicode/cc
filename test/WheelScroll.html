@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>WheelScroll</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                height: 1000px;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <script>
+
+        require(
+
+            [ 'fe/WheelScroll' ],
+
+            function (WheelScroll) {
+                new WheelScroll({
+                    onScroll: function (data) {
+                        console.log(data);
+                        return false;
+                    }
+                });
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

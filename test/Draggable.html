@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Draggable</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .window {
+                background-color: #DDD;
+                width: 100px;
+                height: 100px;
+                margin-bottom: 10px;
+            }
+            #window1 {
+                width: 200px;
+                height: 200px;
+            }
+            .unselectable,
+            .unselectable * {
+                -moz-user-select: none;
+                -webkit-user-select: none;
+                -ms-user-select: none;
+            }
+
+            #window2 {
+                background-color: lightblue;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="window1" class="window">
+            window1
+
+            <div id="window2" class="window">
+                <div class="window-header">header</div>
+                <div class="window-body">window2</div>
+            </div>
+        </div>
+
+
+
+        <script>
+
+        require(
+
+            [ 'fe/Draggable' ],
+
+            function (Draggable) {
+                var window1 = $('#window1');
+                var window2 = $('#window2');
+
+                new Draggable({
+                    element: window1,
+                    cancel: '#window2',
+                    onDragStart: function (point) {
+                        console.log('dragStart', point);
+                    },
+                    onDrag: function (point) {
+                        console.log('drag', point);
+                    },
+                    onDragEnd: function (point) {
+                        console.log('dragEnd', point);
+                    }
+                });
+
+                new Draggable({
+                    element: window2,
+                    containment: window1,
+                    cancel: '.window-header',
+                    draggingBodyClass: 'unselectable',
+                    axis: 'x'
+                });
+
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

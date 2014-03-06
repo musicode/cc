@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Placeholder</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            .placeholder-wrapper {
+                display: inline-block;
+                font-size: 13px;
+                position: relative;
+                line-height: 20px;
+            }
+            .placeholder-wrapper div {
+                color: #BBB;
+                cursor: text;
+
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 1;
+            }
+            .placeholder-wrapper input {
+                border: 1px solid #CCC;
+                padding: 6px 10px;
+                margin: 0;
+            }
+        </style>
+    </head>
+
+    <body>
+        <input id="text-input" type="type" data-placeholder="哈哈哈" />
+        <input id="password-input" type="password" data-placeholder="哈你妹" />
+
+        <script>
+
+        require(
+
+            [ 'fe/Placeholder' ],
+
+            function (Placeholder) {
+                // 提供一些简单常用接口
+                Placeholder.defaultOptions.nativeFirst = false;
+                Placeholder.init();
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

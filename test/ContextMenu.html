@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>ContextMenu</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            html,
+            body {
+                height: 100%;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            #container {
+                width: 300px;
+                height: 300px;
+                background-color: #EEE;
+            }
+
+            .menu {
+                display: none;
+                border: 1px solid #DDD;
+                font-size: 13px;
+                background-color: #F6F6F6;
+                width: 70px;
+                height: 120px;
+                box-shadow: 1px 1px 2px #DFDFDF;
+            }
+
+            ul {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+            li {
+                border-bottom: 1px solid #EEE;
+                padding: 6px 10px;
+            }
+            li:hover {
+                background-color: #FFF;
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <div id="global-menu" class="menu">
+            <ul>
+                <li data-action="search">搜索</li>
+                <li data-action="upload">上传</li>
+                <li data-action="download">下载</li>
+            </ul>
+        </div>
+
+
+        <div id="container">
+
+        </div>
+
+        <div id="local-menu" class="menu">
+            <ul>
+                <li data-action="add">添加</li>
+                <li data-action="remove">删除</li>
+                <li data-action="find">查找</li>
+            </ul>
+        </div>
+
+        <script>
+
+        require(
+
+            [ 'fe/ContextMenu' ],
+
+            function (ContextMenu) {
+
+                var globalMenu = new ContextMenu({
+                    template: $('#global-menu'),
+                    events: {
+                        '[data-action="search"]': function () {
+                            console.log('搜索');
+                            globalMenu.hide();
+                        }
+                    }
+                });
+
+                var localMenu = new ContextMenu({
+                    container: $('#container'),
+                    template: $('#local-menu'),
+                    events: {
+                        '[data-action="add"]': function () {
+                            console.log('添加');
+                            localMenu.hide();
+                        }
+                    }
+                });
+
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

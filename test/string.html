@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>string</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="result1">
+
+        </div>
+
+        <div id="result2">
+
+        </div>
+
+        <div id="result3">
+
+        </div>
+        <script>
+
+        require(
+
+            [ 'fe/string' ],
+
+            function (string) {
+                function setResult(element, str, result) {
+                    element.html('"' + str + '" => ' + result);
+                }
+
+                var str1 = '';
+                setResult(
+                    $('#result1'),
+                    str1,
+                    string.getUTF8Length(str1)
+                );
+
+                var str2 = '，。.';
+                setResult(
+                    $('#result2'),
+                    str2,
+                    string.getUTF8Length(str2)
+                );
+
+                var str3 = '这是一个截断测试，你发现了吗';
+                setResult(
+                    $('#result3'),
+                    str3,
+                    string.truncate(str3, 5, ']')
+                );
+            }
+        );
+
+        </script>
+    </body>
+
+</html>
