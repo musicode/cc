@@ -12,7 +12,6 @@
  *     onUploadStart: fn,
  *     onUploadSuccess: fn,
  *     onUploadError: fn,
- *     onUploadStop: fn,
  *     onUploadComplete: fn
  * });
  * instance.upload();

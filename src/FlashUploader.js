@@ -7,11 +7,10 @@
  *     accept: ['jpg', 'png'],
  *     multiple: true,
  *     data: { },
- *     onFileQueued: fn,
+ *     onFileChange: fn,
  *     onUploadStart: fn,
  *     onUploadSuccess: fn,
  *     onUploadError: fn,
- *     onUploadStop: fn,
  *     onUploadComplete: fn
  * });
  * instance.upload();
