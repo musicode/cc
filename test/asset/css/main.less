@@ -1,0 +1,61 @@
+@import 'normalize.css';
+
+html,
+body,
+#sidebar,
+#main {
+    height: 100%;
+}
+
+body {
+    color: #555;
+    font-size: 13px;
+    font-family: Consolas;
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#sidebar {
+    border-right: 1px solid #CCC;
+    background-color: #FCFCFC;
+    font-size: 1.5em;
+    float: left;
+    width: 200px;
+
+    a {
+        cursor: pointer;
+        display: block;
+        padding: 10px;
+
+        &:hover {
+            background-color: #EEE;
+        }
+    }
+}
+
+#main {
+    overflow: auto;
+    padding: 1em;
+    position: relative;
+}
+
+#module-note {
+    background-color: #F6F6F6;
+    font-size: 1.1em;
+    padding: 10px;
+}
+
+#module-demo {
+    margin-top: 20px;
+}
+
+h1 {
+    font-size: 1.3em;
+}
+h2 {
+    font-size: 1.2em;
+}

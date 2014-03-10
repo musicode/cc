@@ -13,6 +13,8 @@ define(function (require, exports, module) {
      * 4. after 如果返回非 undefined 值，可改写返回值
      */
 
+     'use strict';
+
     /**
      * 在方法执行前进行拦截
      *

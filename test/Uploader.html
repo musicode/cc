@@ -1,74 +1,131 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Uploader</title>
+<div id="module-note">
+    <h1>上传</h1>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('#file'),                   // 上传按钮元素
+        action: '',                            // 上传地址
+        multiple: false,                       // 可选，是否支持多文件上传
+                                               //     默认为 false
+        accept: [ 'jpg', 'png' ],              // 可选，允许上传的文件格式 ( 扩展名 )
+        data: { },                             // 可选，上传附带的数据
+        fileName: 'Filedata',                  // 可选，上传文件的字段名
+                                               //     默认为 Filedata
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                height: 1000px;
-            }
-            img {
-                width: 100px;
-                height: 100px;
-            }
-        </style>
-    </head>
+        onFileChange: function () {},          // 可选，选择的文件发生变化时触发
+        onUploadStart: function (data) {},     // 可选，上传开始触发
+        onUploadProgress: function (data) {},  // 可选，上传过程触发 ( 可实现进度条 )
+        onUploadSuccess: function (data) {},   // 可选，上传成功触发
+        onUploadError: function (data) {},     // 可选，上传失败触发
+        onUploadComplete: function (data) {}   // 可选，上传结束触发
+    }
+    </pre>
 
-    <body>
+    <h2>使用方法</h2>
+    <pre>
+    // 具体看例子的源码
+    var uploader = new Uploader(options);
+    uploader.getFiles(); // 获得当前选中的文件
+    uploader.upload();   // 开始上传
+    uploader.stop();     // 停止上传
+    uploader.enable();   // 启用
+    uploader.disable();  // 禁用 ( 禁止鼠标点击打开文件选择窗口 )
+    uploader.dispose();  // 销毁对象
+    </pre>
+</div>
 
+<div id="module-demo">
+
+    <div id="uploader">
         <span id="file"></span>
+    </div>
 
-        <script>
+    <style>
+        #uploader {
+            background-color: #FCE9D5;
+            display: inline-block;
+            position: relative;
+            *display: inline;
+            *zoom: 1;
+        }
 
-        require(
+        #uploader:after {
+            content: 'click me';
+            position: absolute;
+            left: 35%;
+            top: 40%;
+        }
 
-            [
-                'fe/AjaxUploader',
-                'fe/FlashUploader'
-            ],
+        input[type="file"],
+        .Supload {
+            width: 200px;
+            height: 100px;
+            opacity: 0;
+        }
+    </style>
 
-            function (AjaxUploader, FlashUploader) {
+    <script>
 
-                new FlashUploader({
-                    element: $('#file'),
-                    action: '/upload',
-                    multiple: true,
-                    accept: ['jpg', 'png', 'gif', 'bmp'],
-                    onFileChange: function () {
-                        this.upload();
-                    },
-                    onUploadStart: function (data) {
-                        console.log('upload start:');
-                        console.log(data.fileItem);
-                    },
-                    onUploadProgress: function (data) {
-                        console.log('upload progress:');
-                        console.log((100 * data.uploaded / data.total) + '%');
-                    },
-                    onUploadSuccess: function (data) {
-                        console.log('upload success');
-                        console.log(data.responseText);
-                    },
-                    onUploadError: function (data) {
-                        console.log('upload error');
-                    },
-                    onUploadComplete: function (data) {
-                        console.log('upload complete');
-                    }
-                });
+    require(
+
+        [
+            'killer/AjaxUploader',
+            'killer/FlashUploader'
+        ],
+
+        function (AjaxUploader, FlashUploader) {
+
+            function supportAjaxUpload() {
+                function supportFileAPI() {
+                    var input = document.createElement('input');
+                    input.type = 'file';
+                    return 'files' in input;
+                }
+                function supportAjaxUploadProgressEvents() {
+                   var xhr = new XMLHttpRequest();
+                   return xhr && ('upload' in xhr) && ('onprogress' in xhr.upload);
+                }
+                return supportFileAPI() && supportAjaxUploadProgressEvents();
             }
-        );
 
-        </script>
-    </body>
+            var Uploader = supportAjaxUpload() ? AjaxUploader : FlashUploader;
 
-</html>
+            var uploader = new Uploader({
+                element: $('#file'),
+                action: 'http://localhost:8818/upload',
+                multiple: true,
+                accept: ['jpg', 'png', 'gif', 'bmp'],
+                onFileChange: function () {
+                    this.upload();
+                },
+                onUploadStart: function (data) {
+                    console.log('upload start:');
+                    console.log(data.fileItem);
+                },
+                onUploadProgress: function (data) {
+                    console.log('upload progress:');
+                    console.log((100 * data.uploaded / data.total) + '%');
+                },
+                onUploadSuccess: function (data) {
+                    console.log('upload success');
+                    console.log(data.responseText);
+                },
+                onUploadError: function (data) {
+                    console.log('upload error');
+                    console.log(data);
+                },
+                onUploadComplete: function (data) {
+                    console.log('upload complete');
+                }
+            });
+
+            $(document).one('moduleChanged', function () {
+                uploader.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

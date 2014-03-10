@@ -40,15 +40,14 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
-            this.eventType = supportMouseWheel ? 'mousewheel' : 'DOMMouseScroll';
-            this.element.on(this.eventType, this, onScroll);
+            this.element.on(eventType, this, onScroll);
         },
 
         /**
          * 销毁对象
          */
         dispose: function () {
-            this.element.off(this.eventType, onScroll);
+            this.element.off(eventType, onScroll);
             this.element = null;
         }
     };
@@ -65,15 +64,14 @@ define(function (require, exports, module) {
 
 
     /**
-     * 是否支持 mousewheel 事件
+     * 支持的滚轮事件名称
      *
      * @private
-     * @type {boolean}
+     * @type {string}
      */
-    var supportMouseWheel = (function () {
-        var div = document.createElement('div');
-        return 'onmousewheel' in div;
-    })();
+    var eventType = 'onmousewheel' in document
+                  ? 'mousewheel'
+                  : 'DOMMouseScroll';
 
     /**
      * 处理浏览器的兼容问题

@@ -1,89 +1,185 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Draggable</title>
+<div id="module-note">
+    <h1>拖拽，常用于 Dialog、自定义滚动条、音乐播放器的音量条等</h1>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('#dialog'),            // 需要拖拽的元素
+        container: $('#container'),       // 可选，用一个容器元素限制拖拽的范围
+                                          //     默认是 $(document.body)
+        handle: 'selector',               // 可选，允许拖拽的区域，值是 css 选择器
+                                          //     比如对话框的标题栏
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            .window {
-                background-color: #DDD;
-                width: 100px;
-                height: 100px;
-                margin-bottom: 10px;
-            }
-            #window1 {
-                width: 200px;
-                height: 200px;
-            }
-            .unselectable,
-            .unselectable * {
-                -moz-user-select: none;
-                -webkit-user-select: none;
-                -ms-user-select: none;
-            }
+        cancel: 'selector',               // 可选，和 handle 相反的，不允许拖拽的区域，值是 css 选择器
+                                          //     比如整个元素都可拖拽，唯独某个区域不行
 
-            #window2 {
-                background-color: lightblue;
-            }
-        </style>
-    </head>
+        axis: '',                         // 可选，限制在某个方向上拖拽
+                                          //     可选值包括 x y
 
-    <body>
-        <div id="window1" class="window">
-            window1
+        silence: false,                   // 可选，是否不需要触发位移
+                                          //     比如实现自定义滚动条，需要先处理外部逻辑再位移
+                                          //     如果 silence 为 false，就会位移两次，损失性能
 
-            <div id="window2" class="window">
-                <div class="window-header">header</div>
-                <div class="window-body">window2</div>
-            </div>
+        onDragStart: function (point) {}, // 可选，参数是拖拽的开始位置
+        onDrag: function (point) {},      // 可选，参数是拖拽的当前位置
+        onDragEnd: function (point) {},   // 可选，参数是拖拽的结束位置
+    }
+    </pre>
+
+    <h2>使用方法</h2>
+    <pre>
+        var draggable = new Draggable(options);
+        draggable.dispose(); // 销毁对象
+    </pre>
+</div>
+
+<div id="module-demo">
+
+    <div id="window1" class="window">
+
+        <div id="window2" class="window">
+            <div class="window-header">此处可水平拖拽</div>
+            <div class="window-body">此处不可拖拽</div>
         </div>
 
+        <div id="window3" class="window">
+            <div class="window-header">此处不可拖拽</div>
+            <div class="window-body">此处可垂直拖拽</div>
+        </div>
+
+    </div>
 
 
-        <script>
+    <div id="scrollbar">
+        <div id="scrollbar-track">
+            <i></i>
+        </div>
+    </div>
 
-        require(
+    <style>
 
-            [ 'fe/Draggable' ],
+        .window-header {
+            background-color: #EBD88C;
+            padding: 10px;
+        }
+        .window-body {
+            padding: 10px;
+        }
 
-            function (Draggable) {
-                var window1 = $('#window1');
-                var window2 = $('#window2');
+        #window1 {
+            background-color: #48B0E0;
+            cursor: move;
+            width: 400px;
+            height: 300px;
 
-                new Draggable({
-                    element: window1,
-                    cancel: '#window2',
-                    onDragStart: function (point) {
-                        console.log('dragStart', point);
-                    },
-                    onDrag: function (point) {
-                        console.log('drag', point);
-                    },
-                    onDragEnd: function (point) {
-                        console.log('dragEnd', point);
-                    }
-                });
+            z-index: 10;
+        }
+        #window2 {
+            background-color: #FFF;
+            width: 120px;
+            height: 100px;
+        }
+        #window3 {
+            background-color: #FFF;
+            width: 120px;
+            height: 100px;
+            position: absolute;
+            top: 150px;
+            left: 200px;
+        }
 
-                new Draggable({
-                    element: window2,
-                    containment: window1,
-                    cancel: '.window-header',
-                    draggingBodyClass: 'unselectable',
-                    axis: 'x'
-                });
+        #scrollbar {
+            background-color: #FCFCFC;
+            border: 1px solid #DDD;
+            width: 200px;
+            height: 10px;
+            padding: 1px;
+            box-shadow: inset 0 0 1px #DFDFDF;
+            margin-left: 500px;
+        }
+        #scrollbar-track {
+            height: 10px;
+            position: relative;
+        }
+        #scrollbar i {
+            background-color: #CCC;
+            width: 20px;
+            height: 10px;
+            position: absolute;
+        }
 
-            }
-        );
+        #window2 .window-body,
+        #window3 .window-header {
+            cursor: text;
+        }
+        #scrollbar i {
+            cursor: move;
+        }
 
-        </script>
-    </body>
+    </style>
 
-</html>
+    <script>
+
+    require(
+
+        [ 'killer/Draggable' ],
+
+        function (Draggable) {
+
+            var $window1 = $('#window1');
+            var $window2 = $('#window2');
+            var $window3 = $('#window3');
+
+            var draggable1 = new Draggable({
+                element: $window1,
+                container: $('#main'),
+                cancel: '.window',
+                onDragStart: function (point) {
+                    console.log('dragStart', point);
+                },
+                onDrag: function (point) {
+                    console.log('drag', point);
+                },
+                onDragEnd: function (point) {
+                    console.log('dragEnd', point);
+                }
+            });
+
+            var draggable2 = new Draggable({
+                element: $window2,
+                container: $window1,
+                handle: '.window-header',
+                axis: 'x'
+            });
+
+            var draggable3 = new Draggable({
+                element: $window3,
+                container: $window1,
+                cancel: '.window-header',
+                axis: 'y'
+            });
+
+            var scrollbar = new Draggable({
+                element: $('#scrollbar i'),
+                container: $('#scrollbar-track'),
+                axis: 'x',
+                onDrag: function (point) {
+                    console.log(point);
+                }
+            });
+
+            $(document).one('moduleChanged', function () {
+
+                draggable1.dispose();
+                draggable2.dispose();
+                draggable3.dispose();
+                scrollbar.dispose();
+
+                $window1 = $window2 = $window3 = null;
+            });
+        }
+    );
+
+    </script>
+
+</div>

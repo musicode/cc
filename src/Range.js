@@ -17,6 +17,8 @@ define(function (require, exports, module) {
      * http://yiminghe.iteye.com/blog/508999
      */
 
+     'use strict';
+
     var isOldIE = !window.getSelection;
 
     /**
@@ -88,7 +90,9 @@ define(function (require, exports, module) {
     }
 
     function setRange(start, end) {
-        this.element.setSelectionRange(start, end);
+        var element = this.element;
+        element.focus();
+        element.setSelectionRange(start, end);
     }
 
     /**
@@ -120,7 +124,12 @@ define(function (require, exports, module) {
 
     function setIERange(start, end) {
 
-        var range = this.element.createTextRange();
+        var element = this.element;
+        if (element.value.length < end) {
+            return;
+        }
+
+        var range = element.createTextRange();
 
         // 重置到开始位置
         range.collapse(true);

@@ -15,8 +15,8 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
      * @param {jQuery} options.element 弹出显示的元素
+     * @param {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
      * @param {string=} options.showBy 可选值有 "click", "over", 如果未传 trigger，可不传
      * @param {string} options.hideBy 可选值有 "blur", "out", "blur,out"
      * @param {number=} options.showDelay 当 showBy 为 over 时的显示延时
@@ -84,7 +84,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Popup.defaultOptions = {
-        showDelay: 100,
+        showDelay: 200,
         hideDelay: 200,
         show: function () {
             this.element.show();

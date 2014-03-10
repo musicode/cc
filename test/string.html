@@ -1,68 +1,64 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>string</title>
+<div id="module-note">
+    <h1>utf8 字符串操作</h1>
+    <h2>使用方法</h2>
+    <pre>
+    string.getLength('xxx');                          // 获取字符串长度，一个中文字符长度为 2
+    string.truncate('xxx', 3, '结束字符，默认是...'); // 截断字符串
+    </pre>
+</div>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+<div id="module-demo">
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
+    <div id="result1"></div>
+
+    <div id="result2"></div>
+
+    <div id="result3"></div>
+
+    <style>
+
+        #result1,
+        #result2 {
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+    <script>
+
+    require(
+
+        [ 'killer/string' ],
+
+        function (string) {
+
+            function setResult(element, str, result) {
+                element.html('"' + str + '" ===> ' + result);
             }
-        </style>
-    </head>
 
-    <body>
-        <div id="result1">
+            var str1 = '啊a1ba好厉AS害MA撒旦，。》【】';
+            setResult(
+                $('#result1'),
+                str1,
+                '长度为：' + string.getLength(str1)
+            );
 
-        </div>
+            var str2 = '，。.';
+            setResult(
+                $('#result2'),
+                str2,
+                '长度为：' + string.getLength(str2)
+            );
 
-        <div id="result2">
+            var str3 = '这是一个截断测试，你发现了吗';
+            setResult(
+                $('#result3'),
+                str3,
+                string.truncate(str3, 5)
+            );
+        }
+    );
 
-        </div>
+    </script>
 
-        <div id="result3">
-
-        </div>
-        <script>
-
-        require(
-
-            [ 'fe/string' ],
-
-            function (string) {
-                function setResult(element, str, result) {
-                    element.html('"' + str + '" => ' + result);
-                }
-
-                var str1 = '';
-                setResult(
-                    $('#result1'),
-                    str1,
-                    string.getUTF8Length(str1)
-                );
-
-                var str2 = '，。.';
-                setResult(
-                    $('#result2'),
-                    str2,
-                    string.getUTF8Length(str2)
-                );
-
-                var str3 = '这是一个截断测试，你发现了吗';
-                setResult(
-                    $('#result3'),
-                    str3,
-                    string.truncate(str3, 5, ']')
-                );
-            }
-        );
-
-        </script>
-    </body>
-
-</html>
+</div>

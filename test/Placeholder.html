@@ -1,55 +1,90 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Placeholder</title>
+<div id="module-note">
+    <h1>Placeholder</h1>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('input'),        // 输入框元素，注意 placeholder 的属性为 data-placeholder
+        nativeFirst: false          // 可选，是否优先使用原生的 placeholder
+                                    //     默认为 false ( 为统一浏览器体验考虑 )
+    }
+    </pre>
 
-        <style>
-            .placeholder-wrapper {
-                display: inline-block;
-                font-size: 13px;
-                position: relative;
-                line-height: 20px;
-            }
-            .placeholder-wrapper div {
-                color: #BBB;
-                cursor: text;
+    <h2>静态参数</h2>
+    <pre>
+    Placeholder.template 是包装输入框元素的模版，默认的应该够用了
+    如果需要修改，只需注意用来显示 placeholder 的元素为 div 即可
+    </pre>
 
-                position: absolute;
-                top: 0;
-                left: 0;
-                z-index: 1;
-            }
-            .placeholder-wrapper input {
-                border: 1px solid #CCC;
-                padding: 6px 10px;
-                margin: 0;
-            }
-        </style>
-    </head>
+    <h2>使用方法</h2>
+    <pre>
+    // 单个初始化
+    var placeholder = new Placeholder(options);
+    placeholder.getPlaceholder();      // 获取 placeholder
+    placeholder.setPlaceholder('new'); // 设置 placeholder
+    placeholder.dispose();             // 销毁对象
 
-    <body>
-        <input id="text-input" type="type" data-placeholder="哈哈哈" />
-        <input id="password-input" type="password" data-placeholder="哈你妹" />
+    // 批量初始化
+    Placeholder.init();
+    </pre>
+</div>
 
-        <script>
+<div id="module-demo">
 
-        require(
+    <input id="text-input" type="type" data-placeholder="请输入用户名" />
+    <input id="password-input" type="password" data-placeholder="请输入密码" />
+    <textarea data-placeholder="随便写点吧"></textarea>
 
-            [ 'fe/Placeholder' ],
+    <style>
+        .placeholder-wrapper {
+            display: inline-block;
+            font-size: 13px;
+            position: relative;
+            line-height: 20px;
+            vertical-align: top;
+        }
+        .placeholder-wrapper div {
+            color: #BBB;
+            cursor: text;
 
-            function (Placeholder) {
-                // 提供一些简单常用接口
-                Placeholder.defaultOptions.nativeFirst = false;
-                Placeholder.init();
-            }
-        );
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .placeholder-wrapper input {
+            border: 1px solid #CCC;
+            padding: 6px 10px;
+            margin: 0;
+        }
+    </style>
 
-        </script>
-    </body>
+    <script>
 
-</html>
+    require(
+
+        [ 'killer/Placeholder' ],
+
+        function (Placeholder) {
+
+            var textInput = new Placeholder({
+                element: $('#text-input')
+            });
+            var passwordInput = new Placeholder({
+                element: $('#password-input')
+            });
+            var textarea = new Placeholder({
+                element: $('textarea')
+            });
+
+            $(document).one('moduleChanged', function () {
+                textInput.dispose();
+                passwordInput.dispose();
+                textarea.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

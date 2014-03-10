@@ -1,58 +1,90 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Input</title>
+<div id="module-note">
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
-    </head>
+    <h1>输入框</h1>
 
-    <body>
-        <input type="type" />
-
-        <script>
-
-        require(
-
-            [ 'fe/Input' ],
-
-            function (Input) {
-                var element = $('input');
-
-                var input = new Input({
-                    element: element,
-                    ims: false,
-
-                    onEnter: function () {
-                        console.log('submit');
-                    },
-                    onChange: function () {
-                        console.log(element.val());
-                    },
-                    onLongPressStart: function () {
-                        console.log('长按开始');
-                    },
-                    onLongPressEnd: function () {
-                        console.log('长按结束');
-                    },
-
-                    keyEvents: {
-                        '38': function () {
-                            console.log('up');
-                        },
-                        '46': function () {
-                            console.log('delete');
-                            input.dispose();
-                        }
-                    }
-                });
-
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('input'),                // 输入框元素
+        longPress: false,                   // 可选，长按是否触发　onChange
+                                            //     默认为 false
+        onChange: function () {},           // 可选，相当于 html5 的 oninput 事件
+        onEnter: function () {},            // 可选，按下回车触发
+        onLongPressStart: function () {},   // 可选，长按开始
+        onLongPressEnd: function () {},     // 可选，长按结束
+        keyEvents: {                        // 可选，配置 keyCode => event handler
+            '38': function () {
+                console.log('up');
             }
-        );
+        }
+    }
+    </pre>
 
-        </script>
-    </body>
+    <h2>使用方法</h2>
+    <pre>
+    var input = new Input(options);
+    input.dispose();  // 销毁对象
+    </pre>
 
-</html>
+</div>
+
+<div id="module-demo">
+
+    <input type="text" />
+
+    <style>
+
+        input {
+            border: 1px solid #BBB;
+            padding: 5px 10px;
+            width: 200px;
+        }
+
+    </style>
+
+    <script>
+
+    require(
+
+        [ 'killer/Input' ],
+
+        function (Input) {
+
+            var input = new Input({
+
+                element: $('input'),
+
+                longPress: false,
+
+                onEnter: function () {
+                    console.log('submit');
+                },
+                onChange: function () {
+                    console.log('onChange: ' + this.element.val());
+                },
+                onLongPressStart: function () {
+                    console.log('longPressStart');
+                },
+                onLongPressEnd: function () {
+                    console.log('longPressEnd');
+                },
+
+                keyEvents: {
+                    '38': function () {
+                        console.log('up');
+                    },
+                    '46': function () {
+                        console.log('delete');
+                    }
+                }
+            });
+
+            $(document).one('moduleChanged', function () {
+                input.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

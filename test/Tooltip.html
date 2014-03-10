@@ -1,0 +1,129 @@
+<div id="module-note">
+
+    <h1>工具提示</h1>
+
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('xx'),                                       // 需要弹出提示的元素
+
+        // 下面的建议通过 Tooltip.defaultOptions 统一配置
+
+        tipAttr: 'data-tip',                                    // 可选，读取元素的哪个 attribute 获取提示内容
+                                                                //     默认为 'data-tip'
+        dirAttr: 'data-dir',                                    // 可选，读取元素的哪个 attribute 获取提示方位
+                                                                //     默认为 'data-dir'，元素不写会根据 Tooltip.dirPriority 自动计算最合适的方位
+        dirPrefix: 'tooltip-dir-',                              // 可选，提示方位的 class 前缀，便于设置箭头之类的样式
+                                                                //     默认为 'tooltip-dir-'
+
+        showBy: 'over',                                         // 可选，触发提示显示的方式，可选值包括 'over', 'click'
+                                                                //     默认为 'over'
+        hideBy: 'out,blur',                                     // 可选，触发提示隐藏的方式，可选值包括 'out', 'blur', 'out,blur'
+                                                                //     默认为 'out,blur'
+
+        showDelay: 200,                                         // 可选，当 showBy 为 'over' 时的显示延时
+                                                                //     默认为 200
+        hideDelay: 200,                                         // 可选，当 hideBy 包含 'out' 时的隐藏延时
+                                                                //     默认为 200
+
+        offsetX: 5,                                             // 可选，横坐标偏移量，如果是 0，提示层会和元素贴在一起，较难看
+                                                                //     默认为 5
+        offsetY: 5,                                             // 可选，纵坐标偏移量，如果是 0，提示层会和元素贴在一起，较难看
+                                                                //     默认为 5
+
+
+        template: '',                                           // 可选，提示浮层模版
+
+        dirPriority: [ 'bc', 'br', 'bl', ... ],                 // 可选，自动计算提示方位时的尝试顺序
+
+        show: function (tipElement, triggerElement) {},         // 可选，显示提示的方式
+                                                                //     默认为 tipElement.show()
+        hide: function (tipElement, triggerElement) {},         // 可选，隐藏提示的方式
+                                                                //     默认为 tipElement.hide()
+        update: function (tipElement, triggerElement) {},       // 可选，更新提示的方式
+                                                                //     默认为 tipElement.html(triggerElement.attr(tipAttr))
+
+        onBeforeShow: function () {},                           // 可选，返回 false 可阻止显示
+        onAfterShow: function () {},                            // 可选
+        onBeforeHide: function () {},                           // 可选，返回 false 可阻止显示
+        onAfterHide: function () {}                             // 可选
+    }
+    </pre>
+</div>
+
+<div id="module-demo">
+
+    <i id="icon" data-tip="提示内容" data-dir="tl">?</i>
+
+    <style>
+
+        #icon {
+            background-color: #6A94EC;
+            color: #FFF;
+            font-size: 1.5em;
+            font-style: normal;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+
+            position: absolute;
+            top: 30%;
+            left: 30%;
+        }
+
+        .tooltip {
+            border: 1px solid #DDD;
+            background-color: #FFF;
+            position: absolute;
+            padding: 5px;
+            box-shadow: 1px 1px 3px #EEE;
+        }
+
+    </style>
+
+    <script>
+
+    require(
+
+        [ 'killer/Tooltip' ],
+
+        function (Tooltip) {
+
+            Tooltip.defaultOptions.template = '<div class="tooltip">'
+                                           +    '<i></i>'
+                                           +    '<div class="tooltip-content"></div>'
+                                           + '</div>';
+
+            Tooltip.defaultOptions.show = function (tipElement) {
+                tipElement.slideDown(200);
+            };
+            Tooltip.defaultOptions.hide = function (tipElement) {
+                tipElement.slideUp(200);
+            };
+            Tooltip.defaultOptions.update = function (tipElement, triggerElement) {
+                var content = triggerElement.attr(this.tipAttr);
+                tipElement.find('.tooltip-content').html(content);
+            };
+
+            Tooltip.defaultOptions.onBeforeShow = function () {
+                console.log(this);
+            };
+            Tooltip.defaultOptions.onAfterHide = function () {
+                console.log(this);
+            };
+
+
+            var tooltip = new Tooltip({
+                element: $('#icon')
+            });
+
+            $(document).one('moduleChanged', function () {
+                tooltip.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

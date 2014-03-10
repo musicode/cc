@@ -34,7 +34,6 @@ define(function (require, exports, module) {
                 this[key] = options[key];
             }
         }
-        this.projectName = 'Supload';
         this.init();
     }
 
@@ -74,7 +73,7 @@ define(function (require, exports, module) {
          * @return {string}
          */
         getFlashVars: function () {
-            var paramKeys = [ 'projectName', 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data' ];
+            var paramKeys = [ 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data' ];
             var result = [ ];
 
             for (var i = 0, len = paramKeys.length, key; i < len; i++) {
@@ -83,6 +82,8 @@ define(function (require, exports, module) {
                     result.push(key + '=' + encodeURIComponent(this[key]));
                 }
             }
+
+            result.push('projectName=' + Supload.projectName);
 
             return result.join('&amp;');
         },
@@ -132,6 +133,13 @@ define(function (require, exports, module) {
             Supload.instances[this.movieName] = null;
         }
     };
+
+    /**
+     * 项目名称，as 会用 projectName.instances[movieName] 找出当前实例
+     *
+     * @type {string}
+     */
+    Supload.projectName = 'Supload';
 
     /**
      * Supload 实例容器
@@ -221,7 +229,8 @@ define(function (require, exports, module) {
      */
     function createSWF(id, flashUrl, flashVars) {
 
-        var html = '<object id="' + id + '" data="' + flashUrl + '" type="application/x-shockwave-flash">'
+        var html = '<object id="' + id + '" class="' + Supload.projectName
+                 +     '" data="' + flashUrl + '" type="application/x-shockwave-flash">'
                  +     '<param name="wmode" value="transparent">'
                  +     '<param name="allowscriptaccess" value="always">'
                  +     '<param name="movie" value="' + flashUrl + '" />'

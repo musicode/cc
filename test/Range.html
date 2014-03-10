@@ -1,53 +1,97 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Range</title>
+<div id="module-note">
+    <h1>输入框的选区操作</h1>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h2>使用方法</h2>
+    <pre>
+    var range = new Range(inputElement);
+    range.getRange();      // 获得当前选区 { start: 0, end: 10 }
+    range.setRange(1, 3);  // 设置当前选区开始索引为 1，结束索引为 3
+    range.getText();       // 获得当前选区文本
+    range.setText('xx');   // 设置当前选区文本
+    </pre>
+</div>
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                height: 1000px;
-            }
-        </style>
-    </head>
+<div id="module-demo">
 
-    <body>
+    <div class="demo">
+        <input type="text" />
+        <button id="input-btn1">插入通配符</button>
+        <button id="input-btn2">设置选区</button>
+    </div>
 
-        <input id="input1" type="text" />
-        <textarea id="input2"></textarea>
+    <div class="demo">
+        <textarea></textarea>
+        <button id="textarea-btn1">插入通配符</button>
+        <button id="textarea-btn2">设置选区</button>
+    </div>
 
-        <button id="btn1">插入通配符</button>
-        <button id="btn2">设置选区</button>
+    <style>
 
-        <script>
+        .demo {
+            margin-bottom: 20px;
+        }
+        .demo input,
+        .demo textarea {
+            border: 1px solid #BBB;
+            padding: 5px 10px;
+            width: 200px;
+            vertical-align: bottom;
+        }
+        .demo button {
+            background-color: #F5F5F5;
+            border: 1px solid #DDD;
+            padding: 5px;
+        }
 
-        require(
+    </style>
 
-            [ 'fe/Range' ],
+    <script>
 
-            function (Range) {
-                var range = new Range($('#input1')[0]);
+    require(
 
-                $('#btn1').click(function () {
-                    console.log(range.getText());
-                    range.setText('{' + range.getText() + '}');
-                });
+        [ 'killer/Range' ],
 
-                $('#btn2').click(function () {
-                    range.setRange(1, 3);
-                });
-            }
-        );
+        function (Range) {
 
-        </script>
-    </body>
+            var inputRange = new Range($('input')[0]);
+            var textareaRange = new Range($('textarea')[0]);
 
-</html>
+            var $inputBtn1 = $('#input-btn1');
+            var $inputBtn2 = $('#input-btn2');
+
+            var $textareaBtn1 = $('#textarea-btn1');
+            var $textareaBtn2 = $('#textarea-btn2');
+
+            $inputBtn1.click(function () {
+                inputRange.setText('{' + inputRange.getText() + '}');
+            });
+            $inputBtn2.click(function () {
+                inputRange.setRange(1, 3);
+            });
+
+            $textareaBtn1.click(function () {
+                textareaRange.setText('{' + textareaRange.getText() + '}');
+            });
+            $textareaBtn2.click(function () {
+                textareaRange.setRange(1, 3);
+            });
+
+            $(document).one('moduleChanged', function () {
+                $inputBtn1.off();
+                $inputBtn2.off();
+                $textareaBtn1.off();
+                $textareaBtn2.off();
+
+                inputRange =
+                textareaRange =
+                $inputBtn1 =
+                $inputBtn2 =
+                $textareaBtn1 =
+                $textareaBtn2 = null;
+            });
+        }
+    );
+
+    </script>
+
+</div>

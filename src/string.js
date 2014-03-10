@@ -66,7 +66,7 @@ define(function (require, exports, module) {
      * @param {string} str
      * @return {number}
      */
-    exports.getUTF8Length = function (str) {
+    exports.getLength = function (str) {
         var result = 0;
 
         if (typeof str === 'string') {
@@ -92,7 +92,7 @@ define(function (require, exports, module) {
     exports.truncate = function (str, length, suffix) {
 
         if (typeof length !== 'number'
-            || exports.getUTF8Length(str) <= length
+            || exports.getLength(str) <= length
         ) {
             return str;
         }

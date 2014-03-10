@@ -1,10 +1,5 @@
 /**
- * @file 修正输入相关的事件
- * @example
- *
- * var input = new Input({ });
- * input.dispose();
- *
+ * @file Input
  * @author  zhujl
  */
 define(function (require, exports, module) {
@@ -59,11 +54,10 @@ define(function (require, exports, module) {
      * @param {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
      *                                     因为长按产生的一般是无效输入
      *
-     * @param {boolean=} options.ims 中文输入法开启时是否触发 change 事件，默认为 false
-     * @param {Function} options.onChange
-     * @param {Funciton} options.onEnter
-     * @param {Function} options.onLongPressStart
-     * @param {Function} options.onLongPressEnd
+     * @param {Function=} options.onChange
+     * @param {Funciton=} options.onEnter
+     * @param {Function=} options.onLongPressStart
+     * @param {Function=} options.onLongPressEnd
      * @param {Object=} options.keyEvents 按下某键，发出某事件
      *                                    如 { '43': function () { // up } }
      */
@@ -128,29 +122,36 @@ define(function (require, exports, module) {
          * @private
          */
         triggerChangeEvent: function () {
-            var cache = this.cache;
 
+            var cache = this.cache;
             var keyDownCode = cache.keyDownCode;
 
-            // 判断中文输入法是否正在输入中
-            if (isImsInput(keyDownCode, cache.keyUpCode)) {
-                // 过滤中文输入
-                if (!this.ims // 是否中文输入不需要触发 change 事件
-                    && !isImsKey(keyDownCode) // 是否正在输入
+            if (typeof keyDownCode === 'number') {
+
+                var keyUpCode = cache.keyUpCode;
+
+                // 判断中文输入法是否正在输入中
+                if (isImsInput(keyDownCode, keyUpCode)) {
+
+                    // 以 chrome 举例
+                    // 触发中文输入法开启的 keyDownCode 是 229
+                    // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
+
+                    if (!isImsKey(keyUpCode)) { // 是否正在输入
+                        return;
+                    }
+                }
+                // 不是字符键肯定也不会触发
+                else if (!isCharKey(keyDownCode)) {
+                    return;
+                }
+
+                // 过滤长按
+                if (!this.longPress // 是否长按不需要触发 change 事件
+                    && cache.longPressCouter > 1 // 是否正在长按
                 ) {
                     return;
                 }
-            }
-            // 不是字符键肯定也不会触发
-            else if (!isCharKey(keyDownCode)) {
-                return;
-            }
-
-            // 过滤长按
-            if (!this.longPress // 是否长按不需要触发 change 事件
-                && cache.longPressCouter > 1 // 是否正在长按
-            ) {
-                return;
             }
 
             // 过滤手动改值
@@ -196,7 +197,6 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Input.defaultOptions = {
-        ims: false,
         longPress: false
     };
 
@@ -236,8 +236,7 @@ define(function (require, exports, module) {
     function isImsKey(keyCode) {
         return (keyCode >= 49 && keyCode <= 54)   // 主键盘数字键 1-6
                 || keyCode === 32                 // 空格
-                || keyCode === 13                 // 回车
-                || isImsInput(keyCode);
+                || keyCode === 13;                // 回车
     }
 
     /**

@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var body = $(document.body);
+
     /**
      * 定位一个元素
      *
@@ -23,7 +25,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @param {jQuery} options.element 需要定位的元素
-     * @param {jQuery} options.attachment 参照物元素
+     * @param {jQuery=} options.attachment 参照物元素，默认是 body
      * @param {string|number} options.x 目标元素的横坐标定位点，值可以是 'left' 'center' 'right' 'xx%' 10(纯数字)
      * @param {string|number} options.y 目标元素的纵坐标定位点，值可以是 'top' 'middle' 'bottom' 'yy%' 10(纯数字)
      * @param {string|number} options.attachmentX 参照物元素的横坐标定位点，取值同 options.x
@@ -33,28 +35,37 @@ define(function (require, exports, module) {
      */
     function pin(options) {
 
-        var attachment = options.attachment || $(document.body);
+        var element = options.element;
+        var attachment = options.attachment || body;
+
         var attachmentOffset = attachment.offset();
 
         // 计算的原点
         var originX = attachmentOffset.left + parseX(attachment, options.attachmentX);
         var originY = attachmentOffset.top + parseY(attachment, options.attachmentY);
 
-        var element = options.element;
+        // element 必须是 body 的第一级子元素，否则定位条件太复杂了
+        if (!element.parent().is('body')) {
+            element.appendTo(body);
+        }
+
+        // 相对原点的偏移量
         var offsetX = parseX(element, options.x);
         var offsetY = parseY(element, options.y);
 
+        var x = originX - offsetX;
+        var y = originY - offsetY;
+
         if (typeof options.offsetX === 'number') {
-            offsetX += options.offsetX;
+            x += options.offsetX;
         }
         if (typeof options.offsetY === 'number') {
-            offsetY += options.offsetY;
+            y += options.offsetY;
         }
 
         element.css({
-            position: 'absolute',
-            left: originX - offsetX,
-            top: originY - offsetY
+            left: x,
+            top: y
         });
     }
 
@@ -85,7 +96,7 @@ define(function (require, exports, module) {
         }
 
         if (typeof x === 'string' && percentExpr.test(x)) {
-            x = (RegExp.$1 / 100) * element.prop('scrollWidth');
+            x = (RegExp.$1 / 100) * element.outerWidth();
         }
 
         return x;
@@ -118,7 +129,7 @@ define(function (require, exports, module) {
         }
 
         if (typeof y === 'string' && percentExpr.test(y)) {
-            y = (RegExp.$1 / 100) * element.prop('scrollHeight');
+            y = (RegExp.$1 / 100) * element.outerHeight();
         }
 
         return y;
@@ -132,7 +143,7 @@ define(function (require, exports, module) {
      * @return {Object}
      */
     function copy(options) {
-        return $.extend(true, { }, options);
+        return $.extend({ }, options);
     }
 
     /**
@@ -142,7 +153,6 @@ define(function (require, exports, module) {
      * @type {RegExp}
      */
     var percentExpr = /(-?\d+(\.\d+)?)%/;
-
 
 
     exports.pin = pin;

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>前端常用工具库</title>
+
+        <script src="asset/js/jquery.js"></script>
+        <script src="asset/js/esl.js"></script>
+        <script src="asset/js/config.js"></script>
+        <script src="asset/js/index.js"></script>
+
+        <link rel="stylesheet" href="asset/css/main.less" />
+    </head>
+
+    <body>
+
+        <div id="sidebar">
+            <a data-mod="browser">browser</a>
+            <a data-mod="ContextMenu">ContextMenu</a>
+            <a data-mod="Draggable">Draggable</a>
+            <a data-mod="Input">Input</a>
+            <a data-mod="Placeholder">Placeholder</a>
+            <a data-mod="Popup">Popup</a>
+            <a data-mod="position">position</a>
+            <a data-mod="Range">Range</a>
+            <a data-mod="string">string</a>
+            <a data-mod="Tooltip">Tooltip</a>
+            <a data-mod="Uploader">Uploader</a>
+            <a data-mod="WheelScroll">WheelScroll</a>
+        </div>
+
+        <div id="main">
+
+            <p>
+                cdn 地址：
+            </p>
+
+            <p>
+                使用方法：
+
+                require.config({
+                    paths: {
+                        killer: 'cdn'
+                    }
+                });
+            </p>
+
+        </div>
+
+        <script>
+
+        require(
+
+            [ 'test/asset/js/index' ],
+
+            function (index) {
+                index.init();
+            }
+        );
+
+        </script>
+    </body>
+
+</html>

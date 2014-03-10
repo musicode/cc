@@ -14,17 +14,10 @@ define(function (require, exports, module) {
      *
      * 拖拽的过程就是不断计算相对于父元素的绝对定位坐标
      *
-     * mousedown 记录鼠标点击位置和元素左上角的偏移坐标，记录拖拽范围
-     * mousemove 获取 (pageX, pageY) 并转换到相对父元素的坐标
+     *     mousedown 记录鼠标点击位置和元素左上角的偏移坐标，记录拖拽范围
+     *     mousemove 获取 (pageX, pageY) 并转换到相对父元素的坐标
      *
-     * 为了避免拖拽过程产生的选区，可设置 options.draggingBodyClass
      *
-     * .draggingBodyClass,
-     * .draggingBodyClass * {
-     *     -moz-user-select: none;
-     *     -webkit-user-select: none;
-     *     -ms-user-select: none;
-     * }
      */
 
     'use strict';
@@ -35,8 +28,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @param {jQuery} options.element 需要拖拽的元素
-     * @param {jQuery=} options.containment 限制拖拽范围的容器，默认是 body
-     * @param {string=} options.draggingBodyClass 拖拽时给 body 加的 className，可用样式消除拖拽产生的大片选区
+     * @param {jQuery=} options.container 限制拖拽范围的容器，默认是 body
      * @param {string=} options.handle 触发拖拽的区域 (css 选择器)
      * @param {string=} options.cancel 不触发拖拽的区域 (css 选择器)
      * @param {string=} options.axis 限制方向，可选值包括 'x' 'y'
@@ -60,18 +52,56 @@ define(function (require, exports, module) {
         init: function () {
 
             var element = this.element;
-            var position = element.css('position');
+            var container = this.container;
+            var isChild = contains(container[0], element[0]);
 
-            // 用于存放内部逻辑使用到的私有变量
-            this.cache = {
-                position: position,
-                isChild: contains(this.containment[0], element[0]) // 第三种情况要特殊处理
-            };
+            // 实际定位的容器
+            // 即离 element 最近的非 static 父元素
+            var realContainer = isChild ? container : body;
 
-            if (position !== 'absolute') {
-                element.css('position', 'absolute');
+            // 不满足这个条件就不要玩了...
+            if (!isUnstaticParent(realContainer, element)) {
+                throw new Error('[Draggable] options.element\'s closest unstatic parent element is wrong.');
             }
 
+            var style = { };
+
+            // 避免调用时忘了设置 position
+            var position = element.css('position');
+            if (position === 'static') {
+                style.position = 'absolute';
+            }
+
+            // 确定初始坐标
+            var x = element.css('left');
+            var y = element.css('top');
+            var autoX = x === 'auto';
+            var autoY = y === 'auto';
+
+            // 初始化元素起始坐标
+            // 如果坐标值是 auto，第一次拖动可能会闪跳一次
+            if (autoX || autoY) {
+                var containerOffset = realContainer.offset();
+                var targetOffset = element.offset();
+
+                if (autoX) {
+                    x = style.left = targetOffset.left - containerOffset.left;
+                }
+                if (autoY) {
+                    y = style.top = targetOffset.top - containerOffset.top;
+                }
+            }
+
+            this.cache = {
+                isChild: isChild,
+                position: position,
+                point: {
+                    left: typeof x === 'string' ? parseInt(x, 10) : x,
+                    top: typeof y === 'string' ? parseInt(y, 10) : y
+                }
+            };
+
+            element.css(style);
             element.on('mousedown', this, startDrag);
         },
 
@@ -87,7 +117,7 @@ define(function (require, exports, module) {
 
             this.cache =
             this.element =
-            this.containment = null;
+            this.container = null;
         }
     };
 
@@ -115,9 +145,9 @@ define(function (require, exports, module) {
      */
     Draggable.defaultOptions = {
         // 读取高度，不同浏览器需要用不同的元素
-        containment: doc.prop('scrollHeight') > body.prop('scrollHeight')
-                   ? doc
-                   : body
+        container: doc.prop('scrollHeight') > body.prop('scrollHeight')
+                 ? doc
+                 : body
     };
 
     /**
@@ -150,43 +180,54 @@ define(function (require, exports, module) {
         // ==============================================================
         // 计算坐标
         // ==============================================================
-        var containerRect = getRectange(draggable.containment);
+        var containerRect = getRectange(draggable.container);
         var targetRect = getRectange(element);
 
-        // 偏移量坐标
-        cache.offsetX = e.pageX - targetRect.left;
-        cache.offsetY = e.pageY - targetRect.top;
+        var pageX = e.pageX;
+        var pageY = e.pageY;
 
-        if (cache.isChild) {
-            cache.offsetX += containerRect.left;
-            cache.offsetY += containerRect.top;
+        var containerX = containerRect.left;
+        var containerY = containerRect.top;
+        var targetX = targetRect.left;
+        var targetY = targetRect.top;
+
+        // 偏移量坐标
+        var offsetX = pageX - targetX;
+        var offsetY = pageY - targetY;
+
+        var isChild =  cache.isChild;
+        if (isChild) {
+            offsetX += containerX;
+            offsetY += containerY;
         }
 
         // 开始点坐标
-        cache.originX = e.pageX - cache.offsetX;
-        cache.originY = e.pageY - cache.offsetY;
+        var point = cache.point;
+
+        cache.originX = point.left;
+        cache.originY = point.top;
+        cache.offsetX = offsetX;
+        cache.offsetY = offsetY;
 
         // 可移动的范围
+        var left = isChild ? 0 : containerX;
+        var top = isChild ? 0 : containerY;
+
         cache.movableRect = {
-            left: 0,
-            top: 0,
-            right: (containerRect.right - containerRect.left) - (targetRect.right - targetRect.left),
-            bottom: (containerRect.bottom - containerRect.top) - (targetRect.bottom - targetRect.top)
+            left: left,
+            top: top,
+            right: left + (containerRect.right - containerX) - (targetRect.right - targetX),
+            bottom: top + (containerRect.bottom - containerY) - (targetRect.bottom - targetY)
         };
 
         // 避免出现选区
-        if (draggable.draggingBodyClass) {
-            body.addClass(draggable.draggingBodyClass);
-        }
+        disableSelection(cache);
 
         doc.on('mousemove', draggable, drag);
         doc.on('mouseup', draggable, stopDrag);
 
         if (typeof draggable.onDragStart === 'function') {
-            draggable.onDragStart({
-                left: cache.originX,
-                top: cache.originY
-            });
+            draggable.onDragStart(point);
         }
     }
 
@@ -244,15 +285,59 @@ define(function (require, exports, module) {
         doc.off('mouseup', stopDrag);
 
         var draggable = e.data;
+        var cache = draggable.cache;
 
-        var bodyClass = draggable.draggingBodyClass;
-        if (bodyClass) {
-            body.removeClass(bodyClass);
-        }
+        enableSelection(cache);
 
         if (typeof draggable.onDragEnd === 'function') {
-            draggable.onDragEnd(draggable.cache.point);
+            draggable.onDragEnd(cache.point);
         }
+    }
+
+    /**
+     * 是否支持 onselectstart 禁用选区
+     *
+     * @private
+     * @return {boolean}
+     */
+    var supportSelectStart = typeof doc[0].onselectstart !== 'undefined';
+
+    /**
+     * 禁掉拖动时产生的选区
+     *
+     * @private
+     * @param {Object} cache
+     */
+    var disableSelection;
+
+    /**
+     * 选区恢复原状
+     *
+     * @private
+     * @param {Object} cache
+     */
+    var enableSelection;
+
+    if (supportSelectStart) {
+        disableSelection = function (cache) {
+            var target = doc[0];
+            cache.selectStart = target.onselectstart;;
+            target.onselectstart = function () {
+                return false;
+            };
+        };
+        enableSelection = function (cache) {
+            doc[0].onselectstart = cache.selectStart;
+        };
+    }
+    else {
+        disableSelection = function (cache) {
+            cache.userSelect = doc.css('MozUserSelect');
+            doc.css('MozUserSelect', 'none');
+        };
+        enableSelection = function (cache) {
+            doc.css('MozUserSelect', cache.userSelect);
+        };
     }
 
     /**
@@ -267,8 +352,8 @@ define(function (require, exports, module) {
         return {
             left: offset.left,
             top: offset.top,
-            right: offset.left + element.prop('scrollWidth'),
-            bottom: offset.top + element.prop('scrollHeight')
+            right: offset.left + element.prop('offsetWidth'),
+            bottom: offset.top + element.prop('offsetHeight')
         };
     }
 
@@ -320,6 +405,29 @@ define(function (require, exports, module) {
             }
         });
         return result;
+    }
+
+    /**
+     * 是否是非 static 父元素
+     *
+     * @private
+     * @param {jQuery} parentElement
+     * @param {jQuery} childElement
+     * @return {boolean}
+     */
+    function isUnstaticParent(parentElement, childElement) {
+        do {
+            childElement = childElement.parent();
+
+            if (childElement[0] === parentElement[0]) {
+                return true;
+            }
+
+            if (childElement.css('position') !== 'static') {
+                return false;
+            }
+        }
+        while (childElement[0])
     }
 
     /**

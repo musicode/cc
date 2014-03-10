@@ -1,0 +1,38 @@
+<div id="module-note">
+
+    <h1>使用 UA 检测浏览器</h1>
+
+    <h2>实例属性</h2>
+
+    <pre>
+    {
+        name: 'ie',     // 可选值有 ie, chrome, firefox, safari, opera
+        ie: true,       // key 同上
+        version: '9.0'  // 浏览器版本
+    }
+    </pre>
+
+</div>
+
+<div id="module-demo">
+
+</div>
+
+<script>
+
+require(
+
+    [ 'killer/browser' ],
+
+    function (browser) {
+
+        $('#module-demo').html(
+            'browser name: ' + browser.name +
+            '<br/ >' +
+            'browser version: ' + browser.version
+        );
+
+    }
+);
+
+</script>

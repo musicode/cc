@@ -1,107 +1,160 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>Popup</title>
+<div id="module-note">
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h1>Popup</h1>
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                height: 1000px;
-            }
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('xx'),               // 弹出显示的元素
+        trigger: $('yy'),               // 可选，触发显示的元素
+                                        //     如果不需要交互触发，如 popup.show() 出来，可无视
+        showBy: 'click',                // 可选，触发显示的方式，注意 trigger 必须有值
+                                        //     可选值包括 'click', 'over'
+        hideBy: 'blur',                 // 可选，触发隐藏的方式
+                                        //     可选值包括 'blur', 'out', 'blur,out'
+        showDelay: 100,                 // 可选，showBy 为 over 时的延时显示时间
+        hideDelay: 200,                 // 可选，hideBy 包括 out 时的延时隐藏时间
+        show: function () {},           // 可选，显示函数
+                                        //     默认是 element.show()，如果有特效需求，自行实现
+        hide: function () {},           // 可选，隐藏函数
+                                        //     默认是 element.hide()，如果有特效需求，自行实现
+        onBeforeShow: function () {},   // 可选，返回 false 可阻止显示
+        onAfterShow: function () {},    // 可选
+        onBeforeHide: function () {},   // 可选，返回 false 可阻止隐藏
+        onAfterHide: function () {}     // 可选
+    }
+    </pre>
 
-            #select {
-                display: inline-block;
-            }
-            #trigger {
-                border: 1px solid #DDD;
-                background-color: #EEE;
-                cursor: pointer;
-                display: inline-block;
-                padding: 5px 10px;
-                width: 100px;
-                border-radius: 2px;
-            }
-            #layer {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-                display: none;
+    <h2>使用方法</h2>
+    <pre>
+    var popup = new Popup(options);
+    popup.dispose();
+    </pre>
+</div>
 
-                border: 1px solid #DDD;
-                background-color: #FBFBFB;
-            }
-            li {
-                padding: 5px 10px;
-                border-top: 1px solid #EEE;
-            }
-            li:first-child {
-                border-top: none;
-            }
-        </style>
-    </head>
+<div id="module-demo">
 
-    <body>
+    <div id="ui-select">
+        <span id="select-trigger">
+            <b>请选择</b>
+            <i class="icon-arrow-down"></i>
+        </span>
+        <ul id="select-layer">
+            <li>11111111111</li>
+            <li>22222222222</li>
+            <li>33333333333</li>
+            <li>44444444444</li>
+        </ul>
+    </div>
 
-        <div id="select">
-            <span id="trigger">请选择</span>
-            <ul id="layer">
-                <li>11111111111</li>
-                <li>22222222222</li>
-                <li>33333333333</li>
-                <li>44444444444</li>
-            </ul>
-        </div>
+    <style>
 
-        <script>
+        #ui-select {
+            display: inline-block;
+            *display: inline;
+            *zoom: 1;
+        }
+        #select-trigger {
+            border: 1px solid #DDD;
+            background-color: #F3F3F3;
+            cursor: pointer;
+            display: inline-block;
+            padding: 5px 10px;
+            width: 100px;
+            border-radius: 2px;
+            position: relative;
+        }
+        #select-trigger i {
+            display: inline-block;
 
-        require(
+            position: absolute;
+            right: 10px;
+        }
+        .icon-arrow-down {
+            border: 5px solid #666;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            top: 10px;
+        }
+        .icon-arrow-up {
+            border: 5px solid #666;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            border-top-color: transparent;
+            top: 5px;
+        }
+        #select-layer {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: none;
 
-            [ 'fe/Popup' ],
+            border: 1px solid #DDD;
+            background-color: #FFF;
+        }
+        #select-layer li {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-top: 1px solid #EEE;
+        }
+        #select-layer li:first-child {
+            border-top: none;
+        }
+    </style>
 
-            function (Popup) {
-                var layer = $('#layer');
+    <script>
 
-                var popup = new Popup({
-                    trigger: $('#trigger'),
-                    element: layer,
-                    showBy: 'click',
-                    hideBy: 'blur',
-                    show: function () {
-                        layer.slideDown(50);
-                    },
-                    hide: function () {
-                        layer.slideUp(50);
-                    },
-                    onBeforeShow: function () {
-                        console.log('beforeShow');
-                    },
-                    onAfterShow: function () {
-                        console.log('afterShow');
-                    },
-                    onBeforeHide:function () {
-                        console.log('beforeHide');
-                    },
-                    onAfterHide: function () {
-                        console.log('afterHide');
-                    }
-                });
+    require(
 
-                layer.on('click', 'li', function () {
-                    popup.hide();
-                });
+        [ 'killer/Popup' ],
 
-            }
-        );
+        function (Popup) {
 
-        </script>
-    </body>
+            var $layer = $('#select-layer');
 
-</html>
+            var popup = new Popup({
+                trigger: $('#select-trigger'),
+                element: $layer,
+                showBy: 'click',
+                hideBy: 'blur',
+                show: function () {
+                    this.element.slideDown(100);
+                },
+                hide: function () {
+                    this.element.slideUp(10);
+                },
+                onBeforeShow: function () {
+                    console.log('beforeShow');
+                },
+                onAfterShow: function () {
+                    $('#select-trigger i').removeClass('icon-arrow-down')
+                                          .addClass('icon-arrow-up');
+                    console.log('afterShow');
+                },
+                onBeforeHide:function () {
+                    console.log('beforeHide');
+                },
+                onAfterHide: function () {
+                    $('#select-trigger i').removeClass('icon-arrow-up')
+                                          .addClass('icon-arrow-down');
+                    console.log('afterHide');
+                }
+            });
+
+            $layer.on('click', 'li', function (e) {
+                popup.hide();
+                $('#select-trigger b').html(e.target.innerHTML);
+            });
+
+            $(document).one('moduleChanged', function () {
+                $layer.off();
+                $layer = null;
+                popup.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

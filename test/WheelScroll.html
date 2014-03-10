@@ -1,43 +1,49 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>WheelScroll</title>
+<div id="module-note">
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h1>鼠标滚轮</h1>
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                height: 1000px;
-            }
-        </style>
-    </head>
+    <h2>实例参数</h2>
+    <pre>
+    {
+        element: $('div'),                       // 可选，监听滚动的元素
+                                                 //     默认是 $(document)
+        onScroll: function (data) {}             // 可选，滚动触发
+    }
+    </pre>
 
-    <body>
+    <h2>使用方法</h2>
+    <pre>
+    var wheelScroll = new WheelScroll(options);
+    wheelScroll.dispose();
+    </pre>
+</div>
 
-        <script>
+<div id="module-demo">
 
-        require(
+    <div>
+        滚动鼠标滚轮，打开控制台看输出
+    </div>
 
-            [ 'fe/WheelScroll' ],
+    <script>
 
-            function (WheelScroll) {
-                new WheelScroll({
-                    onScroll: function (data) {
-                        console.log(data);
-                        return false;
-                    }
-                });
-            }
-        );
+    require(
 
-        </script>
-    </body>
+        [ 'killer/WheelScroll' ],
 
-</html>
+        function (WheelScroll) {
+
+            var wheelScroll = new WheelScroll({
+                onScroll: function (data) {
+                    console.log(data);
+                }
+            });
+
+            $(document).one('moduleChanged', function () {
+                wheelScroll.dispose();
+            });
+        }
+    );
+
+    </script>
+
+</div>

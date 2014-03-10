@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     var Popup = require('./Popup');
     var position = require('./position');
 
@@ -13,7 +15,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @param {jQuery} options.container 在 container 内部右键弹出菜单
-     * @param {jQuery|string} options.template 菜单模版
+     * @param {jQuery|string} options.element 菜单元素，也可以是字符串模版
      * @param {string=} options.className 可选，菜单元素的 className
      * @param {Object=} options.events 可选，配置事件处理器
      *                 {
@@ -56,8 +58,10 @@ define(function (require, exports, module) {
             }
 
             var cache = this.cache;
-            cache.popup.dispose();
-            cache.element.remove();
+            if (cache.popup) {
+                cache.popup.dispose();
+                cache.element.remove();
+            }
 
             this.container.off('contextmenu', popupMenu);
 
@@ -110,6 +114,10 @@ define(function (require, exports, module) {
         if (currentMenu && currentMenu !== contextMenu) {
             currentMenu.cache.popup.hide();
         }
+
+        // 记录当前事件
+        cache.event = e;
+
         currentMenu = contextMenu;
 
         cache.popup.show();
@@ -135,15 +143,25 @@ define(function (require, exports, module) {
      * @param {ContextMenu} contextMenu
      */
     function createMenu(contextMenu) {
-        var element = typeof contextMenu.template === 'string'
-                    ? $(contextMenu.template)
-                    : contextMenu.template;
+        var cache = contextMenu.cache;
+
+        var element = typeof contextMenu.element === 'string'
+                    ? $(contextMenu.element)
+                    : contextMenu.element;
 
         var events = contextMenu.events;
 
         if (events) {
             for (var type in events) {
-                element.on('click', type, events[type]);
+                element.on(
+                    'click',
+                    type,
+                    (function (handler) {
+                        return function (e) {
+                            handler.call(contextMenu, cache.event);
+                        };
+                    })(events[type])
+                );
             }
         }
 
@@ -158,7 +176,6 @@ define(function (require, exports, module) {
             hideBy: 'blur'
         });
 
-        var cache = contextMenu.cache;
         cache.element = element;
         cache.popup = popup;
     }

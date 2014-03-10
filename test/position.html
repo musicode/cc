@@ -1,108 +1,174 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>position</title>
+<div id="module-note">
+    <h1>定位</h1>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h2>pin 参数</h2>
+    <pre>
+    {
+        element: $('xx'),        // 需要定位的元素
+        attachment: $('yy'),     // 可选，参照物元素
+                                 //     默认是 $(document.body)
 
-        <style>
-            body {
-                margin: 0;
-                padding: 0;
-            }
-            .rect {
-                background-color: #2E8DE4;
-                width: 50px;
-                height: 50px;
-            }
-            #center {
-                background-color: #C73546;
-                width: 150px;
-                height: 150px;
-            }
+        x: 10,                   // 定位元素的定位点横坐标
+                                 // 可选值包括 'left', 'center', 'right', 'xx%'(百分比), xx(数字)
+        y: 10,                   // 定位元素的定位点纵坐标
+                                 // 可选值包括 'top', 'middle', 'bottom', 'yy%'(百分比), yy(数字)
 
-        </style>
-    </head>
+        attachmentX: 10,         // 参照物元素的参照点横坐标，取值同 x
+        attachmentY: 10,         // 参照物元素的参照点纵坐标，取值同 y
 
-    <body>
-        <div id="center" class="rect"></div>
+        offsetX: 0,              // 可选，定位元素的横坐标偏移量
+        offsetY: 0               // 可选，定位元素的纵坐标偏移量
+    }
+    </pre>
 
-        <div id="top-left" class="rect"></div>
-        <div id="top-center" class="rect"></div>
-        <div id="top-right" class="rect"></div>
+    <h2>使用方法</h2>
+    <pre>
+    // 真正的定位函数，可使用上面所有配置
+    position.pin(options);
 
-        <div id="middle-left" class="rect"></div>
-        <div id="middle-center" class="rect"></div>
-        <div id="middle-right" class="rect"></div>
+    // 下面是一些快捷方法
+    // 只需要设置 element 和 attachment 即可 ( 或配合 offsetX/offsetY 使用 )
+    position.topLeft(options);
+    position.topCenter(options);
+    position.topRight(options);
 
-        <div id="bottom-left" class="rect"></div>
-        <div id="bottom-center" class="rect"></div>
-        <div id="bottom-right" class="rect"></div>
+    position.middleLeft(options);
+    position.middleCenter(options);
+    position.middleRight(options);
 
-        <script>
+    position.bottomLeft(options);
+    position.bottomCenter(options);
+    position.bottomRight(options);
+    </pre>
+</div>
 
-        require(
+<div id="module-demo">
 
-            [ 'fe/position' ],
+    <div id="center" class="rect"></div>
 
-            function (position) {
-                var center = $('#center');
+    <div id="top-left" class="rect"></div>
+    <div id="top-center" class="rect"></div>
+    <div id="top-right" class="rect"></div>
 
-                position.middleCenter({
-                    element: center
-                });
+    <div id="middle-left" class="rect"></div>
+    <div id="middle-center" class="rect"></div>
+    <div id="middle-right" class="rect"></div>
 
-                position.topLeft({
-                    element: $('#top-left'),
-                    attachment: center
-                });
+    <div id="bottom-left" class="rect"></div>
+    <div id="bottom-center" class="rect"></div>
+    <div id="bottom-right" class="rect"></div>
 
-                position.topCenter({
-                    element: $('#top-center'),
-                    attachment: center
-                });
+    <style>
 
-                position.topRight({
-                    element: $('#top-right'),
-                    attachment: center
-                });
+        .rect {
+            background-color: #2E8DE4;
+            width: 50px;
+            height: 50px;
+            position: absolute;
+        }
+        #center {
+            background-color: #F3E1B1;
+            width: 150px;
+            height: 150px;
+        }
 
-                position.middleLeft({
-                    element: $('#middle-left'),
-                    attachment: center
-                });
+    </style>
 
-                position.middleCenter({
-                    element: $('#middle-center'),
-                    attachment: center
-                });
+    <script>
 
-                position.middleRight({
-                    element: $('#middle-right'),
-                    attachment: center
-                });
+    require(
 
-                position.bottomLeft({
-                    element: $('#bottom-left'),
-                    attachment: center
-                });
+        [ 'killer/position' ],
 
-                position.bottomCenter({
-                    element: $('#bottom-center'),
-                    attachment: center
-                });
+        function (position) {
 
-                position.bottomRight({
-                    element: $('#bottom-right'),
-                    attachment: center
-                });
-            }
-        );
+            var $center = $('#center');
+            var $topLeft = $('#top-left')
+            var $topCenter = $('#top-center');
+            var $topRight = $('#top-right');
+            var $middleLeft = $('#middle-left');
+            var $middleCenter = $('#middle-center');
+            var $middleRight = $('#middle-right');
+            var $bottomLeft = $('#bottom-left');
+            var $bottomCenter = $('#bottom-center');
+            var $bottomRight = $('#bottom-right');
 
-        </script>
-    </body>
+            position.middleCenter({
+                element: $center,
+                attachment: $('#main')
+            });
 
-</html>
+            position.topLeft({
+                element: $topLeft,
+                attachment: $center
+            });
+
+            position.topCenter({
+                element: $topCenter,
+                attachment: $center
+            });
+
+            position.topRight({
+                element: $topRight,
+                attachment: $center
+            });
+
+            position.middleLeft({
+                element: $middleLeft,
+                attachment: $center
+            });
+
+            position.middleCenter({
+                element: $middleCenter,
+                attachment: $center
+            });
+
+            position.middleRight({
+                element: $middleRight,
+                attachment: $center
+            });
+
+            position.bottomLeft({
+                element: $bottomLeft,
+                attachment: $center
+            });
+
+            position.bottomCenter({
+                element: $bottomCenter,
+                attachment: $center
+            });
+
+            position.bottomRight({
+                element: $bottomRight,
+                attachment: $center
+            });
+
+            $(document).one('moduleChanged', function () {
+                $center.remove();
+                $topLeft.remove();
+                $topCenter.remove();
+                $topRight.remove();
+                $middleLeft.remove();
+                $middleCenter.remove();
+                $middleRight.remove();
+                $bottomLeft.remove();
+                $bottomCenter.remove();
+                $bottomRight.remove();
+
+                $center =
+                $topLeft =
+                $topCenter =
+                $topRight =
+                $middleLeft =
+                $middleCenter =
+                $middleRight =
+                $bottomLeft =
+                $bottomCenter =
+                $bottomRight = null;
+            });
+        }
+    );
+
+    </script>
+
+</div>

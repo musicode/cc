@@ -1,111 +1,178 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <title>ContextMenu</title>
+<div id="module-note">
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
+    <h1>鼠标右键菜单</h1>
 
-        <style>
-            html,
-            body {
-                height: 100%;
+    <h2>实例参数</h2>
+
+    <pre>
+    {
+        element: $('#context-menu'),     // 自定义菜单元素，也可以是一段 HTML 字符串
+        container: $('#container'),      // 可选，需要弹出自定义菜单的容器，如下面的歌曲列表
+                                         //     默认是 $(document.body)
+
+        events: {                        // 配置菜单点击事件，key 是 css 选择器
+            'selector': function (e) {   //     事件对象来自右键点击
+                // ......                //     通过 e 可知菜单命令作用的对象
+                this.hide();
             }
+        },
+        className: 'context-menu'        // 可选，自定义菜单元素的 className，便于统一设置样式
+                                         //     默认是 'context-menu'
+    }
+    </pre>
 
-            body {
-                margin: 0;
-                padding: 0;
-            }
+    <h2>使用方法</h2>
 
-            #container {
-                width: 300px;
-                height: 300px;
-                background-color: #EEE;
-            }
+    <pre>
+    var contextMenu = new ContextMenu(options);
+    contextMenu.hide();    // 弹出菜单后可通过 hide() 隐藏菜单
+    contextMenu.dispose(); // 销毁对象
+    </pre>
 
-            .menu {
-                display: none;
-                border: 1px solid #DDD;
-                font-size: 13px;
-                background-color: #F6F6F6;
-                width: 70px;
-                height: 120px;
-                box-shadow: 1px 1px 2px #DFDFDF;
-            }
+</div>
 
-            ul {
-                list-style: none;
-                margin: 0;
-                padding: 0;
-            }
-            li {
-                border-bottom: 1px solid #EEE;
-                padding: 6px 10px;
-            }
-            li:hover {
-                background-color: #FFF;
-            }
-        </style>
-    </head>
+<div id="module-demo">
 
-    <body>
-
-        <div id="global-menu" class="menu">
-            <ul>
-                <li data-action="search">搜索</li>
-                <li data-action="upload">上传</li>
-                <li data-action="download">下载</li>
-            </ul>
-        </div>
+    <div id="global-menu" class="context-menu">
+        <ul>
+            <li data-action="copy">拷贝</li>
+            <li data-action="paste">粘贴</li>
+            <li data-action="refresh">刷新</li>
+        </ul>
+    </div>
 
 
-        <div id="container">
+    <div id="song-list">
+        <ul>
+            <li data-url="http://music.baidu.com/1.mp3">adele - rolling in the deep</li>
+            <li data-url="http://music.baidu.com/2.mp3">blue - one love</li>
+            <li data-url="http://music.baidu.com/3.mp3">celion dion - a new day has come</li>
+            <li data-url="http://music.baidu.com/4.mp3">adam lambert - whataya want from me</li>
+            <li data-url="http://music.baidu.com/5.mp3">alicia keys - if i aint got you</li>
+            <li data-url="http://music.baidu.com/6.mp3">amy diamond - heartbeats</li>
+            <li data-url="http://music.baidu.com/7.mp3">angela ammons - always getting over you</li>
+            <li data-url="http://music.baidu.com/8.mp3">avril lavigne - losing grip</li>
+        </ul>
+    </div>
 
-        </div>
+    <div id="local-menu" class="context-menu">
+        <ul>
+            <li data-action="play">播放</li>
+            <li data-action="like">收藏</li>
+            <li data-action="download">下载</li>
+            <li data-action="remove">删除</li>
+        </ul>
+    </div>
 
-        <div id="local-menu" class="menu">
-            <ul>
-                <li data-action="add">添加</li>
-                <li data-action="remove">删除</li>
-                <li data-action="find">查找</li>
-            </ul>
-        </div>
 
-        <script>
+    <style>
 
-        require(
+        #song-list {
+            border: 1px solid #DDD;
+            width: 300px;
+        }
 
-            [ 'fe/ContextMenu' ],
+        #song-list li {
+            color: #777;
+            padding: 10px;
+            border-top: 1px solid #EEE;
+        }
+        #song-list li:first-child {
+            border-top: none;
+        }
 
-            function (ContextMenu) {
+        #song-list li:nth-of-type(even) {
+            background-color: #EAF7FD;
+        }
 
-                var globalMenu = new ContextMenu({
-                    template: $('#global-menu'),
-                    events: {
-                        '[data-action="search"]': function () {
-                            console.log('搜索');
-                            globalMenu.hide();
-                        }
+        .context-menu {
+            border: 1px solid #DDD;
+            background-color: #FFF;
+            display: none;
+            padding: 1px;
+            width: 70px;
+            box-shadow: 1px 1px 2px #F0F0F0;
+            position: absolute;
+        }
+
+        .context-menu li {
+            border-top: 1px solid #EEE;
+            cursor: pointer;
+            padding: 6px 10px;
+        }
+        .context-menu li:first-child {
+            border-top: none;
+        }
+        .context-menu li:hover {
+            background-color: #61A1E6;
+            color: #FFF;
+        }
+
+    </style>
+
+    <script>
+
+    require(
+
+        [ 'killer/ContextMenu' ],
+
+        function (ContextMenu) {
+
+            var globalMenu = new ContextMenu({
+                element: $('#global-menu'),
+                container: $('#main'),
+                events: {
+                    '[data-action="copy"]': function () {
+                        console.log('拷贝');
+                        this.hide();
+                    },
+                    '[data-action="paste"]': function () {
+                        console.log('粘贴');
+                        this.hide();
+                    },
+                    '[data-action="refresh"]': function () {
+                        window.location.reload();
+                        this.hide();
                     }
-                });
+                }
+            });
 
-                var localMenu = new ContextMenu({
-                    container: $('#container'),
-                    template: $('#local-menu'),
-                    events: {
-                        '[data-action="add"]': function () {
-                            console.log('添加');
-                            localMenu.hide();
-                        }
+            var localMenu = new ContextMenu({
+                element: $('#local-menu'),
+                container: $('#song-list'),
+                events: {
+                    '[data-action="play"]': function (e) {
+                        var $target = $(e.target);
+                        console.log('播放: ' + $target.data('url'));
+                        this.hide();
+                    },
+                    '[data-action="like"]': function (e) {
+                        var $target = $(e.target);
+                        console.log('收藏: ' + $target.data('url'));
+                        this.hide();
+                    },
+                    '[data-action="download"]': function (e) {
+                        var $target = $(e.target);
+                        console.log('下载: ' + $target.data('url'));
+                        this.hide();
+                    },
+                    '[data-action="remove"]': function (e) {
+                        var $target = $(e.target);
+                        console.log('删除: ' + $target.data('url'));
+                        this.hide();
                     }
-                });
+                }
+            });
 
-            }
-        );
+            $(document).one('moduleChanged', function () {
+                globalMenu.dispose();
+                localMenu.dispose();
+            });
 
-        </script>
-    </body>
+        }
+    );
 
-</html>
+    </script>
+</div>
+
+

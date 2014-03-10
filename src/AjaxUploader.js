@@ -1,22 +1,5 @@
 /**
  * @file AjaxUploader
- * @example
- *
- * var instance = new AjaxUploader({
- *     element: element,
- *     action: '/upload.php',
- *     accept: ['jpg', 'png'],
- *     multiple: true,
- *     data: { },
- *     onFileChange: fn,
- *     onUploadStart: fn,
- *     onUploadSuccess: fn,
- *     onUploadError: fn,
- *     onUploadComplete: fn
- * });
- * instance.upload();
- * instance.dispose();
- *
  * @author zhujl
  */
 define(function (require, exports, module) {
@@ -33,6 +16,8 @@ define(function (require, exports, module) {
      *
      *     但鉴于这种方式不直观(小白可能都没听过 MIME type)，还是用扩展名好了
      */
+
+    'use strict';
 
     /**
      * 使用 HTML5 ajax 上传
@@ -332,14 +317,11 @@ define(function (require, exports, module) {
         war     : 'application/java-archive',
         ear     : 'application/java-archive',
         hqx     : 'application/mac-binhex40',
-        doc     : 'application/msword',
         pdf     : 'application/pdf',
         ps      : 'application/postscript',
         eps     : 'application/postscript',
         ai      : 'application/postscript',
         rtf     : 'application/rtf',
-        xls     : 'application/vnd.ms-excel',
-        ppt     : 'application/vnd.ms-powerpoint',
         wmlc    : 'application/vnd.wap.wmlc',
         kml     : 'application/vnd.google-earth.kml+xml',
         kmz     : 'application/vnd.google-earth.kmz',
@@ -379,10 +361,11 @@ define(function (require, exports, module) {
         msm     : 'application/octet-stream',
 
         doc     : 'application/msword',
-        docx    : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         xls     : 'application/vnd.ms-excel',
-        xlsx    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
+        ppt     : 'application/vnd.ms-powerpoint',
+        docx    : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xlsx    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        pptx    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     };
 
     /**

@@ -34,8 +34,6 @@ define(function (require, exports, module) {
      * @param {Object} options 配置对象
      * @param {jQuery} options.element 输入框元素，如文本框、密码框、文本域
      * @param {boolean=} options.nativeFirst 是否优先使用浏览器原生的 placeholder，只针对低版本 IE 模拟实现，默认为 false
-     *
-     * @param {string=} options.template 当 nativeFirst 为 false 时的包装模版，这个一般不用改，除非有特殊需求
      */
     function Placeholder(options) {
         $.extend(this, Placeholder.defaultOptions, options);
@@ -51,18 +49,19 @@ define(function (require, exports, module) {
          */
         init: function () {
 
+            // 确定运行时类型
             var type = getRuntimeType(this.nativeFirst);
 
-            this.cache = {
+            var cache = this.cache = {
                 type: type
             };
-
-            var element = this.element;
 
             // 未使用原生特性
             if (type !== TYPE_NATIVE) {
 
-                var wrapper = $(this.template);
+                var element = this.element;
+                var wrapper = $(Placeholder.template);
+
                 element.replaceWith(wrapper);
                 wrapper.append(element);
 
@@ -73,8 +72,8 @@ define(function (require, exports, module) {
                 element.on('blur', this, onRefresh);
                 wrapper.on('click', this, onFocus);
 
-                this.cache.wrapperElement = wrapper;
-                this.cache.placeholderElement = placeholderElement;
+                cache.wrapperElement = wrapper;
+                cache.placeholderElement = placeholderElement;
             }
 
             this.setPlaceholder(this.getPlaceholder());
@@ -133,12 +132,18 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Placeholder.defaultOptions = {
-        nativeFirst: false,
-        template: '<div class="placeholder-wrapper">'
-                +    '<div></div>'
-                + '</div>'
+        nativeFirst: false
     };
 
+    /**
+     * 使用模拟实现时的包装模版，这个一般不用改，除非有特殊需求
+     *
+     * @static
+     * @type {string}
+     */
+    Placeholder.template = '<div class="placeholder-wrapper">'
+                         +    '<div></div>'
+                         + '</div>';
     /**
      * 批量初始化
      *
@@ -147,6 +152,8 @@ define(function (require, exports, module) {
      * @return {Array.<Placeholder>}
      */
     Placeholder.init = function (elements) {
+        elements = elements || $('[data-placeholder]');
+
         var result = [ ];
 
         elements.each(function () {
@@ -218,19 +225,18 @@ define(function (require, exports, module) {
      * @return {Object}
      */
     function getStyle(inputElement) {
-
-        var borderTopWidth = parseInt(inputElement.css('border-top-width'), 10) || 0;
-        var borderRightWidth = parseInt(inputElement.css('border-right-width'), 10) || 0;
-        var borderBottomWidth = parseInt(inputElement.css('border-bottom-width'), 10) || 0;
-        var borderLeftWidth = parseInt(inputElement.css('border-left-width'), 10) || 0;
-
         return {
+            'border-top': inputElement.css('border-top-width') + ' solid transparent',
+            'border-right': inputElement.css('border-right-width') + ' solid transparent',
+            'border-bottom': inputElement.css('border-bottom-width') + ' solid transparent',
+            'border-left': inputElement.css('border-left-width') + ' solid transparent',
             'padding-top': inputElement.css('padding-top'),
             'padding-right': inputElement.css('padding-right'),
             'padding-bottom': inputElement.css('padding-bottom'),
             'padding-left': inputElement.css('padding-left'),
-            'width': inputElement.width() + borderLeftWidth + borderRightWidth,
-            'height': inputElement.height() + borderTopWidth + borderBottomWidth
+            'width': inputElement.width(),
+            'height': inputElement.height(),
+            'line-height': inputElement.css('line-height')
         };
     }
 
@@ -281,10 +287,11 @@ define(function (require, exports, module) {
         if (!hasFocus(element[0])
             && element.val() === ''
         ) {
-            placeholderElement.html(placeholder.getPlaceholder());
+            placeholderElement.html(placeholder.getPlaceholder())
+                              .show();
         }
         else {
-            placeholderElement.html('');
+            placeholderElement.hide();
         }
     }
 

@@ -1,24 +1,10 @@
 /**
  * @file FlashUploader
- *
- * var instance = new FlashUploader({
- *     element: element,
- *     action: '/upload.php',
- *     accept: ['jpg', 'png'],
- *     multiple: true,
- *     data: { },
- *     onFileChange: fn,
- *     onUploadStart: fn,
- *     onUploadSuccess: fn,
- *     onUploadError: fn,
- *     onUploadComplete: fn
- * });
- * instance.upload();
- * instance.dispose();
- *
  * @author zhujl
  */
 define(function (require, exports, module) {
+
+    'use strict';
 
     require('./supload/supload');
 
