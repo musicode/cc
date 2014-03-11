@@ -34,6 +34,7 @@ define(function (require, exports, module) {
      * @param {Object} options 配置对象
      * @param {jQuery} options.element 输入框元素，如文本框、密码框、文本域
      * @param {boolean=} options.nativeFirst 是否优先使用浏览器原生的 placeholder，只针对低版本 IE 模拟实现，默认为 false
+     * @param {string=} options.template 使用模拟实现时的包装模版，这个一般不用改，除非有特殊需求
      */
     function Placeholder(options) {
         $.extend(this, Placeholder.defaultOptions, options);
@@ -60,7 +61,7 @@ define(function (require, exports, module) {
             if (type !== TYPE_NATIVE) {
 
                 var element = this.element;
-                var wrapper = $(Placeholder.template);
+                var wrapper = $(this.template);
 
                 element.replaceWith(wrapper);
                 wrapper.append(element);
@@ -132,18 +133,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Placeholder.defaultOptions = {
-        nativeFirst: false
+        nativeFirst: false,
+        template: '<div class="placeholder-wrapper">'
+                +    '<div></div>'
+                + '</div>'
     };
 
-    /**
-     * 使用模拟实现时的包装模版，这个一般不用改，除非有特殊需求
-     *
-     * @static
-     * @type {string}
-     */
-    Placeholder.template = '<div class="placeholder-wrapper">'
-                         +    '<div></div>'
-                         + '</div>';
     /**
      * 批量初始化
      *

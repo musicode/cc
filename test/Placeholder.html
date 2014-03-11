@@ -5,15 +5,11 @@
     <pre>
     {
         element: $('input'),        // 输入框元素，注意 placeholder 的属性为 data-placeholder
-        nativeFirst: false          // 可选，是否优先使用原生的 placeholder
+        nativeFirst: false,         // 可选，是否优先使用原生的 placeholder
                                     //     默认为 false ( 为统一浏览器体验考虑 )
+        template: ''                // 可选，包装输入框元素的模版，默认的应该够用了
+                                    //     如果需要修改，只需注意用来显示 placeholder 的元素为 div 即可
     }
-    </pre>
-
-    <h2>静态参数</h2>
-    <pre>
-    Placeholder.template 是包装输入框元素的模版，默认的应该够用了
-    如果需要修改，只需注意用来显示 placeholder 的元素为 div 即可
     </pre>
 
     <h2>使用方法</h2>
@@ -27,6 +23,7 @@
     // 批量初始化
     Placeholder.init();
     </pre>
+
 </div>
 
 <div id="module-demo">
@@ -37,11 +34,13 @@
 
     <style>
         .placeholder-wrapper {
-            display: inline-block;
             font-size: 13px;
             position: relative;
             line-height: 20px;
             vertical-align: top;
+            display: inline-block;
+            *display: inline;
+            *zoom: 1;
         }
         .placeholder-wrapper div {
             color: #BBB;
@@ -52,7 +51,8 @@
             left: 0;
             z-index: 1;
         }
-        .placeholder-wrapper input {
+        .placeholder-wrapper input,
+        .placeholder-wrapper textarea {
             border: 1px solid #CCC;
             padding: 6px 10px;
             margin: 0;

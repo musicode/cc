@@ -9,12 +9,14 @@
 
         // 下面的建议通过 Tooltip.defaultOptions 统一配置
 
-        tipAttr: 'data-tip',                                    // 可选，读取元素的哪个 attribute 获取提示内容
-                                                                //     默认为 'data-tip'
-        dirAttr: 'data-dir',                                    // 可选，读取元素的哪个 attribute 获取提示方位
-                                                                //     默认为 'data-dir'，元素不写会根据 Tooltip.dirPriority 自动计算最合适的方位
-        dirPrefix: 'tooltip-dir-',                              // 可选，提示方位的 class 前缀，便于设置箭头之类的样式
-                                                                //     默认为 'tooltip-dir-'
+        titleAttr: 'title',                                     // 可选，默认读取 title 属性
+
+        placement: 'bottom,auto',                               // 可选，提示方位的全局配置，可选值包括　'top' 'right' 'bottom' 'left' 'auto'
+                                                                //     默认为 'bottom,auto'
+                                                                // 　　可组合使用，如　'top,auto' 表示先尝试　top，不行就自动算出可以正常显示的方位
+        placementAttr: 'data-placement',                        // 可选，优先级比 placement 高，可覆盖它
+        placementPrefix: 'tooltip-placement-',                  // 可选，提示方位的 class 前缀，便于设置箭头之类的样式
+                                                                //     默认为 'tooltip-placement-'
 
         showBy: 'over',                                         // 可选，触发提示显示的方式，可选值包括 'over', 'click'
                                                                 //     默认为 'over'
@@ -26,19 +28,25 @@
         hideDelay: 200,                                         // 可选，当 hideBy 包含 'out' 时的隐藏延时
                                                                 //     默认为 200
 
-        offsetX: 5,                                             // 可选，横坐标偏移量，如果是 0，提示层会和元素贴在一起，较难看
+        gapX: 5,                                                // 可选，横向间距，如果是 0，提示层会和元素贴在一起，较难看
                                                                 //     默认为 5
-        offsetY: 5,                                             // 可选，纵坐标偏移量，如果是 0，提示层会和元素贴在一起，较难看
+        gapY: 5,                                                // 可选，纵向间距，如果是 0，提示层会和元素贴在一起，较难看
                                                                 //     默认为 5
+
+        offset: {                                               // 可选，按需设置四个方向的偏移量
+            left: {
+                x: 5,
+                y: 0
+            },
+            ...
+        },
 
 
         template: '',                                           // 可选，提示浮层模版
 
-        dirPriority: [ 'bc', 'br', 'bl', ... ],                 // 可选，自动计算提示方位时的尝试顺序
-
-        show: function (tipElement, triggerElement) {},         // 可选，显示提示的方式
+        show: function (tipElement) {},                         // 可选，显示提示的方式
                                                                 //     默认为 tipElement.show()
-        hide: function (tipElement, triggerElement) {},         // 可选，隐藏提示的方式
+        hide: function (tipElement) {},                         // 可选，隐藏提示的方式
                                                                 //     默认为 tipElement.hide()
         update: function (tipElement, triggerElement) {},       // 可选，更新提示的方式
                                                                 //     默认为 tipElement.html(triggerElement.attr(tipAttr))
@@ -53,7 +61,7 @@
 
 <div id="module-demo">
 
-    <i id="icon" data-tip="提示内容" data-dir="tl">?</i>
+    <i id="icon" title="提示内容">?</i>
 
     <style>
 
@@ -68,8 +76,8 @@
             text-align: center;
 
             position: absolute;
-            top: 30%;
-            left: 30%;
+            top: 40%;
+            left: 40%;
         }
 
         .tooltip {
@@ -78,6 +86,15 @@
             position: absolute;
             padding: 5px;
             box-shadow: 1px 1px 3px #EEE;
+        }
+        .tooltip > i {
+            border: 5px solid #DDD;
+            border-top-color: transparent;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            position: absolute;
+            top: -10px;
+            left: 10px;
         }
 
     </style>
@@ -90,26 +107,32 @@
 
         function (Tooltip) {
 
-            Tooltip.defaultOptions.template = '<div class="tooltip">'
-                                           +    '<i></i>'
-                                           +    '<div class="tooltip-content"></div>'
-                                           + '</div>';
+            var config = Tooltip.defaultOptions;
+            config.template = '<div class="tooltip">'
+                            +    '<i></i>'
+                            +    '<div class="tooltip-content"></div>'
+                            + '</div>';
 
-            Tooltip.defaultOptions.show = function (tipElement) {
-                tipElement.slideDown(200);
-            };
-            Tooltip.defaultOptions.hide = function (tipElement) {
-                tipElement.slideUp(200);
-            };
-            Tooltip.defaultOptions.update = function (tipElement, triggerElement) {
-                var content = triggerElement.attr(this.tipAttr);
-                tipElement.find('.tooltip-content').html(content);
+            config.hideDelay = 0;
+            config.gapX = config.gapY = 8;
+            config.offset.bottom = {
+                x: 17,
+                y: 0
             };
 
-            Tooltip.defaultOptions.onBeforeShow = function () {
+            config.show = function (tipElement) {
+                tipElement.fadeIn(200);
+            };
+            config.hide = function (tipElement) {
+                tipElement.fadeOut(100);
+            };
+            config.update = function (tipElement, triggerElement) {
+                tipElement.find('.tooltip-content').html(this.title);
+            };
+            config.onBeforeShow = function () {
                 console.log(this);
             };
-            Tooltip.defaultOptions.onAfterHide = function () {
+            config.onAfterHide = function () {
                 console.log(this);
             };
 

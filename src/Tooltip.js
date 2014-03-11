@@ -7,21 +7,35 @@ define(function (require, exports, module) {
     /**
      * 鼠标悬浮元素，弹出提示浮层
      *
-     * 浮层内容为该元素某个属性的值
-     * 浮层方位可设置，若未设置，则根据元素所在位置自动算出最适合浮层展现的方位
-     *
      * 鉴于需求较多，可通过 Tooltip.defaultOptions 进行配置
      *
-     * tipAttr: '浮层内容读取的属性，如 data-tip'
-     * dirAttr: '浮层方位读取的属性，如 data-dir'
+     * 默认读取元素的 title 属性进行展现，如有特殊需求，可通过 defaultOptions.titleAttr 配置
      *
-     * 方位属性值可选值如下：
-     * tl tc tr
-     * ml    mr
-     * bl bc br
+     * 提示出现的位置可通过 defaultOptions.placement 和 defaultOptions.placementAttr 统一配置
+     * 如个别元素需特殊处理，可为元素加上 defaultOptions.placementAttr 配置的属性改写全局配置
      *
-     * 偏移量已默认设置为 5px，保证提示浮层不会和触发元素贴在一起
-     * 如不满足需求，可设置 offsetX 和 offsetY
+     * 如果要实现小箭头效果，可参考如下配置:
+     *
+     * {
+     *    template: '<div class="tooltip"><i class="arrow"></i><div class="content"></div></div>',
+     *    placementPrefix: 'tooltip-placement-',
+     *    update: function (tipElement, triggerElement) {
+     *        tipElement.find('.content').html(triggerElement.attr('title'));
+     *    }
+     * }
+     *
+     * 如需要调整位置，比如不是上下左右，而是下方偏右，可参考如下配置：
+     *
+     * {
+     *     placement: 'bottom,auto',
+     *     offset: {
+     *         bottom: {
+     *             x: 20,   // 向右偏移 20px
+     *             y: 0
+     *         }
+     *     }
+     * }
+     *
      */
 
     'use strict';
@@ -34,7 +48,21 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 需要展现 tip 的元素
+     * @param {jQuery} options.element 需要工具提示的元素
+     * @param {string=} options.placement 提示元素出现的位置，可选值包括 left right top bottom auto，可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
+     * @param {string=} options.placementAttr 优先级比 placement 更高的位置配置
+     * @param {string=} options.placementPrefix 提示方位的 class 前缀，有助于实现小箭头之类的效果
+     * @param {string=} options.showBy 触发显示的方式，可选值包括 over click
+     * @param {string=} options.hideBy 触发隐藏的方式，可选值包括 out blur 可组合使用，如 out,blur
+     * @param {number=} options.showDelay 当 showBy 为 over 的显示延时
+     * @param {number=} options.hideDelay 当 hideBy 包含 out 的隐藏延时
+     * @param {number=} options.gapX 横向间距，如果为 0，提示会和元素贴在一起
+     * @param {number=} options.gapY 纵向间距，如果为 0，提示会和元素贴在一起
+     * @param {Object=} options.offset 设置四个方向的偏移量
+     * @param {string=} options.template 提示元素的模版，可配合使用 placementPrefix, update 实现特殊需求
+     * @param {function(jQuery)=} options.show 显示提示的方式，可扩展实现动画
+     * @param {function(jQuery)=} options.hide 显示提示的方式，可扩展实现动画
+     * @param {function(jQuery,jQuery)=} options.update 更新 tip 元素的内容
      * @param {Function=} options.onBeforeShow
      * @param {Function=} options.onAfterShow
      * @param {Function=} options.onBeforeHide
@@ -55,65 +83,81 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
+            var element = me.element;
+            var titleAttr = this.titleAttr;
+
+            this.title = element.attr(titleAttr);
+            this.placement = element.attr(this.placementAttr) || me.placement;
+
+            // 避免出现原生的提示
+            element.removeAttr(titleAttr);
 
             this.cache = {
                 popup: new Popup({
-                    trigger: this.element,
+
+                    trigger: element,
                     element: getTipElement(),
+
                     showBy: this.showBy,
                     hideBy: this.hideBy,
+
                     showDelay: this.showDelay,
                     hideDelay: this.hideDelay,
+
                     show: function () {
-                        me.show(getTipElement(), me.element);
+                        me.show(getTipElement());
                     },
                     hide: function () {
-                        me.hide(getTipElement(), me.element);
+                        me.hide(getTipElement());
                     },
+
                     onAfterShow: $.proxy(this.onAfterShow, this),
                     onBeforeHide: $.proxy(this.onBeforeHide, this),
                     onAfterHide: $.proxy(this.onAfterHide, this),
                     onBeforeShow: function () {
 
-                        var trigger = me.element;
                         var tipElement = getTipElement();
 
                         // 更新浮层内容
-                        me.update(tipElement, trigger);
+                        me.update(tipElement, element);
 
-                        // 确定浮层方位
-                        var dir = trigger.attr(me.dirAttr) || getTipDir(trigger);
+                        var options = {
+                            element: tipElement,
+                            attachment: element,
+                            offsetX: me.gapX,
+                            offsetY: me.gapY
+                        };
 
-                        if (dir && dirMap[dir]) {
+                        var actualPlacement = getTipPlacement(element, me.placement);
 
-                            var options = {
-                                element: tipElement,
-                                attachment: trigger,
-                                offsetX: me.offsetX,
-                                offsetY: me.offsetY
-                            };
+                        if (actualPlacement) {
 
-                            var item = dirMap[dir];
-                            if (typeof item.offset === 'function') {
-                                item.offset(options);
+                            var item = placementMap[actualPlacement];
+                            item.gap(options);
+
+                            var offset = me.offset && me.offset[actualPlacement];
+                            if (offset) {
+                                options.offsetX += offset.x;
+                                options.offsetY += offset.y;
                             }
-
-                            if (tipDirClass) {
-                                tipElement.removeClass(tipDirClass);
-                            }
-                            tipDirClass = me.dirPrefix + dir;
-                            tipElement.addClass(tipDirClass);
 
                             position[item.name](options);
 
-                            if (typeof me.onBeforeShow === 'function') {
-                                me.onBeforeShow();
+                            if (tipPlacementClass) {
+                                tipElement.removeClass(tipPlacementClass);
+                            }
+                            if (me.placementPrefix) {
+                                tipPlacementClass = me.placementPrefix + actualPlacement;
+                                tipElement.addClass(tipPlacementClass);
                             }
 
-                            return;
+                            if (typeof me.onBeforeShow === 'function') {
+                                return me.onBeforeShow();
+                            }
                         }
-
-                        return false;
+                        else {
+                            return false;
+                        }
                     }
                 })
             };
@@ -139,129 +183,45 @@ define(function (require, exports, module) {
      */
     Tooltip.defaultOptions = {
 
-        /**
-         * 读取元素的哪个 attribute 获取提示内容
-         *
-         * @type {string}
-         */
-        tipAttr: 'data-tip',
+        titleAttr: 'title',
 
-        /**
-         * 读取元素的哪个 attribute 获取提示方位
-         *
-         * @type {string}
-         */
-        dirAttr: 'data-dir',
+        placement: 'bottom,auto',
+        placementAttr: 'data-placement',
+        placementPrefix: 'tooltip-placement-',
 
-        /**
-         * 提示方位的 class 前缀
-         *
-         * @type {string}
-         */
-        dirPrefix: 'tooltip-dir-',
-
-        /**
-         * 触发显示的方式
-         *
-         * @type {string}
-         */
         showBy: 'over',
-
-        /**
-         * 触发隐藏的方式
-         *
-         * @type {string}
-         */
         hideBy: 'blur,out',
-
-        /**
-         * showBy 为 over 时的显示延时
-         *
-         * @type {number}
-         */
         showDelay: 200,
-
-        /**
-         * hideBy 包含 out 时的显示延时
-         *
-         * @type {number}
-         */
         hideDelay: 200,
 
-        /**
-         * 横坐标偏移量
-         *
-         * @type {number}
-         */
-        offsetX: 5,
+        gapX: 5,
+        gapY: 5,
+        offset: { },
 
-        /**
-         * 纵坐标偏移量
-         *
-         * @type {number}
-         */
-        offsetY: 5,
-
-        /**
-         * 提示元素的模版
-         *
-         * @type {string}
-         */
         template: '<div class="tooltip"></div>',
 
-        /**
-         * 自动计算方位时，按定义的优先级顺序进行尝试
-         *
-         * @type {Array.<string>}
-         */
-        dirPriority: [
-                        'bc', 'br', 'bl',
-                        'tc', 'tr', 'tl',
-                        'mr', 'ml'
-                      ],
-
-        /**
-         * 显示 tip
-         *
-         * @param {jQuery} tipElement 提示浮层元素
-         * @param {jQuery} trigger 触发元素
-         */
-        show: function (tipElement, triggerElement) {
+        show: function (tipElement) {
             tipElement.show();
         },
-
-        /**
-         * 显示 tip
-         *
-         * @param {jQuery} tipElement 提示浮层元素
-         * @param {jQuery} trigger 触发元素
-         */
-        hide: function (tipElement, triggerElement) {
+        hide: function (tipElement) {
             tipElement.hide();
         },
-
-        /**
-         * 更新 tip 元素的内容，与 template, dirPrefix 配合使用可实现小箭头
-         *
-         * @param {jQuery} tipElement 提示浮层元素
-         * @param {jQuery} trigger 触发元素
-         */
         update: function (tipElement, triggerElement) {
-            var tip = triggerElement.attr(this.tipAttr) || '';
+            var tip = triggerElement.attr(Tooltip.defaultOptions.titleAttr) || '';
             tipElement.html(tip);
         }
-
     };
 
     /**
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} element 需要提示浮层的元素，默认按 tipAttr 配置全局初始化
+     * @param {jQuery=} element 需要提示浮层的元素
      * @return {Array.<Tooltip>}
      */
     Tooltip.init = function (elements) {
-        elements = elements || $('[' + Tooltip.defaultOptions.tipAttr + ']');
+
+        elements = elements || $('[' + Tooltip.defaultOptions.titleAttr + ']');
 
         var result = [ ];
         elements.each(function () {
@@ -281,86 +241,54 @@ define(function (require, exports, module) {
      * @private
      * @type {Object}
      */
-    var dirMap = {
-        tl: {
-            name: 'topLeft',
-            check: function (options) {
-                return options.top > 0
-                    && options.left > 0;
-            },
-            offset: function (options) {
-                options.offsetX *= -1;
-                options.offsetY *= -1;
-            }
-        },
-        tc: {
+    var placementMap = {
+
+        top: {
             name: 'topCenter',
             check: function (options) {
                 return options.top > 0
                     && options.left > 0
                     && options.right > 0;
             },
-            offset: function (options) {
+            gap: function (options) {
                 options.offsetY *= -1;
+                options.offsetX = 0;
             }
         },
-        tr: {
-            name: 'topRight',
-            check: function (options) {
-                return options.top > 0
-                    && options.right > 0;
-            },
-            offset: function (options) {
-                options.offsetY *= -1;
-            }
-        },
-        ml: {
-            name: 'middleLeft',
-            check: function (options) {
-                return options.left > 0;
-            },
-            offset: function (options) {
-                options.offsetX *= -1;
-                options.offsetY = 0;
-            }
-        },
-        mr: {
-            name: 'middleRight',
-            check: function (options) {
-                return options.right > 0;
-            },
-            offset: function (options) {
-                options.offsetY = 0;
-            }
-        },
-        bl: {
-            name: 'bottomLeft',
-            check: function (options) {
-                return options.bottom > 0
-                    && options.left > 0;
-            },
-            offset: function (options) {
-                options.offsetX *= -1;
-            }
-        },
-        bc: {
+
+        bottom: {
             name: 'bottomCenter',
             check: function (options) {
                 return options.bottom > 0
                     && options.left > 0
                     && options.right > 0;
             },
-            offset: function (options) {
+            gap: function (options) {
                 options.offsetX = 0;
             }
         },
-        br: {
-            name: 'bottomRight',
+
+        left: {
+            name: 'middleLeft',
             check: function (options) {
-                return options.bottom > 0
-                    && options.right > 0;
+                return options.left > 0;
+            },
+            gap: function (options) {
+                options.offsetX *= -1;
+                options.offsetY = 0;
+            }
+        },
+
+        right: {
+            name: 'middleRight',
+            check: function (options) {
+                return options.right > 0;
+            },
+            gap: function (options) {
+                options.offsetY = 0;
             }
         }
+
     };
 
     /**
@@ -372,12 +300,12 @@ define(function (require, exports, module) {
     var tipElement;
 
     /**
-     * 当前 tip 的 dirClass
+     * 当前 tip 的 placementClass
      *
      * @private
      * @type {string}
      */
-    var tipDirClass;
+    var tipPlacementClass;
 
     /**
      * 获取页面容器元素
@@ -412,9 +340,15 @@ define(function (require, exports, module) {
      *
      * @private
      * @param {jQuery} trigger 触发 tip 的元素
+     * @param {string} placement 设置的方位优先级，以,分隔
      * @return {string}
      */
-    function getTipDir(trigger) {
+    function getTipPlacement(trigger, placement) {
+
+        var parts = placement.split(',');
+        if (parts.length === 1 && parts[0] !== 'auto') {
+            return parts[0];
+        }
 
         var pageElement = getPageElement();
 
@@ -428,21 +362,38 @@ define(function (require, exports, module) {
         var triggerPosition = trigger.offset();
 
         // 算出上下左右区域，放入 tip 后剩下的大小
-        var options = {
+        var rect = {
             top: triggerPosition.top - tipHeight,
             bottom: pageHeight - (triggerPosition.top + triggerHeight + tipHeight),
             left: triggerPosition.left - tipWidth,
             right: pageWidth - (triggerPosition.left + triggerWidth + tipWidth)
         };
 
+        // 标识是否尝试过
+        var testMap = {
+            bottom: 0,
+            top: 0,
+            right: 0,
+            left: 0
+        };
+
         var result;
 
         $.each(
-            Tooltip.defaultOptions.dirPriority,
-            function (index, dir) {
-                var item = dirMap[dir];
-                if (item && item.check(options)) {
-                    result = dir;
+            parts,
+            function (index, current) {
+                current = $.trim(current);
+                if (testPlacement(current, rect)) {
+                    result = current;
+                    return false;
+                }
+                else if (current === 'auto') {
+                    for (var key in testMap) {
+                        if (!testMap[key] && testPlacement(key, rect)) {
+                            result = key;
+                            break;
+                        }
+                    }
                     return false;
                 }
             }
@@ -451,6 +402,18 @@ define(function (require, exports, module) {
         return result;
     }
 
+    /**
+     * 与 getTipPlacement 配合使用，测试 placement 是否可以正常显示
+     *
+     * @private
+     * @param {string=} placement 方位值
+     * @param {Object} rect 矩形范围
+     * @return {boolean}
+     */
+    function testPlacement(placement, rect) {
+        var item = placementMap[placement];
+        return item && item.check(rect);
+    }
 
     return Tooltip;
 

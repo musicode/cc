@@ -7,7 +7,7 @@
     {
         element: $('div'),                       // 可选，监听滚动的元素
                                                  //     默认是 $(document)
-        onScroll: function (data) {}             // 可选，滚动触发
+        onScroll: function (data) {}             // 可选，滚动触发，返回 false 可阻止滚动
     }
     </pre>
 
@@ -34,7 +34,7 @@
 
             var wheelScroll = new WheelScroll({
                 onScroll: function (data) {
-                    console.log(data);
+                    console.log(data.delta);
                 }
             });
 

@@ -45,9 +45,13 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
-            this.movieName = createGuid();
-            if (typeof this.element === 'string') {
-                this.element = document.getElementById(this.element);
+
+            var instanceId = createGuid();
+            this.movieName = instanceId;
+
+            var element = this.element;
+            if (typeof element === 'string') {
+                element = document.getElementById(element);
             }
 
             var data = this.data || (this.data = { });
@@ -59,12 +63,11 @@ define(function (require, exports, module) {
                 }
             }
 
-            // 替换元素
-            var swf = createSWF(this.movieName, this.flashUrl, this.getFlashVars());
-            this.element.parentNode.replaceChild(swf, this.element);
+            var swf = Supload.createSWF(instanceId, this.flashUrl, this.getFlashVars());
+            element.parentNode.replaceChild(swf, element);
             this.element = swf;
 
-            Supload.instances[this.movieName] = this;
+            Supload.instances[instanceId] = this;
         },
 
         /**
@@ -142,6 +145,30 @@ define(function (require, exports, module) {
     Supload.projectName = 'Supload';
 
     /**
+     * 创建 swf 元素
+     *
+     * 如果在 IE67 下没法用，把 wmode 改成 opaque 即可
+     *
+     * 这个方法暴露给外部修改，实在不想折腾了。。。
+     *
+     * 比如无需兼容 IE67 用现有方法即可
+     *
+     * @param {string} id 实例 id
+     * @param {string} flashUrl swf 文件地址
+     * @param {string} flashVars 传给 flash 的变量
+     * @return {HTMLElement}
+     */
+    Supload.createSWF = function(id, flashUrl, flashVars) {
+
+        var html = '<embed class="' + Supload.projectName.toLowerCase() + '" src="' + flashUrl
+                 + '" wmode="transparent" allowscriptaccess="always" flashvars="' + flashVars + '" />';
+
+        var div = document.createElement('div');
+        div.innerHTML = html;
+        return div.firstChild;
+    };
+
+    /**
      * Supload 实例容器
      *
      * @type {Object}
@@ -216,30 +243,6 @@ define(function (require, exports, module) {
      */
     function createGuid() {
         return '_Supload_' + (guidIndex++);
-    }
-
-    /**
-     * 创建 swf 元素
-     *
-     * @private
-     * @param {string} id 元素 id，IE 必须要这个
-     * @param {string} flashUrl swf 文件地址
-     * @param {string} flashVars 传给 flash 的变量
-     * @return {HTMLElement}
-     */
-    function createSWF(id, flashUrl, flashVars) {
-
-        var html = '<object id="' + id + '" class="' + Supload.projectName
-                 +     '" data="' + flashUrl + '" type="application/x-shockwave-flash">'
-                 +     '<param name="wmode" value="transparent">'
-                 +     '<param name="allowscriptaccess" value="always">'
-                 +     '<param name="movie" value="' + flashUrl + '" />'
-                 +     '<param name="flashvars" value="' + flashVars + '"/>'
-                 + '</object>';
-
-        var div = document.createElement('div');
-        div.innerHTML = html;
-        return div.firstChild;
     }
 
     /**

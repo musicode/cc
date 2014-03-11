@@ -62,6 +62,7 @@
             width: 200px;
             height: 100px;
             opacity: 0;
+            filter: alpha(opacity=0);
         }
     </style>
 
@@ -89,7 +90,7 @@
                 return supportFileAPI() && supportAjaxUploadProgressEvents();
             }
 
-            var Uploader = supportAjaxUpload() ? AjaxUploader : FlashUploader;
+            var Uploader = FlashUploader;
 
             var uploader = new Uploader({
                 element: $('#file'),

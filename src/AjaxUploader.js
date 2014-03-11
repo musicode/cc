@@ -192,7 +192,7 @@ define(function (require, exports, module) {
      */
     AjaxUploader.defaultOptions = {
         multiple: false,
-        fileName: 'Filedata',
+        fileName: 'Filedata'
     };
 
     /**
