@@ -1,64 +1,62 @@
-<div id="module-note">
-    <h1>utf8 字符串操作</h1>
-    <h2>使用方法</h2>
-    <pre>
-    string.getLength('xxx');                          // 获取字符串长度，一个中文字符长度为 2
-    string.truncate('xxx', 3, '结束字符，默认是...'); // 截断字符串
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div id="result1"></div>
+    <div class="content-item active article" data-tab="intro">
+        utf8 字符串操作
+    </div>
 
-    <div id="result2"></div>
+    <div class="content-item" data-tab="demo">
 
-    <div id="result3"></div>
+        <label>js</label>
+        <textarea id="string-js">
+require(
 
-    <style>
+    [ 'killer/string' ],
 
-        #result1,
-        #result2 {
-            margin-bottom: 20px;
-        }
+    function (string) {
 
-    </style>
+        var html = [ ];
 
-    <script>
+        var str1 = '啊a1ba好厉AS害MA撒旦，。》【】';
+        html.push(
+              str1 + ' => 长度为：' + string.getLength(str1)
+        );
 
-    require(
+        var str2 = '，。.';
+        html.push(
+            str2 + ' => 长度为：' + string.getLength(str2)
+        );
 
-        [ 'killer/string' ],
+        var str3 = '这是一个截断测试，你发现了吗';
+        html.push(
+            str3 + ' => '+ string.truncate(str3, 5)
+        );
 
-        function (string) {
+        document.body.innerHTML = html.join('<br />');
+    }
+);
+        </textarea>
 
-            function setResult(element, str, result) {
-                element.html('"' + str + '" ===> ' + result);
-            }
+        <div class="action">
+            <button class="run-code fluid" data-js="#string-js">运行</button>
+        </div>
+    </div>
 
-            var str1 = '啊a1ba好厉AS害MA撒旦，。》【】';
-            setResult(
-                $('#result1'),
-                str1,
-                '长度为：' + string.getLength(str1)
-            );
-
-            var str2 = '，。.';
-            setResult(
-                $('#result2'),
-                str2,
-                '长度为：' + string.getLength(str2)
-            );
-
-            var str3 = '这是一个截断测试，你发现了吗';
-            setResult(
-                $('#result3'),
-                str3,
-                string.truncate(str3, 5)
-            );
-        }
-    );
-
-    </script>
-
+    <div class="content-item" data-tab="usage">
+        <textarea>
+string.getLength('xxx');                            // 获取字符串长度，一个中文字符长度为 2
+string.truncate('xxx', 3, '结束字符，默认是...');   // 截断字符串，一个中文字符长度为 2
+        </textarea>
+    </div>
 </div>

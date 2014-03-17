@@ -18,9 +18,6 @@ define(function (require, exports, module) {
      * 2. 为了保证浏览器之间有相同的体验，最好使用模拟实现
      * 3. 如果希望修改 placeholder 颜色，必须使用模拟实现
      *
-     *
-     * 元素 attribute 使用 'data-placeholder'，不要设置 placeholder 属性
-     *
      * 不支持批量初始化，如果非要一次初始化整个页面的输入框，可使用 Placeholder.init();
      *
      */
@@ -50,34 +47,45 @@ define(function (require, exports, module) {
          */
         init: function () {
 
-            // 确定运行时类型
-            var type = getRuntimeType(this.nativeFirst);
+            var element = this.element;
 
+            if (element.size() > 1) {
+                throw new Error('[Placeholder] options.element.size() should equals 1.');
+            }
+
+            // 确定运行时类型
+            var isNative = supportPlaceholder && this.nativeFirst;
+
+            // 把值取出来先，避免 attribute 设置为 'placeholder' 各种蛋疼...
+            var value = element.attr(this.attribute) || '';
+
+            // 统一放到 cache 里
             var cache = this.cache = {
-                type: type
+                value: value,
+                isNative: isNative
             };
 
             // 未使用原生特性
-            if (type !== TYPE_NATIVE) {
+            if (!isNative) {
 
                 var element = this.element;
-                var wrapper = $(this.template);
+                var wrapperElement = $(this.template);
 
-                element.replaceWith(wrapper);
-                wrapper.append(element);
+                element.replaceWith(wrapperElement);
+                wrapperElement.append(element);
 
-                var placeholderElement = wrapper.find('div');
-                placeholderElement.css(getStyle(element));
+                var placeholderElement = wrapperElement.find('div');
+                placeholderElement.css(getInputStyle(element));
 
                 element.on('focus', this, onRefresh);
                 element.on('blur', this, onRefresh);
-                wrapper.on('click', this, onFocus);
+                wrapperElement.on('click', this, onFocus);
 
-                cache.wrapperElement = wrapper;
+                cache.wrapperElement = wrapperElement;
                 cache.placeholderElement = placeholderElement;
             }
 
-            this.setPlaceholder(this.getPlaceholder());
+            this.setPlaceholder(value);
         },
 
         /**
@@ -86,7 +94,7 @@ define(function (require, exports, module) {
          * @return {string}
          */
         getPlaceholder: function () {
-            return this.element.data('placeholder') || '';
+            return this.cache.value;
         },
 
         /**
@@ -97,13 +105,21 @@ define(function (require, exports, module) {
         setPlaceholder: function (placeholder) {
             placeholder = placeholder || '';
 
-            var element = this.element;
-            element.data('placeholder', placeholder);
+            var cache = this.cache;
+            cache.value = placeholder;
 
-            if (this.cache.type === TYPE_NATIVE) {
-                element.prop('placeholder', placeholder);
+            var element = this.element;
+            var attribute = this.attribute;
+
+            if (cache.isNative) {
+                if (attribute !== 'placeholder') {
+                    element.attr('placeholder', placeholder);
+                }
             }
             else {
+                if (attribute === 'placeholder') {
+                    element.attr('placeholder', '');
+                }
                 apply(this);
             }
         },
@@ -114,7 +130,7 @@ define(function (require, exports, module) {
         dispose: function () {
             var cache = this.cache;
 
-            if (cache.type !== TYPE_NATIVE) {
+            if (!cache.isNative) {
                 var element = this.element;
                 element.off('focus', onRefresh);
                 element.off('blur', onRefresh);
@@ -134,6 +150,7 @@ define(function (require, exports, module) {
      */
     Placeholder.defaultOptions = {
         nativeFirst: false,
+        attribute: 'placeholder',
         template: '<div class="placeholder-wrapper">'
                 +    '<div></div>'
                 + '</div>'
@@ -143,11 +160,12 @@ define(function (require, exports, module) {
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} elements 可选，默认使用 $('[data-placeholder]')
+     * @param {jQuery=} elements
      * @return {Array.<Placeholder>}
      */
     Placeholder.init = function (elements) {
-        elements = elements || $('[data-placeholder]');
+
+        elements = elements || $('[' + Placeholder.defaultOptions.attribute + ']');
 
         var result = [ ];
 
@@ -163,30 +181,6 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 浏览器完全不支持 placeholder
-     *
-     * @private
-     * @type {number}
-     */
-    var TYPE_SIMULATE = 2;
-
-    /**
-     * 浏览器支持 placeholder，但是为了保证体验一致性，采用模拟实现
-     *
-     * @private
-     * @type {number}
-     */
-    var TYPE_SIMULATE_NATIVE = 1;
-
-    /**
-     * 浏览器支持 placeholder，且当前运行时采用的是原生实现
-     *
-     * @private
-     * @type {number}
-     */
-    var TYPE_NATIVE = 0;
-
-    /**
      * 特性检测浏览器是否支持 placeholder 特性
      *
      * @private
@@ -199,27 +193,13 @@ define(function (require, exports, module) {
     })();
 
     /**
-     * 获得当前运行时类型
-     *
-     * @private
-     * @param {boolean} nativeFirst 是否优先使用原生特性
-     * @return {number}
-     */
-    function getRuntimeType(nativeFirst) {
-        if (supportPlaceholder) {
-            return nativeFirst ? TYPE_NATIVE : TYPE_SIMULATE_NATIVE;
-        }
-        return TYPE_SIMULATE;
-    }
-
-    /**
      * 获得和输入框元素一样的盒模型样式
      *
      * @private
      * @param {jQuery} inputElement
      * @return {Object}
      */
-    function getStyle(inputElement) {
+    function getInputStyle(inputElement) {
         return {
             'border-top': inputElement.css('border-top-width') + ' solid transparent',
             'border-right': inputElement.css('border-right-width') + ' solid transparent',
@@ -267,7 +247,6 @@ define(function (require, exports, module) {
     function onRefresh(e) {
         apply(e.data);
     }
-
 
     /**
      * 使 placeholder 生效

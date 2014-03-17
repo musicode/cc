@@ -1,185 +1,131 @@
-<div id="module-note">
-    <h1>拖拽，常用于 Dialog、自定义滚动条、音乐播放器的音量条等</h1>
-
-    <h2>实例参数</h2>
-    <pre>
-    {
-        element: $('#dialog'),            // 需要拖拽的元素
-        container: $('#container'),       // 可选，用一个容器元素限制拖拽的范围
-                                          //     默认是 $(document.body)
-        handle: 'selector',               // 可选，允许拖拽的区域，值是 css 选择器
-                                          //     比如对话框的标题栏
-
-        cancel: 'selector',               // 可选，和 handle 相反的，不允许拖拽的区域，值是 css 选择器
-                                          //     比如整个元素都可拖拽，唯独某个区域不行
-
-        axis: '',                         // 可选，限制在某个方向上拖拽
-                                          //     可选值包括 x y
-
-        silence: false,                   // 可选，是否不需要触发位移
-                                          //     比如实现自定义滚动条，需要先处理外部逻辑再位移
-                                          //     如果 silence 为 false，就会位移两次，损失性能
-
-        onDragStart: function (point) {}, // 可选，参数是拖拽的开始位置
-        onDrag: function (point) {},      // 可选，参数是拖拽的当前位置
-        onDragEnd: function (point) {},   // 可选，参数是拖拽的结束位置
-    }
-    </pre>
-
-    <h2>使用方法</h2>
-    <pre>
-        var draggable = new Draggable(options);
-        draggable.dispose(); // 销毁对象
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div id="window1" class="window">
+    <div class="content-item active article" data-tab="intro">
+        拖拽，常用于 Dialog、自定义滚动条、音乐播放器的音量条等
+    </div>
 
-        <div id="window2" class="window">
-            <div class="window-header">此处可水平拖拽</div>
-            <div class="window-body">此处不可拖拽</div>
-        </div>
+    <div class="content-item" data-tab="demo">
 
-        <div id="window3" class="window">
-            <div class="window-header">此处不可拖拽</div>
-            <div class="window-body">此处可垂直拖拽</div>
+        <label>html</label>
+        <textarea id="draggable-html" data-mode="html">
+<div id="scrollbar">
+    <div id="scrollbar-track">
+        <i></i>
+    </div>
+</div>
+        </textarea>
+
+        <label>css</label>
+        <textarea id="draggable-css" data-tab="css">
+#scrollbar {
+    background-color: #FCFCFC;
+    border: 1px solid #DDD;
+    padding: 1px;
+    width: 200px;
+    height: 10px;
+    box-shadow: inset 0 0 1px #DFDFDF;
+    position: absolute;
+    left: 40%;
+    top: 48%;
+}
+#scrollbar-track {
+    height: 10px;
+    position: relative;
+}
+#scrollbar i {
+    background-color: #CCC;
+    width: 20px;
+    height: 10px;
+    position: absolute;
+}
+#scrollbar i {
+    cursor: move;
+}
+        </textarea>
+
+        <label>js</label>
+        <textarea id="draggable-js">
+require(
+
+    [ 'killer/Draggable' ],
+
+    function (Draggable) {
+
+        var scrollbar = new Draggable({
+            element: $('#scrollbar i'),
+            container: $('#scrollbar-track'),
+            axis: 'x',
+            onDragStart: function (point) {
+                console.log('drag start');
+            },
+            onDrag: function (point) {
+                console.log(point);
+            },
+            onDragEnd: function (point) {
+                console.log('drag end');
+            }
+        });
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#draggable-html"
+                    data-css="#draggable-css"
+                    data-js="#draggable-js">运行</button>
         </div>
 
     </div>
 
+    <div class="content-item" data-tab="config">
+        <textarea>
+// 构造函数的参数如下：
+{
+    element: $('#dialog'),            // 需要拖拽的元素
+    container: $(document.body),      // 可选，用一个容器元素限制拖拽的范围
+                                      //     默认是 $(document.body)
+    handle: 'selector',               // 可选，允许拖拽的区域，值是 css 选择器
+                                      //     比如对话框的标题栏
 
-    <div id="scrollbar">
-        <div id="scrollbar-track">
-            <i></i>
-        </div>
+    cancel: 'selector',               // 可选，和 handle 相反的，不允许拖拽的区域，值是 css 选择器
+                                      //     比如整个元素都可拖拽，唯独某个区域不行
+
+    axis: '',                         // 可选，限制在某个方向上拖拽
+                                      //     可选值包括 x, y
+
+    silence: false,                   // 可选，是否不执行位移
+                                      //     比如实现自定义滚动条，需要先处理外部逻辑再位移
+                                      //     如果 silence 为 false，就会位移两次，损失性能
+
+    onDragStart: function (point) {}, // 可选，参数是拖拽的开始位置
+    onDrag: function (point) {},      // 可选，参数是拖拽的当前位置
+    onDragEnd: function (point) {},   // 可选，参数是拖拽的结束位置
+}
+        </textarea>
     </div>
 
-    <style>
 
-        .window-header {
-            background-color: #EBD88C;
-            padding: 10px;
-        }
-        .window-body {
-            padding: 10px;
-        }
-
-        #window1 {
-            background-color: #48B0E0;
-            cursor: move;
-            width: 400px;
-            height: 300px;
-
-            z-index: 10;
-        }
-        #window2 {
-            background-color: #FFF;
-            width: 120px;
-            height: 100px;
-        }
-        #window3 {
-            background-color: #FFF;
-            width: 120px;
-            height: 100px;
-            position: absolute;
-            top: 150px;
-            left: 200px;
-        }
-
-        #scrollbar {
-            background-color: #FCFCFC;
-            border: 1px solid #DDD;
-            width: 200px;
-            height: 10px;
-            padding: 1px;
-            box-shadow: inset 0 0 1px #DFDFDF;
-            margin-left: 500px;
-        }
-        #scrollbar-track {
-            height: 10px;
-            position: relative;
-        }
-        #scrollbar i {
-            background-color: #CCC;
-            width: 20px;
-            height: 10px;
-            position: absolute;
-        }
-
-        #window2 .window-body,
-        #window3 .window-header {
-            cursor: text;
-        }
-        #scrollbar i {
-            cursor: move;
-        }
-
-    </style>
-
-    <script>
-
-    require(
-
-        [ 'killer/Draggable' ],
-
-        function (Draggable) {
-
-            var $window1 = $('#window1');
-            var $window2 = $('#window2');
-            var $window3 = $('#window3');
-
-            var draggable1 = new Draggable({
-                element: $window1,
-                container: $('#main'),
-                cancel: '.window',
-                onDragStart: function (point) {
-                    console.log('dragStart', point);
-                },
-                onDrag: function (point) {
-                    console.log('drag', point);
-                },
-                onDragEnd: function (point) {
-                    console.log('dragEnd', point);
-                }
-            });
-
-            var draggable2 = new Draggable({
-                element: $window2,
-                container: $window1,
-                handle: '.window-header',
-                axis: 'x'
-            });
-
-            var draggable3 = new Draggable({
-                element: $window3,
-                container: $window1,
-                cancel: '.window-header',
-                axis: 'y'
-            });
-
-            var scrollbar = new Draggable({
-                element: $('#scrollbar i'),
-                container: $('#scrollbar-track'),
-                axis: 'x',
-                onDrag: function (point) {
-                    console.log(point);
-                }
-            });
-
-            $(document).one('moduleChanged', function () {
-
-                draggable1.dispose();
-                draggable2.dispose();
-                draggable3.dispose();
-                scrollbar.dispose();
-
-                $window1 = $window2 = $window3 = null;
-            });
-        }
-    );
-
-    </script>
+    <div class="content-item" data-tab="usage">
+        <textarea>
+var draggable = new Draggable(options);
+draggable.dispose(); // 销毁对象
+        </textarea>
+    </div>
 
 </div>

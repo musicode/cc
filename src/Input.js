@@ -54,10 +54,10 @@ define(function (require, exports, module) {
      * @param {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
      *                                     因为长按产生的一般是无效输入
      *
-     * @param {Function=} options.onChange
-     * @param {Funciton=} options.onEnter
-     * @param {Function=} options.onLongPressStart
-     * @param {Function=} options.onLongPressEnd
+     * @param {Function=} options.onChange 内容变化触发
+     * @param {Funciton=} options.onEnter 按下回车触发
+     * @param {Function=} options.onLongPressStart 长按开始
+     * @param {Function=} options.onLongPressEnd 长按结束
      * @param {Object=} options.keyEvents 按下某键，发出某事件
      *                                    如 { '43': function () { // up } }
      */
@@ -78,7 +78,7 @@ define(function (require, exports, module) {
             var element = this.element;
 
             /**
-             * 用来存放一些逻辑变量
+             * 用来存放一些私有变量
              */
             var cache = this.cache = {
                 val: element.val
@@ -114,58 +114,6 @@ define(function (require, exports, module) {
             }
 
             cache.events = events;
-        },
-
-        /**
-         * 触发 change 事件
-         *
-         * @private
-         */
-        triggerChangeEvent: function () {
-
-            var cache = this.cache;
-            var keyDownCode = cache.keyDownCode;
-
-            if (typeof keyDownCode === 'number') {
-
-                var keyUpCode = cache.keyUpCode;
-
-                // 判断中文输入法是否正在输入中
-                if (isImsInput(keyDownCode, keyUpCode)) {
-
-                    // 以 chrome 举例
-                    // 触发中文输入法开启的 keyDownCode 是 229
-                    // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
-
-                    if (!isImsKey(keyUpCode)) { // 是否正在输入
-                        return;
-                    }
-                }
-                // 不是字符键肯定也不会触发
-                else if (!isCharKey(keyDownCode)) {
-                    return;
-                }
-
-                // 过滤长按
-                if (!this.longPress // 是否长按不需要触发 change 事件
-                    && cache.longPressCouter > 1 // 是否正在长按
-                ) {
-                    return;
-                }
-            }
-
-            // 过滤手动改值
-            if (cache.hasCallVal) {
-                cache.hasCallVal = null;
-                return;
-            }
-
-            cache.keyDownCode =
-            cache.keyUpCode = null;
-
-            if (typeof this.onChange === 'function') {
-                this.onChange();
-            }
         },
 
         /**
@@ -259,6 +207,65 @@ define(function (require, exports, module) {
                 || keyCode === 46;                     // delete 键
     }
 
+
+    /**
+     * 触发 change 事件
+     *
+     * @private
+     * @param {Input} input
+     * @param {number=} keyUpCode
+     */
+    function triggerChangeEvent(input, keyUpCode) {
+
+        var cache = input.cache;
+        var keyDownCode = cache.keyDownCode;
+
+        if (typeof keyDownCode === 'number') {
+
+            // 判断中文输入法是否正在输入中
+            if (isImsInput(keyDownCode, keyUpCode)) {
+
+                // 以 chrome 举例
+                // 触发中文输入法开启的 keyDownCode 是 229
+                // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
+
+                if (!isImsKey(keyUpCode)) { // 是否正在输入
+                    return;
+                }
+            }
+            // 不是字符键肯定也不会触发
+            else if (!isCharKey(keyDownCode)) {
+                return;
+            }
+
+            // 过滤长按
+            if (!input.longPress // 是否长按不需要触发 change 事件
+                && cache.longPressCouter > 1 // 是否正在长按
+            ) {
+                return;
+            }
+        }
+
+        // 过滤手动改值
+        if (cache.hasCallVal) {
+            cache.hasCallVal = null;
+            return;
+        }
+
+        var keyUpCodeType = typeof keyUpCode;
+
+        // 这两个类型表示触发了 keyup 事件
+        if (keyUpCodeType === 'undefined'
+            || keyUpCodeType === 'number'
+        ) {
+            cache.keyDownCode = null;
+        }
+
+        if (typeof input.onChange === 'function') {
+            input.onChange();
+        }
+    }
+
     /**
      * 处理标准浏览器 input 事件
      *
@@ -267,9 +274,10 @@ define(function (require, exports, module) {
      */
     function onInput(e) {
         var input = e.data;
-        // 通过粘贴等方法触发
+        // 过滤输入触发，这里只负责粘贴等方式触发
+        // 不然会触发两次 onChange
         if (input.cache.keyDownCode == null) {
-            input.triggerChangeEvent();
+            triggerChangeEvent(input);
         }
     }
 
@@ -314,7 +322,7 @@ define(function (require, exports, module) {
 
             cache.longPressCouter++;
 
-            input.triggerChangeEvent();
+            triggerChangeEvent(input, null);
         }
         else {
             cache.keyDownCode = keyCode;
@@ -335,7 +343,7 @@ define(function (require, exports, module) {
             if (isImsInput(keyCode)) {
                 cache.keyUpFaker = setTimeout(
                     function () {
-                        input.triggerChangeEvent();
+                        triggerChangeEvent(input);
                     },
                     500
                 );
@@ -355,8 +363,6 @@ define(function (require, exports, module) {
         var cache = input.cache;
         var keyCode = e.keyCode;
 
-        cache.keyUpCode = keyCode;
-
         if (cache.longPressCouter > 1) {
             if (typeof input.onLongPressEnd === 'function') {
                 input.onLongPressEnd();
@@ -370,7 +376,7 @@ define(function (require, exports, module) {
             cache.keyUpFaker = null;
         }
 
-        input.triggerChangeEvent();
+        triggerChangeEvent(input, keyCode);
 
         if (keyCode === 13
             && typeof input.onEnter === 'function'

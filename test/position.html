@@ -1,174 +1,185 @@
-<div id="module-note">
-    <h1>定位</h1>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
 
-    <h2>pin 参数</h2>
-    <pre>
-    {
-        element: $('xx'),        // 需要定位的元素
-        attachment: $('yy'),     // 可选，参照物元素
-                                 //     默认是 $(document.body)
+<div class="tab-content">
 
-        x: 10,                   // 定位元素的定位点横坐标
-                                 // 可选值包括 'left', 'center', 'right', 'xx%'(百分比), xx(数字)
-        y: 10,                   // 定位元素的定位点纵坐标
-                                 // 可选值包括 'top', 'middle', 'bottom', 'yy%'(百分比), yy(数字)
+    <div class="content-item active article" data-tab="intro">
+        <p>把一个元素定位到另一个元素的某个位置</p>
 
-        attachmentX: 10,         // 参照物元素的参照点横坐标，取值同 x
-        attachmentY: 10,         // 参照物元素的参照点纵坐标，取值同 y
+        <p>如居中定位就是把一个元素定位到页面（document.body）的正中心</p>
+    </div>
 
-        offsetX: 0,              // 可选，定位元素的横坐标偏移量
-        offsetY: 0               // 可选，定位元素的纵坐标偏移量
+    <div class="content-item" data-tab="demo">
+
+        <label>html</label>
+        <textarea id="position-html" data-mode="html">
+<div id="center" class="rect"></div>
+
+<div id="top-left" class="rect"></div>
+<div id="top-center" class="rect"></div>
+<div id="top-right" class="rect"></div>
+
+<div id="middle-left" class="rect"></div>
+<div id="middle-center" class="rect"></div>
+<div id="middle-right" class="rect"></div>
+
+<div id="bottom-left" class="rect"></div>
+<div id="bottom-center" class="rect"></div>
+<div id="bottom-right" class="rect"></div>
+        </textarea>
+
+        <label>css</label>
+        <textarea id="position-css" data-mode="css">
+html,
+body {
+    height: 100%;
+}
+.rect {
+    background-color: #2E8DE4;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+}
+#center {
+    background-color: #F3E1B1;
+    width: 150px;
+    height: 150px;
+}
+        </textarea>
+
+        <label>js</label>
+        <textarea id="position-js">
+require(
+
+    [ 'killer/position' ],
+
+    function (position) {
+
+        var $center = $('#center');
+        var $topLeft = $('#top-left')
+        var $topCenter = $('#top-center');
+        var $topRight = $('#top-right');
+        var $middleLeft = $('#middle-left');
+        var $middleCenter = $('#middle-center');
+        var $middleRight = $('#middle-right');
+        var $bottomLeft = $('#bottom-left');
+        var $bottomCenter = $('#bottom-center');
+        var $bottomRight = $('#bottom-right');
+
+        position.middleCenter({
+            element: $center
+        });
+
+        position.topLeft({
+            element: $topLeft,
+            attachment: $center
+        });
+
+        position.topCenter({
+            element: $topCenter,
+            attachment: $center
+        });
+
+        position.topRight({
+            element: $topRight,
+            attachment: $center
+        });
+
+        position.middleLeft({
+            element: $middleLeft,
+            attachment: $center
+        });
+
+        position.middleCenter({
+            element: $middleCenter,
+            attachment: $center
+        });
+
+        position.middleRight({
+            element: $middleRight,
+            attachment: $center
+        });
+
+        position.bottomLeft({
+            element: $bottomLeft,
+            attachment: $center
+        });
+
+        position.bottomCenter({
+            element: $bottomCenter,
+            attachment: $center
+        });
+
+        position.bottomRight({
+            element: $bottomRight,
+            attachment: $center
+        });
     }
-    </pre>
+);
+        </textarea>
 
-    <h2>使用方法</h2>
-    <pre>
-    // 真正的定位函数，可使用上面所有配置
-    position.pin(options);
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#position-html"
+                    data-css="#position-css"
+                    data-js="#position-js">运行</button>
+        </div>
+    </div>
 
-    // 下面是一些快捷方法
-    // 只需要设置 element 和 attachment 即可 ( 或配合 offsetX/offsetY 使用 )
-    position.topLeft(options);
-    position.topCenter(options);
-    position.topRight(options);
+    <div class="content-item" data-tab="config">
+        <textarea>
+{
+    element: $('xx'),                 // 需要定位的元素
+    attachment: $(document.body),     // 可选，参照物元素
+                                      //     默认是 $(document.body)
 
-    position.middleLeft(options);
-    position.middleCenter(options);
-    position.middleRight(options);
+    x: 10,                            // 定位元素的定位点横坐标
+                                      // 可选值包括 left, center, right, xx%(百分比), xx(数字)
+    y: 10,                            // 定位元素的定位点纵坐标
+                                      // 可选值包括 top, middle, bottom, yy%(百分比), yy(数字)
 
-    position.bottomLeft(options);
-    position.bottomCenter(options);
-    position.bottomRight(options);
-    </pre>
-</div>
+    attachmentX: 10,                  // 参照物元素的参照点横坐标，可选值同 x
+    attachmentY: 10,                  // 参照物元素的参照点纵坐标，可选值同 y
 
-<div id="module-demo">
+    offsetX: 0,                       // 可选，定位元素的横坐标偏移量
+    offsetY: 0                        // 可选，定位元素的纵坐标偏移量
+}
+        </textarea>
+    </div>
 
-    <div id="center" class="rect"></div>
+    <div class="content-item" data-tab="usage">
+        <textarea>
+// 真正的定位函数
+position.pin(options);
 
-    <div id="top-left" class="rect"></div>
-    <div id="top-center" class="rect"></div>
-    <div id="top-right" class="rect"></div>
+// 下面是一些快捷方法
+// 只需要设置 element/attachment 即可
+// 如果有偏移需求，可再设置 offsetX/offsetY
+position.topLeft(options);
+position.topCenter(options);
+position.topRight(options);
 
-    <div id="middle-left" class="rect"></div>
-    <div id="middle-center" class="rect"></div>
-    <div id="middle-right" class="rect"></div>
+position.middleLeft(options);
+position.middleCenter(options);
+position.middleRight(options);
 
-    <div id="bottom-left" class="rect"></div>
-    <div id="bottom-center" class="rect"></div>
-    <div id="bottom-right" class="rect"></div>
-
-    <style>
-
-        .rect {
-            background-color: #2E8DE4;
-            width: 50px;
-            height: 50px;
-            position: absolute;
-        }
-        #center {
-            background-color: #F3E1B1;
-            width: 150px;
-            height: 150px;
-        }
-
-    </style>
-
-    <script>
-
-    require(
-
-        [ 'killer/position' ],
-
-        function (position) {
-
-            var $center = $('#center');
-            var $topLeft = $('#top-left')
-            var $topCenter = $('#top-center');
-            var $topRight = $('#top-right');
-            var $middleLeft = $('#middle-left');
-            var $middleCenter = $('#middle-center');
-            var $middleRight = $('#middle-right');
-            var $bottomLeft = $('#bottom-left');
-            var $bottomCenter = $('#bottom-center');
-            var $bottomRight = $('#bottom-right');
-
-            position.middleCenter({
-                element: $center,
-                attachment: $('#main')
-            });
-
-            position.topLeft({
-                element: $topLeft,
-                attachment: $center
-            });
-
-            position.topCenter({
-                element: $topCenter,
-                attachment: $center
-            });
-
-            position.topRight({
-                element: $topRight,
-                attachment: $center
-            });
-
-            position.middleLeft({
-                element: $middleLeft,
-                attachment: $center
-            });
-
-            position.middleCenter({
-                element: $middleCenter,
-                attachment: $center
-            });
-
-            position.middleRight({
-                element: $middleRight,
-                attachment: $center
-            });
-
-            position.bottomLeft({
-                element: $bottomLeft,
-                attachment: $center
-            });
-
-            position.bottomCenter({
-                element: $bottomCenter,
-                attachment: $center
-            });
-
-            position.bottomRight({
-                element: $bottomRight,
-                attachment: $center
-            });
-
-            $(document).one('moduleChanged', function () {
-                $center.remove();
-                $topLeft.remove();
-                $topCenter.remove();
-                $topRight.remove();
-                $middleLeft.remove();
-                $middleCenter.remove();
-                $middleRight.remove();
-                $bottomLeft.remove();
-                $bottomCenter.remove();
-                $bottomRight.remove();
-
-                $center =
-                $topLeft =
-                $topCenter =
-                $topRight =
-                $middleLeft =
-                $middleCenter =
-                $middleRight =
-                $bottomLeft =
-                $bottomCenter =
-                $bottomRight = null;
-            });
-        }
-    );
-
-    </script>
+position.bottomLeft(options);
+position.bottomCenter(options);
+position.bottomRight(options);
+        </textarea>
+    </div>
 
 </div>
+

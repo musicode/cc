@@ -1,160 +1,197 @@
-<div id="module-note">
-
-    <h1>Popup</h1>
-
-    <h2>实例参数</h2>
-    <pre>
-    {
-        element: $('xx'),               // 弹出显示的元素
-        trigger: $('yy'),               // 可选，触发显示的元素
-                                        //     如果不需要交互触发，如 popup.show() 出来，可无视
-        showBy: 'click',                // 可选，触发显示的方式，注意 trigger 必须有值
-                                        //     可选值包括 'click', 'over'
-        hideBy: 'blur',                 // 可选，触发隐藏的方式
-                                        //     可选值包括 'blur', 'out', 'blur,out'
-        showDelay: 100,                 // 可选，showBy 为 over 时的延时显示时间
-        hideDelay: 200,                 // 可选，hideBy 包括 out 时的延时隐藏时间
-        show: function () {},           // 可选，显示函数
-                                        //     默认是 element.show()，如果有特效需求，自行实现
-        hide: function () {},           // 可选，隐藏函数
-                                        //     默认是 element.hide()，如果有特效需求，自行实现
-        onBeforeShow: function () {},   // 可选，返回 false 可阻止显示
-        onAfterShow: function () {},    // 可选
-        onBeforeHide: function () {},   // 可选，返回 false 可阻止隐藏
-        onAfterHide: function () {}     // 可选
-    }
-    </pre>
-
-    <h2>使用方法</h2>
-    <pre>
-    var popup = new Popup(options);
-    popup.dispose();
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div id="ui-select">
-        <span id="select-trigger">
-            <b>请选择</b>
-            <i class="icon-arrow-down"></i>
-        </span>
-        <ul id="select-layer">
-            <li>11111111111</li>
-            <li>22222222222</li>
-            <li>33333333333</li>
-            <li>44444444444</li>
-        </ul>
+    <div class="content-item active article" data-tab="intro">
+        弹出式交互
     </div>
 
-    <style>
+    <div class="content-item" data-tab="demo">
 
-        #ui-select {
-            display: inline-block;
-            *display: inline;
-            *zoom: 1;
-        }
-        #select-trigger {
-            border: 1px solid #DDD;
-            background-color: #F3F3F3;
-            cursor: pointer;
-            display: inline-block;
-            padding: 5px 10px;
-            width: 100px;
-            border-radius: 2px;
-            position: relative;
-        }
-        #select-trigger i {
-            display: inline-block;
+        <label>html</label>
+        <textarea id="popup-html" data-mode="html">
+<div id="ui-select">
+    <span id="select-trigger">
+        <b>请选择</b>
+        <i class="icon-arrow-down"></i>
+    </span>
+    <ul id="select-layer">
+        <li>11111111111</li>
+        <li>22222222222</li>
+        <li>33333333333</li>
+        <li>44444444444</li>
+    </ul>
+</div>
+        </textarea>
 
-            position: absolute;
-            right: 10px;
-        }
-        .icon-arrow-down {
-            border: 5px solid #666;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-bottom-color: transparent;
-            top: 10px;
-        }
-        .icon-arrow-up {
-            border: 5px solid #666;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-top-color: transparent;
-            top: 5px;
-        }
-        #select-layer {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: none;
+        <label>css</label>
+        <textarea id="popup-css" data-mode="css">
+#ui-select {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+#select-trigger {
+    border: 1px solid #DDD;
+    background-color: #F3F3F3;
+    cursor: pointer;
+    display: inline-block;
+    padding: 5px 10px;
+    width: 100px;
+    border-radius: 2px;
+    position: relative;
+}
+#select-trigger i {
+    display: inline-block;
 
-            border: 1px solid #DDD;
-            background-color: #FFF;
-        }
-        #select-layer li {
-            cursor: pointer;
-            padding: 5px 10px;
-            border-top: 1px solid #EEE;
-        }
-        #select-layer li:first-child {
-            border-top: none;
-        }
-    </style>
+    position: absolute;
+    right: 10px;
+}
+.icon-arrow-down {
+    border: 5px solid #666;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-bottom-color: transparent;
+    top: 10px;
+}
+.icon-arrow-up {
+    border: 5px solid #666;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    top: 5px;
+}
+#select-layer {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
 
-    <script>
+    border: 1px solid #DDD;
+    background-color: #FFF;
+}
+#select-layer li {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-top: 1px solid #EEE;
+}
+#select-layer li:first-child {
+    border-top: none;
+}
+        </textarea>
 
-    require(
+        <label>js</label>
+        <textarea id="popup-js">
+require(
 
-        [ 'killer/Popup' ],
+    [ 'killer/Popup' ],
 
-        function (Popup) {
+    function (Popup) {
 
-            var $layer = $('#select-layer');
+        var $layer = $('#select-layer');
 
-            var popup = new Popup({
-                trigger: $('#select-trigger'),
-                element: $layer,
-                showBy: 'click',
-                hideBy: 'blur',
-                show: function () {
-                    this.element.slideDown(100);
-                },
-                hide: function () {
-                    this.element.slideUp(10);
-                },
-                onBeforeShow: function () {
-                    console.log('beforeShow');
-                },
-                onAfterShow: function () {
-                    $('#select-trigger i').removeClass('icon-arrow-down')
-                                          .addClass('icon-arrow-up');
-                    console.log('afterShow');
-                },
-                onBeforeHide:function () {
-                    console.log('beforeHide');
-                },
-                onAfterHide: function () {
-                    $('#select-trigger i').removeClass('icon-arrow-up')
-                                          .addClass('icon-arrow-down');
-                    console.log('afterHide');
-                }
-            });
+        var popup = new Popup({
+            trigger: $('#select-trigger'),
+            element: $layer,
+            showBy: 'click',
+            hideBy: 'blur',
+            show: function () {
+                this.element.slideDown(100);
+            },
+            hide: function () {
+                this.element.slideUp(10);
+            },
+            onBeforeShow: function () {
+                console.log('beforeShow');
+            },
+            onAfterShow: function () {
+                $('#select-trigger i').removeClass('icon-arrow-down')
+                                      .addClass('icon-arrow-up');
+                console.log('afterShow');
+            },
+            onBeforeHide:function () {
+                console.log('beforeHide');
+            },
+            onAfterHide: function () {
+                $('#select-trigger i').removeClass('icon-arrow-up')
+                                      .addClass('icon-arrow-down');
+                console.log('afterHide');
+            }
+        });
 
-            $layer.on('click', 'li', function (e) {
-                popup.hide();
-                $('#select-trigger b').html(e.target.innerHTML);
-            });
+        $layer.on('click', 'li', function (e) {
+            popup.hide();
+            $('#select-trigger b').html(e.target.innerHTML);
+        });
+    }
+);
+        </textarea>
 
-            $(document).one('moduleChanged', function () {
-                $layer.off();
-                $layer = null;
-                popup.dispose();
-            });
-        }
-    );
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#popup-html"
+                    data-css="#popup-css"
+                    data-js="#popup-js">运行</button>
+        </div>
+    </div>
 
-    </script>
+    <div class="content-item" data-tab="config">
+        <textarea>
+// 构造函数参数如下：
+{
+    element: $('xx'),               // 弹出显示的元素
+    trigger: $('yy'),               // 可选，触发显示的元素
+                                    //     如果不需要交互触发，如调用 popup.show() ，可无视
 
+    showBy: 'click',                // 可选，触发显示的方式，如果传入此参数，也必须传入 trigger
+                                    //     可选值包括 click, over
+
+    hideBy: 'blur',                 // 可选，触发隐藏的方式
+                                    //     可选值包括 blur, out
+                                    //     可组合使用，如 'blur,out'，表示每种方式都会触发隐藏，谁先谁赢
+
+    showDelay: 100,                 // 可选，给 showBy 设置显示延时，避免触发太灵敏
+    hideDelay: 200,                 // 可选，为 hideBy 设置隐藏延时，避免触发太灵敏
+                                    //     如果 hideBy 为组合形式，只给最先触发的方式设置延时
+                                    //     如 'blur,out' 中 out 比 blur 先触发，所以延时会加在 out 上
+
+    onBeforeShow: function () { },  // 可选，this 指向当前 Popup 实例
+                                    //     返回 false 可阻止显示
+    onAfterShow: function () { },   // 可选，this 指向当前 Popup 实例
+    onBeforeHide: function () { },  // 可选，this 指向当前 Popup 实例
+                                    //     返回 false 可阻止隐藏
+    onAfterHide: function () { },   // 可选，this 指向当前 Popup 实例
+
+
+    // 下面的参数建议通过 Popup.defaultOptions 统一配置
+
+    show: function () { },          // 可选，显示函数，this 指向当前 Popup 实例
+                                    //     默认是 element.show()，如果有特效需求，自行实现
+    hide: function () { },          // 可选，隐藏函数，this 指向当前 Popup 实例
+                                    //     默认是 element.hide()，如果有特效需求，自行实现
+}
+        </textarea>
+    </div>
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+var popup = new Popup(options);
+popup.show();        // 显示需要弹出的元素
+popup.hide();        // 隐藏需要弹出的元素
+popup.dispose();     // 销毁对象
+        </textarea>
+    </div>
 </div>

@@ -1,178 +1,179 @@
-<div id="module-note">
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
 
-    <h1>鼠标右键菜单</h1>
 
-    <h2>实例参数</h2>
+<div class="tab-content">
 
-    <pre>
-    {
-        element: $('#context-menu'),     // 自定义菜单元素，也可以是一段 HTML 字符串
-        container: $('#container'),      // 可选，需要弹出自定义菜单的容器，如下面的歌曲列表
-                                         //     默认是 $(document.body)
+    <div class="content-item active article" data-tab="intro">
 
-        events: {                        // 配置菜单点击事件，key 是 css 选择器
-            'selector': function (e) {   //     事件对象来自右键点击
-                // ......                //     通过 e 可知菜单命令作用的对象
-                this.hide();
+        自定义鼠标右键菜单
+
+    </div>
+
+
+    <div class="content-item" data-tab="demo">
+
+        <label>html</label>
+        <textarea id="context-menu-html" data-mode="html">
+<!-- 歌曲列表 -->
+<div id="song-list">
+    <a data-url="http://music.baidu.com/1.mp3">adele - rolling in the deep</a>
+    <a data-url="http://music.baidu.com/2.mp3">blue - one love</a>
+    <a data-url="http://music.baidu.com/3.mp3">celion dion - a new day has come</a>
+    <a data-url="http://music.baidu.com/4.mp3">adam lambert - whataya want from me</a>
+    <a data-url="http://music.baidu.com/5.mp3">alicia keys - if i aint got you</a>
+    <a data-url="http://music.baidu.com/6.mp3">amy diamond - heartbeats</a>
+    <a data-url="http://music.baidu.com/7.mp3">angela ammons - always getting over you</a>
+    <a data-url="http://music.baidu.com/8.mp3">avril lavigne - losing grip</a>
+</div>
+
+<!-- 右键点击歌曲列表后出现的菜单 -->
+<div id="song-list-menu">
+    <a data-action="play">播放</a>
+    <a data-action="like">收藏</a>
+    <a data-action="download">下载</a>
+    <a data-action="remove">删除</a>
+</div>
+        </textarea>
+
+        <label>css</label>
+        <textarea id="context-menu-css" data-mode="css">
+#song-list {
+    border: 1px solid #DDD;
+    width: 300px;
+}
+#song-list a {
+    color: #777;
+    display: block;
+    padding: 10px;
+    border-top: 1px solid #EEE;
+}
+#song-list a:first-child {
+    border-top: none;
+}
+#song-list a:nth-of-type(even) {
+    background-color: #EAF7FD;
+}
+
+#song-list-menu {
+    display: none;
+}
+.context-menu {
+    border: 1px solid #DDD;
+    background-color: #FFF;
+    padding: 1px;
+    width: 70px;
+    box-shadow: 1px 1px 2px #F0F0F0;
+    position: absolute;
+}
+.context-menu a {
+    border-top: 1px solid #EEE;
+    cursor: pointer;
+    display: block;
+    padding: 6px 10px;
+}
+.context-menu a:first-child {
+    border-top: none;
+}
+.context-menu a:hover {
+    background-color: #61A1E6;
+    color: #FFF;
+}
+        </textarea>
+
+
+        <label>js</label>
+        <textarea id="context-menu-js">
+require(
+
+    [ 'killer/ContextMenu' ],
+
+    function (ContextMenu) {
+
+        var songListMenu = new ContextMenu({
+            element: $('#song-list-menu'),
+            container: $('#song-list'),
+            clickEvents: {
+                '[data-action="play"]': function (e) {
+                    var $target = $(e.target);
+                    console.log('播放: ' + $target.data('url'));
+                    this.hide();
+                },
+                '[data-action="like"]': function (e) {
+                    var $target = $(e.target);
+                    console.log('收藏: ' + $target.data('url'));
+                    this.hide();
+                },
+                '[data-action="download"]': function (e) {
+                    var $target = $(e.target);
+                    console.log('下载: ' + $target.data('url'));
+                    this.hide();
+                },
+                '[data-action="remove"]': function (e) {
+                    var $target = $(e.target);
+                    console.log('删除: ' + $target.data('url'));
+                    this.hide();
+                }
             }
-        },
-        className: 'context-menu'        // 可选，自定义菜单元素的 className，便于统一设置样式
-                                         //     默认是 'context-menu'
+        });
+
     }
-    </pre>
+);
+        </textarea>
 
-    <h2>使用方法</h2>
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#context-menu-html"
+                    data-css="#context-menu-css"
+                    data-js="#context-menu-js">运行</button>
+        </div>
+    </div>
 
-    <pre>
-    var contextMenu = new ContextMenu(options);
-    contextMenu.hide();    // 弹出菜单后可通过 hide() 隐藏菜单
-    contextMenu.dispose(); // 销毁对象
-    </pre>
+
+    <div class="content-item" data-tab="config">
+
+        <textarea>
+// 构造函数参数如下：
+{
+    element: $('#context-menu'),     // 自定义菜单元素，也可以是一段 HTML 字符串
+    container: $('#container'),      // 可选，需要弹出自定义菜单的容器，如下面的歌曲列表
+                                     //     默认是 $(document.body)
+
+    clickEvents: {                   // 配置菜单点击事件，key 是 css 选择器，handler 的 this 指向当前 ContextMenu 实例
+        'selector': function (e) {   //     事件对象来自右键点击
+            // ......                //     通过 e 可知菜单命令作用的对象
+            this.hide();
+        }
+    },
+
+    // 下面的参数建议通过 ContextMenu.defaultOptions 统一配置
+
+    className: 'context-menu'        // 可选，自定义菜单元素的 className，便于统一设置样式
+                                     //     默认是 'context-menu'
+}
+        </textarea>
+
+    </div>
+
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+var contextMenu = new ContextMenu(options);
+contextMenu.hide();    // 弹出菜单后可通过 hide() 隐藏菜单
+contextMenu.dispose(); // 销毁对象
+        </textarea>
+    </div>
 
 </div>
-
-<div id="module-demo">
-
-    <div id="global-menu" class="context-menu">
-        <ul>
-            <li data-action="copy">拷贝</li>
-            <li data-action="paste">粘贴</li>
-            <li data-action="refresh">刷新</li>
-        </ul>
-    </div>
-
-
-    <div id="song-list">
-        <ul>
-            <li data-url="http://music.baidu.com/1.mp3">adele - rolling in the deep</li>
-            <li data-url="http://music.baidu.com/2.mp3">blue - one love</li>
-            <li data-url="http://music.baidu.com/3.mp3">celion dion - a new day has come</li>
-            <li data-url="http://music.baidu.com/4.mp3">adam lambert - whataya want from me</li>
-            <li data-url="http://music.baidu.com/5.mp3">alicia keys - if i aint got you</li>
-            <li data-url="http://music.baidu.com/6.mp3">amy diamond - heartbeats</li>
-            <li data-url="http://music.baidu.com/7.mp3">angela ammons - always getting over you</li>
-            <li data-url="http://music.baidu.com/8.mp3">avril lavigne - losing grip</li>
-        </ul>
-    </div>
-
-    <div id="local-menu" class="context-menu">
-        <ul>
-            <li data-action="play">播放</li>
-            <li data-action="like">收藏</li>
-            <li data-action="download">下载</li>
-            <li data-action="remove">删除</li>
-        </ul>
-    </div>
-
-
-    <style>
-
-        #song-list {
-            border: 1px solid #DDD;
-            width: 300px;
-        }
-
-        #song-list li {
-            color: #777;
-            padding: 10px;
-            border-top: 1px solid #EEE;
-        }
-        #song-list li:first-child {
-            border-top: none;
-        }
-
-        #song-list li:nth-of-type(even) {
-            background-color: #EAF7FD;
-        }
-
-        .context-menu {
-            border: 1px solid #DDD;
-            background-color: #FFF;
-            display: none;
-            padding: 1px;
-            width: 70px;
-            box-shadow: 1px 1px 2px #F0F0F0;
-            position: absolute;
-        }
-
-        .context-menu li {
-            border-top: 1px solid #EEE;
-            cursor: pointer;
-            padding: 6px 10px;
-        }
-        .context-menu li:first-child {
-            border-top: none;
-        }
-        .context-menu li:hover {
-            background-color: #61A1E6;
-            color: #FFF;
-        }
-
-    </style>
-
-    <script>
-
-    require(
-
-        [ 'killer/ContextMenu' ],
-
-        function (ContextMenu) {
-
-            var globalMenu = new ContextMenu({
-                element: $('#global-menu'),
-                container: $('#main'),
-                events: {
-                    '[data-action="copy"]': function () {
-                        console.log('拷贝');
-                        this.hide();
-                    },
-                    '[data-action="paste"]': function () {
-                        console.log('粘贴');
-                        this.hide();
-                    },
-                    '[data-action="refresh"]': function () {
-                        window.location.reload();
-                        this.hide();
-                    }
-                }
-            });
-
-            var localMenu = new ContextMenu({
-                element: $('#local-menu'),
-                container: $('#song-list'),
-                events: {
-                    '[data-action="play"]': function (e) {
-                        var $target = $(e.target);
-                        console.log('播放: ' + $target.data('url'));
-                        this.hide();
-                    },
-                    '[data-action="like"]': function (e) {
-                        var $target = $(e.target);
-                        console.log('收藏: ' + $target.data('url'));
-                        this.hide();
-                    },
-                    '[data-action="download"]': function (e) {
-                        var $target = $(e.target);
-                        console.log('下载: ' + $target.data('url'));
-                        this.hide();
-                    },
-                    '[data-action="remove"]': function (e) {
-                        var $target = $(e.target);
-                        console.log('删除: ' + $target.data('url'));
-                        this.hide();
-                    }
-                }
-            });
-
-            $(document).one('moduleChanged', function () {
-                globalMenu.dispose();
-                localMenu.dispose();
-            });
-
-        }
-    );
-
-    </script>
-</div>
-
-

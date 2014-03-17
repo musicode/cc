@@ -1,132 +1,183 @@
-<div id="module-note">
-    <h1>上传</h1>
-
-    <h2>实例参数</h2>
-    <pre>
-    {
-        element: $('#file'),                   // 上传按钮元素
-        action: '',                            // 上传地址
-        multiple: false,                       // 可选，是否支持多文件上传
-                                               //     默认为 false
-        accept: [ 'jpg', 'png' ],              // 可选，允许上传的文件格式 ( 扩展名 )
-        data: { },                             // 可选，上传附带的数据
-        fileName: 'Filedata',                  // 可选，上传文件的字段名
-                                               //     默认为 Filedata
-
-        onFileChange: function () {},          // 可选，选择的文件发生变化时触发
-        onUploadStart: function (data) {},     // 可选，上传开始触发
-        onUploadProgress: function (data) {},  // 可选，上传过程触发 ( 可实现进度条 )
-        onUploadSuccess: function (data) {},   // 可选，上传成功触发
-        onUploadError: function (data) {},     // 可选，上传失败触发
-        onUploadComplete: function (data) {}   // 可选，上传结束触发
-    }
-    </pre>
-
-    <h2>使用方法</h2>
-    <pre>
-    // 具体看例子的源码
-    var uploader = new Uploader(options);
-    uploader.getFiles(); // 获得当前选中的文件
-    uploader.upload();   // 开始上传
-    uploader.stop();     // 停止上传
-    uploader.enable();   // 启用
-    uploader.disable();  // 禁用 ( 禁止鼠标点击打开文件选择窗口 )
-    uploader.dispose();  // 销毁对象
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div id="uploader">
-        <span id="file"></span>
+    <div class="content-item active article" data-tab="intro">
+        提供了两套接口完全一致的上传实现：AjaxUploader 和 FlashUploader
     </div>
 
-    <style>
-        #uploader {
-            background-color: #FCE9D5;
-            display: inline-block;
-            position: relative;
-            *display: inline;
-            *zoom: 1;
-        }
+    <div class="content-item" data-tab="demo">
 
-        #uploader:after {
-            content: 'click me';
-            position: absolute;
-            left: 35%;
-            top: 40%;
-        }
+        <label>html</label>
+        <textarea id="uploader-html" data-mode="html">
+<div id="uploader">
+    <span id="file"></span>
+</div>
+        </textarea>
 
-        input[type="file"],
-        .Supload {
-            width: 200px;
-            height: 100px;
-            opacity: 0;
-            filter: alpha(opacity=0);
-        }
-    </style>
+        <label>css</label>
+        <textarea id="uploader-css" data-mode="css">
+ #uploader {
+    background-color: #FCE9D5;
+    display: inline-block;
+    position: relative;
+}
 
-    <script>
+#uploader:after {
+    content: 'click me';
+    position: absolute;
+    left: 35%;
+    top: 40%;
+}
 
-    require(
+input[type="file"],
+.supload {
+    width: 200px;
+    height: 100px;
+    opacity: 0;
+}
+        </textarea>
 
-        [
-            'killer/AjaxUploader',
-            'killer/FlashUploader'
-        ],
+        <label>js</label>
+        <textarea id="uploader-js">
+require(
 
-        function (AjaxUploader, FlashUploader) {
+    [
+        'killer/AjaxUploader',
+        'killer/FlashUploader'
+    ],
 
-            function supportAjaxUpload() {
-                function supportFileAPI() {
-                    var input = document.createElement('input');
-                    input.type = 'file';
-                    return 'files' in input;
-                }
-                function supportAjaxUploadProgressEvents() {
-                   var xhr = new XMLHttpRequest();
-                   return xhr && ('upload' in xhr) && ('onprogress' in xhr.upload);
-                }
-                return supportFileAPI() && supportAjaxUploadProgressEvents();
+    function (AjaxUploader, FlashUploader) {
+
+        /**
+         * 是否支持 ajax 上传
+         *
+         * @return {boolean}
+         */
+        function supportAjaxUpload() {
+            function supportFileAPI() {
+                var input = document.createElement('input');
+                input.type = 'file';
+                return 'files' in input;
             }
-
-            var Uploader = FlashUploader;
-
-            var uploader = new Uploader({
-                element: $('#file'),
-                action: 'http://localhost:8818/upload',
-                multiple: true,
-                accept: ['jpg', 'png', 'gif', 'bmp'],
-                onFileChange: function () {
-                    this.upload();
-                },
-                onUploadStart: function (data) {
-                    console.log('upload start:');
-                    console.log(data.fileItem);
-                },
-                onUploadProgress: function (data) {
-                    console.log('upload progress:');
-                    console.log((100 * data.uploaded / data.total) + '%');
-                },
-                onUploadSuccess: function (data) {
-                    console.log('upload success');
-                    console.log(data.responseText);
-                },
-                onUploadError: function (data) {
-                    console.log('upload error');
-                    console.log(data);
-                },
-                onUploadComplete: function (data) {
-                    console.log('upload complete');
-                }
-            });
-
-            $(document).one('moduleChanged', function () {
-                uploader.dispose();
-            });
+            function supportAjaxUploadProgressEvents() {
+               var xhr = new XMLHttpRequest();
+               return xhr && ('upload' in xhr) && ('onprogress' in xhr.upload);
+            }
+            return supportFileAPI() && supportAjaxUploadProgressEvents();
         }
-    );
 
-    </script>
+        var Uploader = supportAjaxUpload() ? AjaxUploader : FlashUploader;
 
+        var uploader = new Uploader({
+            element: $('#file'),
+            action: 'http://localhost:8818/upload',
+            multiple: true,
+            accept: ['jpg', 'png', 'gif', 'bmp'],
+            onFileChange: function () {
+                this.upload();
+            },
+            onUploadStart: function (data) {
+                console.log('upload start:');
+                console.log(data.fileItem);
+            },
+            onUploadProgress: function (data) {
+                console.log('upload progress:');
+                console.log((100 * data.uploaded / data.total) + '%');
+            },
+            onUploadSuccess: function (data) {
+                console.log('upload success');
+                console.log(data.responseText);
+            },
+            onUploadError: function (data) {
+                console.log('upload error');
+                console.log(data);
+            },
+            onUploadComplete: function (data) {
+                console.log('upload complete');
+            }
+        });
+    }
+);
+
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#uploader-html"
+                    data-css="#uploader-css"
+                    data-js="#uploader-js">运行</button>
+        </div>
+    </div>
+
+    <div class="content-item" data-tab="config">
+        <textarea>
+// 构造函数参数如下：
+{
+    element: $('#file'),                    // 上传按钮元素
+    action: '',                             // 上传地址
+    multiple: false,                        // 可选，是否支持多文件上传
+                                            //     默认为 false
+    accept: [ 'jpg', 'png' ],               // 可选，允许上传的文件格式 ( 扩展名 )
+    data: { },                              // 可选，上传附带的数据
+    fileName: 'Filedata',                   // 可选，上传文件的字段名
+                                            //     默认为 Filedata
+
+    onFileChange: function () { },          // 可选，选择的文件发生变化时触发
+    onUploadStart: function (data) { },     // 可选，上传开始触发
+    onUploadProgress: function (data) { },  // 可选，上传过程触发 ( 可实现进度条 )
+    onUploadSuccess: function (data) { },   // 可选，上传成功触发
+    onUploadError: function (data) { },     // 可选，上传失败触发
+    onUploadComplete: function (data) { }   // 可选，上传结束触发
+}
+        </textarea>
+    </div>
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+// 提供了两个版本的实现
+// 移动端可直接使用 AjaxUploader
+// pc 端如果需要根据浏览器特性进行选择，可使用以下方式：
+
+/**
+ * 是否支持 ajax 上传
+ *
+ * @return {boolean}
+ */
+function supportAjaxUpload() {
+    function supportFileAPI() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        return 'files' in input;
+    }
+    function supportAjaxUploadProgressEvents() {
+       var xhr = new XMLHttpRequest();
+       return xhr && ('upload' in xhr) && ('onprogress' in xhr.upload);
+    }
+    return supportFileAPI() && supportAjaxUploadProgressEvents();
+}
+
+var Uploader = supportAjaxUpload() ? AjaxUploader : FlashUploader;
+var uploader = new Uploader(options);
+uploader.getFiles(); // 获得当前选中的文件
+uploader.upload();   // 开始上传
+uploader.stop();     // 停止上传
+uploader.enable();   // 启用
+uploader.disable();  // 禁用 ( 禁止鼠标点击打开文件选择窗口 )
+uploader.dispose();  // 销毁对象
+        </textarea>
+    </div>
 </div>

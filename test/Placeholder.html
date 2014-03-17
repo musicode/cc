@@ -1,90 +1,116 @@
-<div id="module-note">
-    <h1>Placeholder</h1>
-
-    <h2>实例参数</h2>
-    <pre>
-    {
-        element: $('input'),        // 输入框元素，注意 placeholder 的属性为 data-placeholder
-        nativeFirst: false,         // 可选，是否优先使用原生的 placeholder
-                                    //     默认为 false ( 为统一浏览器体验考虑 )
-        template: ''                // 可选，包装输入框元素的模版，默认的应该够用了
-                                    //     如果需要修改，只需注意用来显示 placeholder 的元素为 div 即可
-    }
-    </pre>
-
-    <h2>使用方法</h2>
-    <pre>
-    // 单个初始化
-    var placeholder = new Placeholder(options);
-    placeholder.getPlaceholder();      // 获取 placeholder
-    placeholder.setPlaceholder('new'); // 设置 placeholder
-    placeholder.dispose();             // 销毁对象
-
-    // 批量初始化
-    Placeholder.init();
-    </pre>
-
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <input id="text-input" type="type" data-placeholder="请输入用户名" />
-    <input id="password-input" type="password" data-placeholder="请输入密码" />
-    <textarea data-placeholder="随便写点吧"></textarea>
+    <div class="content-item active article" data-tab="intro">
+        文本输入框的 placeholder
+    </div>
 
-    <style>
-        .placeholder-wrapper {
-            font-size: 13px;
-            position: relative;
-            line-height: 20px;
-            vertical-align: top;
-            display: inline-block;
-            *display: inline;
-            *zoom: 1;
-        }
-        .placeholder-wrapper div {
-            color: #BBB;
-            cursor: text;
+    <div class="content-item" data-tab="demo">
 
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        .placeholder-wrapper input,
-        .placeholder-wrapper textarea {
-            border: 1px solid #CCC;
-            padding: 6px 10px;
-            margin: 0;
-        }
-    </style>
+        <label>html</label>
+        <textarea id="placeholder-html" data-mode="html">
+<input id="text-input" type="type" placeholder="请输入用户名" />
+<input id="password-input" type="password" placeholder="请输入密码" />
+        </textarea>
 
-    <script>
+        <label>css</label>
+        <textarea id="placeholder-css" data-mode="css">
+.placeholder-wrapper {
+    position: relative;
+    line-height: 20px;
+    vertical-align: top;
+    display: inline-block;
+}
+.placeholder-wrapper div {
+    color: #BBB;
+    cursor: text;
 
-    require(
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+.placeholder-wrapper input,
+.placeholder-wrapper textarea {
+    border: 1px solid #CCC;
+    padding: 6px 10px;
+    margin: 0;
+}
+        </textarea>
 
-        [ 'killer/Placeholder' ],
+        <label>js</label>
+        <textarea id="placeholder-js">
+require(
 
-        function (Placeholder) {
+    [ 'killer/Placeholder' ],
 
-            var textInput = new Placeholder({
-                element: $('#text-input')
-            });
-            var passwordInput = new Placeholder({
-                element: $('#password-input')
-            });
-            var textarea = new Placeholder({
-                element: $('textarea')
-            });
+    function (Placeholder) {
 
-            $(document).one('moduleChanged', function () {
-                textInput.dispose();
-                passwordInput.dispose();
-                textarea.dispose();
-            });
-        }
-    );
+        var textInput = new Placeholder({
+            element: $('#text-input')
+        });
+        var passwordInput = new Placeholder({
+            element: $('#password-input')
+        });
 
-    </script>
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#placeholder-html"
+                    data-css="#placeholder-css"
+                    data-js="#placeholder-js">运行</button>
+        </div>
+    </div>
+
+    <div class="content-item" data-tab="config">
+        <textarea>
+// 构造函数的参数如下：
+{
+    element: $('input'),        // 输入框元素
+
+    // 下面的参数建议通过 Placeholder.defaultOptions 统一配置
+
+    attribute: 'placeholder',   // 可选，从元素的哪个属性取值
+                                //     默认为 placeholder
+    nativeFirst: false,         // 可选，是否优先使用原生的 placeholder
+                                //     默认为 false ( 为了统一各个浏览器的体验 )
+    template: ''                // 可选，包装输入框元素的模版，默认的应该够用了
+                                //     如果需要修改，只需注意用来显示 placeholder 的元素为 div 即可
+                                //     因为是通过 $(template).find('div') 来找它的...
+}
+        </textarea>
+    </div>
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+// 单个初始化
+var placeholder = new Placeholder(options);
+placeholder.getPlaceholder();      // 获取 placeholder
+placeholder.setPlaceholder('');    // 设置 placeholder
+placeholder.dispose();             // 销毁对象
+
+// 批量初始化
+// 可传入元素，如 $('input')
+// 默认会查找页面上具有 Placeholder.defaultOptions.attribute 属性的元素
+Placeholder.init();
+        </textarea>
+    </div>
 
 </div>

@@ -7,8 +7,8 @@ define(function (require, exports, module) {
     /**
      * 在方法执行前后进行拦截
      *
-     * 1. 可拦截对象的方法，如 before(obj, 'setValue', new Function());
-     * 2. 可拦截单纯的函数，如 setValue = before(setValue, new Function());
+     * 1. 可拦截对象的方法，如 advice.before(obj, 'setValue', new Function());
+     * 2. 可拦截单纯的函数，如 setValue = advice.before(setValue, new Function());
      * 3. 如果 before 返回 false，可阻止后续执行
      * 4. after 如果返回非 undefined 值，可改写返回值
      */

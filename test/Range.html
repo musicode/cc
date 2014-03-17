@@ -1,97 +1,82 @@
-<div id="module-note">
-    <h1>输入框的选区操作</h1>
-
-    <h2>使用方法</h2>
-    <pre>
-    var range = new Range(inputElement);
-    range.getRange();      // 获得当前选区 { start: 0, end: 10 }
-    range.setRange(1, 3);  // 设置当前选区开始索引为 1，结束索引为 3
-    range.getText();       // 获得当前选区文本
-    range.setText('xx');   // 设置当前选区文本
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div class="demo">
-        <input type="text" />
-        <button id="input-btn1">插入通配符</button>
-        <button id="input-btn2">设置选区</button>
+    <div class="content-item active article" data-tab="intro">
+        兼容文本输入框的选区操作
     </div>
 
-    <div class="demo">
-        <textarea></textarea>
-        <button id="textarea-btn1">插入通配符</button>
-        <button id="textarea-btn2">设置选区</button>
+    <div class="content-item" data-tab="demo">
+
+        <label>html</label>
+        <textarea id="range-html" data-mode="html">
+<input type="text" />
+<button id="input-btn1">插入通配符</button>
+<button id="input-btn2">设置选区</button>
+        </textarea>
+
+        <label>css</label>
+        <textarea id="range-css" data-mode="css">
+input {
+    border: 1px solid #BBB;
+    padding: 5px 10px;
+    width: 200px;
+    vertical-align: bottom;
+}
+button {
+    background-color: #F5F5F5;
+    border: 1px solid #DDD;
+    padding: 5px;
+}
+        </textarea>
+
+        <label>js</label>
+        <textarea id="range-js">
+require(
+
+    [ 'killer/Range' ],
+
+    function (Range) {
+
+        var inputRange = new Range($('input')[0]);
+
+        $('#input-btn1').click(function () {
+            inputRange.setText('{' + inputRange.getText() + '}');
+        });
+        $('#input-btn2').click(function () {
+            inputRange.setRange(1, 3);
+        });
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#range-html"
+                    data-css="#range-css"
+                    data-js="#range-js">运行</button>
+        </div>
     </div>
 
-    <style>
-
-        .demo {
-            margin-bottom: 20px;
-        }
-        .demo input,
-        .demo textarea {
-            border: 1px solid #BBB;
-            padding: 5px 10px;
-            width: 200px;
-            vertical-align: bottom;
-        }
-        .demo button {
-            background-color: #F5F5F5;
-            border: 1px solid #DDD;
-            padding: 5px;
-        }
-
-    </style>
-
-    <script>
-
-    require(
-
-        [ 'killer/Range' ],
-
-        function (Range) {
-
-            var inputRange = new Range($('input')[0]);
-            var textareaRange = new Range($('textarea')[0]);
-
-            var $inputBtn1 = $('#input-btn1');
-            var $inputBtn2 = $('#input-btn2');
-
-            var $textareaBtn1 = $('#textarea-btn1');
-            var $textareaBtn2 = $('#textarea-btn2');
-
-            $inputBtn1.click(function () {
-                inputRange.setText('{' + inputRange.getText() + '}');
-            });
-            $inputBtn2.click(function () {
-                inputRange.setRange(1, 3);
-            });
-
-            $textareaBtn1.click(function () {
-                textareaRange.setText('{' + textareaRange.getText() + '}');
-            });
-            $textareaBtn2.click(function () {
-                textareaRange.setRange(1, 3);
-            });
-
-            $(document).one('moduleChanged', function () {
-                $inputBtn1.off();
-                $inputBtn2.off();
-                $textareaBtn1.off();
-                $textareaBtn2.off();
-
-                inputRange =
-                textareaRange =
-                $inputBtn1 =
-                $inputBtn2 =
-                $textareaBtn1 =
-                $textareaBtn2 = null;
-            });
-        }
-    );
-
-    </script>
-
+    <div class="content-item" data-tab="usage">
+        <textarea>
+var range = new Range(inputElement);  // 参数是 HTMLElement，不是 jQuery 对象
+range.getRange();                     // 获得当前选区 { start: 0, end: 10 }
+range.setRange(1, 3);                 // 设置当前选区开始索引为 1，结束索引为 3
+range.getText();                      // 获得当前选区文本
+range.setText('xx');                  // 设置当前选区文本
+range.dispose();                      // 销毁对象
+        </textarea>
+    </div>
 </div>
+

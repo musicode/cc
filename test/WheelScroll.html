@@ -1,49 +1,65 @@
-<div id="module-note">
-
-    <h1>鼠标滚轮</h1>
-
-    <h2>实例参数</h2>
-    <pre>
-    {
-        element: $('div'),                       // 可选，监听滚动的元素
-                                                 //     默认是 $(document)
-        onScroll: function (data) {}             // 可选，滚动触发，返回 false 可阻止滚动
-    }
-    </pre>
-
-    <h2>使用方法</h2>
-    <pre>
-    var wheelScroll = new WheelScroll(options);
-    wheelScroll.dispose();
-    </pre>
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
 </div>
 
-<div id="module-demo">
+<div class="tab-content">
 
-    <div>
-        滚动鼠标滚轮，打开控制台看输出
+    <div class="content-item active article" data-tab="intro">
+        解决鼠标滚轮事件的兼容问题
     </div>
 
-    <script>
+    <div class="content-item" data-tab="demo">
 
-    require(
+        <label>js</label>
+        <textarea id="wheel-scroll-js">
+require(
 
-        [ 'killer/WheelScroll' ],
+    [ 'killer/WheelScroll' ],
 
-        function (WheelScroll) {
+    function (WheelScroll) {
 
-            var wheelScroll = new WheelScroll({
-                onScroll: function (data) {
-                    console.log(data.delta);
-                }
-            });
+        var wheelScroll = new WheelScroll({
+            onScroll: function (data) {
+                console.log(data.delta);
+            }
+        });
+    }
+);
+        </textarea>
 
-            $(document).one('moduleChanged', function () {
-                wheelScroll.dispose();
-            });
-        }
-    );
+        <div class="action">
+            <button class="run-code fluid"
+                    data-js="#wheel-scroll-js">运行</button>
+        </div>
+    </div>
 
-    </script>
+    <div class="content-item" data-tab="config">
+        <textarea>
+// 构造函数参数如下：
+{
+    element: $('div'),                       // 可选，监听滚动的元素
+                                             //     默认是 $(document)
+    onScroll: function (data) { }            // 可选，滚动触发，返回 false 可阻止滚动
+}
+        </textarea>
+    </div>
 
+    <div class="content-item" data-tab="usage">
+        <textarea>
+var wheelScroll = new WheelScroll(options);
+wheelScroll.dispose();         // 销毁对象
+        </textarea>
+    </div>
 </div>
+

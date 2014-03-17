@@ -5,7 +5,8 @@
 define(function (require, exports, module) {
 
     /**
-     * 处理 UTF-8 字符相关
+     * 1. 处理 UTF-8 字符相关
+     * 2. 处理各种字符键值，如 url 参数, cookie 等
      */
 
     'use strict';

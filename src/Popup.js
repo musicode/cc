@@ -4,6 +4,64 @@
  */
 define(function (require, exports, module) {
 
+    /**
+     * 弹出式交互使用的非常普遍
+     *
+     * 抽象的说就是通过怎样的交互触发一个元素的显示，以及后续怎么隐藏它的问题
+     *
+     * #怎样触发显示#
+     *
+     *    常见的触发方式包括：
+     *
+     *    click
+     *    over ( mouseover 简写 )
+     *
+     * #怎样触发隐藏#
+     *
+     *    常见的触发方式包括：
+     *
+     *    blur ( 没有这个原生事件，因为类似输入框失焦，所以取同名 )
+     *    out ( mouseout 简写 )
+     *
+     * #延时#
+     *
+     *    有时为了避免过于灵敏的触发，会设置一个 showDelay/hideDelay 来减少误操作
+     *
+     * #多种触发方式#
+     *
+     *    比较常用的组合是 'out,blur'，即 鼠标移出 和 元素失焦 都会触发隐藏
+     *
+     *    如果没有隐藏延时，这个组合是不可能实现的，因为一旦移出，肯定是 out 率先生效，blur 等于没写
+     *    如果设置隐藏延时，为了避免问题复杂化，需要把隐藏延时的方式写在首位（后面会说理由）
+     *
+     * #可配置的触发方式#
+     *
+     *    因为触发显示和隐藏的方式的配置需求太强了，所以暴露了两个接口：
+     *
+     *    Popup.showBy 和 Popup.hideBy
+     *
+     *    它们的结构都是
+     *
+     *    trigger: {
+     *        addTrigger: function (popup),             // 传入 popup 实例，绑定触发事件
+     *        removeTrigger: function (popup),          // 传入 popup 实例，解绑触发事件
+     *
+     *        addBreaker: function (popup, breaker),    // 因为 delay 会产生异步，所以要提供中断异步的方式
+     *                                                  // 如 鼠标移出触发延时，鼠标再次移入就需要中断它
+     *                                                  // breaker 参数不用关心实现，只需知道执行它能中断异步就行
+     *        removeBreaker: function (popup, breaker)  // 解绑中断事件
+     *
+     *    }
+     *
+     *    构造函数的 showBy 参数值取决于 Popup.showBy 的键值
+     *
+     *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
+     *
+     *    在配置 showDelay 时，只作用于第一个触发方式，如 showBy 配置为 'over,click'，只有 over 才会 delay
+     *    hideDelay 同理
+     *
+     */
+
     'use strict';
 
     var advice = require('./advice');
@@ -17,10 +75,10 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @param {jQuery} options.element 弹出显示的元素
      * @param {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
-     * @param {string=} options.showBy 可选值有 "click", "over", 如果未传 trigger，可不传
-     * @param {string} options.hideBy 可选值有 "blur", "out", "blur,out"
-     * @param {number=} options.showDelay 当 showBy 为 over 时的显示延时
-     * @param {number=} options.hideDelay 当 hideBy 包含 out 时的隐藏延时
+     * @param {string=} options.showBy 可选值请看 Popup.showBy 的 key，可组合使用，如 'click,over'
+     * @param {string} options.hideBy 可选值请看 Popup.hideBy 的 key，可组合使用，如 'blur,out'
+     * @param {number=} options.showDelay 给 showBy 的第一个触发方式加显示延时，如 'over,click' 中的 over
+     * @param {number=} options.hideDelay 给 hideBy 的第一个触发方式加隐藏延时，如 'out,blur' 中的 out
      * @param {Function=} options.show 可选，默认是 element.show()
      * @param {Function=} options.hide 可选，默认是 element.hide()
      * @param {Function=} options.onBeforeShow 返回 false 可阻止显示
@@ -58,7 +116,7 @@ define(function (require, exports, module) {
                 onAfterHide
             );
 
-            addShowEvent(this);
+            showEvent(this, 'add');
         },
 
         /**
@@ -68,8 +126,8 @@ define(function (require, exports, module) {
 
             this.hide();
 
-            removeShowEvent(this);
-            removeHideEvent(this);
+            showEvent(this, 'remove');
+            hideEvent(this, 'remove');
 
             this.trigger =
             this.element =
@@ -84,8 +142,6 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Popup.defaultOptions = {
-        showDelay: 200,
-        hideDelay: 200,
         show: function () {
             this.element.show();
         },
@@ -93,6 +149,167 @@ define(function (require, exports, module) {
             this.element.hide();
         }
     };
+
+    /**
+     * 提供 showBy 扩展
+     *
+     * @type {Object}
+     */
+    Popup.showBy = {
+
+        click: {
+            addTrigger: function (popup) {
+                var trigger = popup.trigger;
+                trigger.on('click', popup, showByClick);
+            },
+            removeTrigger: function (popup) {
+                var trigger = popup.trigger;
+                trigger.off('click', showByClick);
+            },
+
+            addBreaker: function (popup, breaker) {
+                setTimeout(
+                    function () {
+                        if (popup.cache) {
+                            doc.click(breaker);
+                        }
+                    },
+                    50
+                );
+            },
+            removeBreaker: function (popup, breaker) {
+                doc.off('click', breaker);
+            }
+        },
+
+        over: {
+            addTrigger: function (popup) {
+                popup.trigger.on('mouseenter', popup, showByOver);
+            },
+            removeTrigger: function (popup) {
+                popup.trigger.off('mouseenter', showByOver);
+            },
+
+            addBreaker: function (popup, breaker) {
+                popup.trigger.on('mouseleave', breaker);
+            },
+            removeBreaker: function (popup, breaker) {
+                popup.trigger.off('mouseleave', breaker);
+            }
+        }
+    };
+
+    /**
+     * 提供 hideBy 扩展
+     *
+     * @type {Object}
+     */
+    Popup.hideBy = {
+
+        blur: {
+            addTrigger: function (popup) {
+                var handler = hideByBlur(popup);
+                popup.cache.blurHandler = handler;
+
+                var showBy = popup.showBy;
+
+                if (typeof showBy === 'string'
+                    && showBy.indexOf('click') >= 0
+                ) {
+                    setTimeout(
+                        function () {
+                            // 异步得确保未调用 dispose()
+                            if (popup.cache) {
+                                doc.click(handler);
+                            }
+                        },
+                        50
+                    );
+                }
+                else {
+                    doc.click('click', handler);
+                }
+            },
+            removeTrigger: function (popup) {
+                var handler = popup.cache.blurHandler;
+                if (handler) {
+                    doc.off('click', handler);
+                }
+            }
+        },
+
+        out: {
+            addTrigger: function (popup) {
+                popup.trigger.on('mouseleave', popup, hideByOut);
+                popup.element.on('mouseleave', popup, hideByOut);
+            },
+            removeTrigger: function (popup) {
+                popup.trigger.off('mouseleave', hideByOut);
+                popup.element.off('mouseleave', hideByOut);
+            },
+
+            addBreaker: function (popup, breaker) {
+                popup.trigger.on('mouseenter', breaker);
+                popup.element.on('mouseenter', breaker);
+            },
+            removeBreaker: function (popup, breaker) {
+                popup.trigger.off('mouseenter', breaker);
+                popup.element.off('mouseenter', breaker);
+            }
+        }
+    };
+
+    /**
+     * 处理 显示事件
+     *
+     * @private
+     * @param {Popup} popup
+     * @param {string} action 可选值有 add remove
+     */
+    function showEvent(popup, action) {
+        // 显示可能来自 popup.show 调用
+        // 这种情况不需要设置 showBy 也可以
+        var showBy = popup.showBy;
+        if (showBy) {
+            each(showBy, function (showBy) {
+                var target = Popup.showBy[showBy];
+                if (target) {
+                    target[action + 'Trigger'](popup);
+                }
+            });
+        }
+    }
+
+    /**
+     * 处理 隐藏事件
+     *
+     * @private
+     * @param {Popup} popup
+     * @param {string} action 可选值有 add remove
+     */
+    function hideEvent(popup, action) {
+        each(popup.hideBy, function (hideBy) {
+            var target = Popup.hideBy[hideBy];
+            if (target) {
+                target[action + 'Trigger'](popup);
+            }
+        });
+    }
+
+    /**
+     * 遍历 out,blur 这样以逗号分隔的字符串
+     *
+     * @param {string} str
+     * @return {function(string)) callback
+     */
+    function each(str, callback) {
+        $.each(
+            str.split(','),
+            function (index, item) {
+                callback($.trim(item));
+            }
+        );
+    }
 
     /**
      * document 比较常用的
@@ -155,8 +372,8 @@ define(function (require, exports, module) {
      * @param {HTMLElement} triggerElement
      */
     function onAfterShow() {
-        removeShowEvent(this);
-        addHideEvent(this);
+        showEvent(this, 'remove');
+        hideEvent(this, 'add');
 
         if (typeof this.onAfterShow === 'function') {
             this.onAfterShow();
@@ -185,8 +402,8 @@ define(function (require, exports, module) {
      */
     function onAfterHide() {
         this.element.removeData(currentTriggerKey);
-        removeHideEvent(this);
-        addShowEvent(this);
+        hideEvent(this, 'remove');
+        showEvent(this, 'add');
 
         if (typeof this.onAfterHide === 'function') {
             this.onAfterHide();
@@ -194,113 +411,64 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 添加触发显示的事件
+     * 延时执行
      *
      * @private
      * @param {Popup} popup
+     * @param {number} time
+     * @param {Function} handler
+     * @param {Object} condition 延时条件
      */
-    function addShowEvent(popup) {
-        var trigger = popup.trigger;
+    function setDelay(popup, time, handler, condition) {
 
-        switch (popup.showBy) {
-            case 'click':
-                trigger.on('click', popup, showByClick);
-                break;
-            case 'over':
-                trigger.on('mouseenter', popup, showByMouseEnter);
-                trigger.on('mouseleave', popup, showByMouseLeave);
-                break;
-        }
-    }
+        var cache = popup.cache;
 
-    /**
-     * 移除触发显示的事件
-     *
-     * @private
-     * @param {Popup} popup
-     */
-    function removeShowEvent(popup) {
-        var trigger = popup.trigger;
+        if (time > 0) {
+            if (cache.delayTask) {
+                return;
+            }
 
-        switch (popup.showBy) {
-            case 'click':
-                trigger.off('click', showByClick);
-                break;
-            case 'over':
-                trigger.off('mouseenter', showByMouseEnter);
-                trigger.off('mouseleave', showByMouseLeave);
-                break;
-        }
-    }
-
-    /**
-     * 添加触发隐藏的事件
-     *
-     * @private
-     * @param {Popup} popup
-     */
-    function addHideEvent(popup) {
-        var hideBy = popup.hideBy;
-        var element = popup.element;
-
-        if (hideBy.indexOf('out') !== -1) {
-            var trigger = popup.trigger;
-
-            trigger.on('mouseleave', popup, hideByMouseLeave);
-            trigger.on('mouseenter', popup, hideByMouseEnter);
-            element.on('mouseleave', popup, hideByMouseLeave);
-            element.on('mouseenter', popup, hideByMouseEnter);
-        }
-
-        if (hideBy.indexOf('blur') !== -1) {
-            var blurHandler = function (e) {
-                if (isOutside(e.target, element[0])) {
-                    popup.hide();
-                }
+            var addBreaker = condition.addBreaker || $.noop;
+            var removeBreaker = condition.removeBreaker || $.noop;
+            var breaker = function () {
+                removeBreaker(popup, breaker);
+                clearDelay(popup);
             };
-            popup.cache.blurHandler = blurHandler;
 
-            // 用延时来避免 click 事件冒泡到 document 带来的悲剧
-            if (popup.showBy === 'click') {
-                setTimeout(
-                    function () {
-                        // 异步得确保未调用 dispose()
-                        if (popup.cache) {
-                            doc.click(blurHandler);
-                        }
-                    },
-                    50
-                );
-            }
-            else {
-                doc.click(blurHandler);
-            }
+            cache.delayTask = setTimeout(
+                function () {
+                    removeBreaker(popup, breaker);
+                    if (clearDelay(popup)) {
+                        handler();
+                    }
+                },
+                time
+            );
+
+            addBreaker(popup, breaker);
+        }
+        else {
+            handler();
         }
     }
 
-
     /**
-     * 移除用于触发隐藏的事件
+     * 清理延时任务
      *
      * @private
      * @param {Popup} popup
+     * @return {boolean=} 返回 true 表示清理成功
      */
-    function removeHideEvent(popup) {
-        var trigger = popup.trigger;
-        var element = popup.element;
-        var hideBy = popup.hideBy;
+    function clearDelay(popup) {
 
-        if (hideBy.indexOf('out') !== -1) {
-            trigger.off('mouseleave', hideByMouseLeave);
-            trigger.off('mouseenter', hideByMouseEnter);
-            element.off('mouseleave', hideByMouseLeave);
-            element.off('mouseenter', hideByMouseEnter);
-        }
-        if (hideBy.indexOf('blur') !== -1) {
-            var blurHandler = popup.cache.blurHandler;
-            if (blurHandler) {
-                doc.off('click', blurHandler);
-            }
+        var cache = popup.cache;
+
+        // 调用 dispose 会把 popup.cache 置为 null
+        // 异步必须检查一下
+        if (cache && cache.delayTask) {
+            clearTimeout(cache.delayTask);
+            cache.delayTask = null;
+            return true;
         }
     }
 
@@ -311,7 +479,17 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function showByClick(e) {
-        e.data.show(e.target);
+
+        var popup = e.data;
+
+        setDelay(
+            popup,
+            popup.showDelay,
+            function () {
+                popup.show(e.target);
+            },
+            Popup.showBy.click
+        );
     }
 
     /**
@@ -320,42 +498,37 @@ define(function (require, exports, module) {
      * @private
      * @param {Event} e
      */
-    function showByMouseEnter(e) {
+    function showByOver(e) {
 
         var popup = e.data;
-        var cache = popup.cache;
 
-        // 任务正等待执行
-        if (cache.showTask) {
-            return;
-        }
-
-        // 启动显示任务
-        // 延时显示，不然太灵敏了
-        cache.showTask = setTimeout(
+        setDelay(
+            popup,
+            popup.showDelay,
             function () {
-                if (popup.cache && cache.showTask) {
-                    popup.show(e.toElement);
-                    cache.showTask = null;
-                }
+                popup.show(e.toElement);
             },
-            popup.showDelay
+            Popup.showBy.over
         );
     }
 
     /**
-     * 为了避免太灵敏的触发显示
-     * mouseenter 会开始一个显示任务，mouseleave 取消任务
+     * 监听 document 点击，必须创建新的函数，不然解绑会影响其他实例
      *
-     * @private
-     * @param {Event} e
+     * @param {Popup} popup
+     * @return {Function}
      */
-    function showByMouseLeave(e) {
-        var cache = e.data.cache;
-        if (cache.showTask) {
-            clearTimeout(cache.showTask);
-            cache.showTask = null;
-        }
+    function hideByBlur(popup) {
+        return function (e) {
+            if (isOutside(e.target, popup.element[0])) {
+                setDelay(
+                    popup,
+                    popup.hideDelay,
+                    $.proxy(popup.hide, popup),
+                    Popup.hideBy.blur
+                );
+            }
+        };
     }
 
     /**
@@ -364,47 +537,21 @@ define(function (require, exports, module) {
      * @private
      * @param {Event} e
      */
-    function hideByMouseLeave(e) {
+    function hideByOut(e) {
 
         var popup = e.data;
-        var cache = popup.cache;
 
-        // 可能会重复触发
-        if (cache.hideTask) {
-            return;
-        }
-
-        if (!isOutside(
+        if (isOutside(
                 e.toElement,
                 popup.trigger[0],
                 popup.element[0])
         ) {
-            return;
-        }
-
-        // 启动隐藏任务
-        cache.hideTask = setTimeout(
-            function () {
-                if (popup.cache && cache.hideTask) {
-                    popup.hide();
-                    cache.hideTask = null;
-                }
-            },
-            popup.hideDelay
-        );
-    }
-
-    /**
-     * mouseleave 之后如果触发 mouseenter 需删掉隐藏任务
-     *
-     * @private
-     * @param {Event} e
-     */
-    function hideByMouseEnter(e) {
-        var cache = e.data.cache;
-        if (cache.hideTask) {
-            clearTimeout(cache.hideTask);
-            cache.hideTask = null;
+            setDelay(
+                popup,
+                popup.hideDelay,
+                $.proxy(popup.hide, popup),
+                Popup.hideBy.out
+            );
         }
     }
 
@@ -419,9 +566,7 @@ define(function (require, exports, module) {
     function isOutside(target, container) {
         for (var i = 1, len = arguments.length; i < len; i++) {
             container = arguments[i];
-            if (container === target
-                || $.contains(container, target)
-            ) {
+            if (container === target || $.contains(container, target)) {
                 return false;
             }
         }

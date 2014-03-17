@@ -4,18 +4,17 @@
         <meta charset="utf-8" />
         <title>前端常用工具库</title>
 
-        <script src="asset/js/jquery.js"></script>
-        <script src="asset/js/esl.js"></script>
-        <script src="asset/js/config.js"></script>
-        <script src="asset/js/index.js"></script>
-
+        <link rel="stylesheet" href="asset/codemirror/theme/mbo.css">
+        <link rel="stylesheet" href="asset/codemirror/codemirror.css">
         <link rel="stylesheet" href="asset/css/main.less" />
     </head>
 
     <body>
 
-        <div id="sidebar">
+        <sidebar>
+            <a data-mod="intro">首页</a>
             <a data-mod="browser">browser</a>
+            <a data-mod="cookie">cookie</a>
             <a data-mod="ContextMenu">ContextMenu</a>
             <a data-mod="Draggable">Draggable</a>
             <a data-mod="Input">Input</a>
@@ -27,34 +26,37 @@
             <a data-mod="Tooltip">Tooltip</a>
             <a data-mod="Uploader">Uploader</a>
             <a data-mod="WheelScroll">WheelScroll</a>
-        </div>
+        </sidebar>
 
         <div id="main">
 
-            <p>
-                cdn 地址：
-            </p>
-
-            <p>
-                使用方法：
-
-                require.config({
-                    paths: {
-                        killer: 'cdn'
-                    }
-                });
-            </p>
-
         </div>
 
+        <script src="asset/lib/jquery2.js"></script>
+        <!--[if ite IE 9]>
+        <script src="asset/lib/jquery.js"></script>
+        <![endif]-->
+
+        <script src="asset/esl/esl.js"></script>
+        <script src="asset/esl/config.js"></script>
+        <script src="asset/index.js"></script>
+        <script src="asset/codemirror/codemirror.js"></script>
+        <script src="asset/codemirror/mode/xml.js"></script>
+        <script src="asset/codemirror/mode/html.js"></script>
+        <script src="asset/codemirror/mode/css.js"></script>
+        <script src="asset/codemirror/mode/javascript.js"></script>
+
+        <!--
+        <script src="http://debug.phonegap.com/target/target-script-min.js#anonymous4865"></script>
+    -->
         <script>
 
         require(
 
-            [ 'test/asset/js/index' ],
+            [ 'test/asset/index' ],
 
             function (index) {
-                index.init();
+                index.init('intro');
             }
         );
 

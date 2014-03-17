@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      * @param {jQuery} options.container 在 container 内部右键弹出菜单
      * @param {jQuery|string} options.element 菜单元素，也可以是字符串模版
      * @param {string=} options.className 可选，菜单元素的 className
-     * @param {Object=} options.events 可选，配置事件处理器
+     * @param {Object=} options.clickEvents 可选，配置点击事件处理器
      *                 {
      *                     '.add-user': function (e) { },
      *                     '.remove-user': function (e) { }
@@ -149,7 +149,7 @@ define(function (require, exports, module) {
                     ? $(contextMenu.element)
                     : contextMenu.element;
 
-        var events = contextMenu.events;
+        var events = contextMenu.clickEvents;
 
         if (events) {
             for (var type in events) {

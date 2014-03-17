@@ -73,6 +73,13 @@ define(function (require, exports, module) {
             element.value = value.substring(0, range.start)
                           + text
                           + value.substr(range.end);
+        },
+
+        /**
+         * 销毁对象
+         */
+        dispose: function () {
+            this.element = null;
         }
     };
 
