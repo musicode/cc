@@ -1,0 +1,25 @@
+{
+  "name": "cobble",
+  "version": "0.0.1",
+  "description": "tools for web develop",
+  "main": "",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhujl/cobble"
+  },
+  "keywords": [
+    "tool"
+  ],
+  "author": "zhujl",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/zhujl/cobble/issues"
+  },
+  "homepage": "https://github.com/zhujl/cobble"
+}
