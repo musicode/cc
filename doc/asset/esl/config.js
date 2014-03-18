@@ -1,12 +1,11 @@
 require.config({
     baseUrl: '/',
     paths: {
-        //killer: 'http://s1.bdstatic.com/r/www/cache/biz/ecom/ui/20140306v1/killer',
-        text: './test/asset/esl/text'
+        text: './doc/asset/esl/text'
     },
     packages: [
         {
-            name: 'killer',
+            name: 'cobble',
             location: './src',
             main: 'main'
         }

@@ -37,6 +37,14 @@ define(function (require, exports) {
     var activeClass = 'active';
 
     /**
+     * 当前的域名
+     *
+     * @private
+     * @type {String}
+     */
+    var domain = document.location.origin;
+
+    /**
      * 收集 codemirror 实例，便于销毁
      *
      * @private
@@ -108,7 +116,7 @@ define(function (require, exports) {
                 '<html>',
                     '<head>',
                         '<meta charset="utf-8" />',
-                        '<link rel="stylesheet" href="http://localhost:8818/test/asset/css/normalize.css" />',
+                        '<link rel="stylesheet" href="' + domain + '/doc/asset/css/normalize.css" />',
                         '<style>',
                             'body { font-size: 13px; }',
                             css || '',
@@ -116,9 +124,9 @@ define(function (require, exports) {
                     '</head>',
                     '<body>',
                         html || '',
-                        '<script src="http://localhost:8818/test/asset/lib/jquery.js"></script>',
-                        '<script src="http://localhost:8818/test/asset/esl/esl.js"></script>',
-                        '<script src="http://localhost:8818/test/asset/esl/config.js"></script>',
+                        '<script src="' + domain + '/doc/asset/lib/jquery.js"></script>',
+                        '<script src="' + domain + '/doc/asset/esl/esl.js"></script>',
+                        '<script src="' + domain + '/doc/asset/esl/config.js"></script>',
                         '<script>',
                         js || '',
                         '</script>',
@@ -157,7 +165,7 @@ define(function (require, exports) {
      * @param {string=} js
      */
     function runCode(html, css, js) {
-        var win = window.open('', "_blank", '');
+        var win = window.open('', '_blank', '');
         var doc = win.document;
         doc.open('text/html', 'replace');
         win.opener = null;

@@ -19,6 +19,28 @@ define (function (require, exports, module) {
      'use strict';
 
     /**
+     * 解码
+     *
+     * @private
+     * @param {string} str
+     * @return {string}
+     */
+    function decode(str) {
+        return decodeURIComponent(str);
+    }
+
+    /**
+     * 编码
+     *
+     * @private
+     * @param {string} str
+     * @return {string}
+     */
+    function encode(str) {
+        return encodeURIComponent(str);
+    }
+
+    /**
      * 把 cookie 字符串解析成对象
      *
      * @private
@@ -42,7 +64,7 @@ define (function (require, exports, module) {
             // Replace server-side written pluses with spaces.
             // If we can't decode the cookie, ignore it, it's unusable.
             // If we can't parse the cookie, ignore it, it's unusable.
-            cookieStr = decodeURIComponent(cookieStr.replace(/\+/g, ' '));
+            cookieStr = decode(cookieStr.replace(/\+/g, ' '));
 
             $.each(
                 cookieStr.split(';'),
@@ -52,7 +74,7 @@ define (function (require, exports, module) {
                     var value = $.trim(pair[1]);
 
                     if (key) {
-                        result[key] = value;
+                        result[decode(key)] = value;
                     }
                 }
             );
@@ -78,7 +100,7 @@ define (function (require, exports, module) {
                 value = cookieObj[key];
                 if (value !== '') {
                     result.push(
-                        encodeURIComponent(key) + '='+ value
+                        encode(key) + '='+ value
                     );
               }
             }
@@ -105,16 +127,16 @@ define (function (require, exports, module) {
      * @param {string|Object} key 如果 key 是 string，则必须传 value
      *                            如果 key 是 Object，可批量写入
      * @param {*=} value
-     * @param {Object=} options 额外的参数，如过期时间
+     * @param {number=} expires 相对当前时刻的过期时间，如一小时后，传入 1000 * 60 * 60
      */
-    exports.setCookie = function (key, value, options) {
+    exports.setCookie = function (key, value, expires) {
 
         // 批量分支
         if ($.isPlainObject(key)) {
-            options = value;
+            expires = value;
             for (var k in key) {
                 if (key.hasOwnProperty(k)) {
-                    exports.setCookie(k, key[k], options);
+                    exports.setCookie(k, key[k], expires);
                 }
             }
             return;
@@ -128,19 +150,12 @@ define (function (require, exports, module) {
             throw new Error('[cookie] cookie.setCookie require value\' type is string or number.');
         };
 
-        options = options || { };
-
-        if (typeof options.expires === 'number') {
-            var date = options.expires;
-            var expires = options.expires = new Date();
-            expires.setTime(+ expires + date * 864e+5);
-        }
-
         var current = parse(document.cookie);
         current[key] = value;
 
-        if (options.expires) {
-            current.expires = options.expires.toUTCString();
+        if (typeof expires === 'number') {
+            var date = new Date(new Date() + expires);
+            current.expires = date.toUTCString();
         }
 
         document.cookie = stringify(current);
@@ -150,16 +165,14 @@ define (function (require, exports, module) {
      * 删除某个 cookie
      *
      * @param {string} key
-     * @param {Object=} options
      */
-    exports.removeCookie = function (key, options) {
+    exports.removeCookie = function (key) {
 
         if (typeof exports.getCookie(key) === 'undefined') {
             return;
         }
 
-        options = $.extend({ }, options, { expires: -1 });
-        exports.setCookie(key, '', options);
+        exports.setCookie(key, '', -1);
     };
 
 });
