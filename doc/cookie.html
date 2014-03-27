@@ -1,0 +1,66 @@
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
+
+<div class="tab-content">
+
+    <div class="content-item active article" data-tab="intro">
+
+        以 Object 形式读写 Cookie
+
+    </div>
+
+    <div class="content-item" data-tab="demo">
+
+        <label>js</label>
+        <textarea id="cookie-js">
+require(
+
+    [ 'cobble/cookie' ],
+
+    function (cookie) {
+
+        // 新开页面 cookie 是空的..
+        cookie.setCookie({
+            name: 'chrome',
+            version: '32'
+        });
+
+        var obj = cookie.getCookie();
+        var html = [ ];
+
+        for (var key in obj) {
+            html.push(
+                key + ': ' + obj[key]
+            );
+        }
+
+        document.body.innerHTML = html.join('<br />');
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid" data-js="#cookie-js">运行</button>
+        </div>
+
+    </div>
+
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+cookie.getCookie('key');                // 读取 cookie 中某个参数，如果不传 key，返回完整的 cookie 对象
+cookie.setCookie('key', 'value', { });  // 写入 cookie，把 key 换成 Object 可批量写入
+cookie.removeCookie('key');             // 删除 cookie 中某个参数
+        </textarea>
+    </div>
+
+</div>

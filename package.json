@@ -1,0 +1,30 @@
+{
+  "name": "cobble",
+  "version": "0.0.2",
+  "description": "tools for web develop",
+  "main": "",
+  "directories": {
+    "doc": "doc"
+  },
+  "devDependencies": {
+    "requirejs": "^2.1.11",
+    "karma": "^0.12.1",
+    "karma-jasmine": "^0.2.2"
+  },
+  "scripts": {
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhujl/cobble"
+  },
+  "keywords": [
+    "tool"
+  ],
+  "author": "zhujl",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/zhujl/cobble/issues"
+  },
+  "homepage": "https://github.com/zhujl/cobble"
+}
