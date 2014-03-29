@@ -29,12 +29,12 @@ require(
     function (cookie) {
 
         // 新开页面 cookie 是空的..
-        cookie.setCookie({
+        cookie.set({
             name: 'chrome',
             version: '32'
         });
 
-        var obj = cookie.getCookie();
+        var obj = cookie.get();
         var html = [ ];
 
         for (var key in obj) {
@@ -57,9 +57,9 @@ require(
 
     <div class="content-item" data-tab="usage">
         <textarea>
-cookie.getCookie('key');                // 读取 cookie 中某个参数，如果不传 key，返回完整的 cookie 对象
-cookie.setCookie('key', 'value', { });  // 写入 cookie，把 key 换成 Object 可批量写入
-cookie.removeCookie('key');             // 删除 cookie 中某个参数
+cookie.get('key');                // 读取 cookie 中某个参数，如果不传 key，返回完整的 cookie 对象
+cookie.set('key', 'value', { });  // 写入 cookie，把 key 换成 Object 可批量写入
+cookie.remove('key');             // 删除 cookie 中某个参数
         </textarea>
     </div>
 

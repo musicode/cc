@@ -128,7 +128,7 @@ require(
                                                             //     默认为 'tooltip-placement-'
 
     placement: 'bottom,auto',                               // 可选，提示方位的优先级
-                                                            //     可选值包括　top, right, bottom, left, auto
+                                                            //     可选值包括　top, right, bottom, left, topLeft, topRight, bottomLeft, bottomRight, auto
                                                             // 　　可组合使用，如　'bottom,auto' 表示先尝试　bottom，不行就自动算出可以正常显示的方位
                                                             //     默认为 'bottom,auto'
 
@@ -152,29 +152,24 @@ require(
             x: -5,
             y: 0
         },
-        right: {
-            x: 5,
-            y: 0
-        },
-        top: {
-            x: 0,
-            y: -5
-        },
-        bottom: {
-            x: 0,
-            y: 5
-        }
+        right: {},
+        top: {},
+        bottom: {},
+        topLeft: {},
+        topRight: {},
+        bottomLeft: {},
+        bottomRight: {}
     },
 
 
     template: '',                                           // 可选，提示浮层模版
                                                             //     与 placementPrefix 和 update 配合使用，可自定义浮层
 
-    show: function (tipElement) { },                        // 可选，显示提示的方式
+    show: function (tipElement) { },                        // 可选，显示提示的方式，this 指向当前实例
                                                             //     默认为 tipElement.show()
-    hide: function (tipElement) { },                        // 可选，隐藏提示的方式
+    hide: function (tipElement) { },                        // 可选，隐藏提示的方式，this 指向当前实例
                                                             //     默认为 tipElement.hide()
-    update: function (tipElement, triggerElement) { },      // 可选，更新提示的方式
+    update: function (tipElement, triggerElement) { },      // 可选，更新提示的方式，this 指向当前实例
                                                             //     默认为 tipElement.html(triggerElement.attr(tipAttr))
 
     onBeforeShow: function () { },                          // 可选，this 指向当前 Tooltip 实例

@@ -147,11 +147,14 @@ define(function (require, exports, module) {
     /**
      * 创建 swf 元素
      *
-     * 如果在 IE67 下没法用，把 wmode 改成 opaque 即可
+     * 无需兼容 IE67 用现有方法即可
      *
-     * 这个方法暴露给外部修改，实在不想折腾了。。。
+     * 如果想兼容 IE67，有两种方法：
      *
-     * 比如无需兼容 IE67 用现有方法即可
+     * 1. 把 wmode 改成 opaque
+     * 2. 用 swfobject 或别的库重写此方法
+     *
+     * 这里不兼容 IE67 是因为要判断浏览器实在太蛋疼了。。。
      *
      * @param {string} id 实例 id
      * @param {string} flashUrl swf 文件地址
@@ -160,11 +163,13 @@ define(function (require, exports, module) {
      */
     Supload.createSWF = function(id, flashUrl, flashVars) {
 
-        var html = '<embed class="' + Supload.projectName.toLowerCase() + '" src="' + flashUrl
+        var html = '<embed class="' + Supload.projectName.toLowerCase()
+                 + '" src="' + flashUrl
                  + '" wmode="transparent" allowscriptaccess="always" flashvars="' + flashVars + '" />';
 
         var div = document.createElement('div');
         div.innerHTML = html;
+
         return div.firstChild;
     };
 

@@ -54,6 +54,8 @@ define(function (require, exports, module) {
          */
         init: function () {
 
+            var me = this;
+
             /**
              * 文件队列，格式如下：
              * {
@@ -63,37 +65,42 @@ define(function (require, exports, module) {
              *
              * @type {Object}
              */
-            this.fileQueue = { };
+            me.fileQueue = { };
 
-            var element = this.element;
+            var element = me.element;
 
             // 确保是文件上传控件
             if (!element.is(':file')) {
                 var input = $('<input type="file" />');
                 element.replaceWith(input);
-                element = this.element = input;
+                element = me.element = input;
             }
 
             // 完善元素属性
             var properties = { };
 
-            if (this.accept) {
-                properties.accept = formatAccept(this.accept);
+            if (me.accept) {
+                properties.accept = formatAccept(me.accept);
             }
 
-            if (this.multiple) {
+            if (me.multiple) {
                 properties.multiple = 'multiple';
             }
 
-            for (var name in properties) {
-                element.prop(name, properties[name]);
-            }
+            element.prop(properties);
 
-            var me = this;
-            var event = eventHandler.fileChange;
-            element.on(event.type, function (e) {
-                event.handler(me, e);
-            });
+            var onChange = function () {
+                setFiles(me, element.prop('files'));
+                if (typeof me.onFileChange === 'function') {
+                    me.onFileChange();
+                }
+            };
+
+            me.cache = {
+                onChange: onChange
+            };
+
+            element.change(onChange);
         },
 
         /**
@@ -117,30 +124,36 @@ define(function (require, exports, module) {
          */
         upload: function () {
 
-            disposeXHR(this);
+            var me = this;
 
-            var file = getCurrentFile(this);
-            if (!file || file.status !== AjaxUploader.STATUS_WAITING) {
+            var fileItem = getCurrentFileItem(me);
+            if (!fileItem || fileItem.status !== AjaxUploader.STATUS_WAITING) {
                 return;
             }
 
             var formData = new FormData();
-
             formData.append(
-                this.fileName,
-                file.nativeFile
+                me.fileName,
+                fileItem.nativeFile
             );
 
-            var data = this.data;
+            var data = me.data;
             if (data) {
                 for (var key in data) {
                     formData.append(key, data[key]);
                 }
             }
 
-            var xhr = createXHR(this);
-            this.fileQueue.xhr = xhr;
+            var xhr = new XMLHttpRequest();
+            me.cache.xhr = xhr;
 
+            $.each(eventHandler, function (index, item) {
+                xhr['on' + item.type] = function (e) {
+                    item.handler(me, e);
+                };
+            });
+
+            xhr.open('POST', me.action, true);
             xhr.send(formData);
         },
 
@@ -148,9 +161,9 @@ define(function (require, exports, module) {
          * 停止上传
          */
         stop: function () {
-            var file = getCurrentFile(this);
-            if (file && file.status === AjaxUploader.STATUS_UPLOADING) {
-                var xhr = this.fileQueue.xhr;
+            var fileItem = getCurrentFileItem(this);
+            if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
+                var xhr = this.cache.xhr;
                 if (xhr) {
                     xhr.abort();
                 }
@@ -175,12 +188,14 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            this.stop();
-            disposeXHR(this);
-            this.element.off();
+            var me = this;
 
-            this.element =
-            this.fileQueue = null;
+            me.stop();
+            me.element.off('change', me.cache.onChange);
+
+            me.cache =
+            me.element =
+            me.fileQueue = null;
         }
     };
 
@@ -234,22 +249,6 @@ define(function (require, exports, module) {
      * @type {number}
      */
     AjaxUploader.ERROR_CANCEL = 0;
-
-    /**
-     * 上传出现沙箱安全错误
-     *
-     * @const
-     * @type {number}
-     */
-    AjaxUploader.ERROR_SECURITY = 1;
-
-    /**
-     * 上传 IO 错误
-     *
-     * @const
-     * @type {number}
-     */
-    AjaxUploader.ERROR_IO = 2;
 
     /**
      * ext -> mimeType
@@ -368,6 +367,7 @@ define(function (require, exports, module) {
         pptx    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     };
 
+
     /**
      * 事件处理函数
      *
@@ -376,26 +376,16 @@ define(function (require, exports, module) {
      */
     var eventHandler = {
 
-        fileChange: {
-            type: 'change',
-            handler: function (uploader, e) {
-                setFiles(uploader, uploader.element.prop('files'));
-                if (typeof uploader.onFileChange === 'function') {
-                    uploader.onFileChange();
-                }
-            }
-        },
-
         uploadStart: {
             type: 'loadstart',
             handler: function (uploader, e) {
 
-                var file = getCurrentFile(uploader);
-                file.status = AjaxUploader.STATUS_UPLOADING;
+                var fileItem = getCurrentFileItem(uploader);
+                fileItem.status = AjaxUploader.STATUS_UPLOADING;
 
                 if (typeof uploader.onUploadStart === 'function') {
                     uploader.onUploadStart({
-                        fileItem: file
+                        fileItem: fileItem
                     });
                 }
             }
@@ -406,7 +396,7 @@ define(function (require, exports, module) {
             handler: function (uploader, e) {
                 if (typeof uploader.onUploadProgress === 'function') {
                     uploader.onUploadProgress({
-                        fileItem: getCurrentFile(uploader),
+                        fileItem: getCurrentFileItem(uploader),
                         uploaded: e.loaded,
                         total: e.total
                     });
@@ -418,23 +408,19 @@ define(function (require, exports, module) {
             type: 'load',
             handler: function (uploader, e) {
 
-                var file = getCurrentFile(uploader);
-                file.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
+                var fileItem = getCurrentFileItem(uploader);
+                fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
 
                 if (typeof uploader.onUploadSuccess === 'function') {
                     uploader.onUploadSuccess({
-                        fileItem: file,
+                        fileItem: fileItem,
                         responseText: e.target.responseText
                     });
                 }
 
-                if (typeof uploader.onUploadComplete === 'function') {
-                    uploader.onUploadComplete({
-                        fileItem: file
-                    });
-                }
+                uploadComplete(uploader, fileItem);
 
-                uploader.fileQueue.index = file.index + 1;
+                uploader.fileQueue.index = fileItem.index + 1;
                 uploader.upload();
             }
         },
@@ -443,20 +429,17 @@ define(function (require, exports, module) {
             type: 'error',
             handler: function (uploader, e, errorCode) {
 
-                var file = getCurrentFile(uploader);
-                file.status = AjaxUploader.STATUS_UPLOAD_ERROR;
+                var fileItem = getCurrentFileItem(uploader);
+                fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
                 if (typeof uploader.onUploadError === 'function') {
                     uploader.onUploadError({
-                        fileItem: file,
+                        fileItem: fileItem,
                         errorCode: errorCode
                     });
                 }
-                if (typeof uploader.onUploadComplete === 'function') {
-                    uploader.onUploadComplete({
-                        fileItem: file
-                    });
-                }
+
+                uploadComplete(uploader, fileItem);
             }
         },
 
@@ -469,69 +452,28 @@ define(function (require, exports, module) {
     };
 
     /**
-     * xhr 对象需要监听的事件
-     *
-     * @private
-     * @type {Array.<string>}
-     */
-    var xhrEvents = [ 'uploadSuccess', 'uploadError', 'uploadStop' ];
-
-    /**
-     * xhr.upload 对象需要监听的事件
-     *
-     * @private
-     * @type {Array.<string>}
-     */
-    var uploadEvents = [ 'uploadStart', 'uploadProgress' ];
-
-    /**
-     * 创建 XHR 对象
+     * 上传完成后执行
      *
      * @private
      * @param {AjaxUploader} uploader
-     * @return {XMLHttpRequest}
+     * @param {Object} fileItem
      */
-    function createXHR(uploader) {
-        var xhr = new XMLHttpRequest();
-        var upload = xhr.upload;
+    function uploadComplete(uploader, fileItem) {
 
-        $.each(xhrEvents, function (index, name) {
-            var item = eventHandler[name];
-            xhr['on' + item.type] = function (e) {
-                item.handler(uploader, e);
-            };
-        });
-        $.each(uploadEvents, function (index, name) {
-            var item = eventHandler[name];
-            upload['on' + item.type] = function (e) {
-                item.handler(uploader, e);
-            };
-        });
+        var cache = uploader.cache;
+        var xhr = cache.xhr;
 
-        xhr.open('POST', uploader.action, true);
-
-        return xhr;
-    }
-
-    /**
-     * 销毁 XHR 对象
-     *
-     * @private
-     * @param {AjaxUploader} uploader
-     */
-    function disposeXHR(uploader) {
-        var xhr = uploader.fileQueue.xhr;
         if (xhr) {
-
-            var upload = xhr.upload;
-            $.each(xhrEvents, function (index, name) {
-                xhr['on' + eventHandler[name].type] = null;
+            $.each(eventHandler, function (index, item) {
+                xhr['on' + item.type] = null;
             });
-            $.each(uploadEvents, function (index, name) {
-                upload['on' + eventHandler[name].type] = null;
-            });
+            cache.xhr = null;
+        }
 
-            delete uploader.fileQueue.xhr;
+        if (typeof uploader.onUploadComplete === 'function') {
+            uploader.onUploadComplete({
+                fileItem: fileItem
+            });
         }
     }
 
@@ -567,7 +509,7 @@ define(function (require, exports, module) {
      * @param {AjaxUploader} uploader
      * @return {?Object}
      */
-    function getCurrentFile(uploader) {
+    function getCurrentFileItem(uploader) {
         var fileQueue = uploader.fileQueue;
         var index = fileQueue.index;
         if (fileQueue.files && typeof index === 'number') {

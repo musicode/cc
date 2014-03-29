@@ -358,11 +358,9 @@ define(function (require, exports, module) {
      * @return {jQuery}
      */
     function getPageElement() {
-        var doc = $(document.documentElement);
-        var body = $(document.body);
-        return doc.prop('scrollHeight') > body.prop('scrollHeight')
-             ? doc
-             : body;
+        var documentElement = document.documentElement;
+        var body = document.body;
+        return $(documentElement.scrollHeight > body.scrollHeight ? documentElement : body);
     }
 
     /**

@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      * http://yiminghe.iteye.com/blog/508999
      */
 
-     'use strict';
+    'use strict';
 
     var isOldIE = !window.getSelection;
 

@@ -48,20 +48,21 @@ define(function (require, exports, module) {
          */
         init: function () {
 
-            var element = this.element;
+            var me = this;
+            var element = me.element;
 
             if (element.size() > 1) {
                 throw new Error('[Placeholder] options.element.size() should equals 1.');
             }
 
             // 确定运行时类型
-            var isNative = supportPlaceholder && this.nativeFirst;
+            var isNative = supportPlaceholder && me.nativeFirst;
 
             // 把值取出来先，避免 attribute 设置为 'placeholder' 各种蛋疼...
-            var value = element.attr(this.attribute) || '';
+            var value = element.attr(me.attribute) || '';
 
             // 统一放到 cache 里
-            var cache = this.cache = {
+            var cache = me.cache = {
                 value: value,
                 isNative: isNative
             };
@@ -69,24 +70,23 @@ define(function (require, exports, module) {
             // 未使用原生特性
             if (!isNative) {
 
-                var element = this.element;
-                var wrapperElement = $(this.template);
+                var wrapperElement = $(me.template);
 
                 element.replaceWith(wrapperElement);
                 wrapperElement.append(element);
 
-                var placeholderElement = wrapperElement.find(this.placeholderSelector);
+                var placeholderElement = wrapperElement.find(me.placeholderSelector);
                 placeholderElement.css(getInputStyle(element));
 
-                element.on('focus', this, onRefresh);
-                element.on('blur', this, onRefresh);
-                wrapperElement.on('click', this, onFocus);
+                element.on('focus', me, onRefresh);
+                element.on('blur', me, onRefresh);
+                wrapperElement.on('click', me, onFocus);
 
                 cache.wrapperElement = wrapperElement;
                 cache.placeholderElement = placeholderElement;
             }
 
-            this.setPlaceholder(value);
+            me.setPlaceholder(value);
         },
 
         /**
@@ -106,11 +106,12 @@ define(function (require, exports, module) {
         setPlaceholder: function (placeholder) {
             placeholder = placeholder || '';
 
-            var cache = this.cache;
+            var me = this;
+            var cache = me.cache;
             cache.value = placeholder;
 
-            var element = this.element;
-            var attribute = this.attribute;
+            var element = me.element;
+            var attribute = me.attribute;
 
             if (cache.isNative) {
                 if (attribute !== 'placeholder') {
@@ -119,7 +120,7 @@ define(function (require, exports, module) {
             }
             else {
                 element.attr('placeholder', '');
-                apply(this);
+                apply(me);
             }
         },
 
@@ -127,17 +128,18 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            var cache = this.cache;
+            var me = this;
+            var cache = me.cache;
 
             if (!cache.isNative) {
-                var element = this.element;
+                var element = me.element;
                 element.off('focus', onRefresh);
                 element.off('blur', onRefresh);
                 cache.wrapperElement.off('click', onFocus);
             }
 
-            this.cache =
-            this.element = null;
+            me.cache =
+            me.element = null;
         }
     };
 

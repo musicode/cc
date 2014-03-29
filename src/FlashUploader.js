@@ -4,16 +4,16 @@
  */
 define(function (require, exports, module) {
 
-    'use strict';
-
-    require('./supload/supload');
-
     /**
      * 如果出现 flash 跨域问题，有两种解决办法：
      *
      * 1. 可把 supload.swf 放到自己的域下，修改 FlashUploader.defaultOptions.flashUrl
      * 2. 放一个 crossdomain.xml 跨域配置文件
      */
+
+    'use strict';
+
+    require('./supload/supload');
 
     /**
      * 使用 flash 上传
@@ -48,16 +48,18 @@ define(function (require, exports, module) {
          */
         init: function () {
 
+            var me = this;
+
             var swfOptions = {
-                flashUrl: this.flashUrl,
-                element: this.element[0],
-                action: this.action,
-                accept: this.accept ? this.accept.join(',') : '',
-                multiple: this.multiple,
-                data: this.data,
-                fileName: this.fileName,
+                flashUrl: me.flashUrl,
+                element: me.element[0],
+                action: me.action,
+                accept: me.accept ? me.accept.join(',') : '',
+                multiple: me.multiple,
+                data: me.data,
+                fileName: me.fileName,
                 customSettings: {
-                    uploader: this
+                    uploader: me
                 }
             };
 
@@ -67,7 +69,7 @@ define(function (require, exports, module) {
                 swfOptions[onType] = eventHandler[type];
             }
 
-            this.supload = new Supload(swfOptions);
+            me.supload = new Supload(swfOptions);
         },
 
         /**

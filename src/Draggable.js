@@ -51,8 +51,10 @@ define(function (require, exports, module) {
          */
         init: function () {
 
-            var element = this.element;
-            var container = this.container;
+            var me = this;
+
+            var element = me.element;
+            var container = me.container;
             var isChild = contains(container[0], element[0]);
 
             // 实际定位的容器
@@ -93,7 +95,7 @@ define(function (require, exports, module) {
                 }
             }
 
-            this.cache = {
+            me.cache = {
                 isChild: isChild,
                 position: position,
                 point: {
@@ -103,15 +105,17 @@ define(function (require, exports, module) {
             };
 
             element.css(style);
-            element.on('mousedown', this, onDragStart);
+            element.on('mousedown', me, onDragStart);
         },
 
         /**
          * 销毁对象
          */
         dispose: function () {
-            var element = this.element;
-            var cache = this.cache;
+            var me = this;
+
+            var element = me.element;
+            var cache = me.cache;
 
             if (cache.onDragEnd) {
                 cache.onDragEnd();
@@ -119,9 +123,9 @@ define(function (require, exports, module) {
             element.off('mousedown', onDragStart);
             element.css('position', cache.position);
 
-            this.cache =
-            this.element =
-            this.container = null;
+            me.cache =
+            me.element =
+            me.container = null;
         }
     };
 
@@ -227,8 +231,8 @@ define(function (require, exports, module) {
         // 避免出现选区
         disableSelection(cache);
 
-        doc.on('mousemove', (cache.onDrag = onDrag(draggable)));
-        doc.on('mouseup', (cache.onDragEnd = onDragEnd(draggable)));
+        doc.on('mousemove', cache.onDrag = onDrag(draggable));
+        doc.on('mouseup', cache.onDragEnd = onDragEnd(draggable));
 
         if (typeof draggable.onDragStart === 'function') {
             draggable.onDragStart(point);

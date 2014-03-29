@@ -409,6 +409,7 @@ define(function (require, exports, module) {
             var addBreaker = condition.addBreaker || $.noop;
             var removeBreaker = function () {
                 cache.removeBreaker = null;
+                clearDelay(popup);
                 if (typeof condition.removeBreaker === 'function') {
                     condition.removeBreaker(popup, breaker);
                 }

@@ -228,6 +228,8 @@ define(function (require, exports, module) {
 
             instance.onBeforeHide = null;
 
+            sleep(1000000);
+
             $('#blur-button').trigger('click');
             expect(onBeforeHide).toBe(1);
             expect(onAfterHide).toBe(2);

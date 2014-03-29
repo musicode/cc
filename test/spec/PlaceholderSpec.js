@@ -13,7 +13,7 @@ define(function (require, exports, module) {
         document.body.innerHTML = '<input type="text" placeholder="abc" />';
     }
 
-    describe('placeholderSelector', function () {
+    describe('placeholder', function () {
 
         it('init', function () {
 
@@ -34,16 +34,18 @@ define(function (require, exports, module) {
 
             reset();
 
+            var element = $('input');
             var instance = new Placeholder({
-                element: $('input')
+                element: element
             });
 
             var placeholderElement = $(instance.placeholderSelector);
+for (var i = 0; i < 100000000; i++) {}
 
-            instance.element.focus();
+            element.focus();
             expect(placeholderElement.css('display')).toBe('none');
 
-            instance.element.blur();
+            element.blur();
             expect(placeholderElement.css('display')).not.toBe('none');
 
             $('#placeholder-wrapper').click();

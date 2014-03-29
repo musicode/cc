@@ -120,8 +120,9 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            var cache = this.cache;
-            var element = this.element;
+            var me = this;
+            var cache = me.cache;
+            var element = me.element;
 
             // 解绑事件
             var events = cache.events;
@@ -133,8 +134,8 @@ define(function (require, exports, module) {
             element.val = cache.val;
 
             // 垃圾回收
-            this.cache =
-            this.element = null;
+            me.cache =
+            me.element = null;
         }
     };
 

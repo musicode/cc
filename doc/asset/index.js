@@ -42,7 +42,9 @@ define(function (require, exports) {
      * @private
      * @type {String}
      */
-    var domain = document.location.origin;
+    var domain = document.location.protocol
+               + '//'
+               + document.location.host;
 
     /**
      * 收集 codemirror 实例，便于销毁

@@ -37,13 +37,14 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
-            var element = this.element;
+            var me = this;
+            var element = me.element;
             if (typeof element !== 'string') {
                 initMenuElement(element);
             }
 
-            this.cache = { };
-            this.container.on('contextmenu', this, popupMenu);
+            me.cache = { };
+            me.container.on('contextmenu', me, popupMenu);
         },
 
         /**
@@ -58,13 +59,15 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            if (currentMenu === this) {
+            var me = this;
+
+            if (currentMenu === me) {
                 currentMenu = null;
             }
 
-            var element = this.element;
+            var element = me.element;
 
-            var cache = this.cache;
+            var cache = me.cache;
             if (cache.popup) {
                 element = cache.element;
                 cache.popup.dispose();
@@ -74,11 +77,11 @@ define(function (require, exports, module) {
                 element.remove();
             }
 
-            this.container.off('contextmenu', popupMenu);
+            me.container.off('contextmenu', popupMenu);
 
-            this.cache =
-            this.element =
-            this.container = null;
+            me.cache =
+            me.element =
+            me.container = null;
         }
     };
 

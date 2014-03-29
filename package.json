@@ -1,7 +1,8 @@
 {
   "name": "cobble",
-  "version": "0.0.2",
-  "description": "tools for web develop",
+  "author": "zhujl",
+  "version": "0.0.3",
+  "description": "javascript tools for web develop",
   "main": "",
   "directories": {
     "doc": "doc"
@@ -19,12 +20,12 @@
     "url": "https://github.com/zhujl/cobble"
   },
   "keywords": [
+    "javascript",
     "tool"
   ],
-  "author": "zhujl",
-  "license": "BSD-2-Clause",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/zhujl/cobble/issues"
   },
-  "homepage": "https://github.com/zhujl/cobble"
+  "homepage": "http://zhujl.com/cobble"
 }
