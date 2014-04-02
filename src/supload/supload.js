@@ -257,7 +257,7 @@ define(function (require, exports, module) {
      * @return {Object}
      */
     function getCookie() {
-        var cookie = document.cookie
+        var cookie = document.cookie;
 
         if (cookie.indexOf('"') === 0) {
             // This is a quoted cookie as according to RFC2068, unescape...
@@ -281,7 +281,7 @@ define(function (require, exports, module) {
                 result[trim(pair[0])] = trim(pair[1]);
             }
         }
-        catch (e) { };
+        catch (e) { }
 
         return result;
     }

@@ -330,7 +330,7 @@ define(function (require, exports, module) {
     if (supportSelectStart) {
         disableSelection = function (cache) {
             var target = doc[0];
-            cache.selectStart = target.onselectstart;;
+            cache.selectStart = target.onselectstart;
             target.onselectstart = function () {
                 return false;
             };
@@ -436,7 +436,7 @@ define(function (require, exports, module) {
                 return false;
             }
         }
-        while (childElement[0])
+        while (childElement[0]);
     }
 
     /**

@@ -457,7 +457,7 @@ define(function (require, exports, module) {
         var testPlacement = { };
         $.each(keys(placementMap), function (index, placement) {
             testPlacement[placement] = 0;
-        })
+        });
 
         // 尝试方法
         var test = function (placement) {

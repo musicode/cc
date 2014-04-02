@@ -82,7 +82,7 @@ define (function (require, exports, module) {
                 }
             );
         }
-        catch (e) { };
+        catch (e) { }
 
         return result;
     }

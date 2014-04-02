@@ -21,7 +21,7 @@ define(function (require, exports, module) {
     var firefoxExpr = /(firefox)[ \/]([\w.]+)/;
     var operaExpr = /(opera)(?:.*version)?[ \/]([\w.]+)/;
 
-    var safariExpr = /version[ \/]([\w.]+) safari/
+    var safariExpr = /version[ \/]([\w.]+) safari/;
 
     var oldIEExpr = /msie ([\w.]+)/;
     var newIEExpr = /trident[ \/]([\w.]+)/;

@@ -21,15 +21,15 @@ define(function (require, exports, module) {
     function getCharUTF8Length(x) {
         var code = x.charCodeAt(0);
 
-        if ((code & ~0x7F) == 0) {
+        if ((code & ~0x7F) === 0) {
             return 1;
         }
 
-        if ((code & ~0x07FF) == 0) {
+        if ((code & ~0x07FF) === 0) {
             return 2;
         }
 
-        if ((code & ~0xFFFF) == 0) {
+        if ((code & ~0xFFFF) === 0) {
             return 3;
         }
 
