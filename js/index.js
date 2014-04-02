@@ -44,7 +44,12 @@ define(function (require, exports) {
      */
     var domain = document.location.protocol
                + '//'
-               + document.location.host;
+               + document.location.host
+               + document.location.pathname;
+
+    if (domain.charAt(domain.length - 1) === '/') {
+        domain = domain.substr(0, domain.length - 1);
+    }
 
     /**
      * 收集 codemirror 实例，便于销毁
@@ -118,7 +123,7 @@ define(function (require, exports) {
                 '<html>',
                     '<head>',
                         '<meta charset="utf-8" />',
-                        '<link rel="stylesheet" href="' + domain + '/doc/asset/css/normalize.css" />',
+                        '<link rel="stylesheet" href="' + domain + '/css/normalize.css" />',
                         '<style>',
                             'body { font-size: 13px; }',
                             css || '',
@@ -126,9 +131,9 @@ define(function (require, exports) {
                     '</head>',
                     '<body>',
                         html || '',
-                        '<script src="' + domain + '/doc/asset/lib/jquery.js"></script>',
-                        '<script src="' + domain + '/doc/asset/esl/esl.js"></script>',
-                        '<script src="' + domain + '/doc/asset/esl/config.js"></script>',
+                        '<script src="' + domain + '/js/lib/jquery.js"></script>',
+                        '<script src="' + domain + '/js/esl/esl.js"></script>',
+                        '<script src="' + domain + '/js/esl/config.js"></script>',
                         '<script>',
                         js || '',
                         '</script>',
