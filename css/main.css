@@ -1,0 +1,157 @@
+@import 'normalize.css';
+
+@import 'animate.css';
+
+@import 'codemirror.css';
+
+@import 'mbo.css';
+.tab-nav {
+  padding: 0 2em;
+}
+.nav-item {
+  background-color: #bb8080;
+  border-bottom: none;
+  color: #fff8f5;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 1.2em;
+  font-family: 'Helvetica Neue', 'Hiragino Sans GB', 'Microsoft Yahei', 'WenQuanYi Micro Hei';
+  padding: 0.4em 1em;
+  margin-right: 0.5em;
+}
+.nav-item:hover {
+  color: #ffffff;
+}
+.nav-item.active {
+  background-color: #FFF;
+  color: #bb8080;
+}
+.tab-content {
+  background-color: #FFF;
+  padding: 2em;
+  box-shadow: 1px 1px 1px #CECECE;
+}
+.content-item {
+  display: none;
+}
+.content-item.active {
+  display: block;
+}
+.content-item[data-tab="demo"] .action {
+  margin-top: 1em;
+}
+.content-item[data-tab="demo"] > label {
+  background-color: #62768A;
+  color: #FFF;
+  display: inline-block;
+  font-weight: bold;
+  margin: 5px 0;
+  padding: 5px 15px;
+}
+.content-item[data-tab="demo"] > label:first-child {
+  margin-top: 0;
+}
+button {
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#ffffff), to(#f6f6f6));
+  background-image: -webkit-linear-gradient(top, #ffffff, #f6f6f6);
+  background-image: -moz-linear-gradient(top, #ffffff, #f6f6f6);
+  background-image: linear-gradient(to bottom, #ffffff, #f6f6f6);
+  background-repeat: repeat-x;
+  border-radius: 2px;
+  border: 1px solid #DDD;
+  padding: 8px 14px;
+}
+button:hover {
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#f6f6f6), to(#ffffff));
+  background-image: -webkit-linear-gradient(top, #f6f6f6, #ffffff);
+  background-image: -moz-linear-gradient(top, #f6f6f6, #ffffff);
+  background-image: linear-gradient(to bottom, #f6f6f6, #ffffff);
+  background-repeat: repeat-x;
+}
+button:focus {
+  outline: none;
+}
+button.fluid {
+  width: 100%;
+}
+.article em {
+  font-style: normal;
+  text-decoration: underline;
+}
+.article ul {
+  list-style-type: square;
+}
+.article li {
+  height: 1.8em;
+  line-height: 1.8em;
+}
+html,
+body {
+  font-size: 13px;
+}
+body {
+  background-color: #ece2e2;
+  color: #555555;
+  padding: 30px;
+  -webkit-transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+}
+a {
+  color: #2f97a7;
+}
+a:hover {
+  color: #68c6d4;
+}
+sidebar {
+  background-color: #744d6c;
+  font-weight: bold;
+  width: 200px;
+  position: absolute;
+  top: 30px;
+  left: 30px;
+}
+sidebar a {
+  color: #c8acc2;
+  cursor: pointer;
+  display: block;
+  font-size: 1.2em;
+  padding: 10px 20px;
+  position: relative;
+  text-shadow: 1px 1px 1px #241324;
+}
+sidebar a:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 1px;
+  background-image: -webkit-gradient(left, linear, 0 0, 0 100%, from(rgba(0, 0, 0, 0.1)), color-stop(50%, rgba(0, 0, 0, 0.25)), to(rgba(0, 0, 0, 0.1)));
+  background-image: -webkit-linear-gradient(left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.1));
+  background-image: -moz-linear-gradient(left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.1));
+  background-image: linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.1));
+  background-repeat: no-repeat;
+}
+sidebar a:first-child:after {
+  display: none;
+}
+sidebar a:hover {
+  background-color: #F5EDED;
+  color: #744d6c;
+  text-shadow: none;
+  -webkit-transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+}
+sidebar a.active {
+  background-color: #ece2e2;
+  color: #744d6c;
+  cursor: text;
+  text-shadow: none;
+}
+#main {
+  position: relative;
+  margin-left: 230px;
+}
+.header {
+  font-family: 'Helvetica Neue', 'Hiragino Sans GB', 'Microsoft Yahei', 'WenQuanYi Micro Hei';
+}
