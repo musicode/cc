@@ -44,6 +44,22 @@ define(function (require, exports) {
      */
     var editors = [ ];
 
+    /**
+     * 当前的域名
+     *
+     * @private
+     * @type {String}
+     */
+    var pageUrl = document.location.protocol
+               + '//'
+               + document.location.host
+               + document.location.pathname;
+
+    if (pageUrl.charAt(pageUrl.length - 1) === '/') {
+        pageUrl = pageUrl.substr(0, pageUrl.length - 1);
+    }
+
+
     // 配置 codemirror
     var defaultOptions = CodeMirror.defaults;
     defaultOptions.mode = 'javascript';
