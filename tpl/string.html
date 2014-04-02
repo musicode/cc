@@ -1,0 +1,62 @@
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
+
+<div class="tab-content">
+
+    <div class="content-item active article" data-tab="intro">
+        utf8 字符串操作
+    </div>
+
+    <div class="content-item" data-tab="demo">
+
+        <label>js</label>
+        <textarea id="string-js">
+require(
+
+    [ 'cobble/string' ],
+
+    function (string) {
+
+        var html = [ ];
+
+        var str1 = '啊a1ba好厉AS害MA撒旦，。》【】';
+        html.push(
+              str1 + ' => 长度为：' + string.getLength(str1)
+        );
+
+        var str2 = '，。.';
+        html.push(
+            str2 + ' => 长度为：' + string.getLength(str2)
+        );
+
+        var str3 = '这是一个截断测试，你发现了吗';
+        html.push(
+            str3 + ' => '+ string.truncate(str3, 5)
+        );
+
+        document.body.innerHTML = html.join('<br />');
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid" data-js="#string-js">运行</button>
+        </div>
+    </div>
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+string.getLength('xxx');                            // 获取字符串长度，一个中文字符长度为 2
+string.truncate('xxx', 3, '结束字符，默认是...');   // 截断字符串，一个中文字符长度为 2
+        </textarea>
+    </div>
+</div>

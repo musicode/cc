@@ -1,0 +1,185 @@
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="config">
+        配置
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
+
+<div class="tab-content">
+
+    <div class="content-item active article" data-tab="intro">
+        <p>把一个元素定位到另一个元素的某个位置</p>
+
+        <p>如居中定位就是把一个元素定位到页面（document.body）的正中心</p>
+    </div>
+
+    <div class="content-item" data-tab="demo">
+
+        <label>html</label>
+        <textarea id="position-html" data-mode="html">
+<div id="center" class="rect"></div>
+
+<div id="top-left" class="rect"></div>
+<div id="top-center" class="rect"></div>
+<div id="top-right" class="rect"></div>
+
+<div id="middle-left" class="rect"></div>
+<div id="middle-center" class="rect"></div>
+<div id="middle-right" class="rect"></div>
+
+<div id="bottom-left" class="rect"></div>
+<div id="bottom-center" class="rect"></div>
+<div id="bottom-right" class="rect"></div>
+        </textarea>
+
+        <label>css</label>
+        <textarea id="position-css" data-mode="css">
+html,
+body {
+    height: 100%;
+}
+.rect {
+    background-color: #2E8DE4;
+    width: 50px;
+    height: 50px;
+    position: absolute;
+}
+#center {
+    background-color: #F3E1B1;
+    width: 150px;
+    height: 150px;
+}
+        </textarea>
+
+        <label>js</label>
+        <textarea id="position-js">
+require(
+
+    [ 'cobble/position' ],
+
+    function (position) {
+
+        var $center = $('#center');
+        var $topLeft = $('#top-left')
+        var $topCenter = $('#top-center');
+        var $topRight = $('#top-right');
+        var $middleLeft = $('#middle-left');
+        var $middleCenter = $('#middle-center');
+        var $middleRight = $('#middle-right');
+        var $bottomLeft = $('#bottom-left');
+        var $bottomCenter = $('#bottom-center');
+        var $bottomRight = $('#bottom-right');
+
+        position.middleCenter({
+            element: $center
+        });
+
+        position.topLeft({
+            element: $topLeft,
+            attachment: $center
+        });
+
+        position.topCenter({
+            element: $topCenter,
+            attachment: $center
+        });
+
+        position.topRight({
+            element: $topRight,
+            attachment: $center
+        });
+
+        position.middleLeft({
+            element: $middleLeft,
+            attachment: $center
+        });
+
+        position.middleCenter({
+            element: $middleCenter,
+            attachment: $center
+        });
+
+        position.middleRight({
+            element: $middleRight,
+            attachment: $center
+        });
+
+        position.bottomLeft({
+            element: $bottomLeft,
+            attachment: $center
+        });
+
+        position.bottomCenter({
+            element: $bottomCenter,
+            attachment: $center
+        });
+
+        position.bottomRight({
+            element: $bottomRight,
+            attachment: $center
+        });
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid"
+                    data-html="#position-html"
+                    data-css="#position-css"
+                    data-js="#position-js">运行</button>
+        </div>
+    </div>
+
+    <div class="content-item" data-tab="config">
+        <textarea>
+{
+    element: $('xx'),                 // 需要定位的元素
+    attachment: $(document.body),     // 可选，参照物元素
+                                      //     默认是 $(document.body)
+
+    x: 10,                            // 定位元素的定位点横坐标
+                                      // 可选值包括 left, center, right, xx%(百分比), xx(数字)
+    y: 10,                            // 定位元素的定位点纵坐标
+                                      // 可选值包括 top, middle, bottom, yy%(百分比), yy(数字)
+
+    attachmentX: 10,                  // 参照物元素的参照点横坐标，可选值同 x
+    attachmentY: 10,                  // 参照物元素的参照点纵坐标，可选值同 y
+
+    offsetX: 0,                       // 可选，定位元素的横坐标偏移量
+    offsetY: 0                        // 可选，定位元素的纵坐标偏移量
+}
+        </textarea>
+    </div>
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+// 真正的定位函数
+position.pin(options);
+
+// 下面是一些快捷方法
+// 只需要设置 element/attachment 即可
+// 如果有偏移需求，可再设置 offsetX/offsetY
+position.topLeft(options);
+position.topCenter(options);
+position.topRight(options);
+
+position.middleLeft(options);
+position.middleCenter(options);
+position.middleRight(options);
+
+position.bottomLeft(options);
+position.bottomCenter(options);
+position.bottomRight(options);
+        </textarea>
+    </div>
+
+</div>
+

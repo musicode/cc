@@ -1,0 +1,104 @@
+// 清除浮动
+.clearfix() {
+    &:before,
+    &:after {
+        display: table;
+        line-height: 0;
+        content: "";
+    }
+    &:after {
+        clear: both;
+    }
+    *zoom: 1;
+}
+
+// 长文本以省略号截断
+// 需自行设置 max-width
+.text-ellipsis() {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// 不透明度 如 0.5
+.opacity(@opacity) {
+    opacity: @opacity;
+    // IE8 filter
+    @opacity-ie: (@opacity * 100);
+    filter: ~"alpha(opacity=@{opacity-ie})";
+}
+
+// 下面是 CSS3 特性
+
+.border-radius(@radius) when not(@radius = 0) {
+    border-radius: @radius
+}
+// 设置 上下左右 圆角
+.border-top-radius(@radius) when not(@radius = 0) {
+    border-top-right-radius: @radius;
+    border-top-left-radius: @radius;
+}
+.border-right-radius(@radius) when not(@radius = 0) {
+    border-bottom-right-radius: @radius;
+    border-top-right-radius: @radius;
+}
+.border-bottom-radius(@radius) when not(@radius = 0) {
+    border-bottom-right-radius: @radius;
+    border-bottom-left-radius: @radius;
+}
+.border-left-radius(@radius) when not(@radius = 0) {
+    border-bottom-left-radius: @radius;
+    border-top-left-radius: @radius;
+}
+
+.ease(@time: 0.3s) {
+    -webkit-transition: background @time ease, border @time ease, color @time ease;
+    transition: background @time ease, border @time ease, color @time ease;
+}
+
+// 各种渐变
+.gradient-horizontal(@start-color: #555, @end-color: #333) when (@start-color = @end-color) {
+    background-color: @start-color;
+}
+.gradient-horizontal(@start-color: #555, @end-color: #333) when not(@start-color = @end-color) {
+    background-image: -moz-linear-gradient(left, @start-color, @end-color); // FF 3.6+
+    background-image: -webkit-gradient(linear, 0 0, 100% 0, from(@start-color), to(@end-color)); // Safari 4+, Chrome 2+
+    background-image: -webkit-linear-gradient(left, @start-color, @end-color); // Safari 5.1+, Chrome 10+
+    background-image: -o-linear-gradient(left, @start-color, @end-color); // Opera 11.10
+    background-image: linear-gradient(to right, @start-color, @end-color); // Standard, IE10
+    background-repeat: repeat-x;
+}
+.gradient-horizontal-three-colors(@start-color: #00b3ee, @midColor: #7a43b6, @colorStop: 50%, @end-color: #c3325f) {
+    background-image: -webkit-gradient(left, linear, 0 0, 0 100%, from(@start-color), color-stop(@colorStop, @midColor), to(@end-color));
+    background-image: -webkit-linear-gradient(left, @start-color, @midColor @colorStop, @end-color);
+    background-image: -moz-linear-gradient(left, @start-color, @midColor @colorStop, @end-color);
+    background-image: linear-gradient(to right, @start-color, @midColor @colorStop, @end-color);
+    background-repeat: no-repeat;
+}
+
+.gradient-vertical(@start-color: #555, @end-color: #333) when (@start-color = @end-color) {
+    background-color: @start-color;
+}
+.gradient-vertical(@start-color: #555, @end-color: #333) when not(@start-color = @end-color) {
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(@start-color), to(@end-color)); // Safari 4+, Chrome 2+
+    background-image: -webkit-linear-gradient(top, @start-color, @end-color); // Safari 5.1+, Chrome 10+
+    background-image: -moz-linear-gradient(top, @start-color, @end-color); // FF 3.6+
+    background-image: linear-gradient(to bottom, @start-color, @end-color); // Standard, IE10
+    background-repeat: repeat-x;
+}
+.gradient-vertical-three-colors(@start-color: #00b3ee, @midColor: #7a43b6, @colorStop: 50%, @end-color: #c3325f) {
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(@start-color), color-stop(@colorStop, @midColor), to(@end-color));
+    background-image: -webkit-linear-gradient(@start-color, @midColor @colorStop, @end-color);
+    background-image: -moz-linear-gradient(top, @start-color, @midColor @colorStop, @end-color);
+    background-image: linear-gradient(@start-color, @midColor @colorStop, @end-color);
+    background-repeat: no-repeat;
+}
+
+.gradient-directional(@start-color: #555, @end-color: #333, @deg: 45deg) {
+    background-repeat: repeat-x;
+    background-image: -webkit-linear-gradient(@deg, @start-color, @end-color); // Safari 5.1+, Chrome 10+
+    background-image: -moz-linear-gradient(@deg, @start-color, @end-color); // FF 3.6+
+    background-image: linear-gradient(@deg, @start-color, @end-color); // Standard, IE10
+}
+
+
