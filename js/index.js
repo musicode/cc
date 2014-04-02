@@ -37,21 +37,6 @@ define(function (require, exports) {
     var activeClass = 'active';
 
     /**
-     * 当前的域名
-     *
-     * @private
-     * @type {String}
-     */
-    var domain = document.location.protocol
-               + '//'
-               + document.location.host
-               + document.location.pathname;
-
-    if (domain.charAt(domain.length - 1) === '/') {
-        domain = domain.substr(0, domain.length - 1);
-    }
-
-    /**
      * 收集 codemirror 实例，便于销毁
      *
      * @private
@@ -123,7 +108,7 @@ define(function (require, exports) {
                 '<html>',
                     '<head>',
                         '<meta charset="utf-8" />',
-                        '<link rel="stylesheet" href="' + domain + '/css/normalize.css" />',
+                        '<link rel="stylesheet" href="' + pageUrl + '/css/normalize.css" />',
                         '<style>',
                             'body { font-size: 13px; }',
                             css || '',
@@ -131,9 +116,9 @@ define(function (require, exports) {
                     '</head>',
                     '<body>',
                         html || '',
-                        '<script src="' + domain + '/js/lib/jquery.js"></script>',
-                        '<script src="' + domain + '/js/esl/esl.js"></script>',
-                        '<script src="' + domain + '/js/esl/config.js"></script>',
+                        '<script src="' + pageUrl + '/js/lib/jquery.js"></script>',
+                        '<script src="' + pageUrl + '/js/esl/esl.js"></script>',
+                        '<script src="' + pageUrl + '/js/esl/config.js"></script>',
                         '<script>',
                         js || '',
                         '</script>',

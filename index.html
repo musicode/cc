@@ -43,9 +43,24 @@
 
         <script>
 
+        /**
+         * 当前的域名
+         *
+         * @private
+         * @type {String}
+         */
+        var pageUrl = document.location.protocol
+                   + '//'
+                   + document.location.host
+                   + document.location.pathname;
+
+        if (pageUrl.charAt(pageUrl.length - 1) === '/') {
+            pageUrl = pageUrl.substr(0, pageUrl.length - 1);
+        }
+
         require(
 
-            [ './cobble/js/index' ],
+            [ pageUrl + '/js/index' ],
 
             function (index) {
                 index.init('intro');
