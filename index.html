@@ -31,7 +31,6 @@
         </div>
 
         <script src="js/lib/jquery2.js"></script>
-
         <script src="js/esl/esl.js"></script>
         <script src="js/esl/config.js"></script>
         <script src="js/index.js"></script>
@@ -58,9 +57,16 @@
             pageUrl = pageUrl.substr(0, pageUrl.length - 1);
         }
 
+
+        require.config({
+            paths: {
+                page: pageUrl
+            }
+        });
+
         require(
 
-            [ pageUrl + '/js/index' ],
+            [ 'page/js/index' ],
 
             function (index) {
                 index.init('intro');
