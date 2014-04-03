@@ -1,0 +1,59 @@
+<div class="tab-nav">
+    <a class="nav-item active" data-tab="intro">
+        简介
+    </a>
+    <a class="nav-item" data-tab="demo">
+        例子
+    </a>
+    <a class="nav-item" data-tab="usage">
+        使用方法
+    </a>
+</div>
+
+<div class="tab-content">
+
+    <div class="content-item active article" data-tab="intro">
+
+        使用 UA 检测浏览器 <em>类型</em> 和 <em>版本</em>
+
+    </div>
+
+    <div class="content-item" data-tab="demo">
+
+        <label>js</label>
+        <textarea id="browser-js">
+require(
+
+    [ 'cobble/browser' ],
+
+    function (browser) {
+
+        document.body.innerHTML = 'browser name: ' + browser.name
+                                + '<br />'
+                                + 'browser version: ' + browser.version;
+
+    }
+);
+        </textarea>
+
+        <div class="action">
+            <button class="run-code fluid" data-js="#browser-js">运行</button>
+        </div>
+
+    </div>
+
+
+    <div class="content-item" data-tab="usage">
+        <textarea>
+// browser 对外暴露以下 plain object：
+{
+    name: 'ie',     // 可选值有 ie, chrome, firefox, safari, opera
+                    // 此属性便于用 switch 判断多种浏览器
+    ie: true,       // key 和 name 属性值相同
+                    // 此属性便于用 if 判断某一种浏览器
+    version: '9.0'  // 浏览器版本
+}
+        </textarea>
+    </div>
+
+</div>
