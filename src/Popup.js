@@ -424,9 +424,7 @@ define(function (require, exports, module) {
             cache.delayTask = setTimeout(
                 function () {
                     removeBreaker();
-                    if (clearDelay(popup)) {
-                        handler();
-                    }
+                    handler();
                 },
                 time
             );
