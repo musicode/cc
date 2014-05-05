@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var cookie = require('cobble/cookie');
+    var cookie = require('cobble/util/cookie');
 
     describe('cookie', function () {
 

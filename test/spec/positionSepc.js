@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var position = require('cobble/position');
+    var position = require('cobble/util/position');
 
     describe('position', function () {
 

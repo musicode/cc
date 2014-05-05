@@ -1,7 +1,7 @@
 define(function (require, exports, module) {
 
-    var Tooltip = require('cobble/Tooltip');
-    var position = require('cobble/position');
+    var Tooltip = require('cobble/ui/Tooltip');
+    var position = require('cobble/util/position');
 
     function reset() {
         document.body.innerHTML = '<i id="icon1" title="tip1">?</i>'

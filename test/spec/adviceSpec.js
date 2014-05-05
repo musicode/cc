@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var advice = require('cobble/advice');
+    var advice = require('cobble/util/advice');
 
     describe('test advice', function () {
 

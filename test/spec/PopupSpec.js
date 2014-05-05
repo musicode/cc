@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var Popup = require('cobble/Popup');
+    var Popup = require('cobble/base/Popup');
 
     function reset() {
 

@@ -17,7 +17,7 @@ module.exports = function(config) {
     files: [
       'test/main.js',
       'http://s1.bdstatic.com/r/www/cache/static/jquery/jquery-1.10.2.min_f2fb5194.js',
-      {pattern: 'src/*.js', included: false},
+      {pattern: 'src/*/*.js', included: false},
       {pattern: 'test/spec/*Spec.js', included: false}
     ],
 

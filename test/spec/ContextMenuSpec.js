@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var ContextMenu = require('cobble/ContextMenu');
+    var ContextMenu = require('cobble/ui/ContextMenu');
 
     var instance;
 

@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var Draggable = require('cobble/Draggable');
+    var Draggable = require('cobble/base/Draggable');
 
     var elementId = 'draggable';
     var template = '<div id="' + elementId + '">'
