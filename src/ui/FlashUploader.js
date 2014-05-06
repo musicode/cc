@@ -20,19 +20,19 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 点击打开文件选择框的元素
-     * @param {string} options.action 上传地址
-     * @param {boolean=} options.multiple 是否支持多文件上传
-     * @param {Object=} options.data 上传的其他数据
-     * @param {Array.<string>=} options.accept 可上传的文件类型，如
+     * @property {jQuery} options.element 点击打开文件选择框的元素
+     * @property {string} options.action 上传地址
+     * @property {boolean=} options.multiple 是否支持多文件上传
+     * @property {Object=} options.data 上传的其他数据
+     * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                         [ 'jpg', 'png' ]
      *
-     * @param {Function=} options.onFileChange
-     * @param {function(Object)=} options.onUploadStart
-     * @param {function(Object)=} options.onUploadProgress
-     * @param {function(Object)=} options.onUploadSuccess
-     * @param {function(Object)=} options.onUploadError
-     * @param {function(Object)=} options.onUploadComplete
+     * @property {Function=} options.onFileChange
+     * @property {function(Object)=} options.onUploadStart
+     * @property {function(Object)=} options.onUploadProgress
+     * @property {function(Object)=} options.onUploadSuccess
+     * @property {function(Object)=} options.onUploadError
+     * @property {function(Object)=} options.onUploadComplete
      */
     function FlashUploader(options) {
         $.extend(this, FlashUploader.defaultOptions, options);
@@ -186,7 +186,7 @@ define(function (require, exports, module) {
     /**
      * 事件处理函数
      *
-     * @private
+     * @inner
      * @type {Object}
      */
     var eventHandler = {
@@ -202,7 +202,7 @@ define(function (require, exports, module) {
          * 开始上传
          *
          * @param {Object} data
-         * @param {Object} data.fileItem
+         * @property {Object} data.fileItem
          */
         uploadStart: function (data) {
             var uploader = this.customSettings.uploader;
@@ -215,9 +215,9 @@ define(function (require, exports, module) {
          * 正在上传
          *
          * @param {Object} data
-         * @param {Object} data.fileItem
-         * @param {number} data.uploaded
-         * @param {number} data.total
+         * @property {Object} data.fileItem
+         * @property {number} data.uploaded
+         * @property {number} data.total
          */
         uploadProgress: function (data) {
             var uploader = this.customSettings.uploader;
@@ -230,8 +230,8 @@ define(function (require, exports, module) {
          * 上传成功
          *
          * @param {Object} data
-         * @param {Object} data.fileItem
-         * @param {string} data.response
+         * @property {Object} data.fileItem
+         * @property {string} data.response
          */
         uploadSuccess: function (data) {
             var uploader = this.customSettings.uploader;
@@ -244,8 +244,8 @@ define(function (require, exports, module) {
          * 上传失败，失败原因可查看 errorCode
          *
          * @param {Object} data
-         * @param {Object} data.fileItem
-         * @param {number} data.errorCode
+         * @property {Object} data.fileItem
+         * @property {number} data.errorCode
          */
         uploadError: function (data) {
             var uploader = this.customSettings.uploader;
@@ -258,7 +258,7 @@ define(function (require, exports, module) {
          * 上传完成，在 成功/失败 之后触发
          *
          * @param {Object} data
-         * @param {Object} data.fileItem
+         * @property {Object} data.fileItem
          */
         uploadComplete: function (data) {
             var uploader = this.customSettings.uploader;

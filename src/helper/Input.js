@@ -50,16 +50,16 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 输入框元素
-     * @param {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
-     *                                     因为长按产生的一般是无效输入
+     * @property {jQuery} options.element 输入框元素
+     * @property {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
+     *                                        因为长按产生的一般是无效输入
      *
-     * @param {Function=} options.onChange 内容变化触发
-     * @param {Funciton=} options.onEnter 按下回车触发
-     * @param {Function=} options.onLongPressStart 长按开始
-     * @param {Function=} options.onLongPressEnd 长按结束
-     * @param {Object=} options.keyEvents 按下某键，发出某事件
-     *                                    如 { '43': function () { // up } }
+     * @property {Function=} options.onChange 内容变化触发
+     * @property {Funciton=} options.onEnter 按下回车触发
+     * @property {Function=} options.onLongPressStart 长按开始
+     * @property {Function=} options.onLongPressEnd 长按结束
+     * @property {Object=} options.keyEvents 按下某键，发出某事件
+     *                                       如 { '43': function () { // up } }
      */
     function Input(options) {
         $.extend(this, Input.defaultOptions, options);

@@ -30,7 +30,7 @@ define (function (require, exports, module) {
     /**
      * 一天的毫秒数
      *
-     * @private
+     * @inner
      * @const
      * @type {number}
      */
@@ -48,7 +48,7 @@ define (function (require, exports, module) {
     /**
      * 把 cookie 字符串解析成对象
      *
-     * @private
+     * @inner
      * @param {string} cookieStr 格式为 key1=value1;key2=value2;
      * @return {Object}
      */

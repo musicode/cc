@@ -29,10 +29,10 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options 配置对象
-     * @param {jQuery} options.element 输入框元素，如文本框、密码框、文本域
-     * @param {boolean=} options.nativeFirst 是否优先使用浏览器原生的 placeholder，只针对低版本 IE 模拟实现，默认为 false
-     * @param {string=} options.template 使用模拟实现时的包装模版
-     * @param {string=} options.placeholderSelector 从 template 里查找 placeholder 元素的选择器
+     * @property {jQuery} options.element 输入框元素，如文本框、密码框、文本域
+     * @property {boolean=} options.nativeFirst 是否优先使用浏览器原生的 placeholder，只针对低版本 IE 模拟实现，默认为 false
+     * @property {string=} options.template 使用模拟实现时的包装模版
+     * @property {string=} options.placeholderSelector 从 template 里查找 placeholder 元素的选择器
      */
     function Placeholder(options) {
         $.extend(this, Placeholder.defaultOptions, options);

@@ -14,7 +14,7 @@ define(function (require, exports, module) {
     /**
      * 获得单个字符的 UTF-8 长度
      *
-     * @private
+     * @inner
      * @param {string} x
      * @return {number}
      */
@@ -39,7 +39,7 @@ define(function (require, exports, module) {
     /**
      * 遍历字符串
      *
-     * @private
+     * @inner
      * @param {string} str
      * @param {function(number, number)} callback
      */

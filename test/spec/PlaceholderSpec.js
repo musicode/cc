@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var Placeholder = require('cobble/base/Placeholder');
+    var Placeholder = require('cobble/helper/Placeholder');
 
     var defaultOptions = Placeholder.defaultOptions;
     defaultOptions.attribute = 'placeholder';

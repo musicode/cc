@@ -24,14 +24,14 @@ define(function (require, exports, module) {
      * });
      *
      * @param {Object} options
-     * @param {jQuery} options.element 需要定位的元素
-     * @param {jQuery=} options.attachment 参照物元素，默认是 body
-     * @param {string|number} options.x 目标元素的横坐标定位点，值可以是 'left' 'center' 'right' 'xx%' 10(纯数字)
-     * @param {string|number} options.y 目标元素的纵坐标定位点，值可以是 'top' 'middle' 'bottom' 'yy%' 10(纯数字)
-     * @param {string|number} options.attachmentX 参照物元素的横坐标定位点，取值同 options.x
-     * @param {string|number} options.attachmentY 参照物元素的纵坐标定位点，取值同 options.y
-     * @param {number=} options.offsetX 目标元素的横坐标偏移量，单位是 px
-     * @param {number=} options.offsetY 目标元素的纵坐标偏移量，单位是 px
+     * @property {jQuery} options.element 需要定位的元素
+     * @property {jQuery=} options.attachment 参照物元素，默认是 body
+     * @property {string|number} options.x 目标元素的横坐标定位点，值可以是 'left' 'center' 'right' 'xx%' 10(纯数字)
+     * @property {string|number} options.y 目标元素的纵坐标定位点，值可以是 'top' 'middle' 'bottom' 'yy%' 10(纯数字)
+     * @property {string|number} options.attachmentX 参照物元素的横坐标定位点，取值同 options.x
+     * @property {string|number} options.attachmentY 参照物元素的纵坐标定位点，取值同 options.y
+     * @property {number=} options.offsetX 目标元素的横坐标偏移量，单位是 px
+     * @property {number=} options.offsetY 目标元素的纵坐标偏移量，单位是 px
      */
     function pin(options) {
 
@@ -85,7 +85,7 @@ define(function (require, exports, module) {
      * xx%    (百分比)
      * xx     (纯数字)
      *
-     * @private
+     * @inner
      * @param {jQuery} element
      * @param {string|number} x
      * @return {number}
@@ -118,7 +118,7 @@ define(function (require, exports, module) {
      * yy%    (百分比)
      * yy     (纯数字)
      *
-     * @private
+     * @inner
      * @param {jQuery} element
      * @param {string|number} y
      * @return {number}
@@ -145,7 +145,7 @@ define(function (require, exports, module) {
     /**
      * 拷贝对象
      *
-     * @private
+     * @inner
      * @param {Object} options
      * @return {Object}
      */
@@ -156,7 +156,7 @@ define(function (require, exports, module) {
     /**
      * 提取百分比的正则
      *
-     * @private
+     * @inner
      * @type {RegExp}
      */
     var percentExpr = /(-?\d+(\.\d+)?)%/;
@@ -168,10 +168,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的左上方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.topLeft = function (options) {
         options = copy(options);
@@ -186,10 +186,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的正上方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.topCenter = function (options) {
         options = copy(options);
@@ -204,10 +204,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的右上方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.topRight = function (options) {
         options = copy(options);
@@ -222,10 +222,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的正左方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.middleLeft = function (options) {
         options = copy(options);
@@ -240,10 +240,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的正中心
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.middleCenter = function (options) {
         options = copy(options);
@@ -258,10 +258,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的正右方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.middleRight = function (options) {
         options = copy(options);
@@ -276,10 +276,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的左下方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.bottomLeft = function (options) {
         options = copy(options);
@@ -294,10 +294,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的正下方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.bottomCenter = function (options) {
         options = copy(options);
@@ -312,10 +312,10 @@ define(function (require, exports, module) {
      * 把元素定位到参照元素的右下方
      *
      * @param {Object} options
-     * @param {jQuery} options.element
-     * @param {jQuery=} options.attachment
-     * @param {number=} options.offsetX
-     * @param {number=} options.offsetY
+     * @property {jQuery} options.element
+     * @property {jQuery=} options.attachment
+     * @property {number=} options.offsetX
+     * @property {number=} options.offsetY
      */
     exports.bottomRight = function (options) {
         options = copy(options);

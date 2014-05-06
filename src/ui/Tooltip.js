@@ -19,8 +19,8 @@ define(function (require, exports, module) {
      * {
      *    template: '<div class="tooltip"><i class="arrow"></i><div class="content"></div></div>',
      *    placementPrefix: 'tooltip-placement-',
-     *    update: function (tipElement, triggerElement) {
-     *        tipElement.find('.content').html(triggerElement.attr('title'));
+     *    update: function (tipElement) {
+     *        tipElement.find('.content').html(this.title);
      *    }
      * }
      *
@@ -42,7 +42,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Popup = require('../base/Popup');
+    var Popup = require('../helper/Popup');
     var position = require('../util/position');
 
     /**
@@ -50,25 +50,25 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 需要工具提示的元素
-     * @param {string=} options.placement 提示元素出现的位置，可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto，可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
-     * @param {string=} options.placementAttr 优先级比 placement 更高的位置配置
-     * @param {string=} options.placementPrefix 提示方位的 class 前缀，有助于实现小箭头之类的效果
-     * @param {string=} options.showBy 触发显示的方式，可选值包括 over click
-     * @param {string=} options.hideBy 触发隐藏的方式，可选值包括 out blur 可组合使用，如 out,blur
-     * @param {number=} options.showDelay 当 showBy 为 over 的显示延时
-     * @param {number=} options.hideDelay 当 hideBy 包含 out 的隐藏延时
-     * @param {number=} options.gapX 横向间距，如果为 0，提示会和元素贴在一起
-     * @param {number=} options.gapY 纵向间距，如果为 0，提示会和元素贴在一起
-     * @param {Object=} options.offset 设置 left right top bottom topLeft topRight bottomLeft bottomRight 方向的偏移量
-     * @param {string=} options.template 提示元素的模版，可配合使用 placementPrefix, update 实现特殊需求
-     * @param {function(jQuery)=} options.show 显示提示的方式，可扩展实现动画
-     * @param {function(jQuery)=} options.hide 显示提示的方式，可扩展实现动画
-     * @param {function(jQuery,jQuery)=} options.update 更新 tip 元素的内容
-     * @param {Function=} options.onBeforeShow
-     * @param {Function=} options.onAfterShow
-     * @param {Function=} options.onBeforeHide
-     * @param {Function=} options.onAfterHide
+     * @property {jQuery} options.element 需要工具提示的元素
+     * @property {string=} options.placement 提示元素出现的位置，可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto，可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
+     * @property {string=} options.placementAttr 优先级比 placement 更高的位置配置
+     * @property {string=} options.placementPrefix 提示方位的 class 前缀，有助于实现小箭头之类的效果
+     * @property {string=} options.showBy 触发显示的方式，可选值包括 over click
+     * @property {string=} options.hideBy 触发隐藏的方式，可选值包括 out blur 可组合使用，如 out,blur
+     * @property {number=} options.showDelay 当 showBy 为 over 的显示延时
+     * @property {number=} options.hideDelay 当 hideBy 包含 out 的隐藏延时
+     * @property {number=} options.gapX 横向间距，如果为 0，提示会和元素贴在一起
+     * @property {number=} options.gapY 纵向间距，如果为 0，提示会和元素贴在一起
+     * @property {Object=} options.offset 设置 left right top bottom topLeft topRight bottomLeft bottomRight 方向的偏移量
+     * @property {string=} options.template 提示元素的模版，可配合使用 placementPrefix, update 实现特殊需求
+     * @property {function(jQuery)=} options.show 显示提示的方式，可扩展实现动画
+     * @property {function(jQuery)=} options.hide 显示提示的方式，可扩展实现动画
+     * @property {function(jQuery)=} options.update 更新 tip 元素的内容
+     * @property {Function=} options.onBeforeShow
+     * @property {Function=} options.onAfterShow
+     * @property {Function=} options.onBeforeHide
+     * @property {Function=} options.onAfterHide
      */
     function Tooltip(options) {
         $.extend(this, Tooltip.defaultOptions, options);
@@ -97,81 +97,81 @@ define(function (require, exports, module) {
                 element.removeAttr(titleAttr);
             }
 
-            me.cache = {
-                popup: new Popup({
+            me.cache = { };
+            me.cache.popup = new Popup({
 
-                    trigger: element,
-                    element: getTipElement(me),
+                trigger: element,
+                element: getTipElement(me),
 
-                    showBy: me.showBy,
-                    hideBy: me.hideBy,
+                showBy: me.showBy,
+                hideBy: me.hideBy,
 
-                    showDelay: me.showDelay,
-                    hideDelay: me.hideDelay,
+                showDelay: me.showDelay,
+                hideDelay: me.hideDelay,
 
-                    show: function () {
-                        me.show(getTipElement(me));
-                    },
-                    hide: function () {
-                        me.hide(getTipElement(me));
-                    },
+                show: function () {
+                    me.show(getTipElement(me));
+                },
+                hide: function () {
+                    me.hide(getTipElement(me));
+                },
 
-                    onAfterShow: $.proxy(me.onAfterShow, me),
-                    onBeforeHide: $.proxy(me.onBeforeHide, me),
-                    onAfterHide: $.proxy(me.onAfterHide, me),
-                    onBeforeShow: function () {
+                onAfterShow: $.proxy(me.onAfterShow, me),
+                onBeforeHide: $.proxy(me.onBeforeHide, me),
+                onAfterHide: $.proxy(me.onAfterHide, me),
+                onBeforeShow: function () {
 
-                        var tipElement = getTipElement(me);
-                        var actualPlacement;
+                    var tipElement = getTipElement(me);
+                    var actualPlacement;
 
-                        // 如果 update 返回 false，表示后面的都不用继续了
-                        if (me.update(tipElement, element) === false
-                            || !(actualPlacement = getTipPlacement(element, tipElement, me.placement))
-                        ) {
-                            return false;
+                    // 如果 update 返回 false，表示后面的都不用继续了
+                    if (me.update(tipElement) === false
+                        || !(actualPlacement = getTipPlacement(element, tipElement, me.placement))
+                    ) {
+                        return false;
+                    }
+                    else {
+                        var target = placementMap[actualPlacement];
+                        var options = {
+                            element: tipElement,
+                            attachment: element,
+                            offsetX: me.gapX,
+                            offsetY: me.gapY
+                        };
+
+                        if (typeof target.gap === 'function') {
+                            target.gap(options);
                         }
-                        else {
-                            var target = placementMap[actualPlacement];
-                            var options = {
-                                element: tipElement,
-                                attachment: element,
-                                offsetX: me.gapX,
-                                offsetY: me.gapY
-                            };
 
-                            if (typeof target.gap === 'function') {
-                                target.gap(options);
-                            }
+                        // 全局定位
+                        var offset = me.offset && me.offset[actualPlacement];
+                        if (offset) {
+                            options.offsetX += offset.x;
+                            options.offsetY += offset.y;
+                        }
 
-                            // 全局定位
-                            var offset = me.offset && me.offset[actualPlacement];
-                            if (offset) {
-                                options.offsetX += offset.x;
-                                options.offsetY += offset.y;
-                            }
+                        position[target.name](options);
 
-                            position[target.name](options);
+                        // 设置方位 class，便于添加箭头样式
+                        var placementClassKey = '__placement__';
+                        var placementClass = tipElement.data(placementClassKey);
 
-                            // 设置方位 class，便于添加箭头样式
-                            var placementClassKey = '__placement__';
-                            var placementClass = tipElement.data(placementClassKey);
+                        if (placementClass) {
+                            tipElement.removeClass(placementClass);
+                            tipElement.removeData(placementClassKey);
+                        }
+                        if (me.placementPrefix) {
+                            placementClass = me.placementPrefix + actualPlacement.toLowerCase();
+                            tipElement.addClass(placementClass);
+                            tipElement.data(placementClassKey, placementClass);
+                        }
 
-                            if (placementClass) {
-                                tipElement.removeClass(placementClass);
-                                tipElement.removeData(placementClassKey);
-                            }
-                            if (me.placementPrefix) {
-                                placementClass = me.placementPrefix + actualPlacement.toLowerCase();
-                                tipElement.data(placementClassKey, placementClass);
-                            }
-
-                            if (typeof me.onBeforeShow === 'function') {
-                                return me.onBeforeShow();
-                            }
+                        if (typeof me.onBeforeShow === 'function') {
+                            return me.onBeforeShow();
                         }
                     }
-                })
-            };
+                }
+            });
         },
 
         /**
@@ -182,6 +182,10 @@ define(function (require, exports, module) {
 
             var cache = me.cache;
             cache.popup.dispose();
+
+            if (cache.tipElement) {
+                cache.tipElement.remove();
+            }
 
             me.element =
             me.cache = null;
@@ -219,7 +223,7 @@ define(function (require, exports, module) {
         hide: function (tipElement) {
             tipElement.hide();
         },
-        update: function (tipElement, triggerElement) {
+        update: function (tipElement) {
             tipElement.html(this.title || '');
         }
     };
@@ -228,19 +232,31 @@ define(function (require, exports, module) {
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} element 需要提示浮层的元素
+     * @param {jQuery=} elements 需要提示浮层的元素
+     * @param {Object=} options 配置参数
      * @return {Array.<Tooltip>}
      */
-    Tooltip.init = function (elements) {
+    Tooltip.init = function (elements, options) {
+
+        if (!options && $.isPlainObject(elements)) {
+            options = elements;
+            elements = null;
+        }
 
         elements = elements || $('[' + Tooltip.defaultOptions.titleAttr + ']');
 
         var result = [ ];
+
         elements.each(function () {
             result.push(
-                new Tooltip({
-                    element: $(this)
-                })
+                new Tooltip(
+                    $.extend(
+                        {
+                            element: $(this)
+                        },
+                        options
+                    )
+                )
             );
         });
 
@@ -392,13 +408,13 @@ define(function (require, exports, module) {
         if (!element || !$.contains(document.body, element[0])) {
             element = $(template);
             element.hide().appendTo(document.body);
-        }
 
-        if (useSingleton) {
-            tipElement = element;
-        }
-        else {
-            tooltip.cache.tipElement = element;
+            if (useSingleton) {
+                tipElement = element;
+            }
+            else {
+                tooltip.cache.tipElement = element;
+            }
         }
 
         return element;

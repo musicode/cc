@@ -24,8 +24,8 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery=} options.element 需要监听鼠标滚轮事件的元素，默认是 document
-     * @param {function(Object)=} options.onScroll 滚动事件对外接口，如果返回 false 可阻止默认行为
+     * @property {jQuery=} options.element 需要监听鼠标滚轮事件的元素，默认是 document
+     * @property {function(Object)=} options.onScroll 滚动事件对外接口，如果返回 false 可阻止默认行为
      */
     function WheelScroll(options) {
         $.extend(this, WheelScroll.defaultOptions, options);

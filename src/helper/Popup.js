@@ -73,18 +73,18 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 弹出显示的元素
-     * @param {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
-     * @param {string=} options.showBy 可选值请看 Popup.showBy 的 key，可组合使用，如 'click,over'
-     * @param {string} options.hideBy 可选值请看 Popup.hideBy 的 key，可组合使用，如 'blur,out'
-     * @param {number=} options.showDelay 给 showBy 的第一个触发方式加显示延时，如 'over,click' 中的 over
-     * @param {number=} options.hideDelay 给 hideBy 的第一个触发方式加隐藏延时，如 'out,blur' 中的 out
-     * @param {Function=} options.show 可选，默认是 element.show()
-     * @param {Function=} options.hide 可选，默认是 element.hide()
-     * @param {Function=} options.onBeforeShow 返回 false 可阻止显示
-     * @param {Function=} options.onAfterShow
-     * @param {Function=} options.onBeforeHide 返回 false 可阻止隐藏
-     * @param {Function=} options.onAfterHide
+     * @property {jQuery} options.element 弹出显示的元素
+     * @property {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
+     * @property {string=} options.showBy 可选值请看 Popup.showBy 的 key，可组合使用，如 'click,over'
+     * @property {string} options.hideBy 可选值请看 Popup.hideBy 的 key，可组合使用，如 'blur,out'
+     * @property {number=} options.showDelay 给 showBy 的第一个触发方式加显示延时，如 'over,click' 中的 over
+     * @property {number=} options.hideDelay 给 hideBy 的第一个触发方式加隐藏延时，如 'out,blur' 中的 out
+     * @property {Function=} options.show 可选，默认是 element.show()
+     * @property {Function=} options.hide 可选，默认是 element.hide()
+     * @property {Function=} options.onBeforeShow 返回 false 可阻止显示
+     * @property {Function=} options.onAfterShow
+     * @property {Function=} options.onBeforeHide 返回 false 可阻止隐藏
+     * @property {Function=} options.onAfterHide
      */
     function Popup(options) {
         $.extend(this, Popup.defaultOptions, options);

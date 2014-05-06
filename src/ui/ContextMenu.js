@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Popup = require('../base/Popup');
+    var Popup = require('../helper/Popup');
     var position = require('../util/position');
 
     /**
@@ -14,15 +14,15 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.container 在 container 内部右键弹出菜单
-     * @param {jQuery|string} options.element 菜单元素，也可以是字符串模版
-     * @param {string=} options.className 可选，菜单元素的 className
-     * @param {Object=} options.clickEvents 可选，配置点击事件处理器
-     *                 {
-     *                     '.add-user': function (e) { },
-     *                     '.remove-user': function (e) { }
-     *                 }
-     *                 key 是选择器，value 是 handler
+     * @property {jQuery} options.container 在 container 内部右键弹出菜单
+     * @property {jQuery|string} options.element 菜单元素，也可以是字符串模版
+     * @property {string=} options.className 可选，菜单元素的 className
+     * @property {Object=} options.clickEvents 可选，配置点击事件处理器
+     *                     {
+     *                         '.add-user': function (e) { },
+     *                         '.remove-user': function (e) { }
+     *                     }
+     *                     key 是选择器，value 是 handler
      */
     function ContextMenu(options) {
         $.extend(this, ContextMenu.defaultOptions, options);
@@ -96,7 +96,7 @@ define(function (require, exports, module) {
      * 当前正在显示的菜单
      * 同一时刻只能显示一个菜单
      *
-     * @private
+     * @inner
      * @type {ContextMenu}
      */
     var currentMenu;
@@ -115,7 +115,7 @@ define(function (require, exports, module) {
     /**
      * contenxtmenu 事件处理器
      *
-     * @private
+     * @inner
      * @param {Event} e
      */
     function popupMenu(e) {
@@ -154,7 +154,7 @@ define(function (require, exports, module) {
     /**
      * 创建菜单面板
      *
-     * @private
+     * @inner
      * @param {ContextMenu} contextMenu
      */
     function createMenu(contextMenu) {
@@ -197,7 +197,7 @@ define(function (require, exports, module) {
     /**
      * 简单的初始化菜单元素
      *
-     * @private
+     * @inner
      * @param {jQuery} element
      */
     function initMenuElement(element) {

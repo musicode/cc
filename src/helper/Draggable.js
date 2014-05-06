@@ -27,15 +27,15 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 需要拖拽的元素
-     * @param {jQuery=} options.container 限制拖拽范围的容器，默认是 body
-     * @param {string=} options.handle 触发拖拽的区域 (css 选择器)
-     * @param {string=} options.cancel 不触发拖拽的区域 (css 选择器)
-     * @param {string=} options.axis 限制方向，可选值包括 'x' 'y'
-     * @param {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
-     * @param {function(Object)=} options.onDragStart 开始拖拽
-     * @param {function(Object)=} options.onDrag 正在拖拽
-     * @param {function(Object)=} options.onDragEnd 结束拖拽
+     * @property {jQuery} options.element 需要拖拽的元素
+     * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 body
+     * @property {string=} options.handle 触发拖拽的区域 (css 选择器)
+     * @property {string=} options.cancel 不触发拖拽的区域 (css 选择器)
+     * @property {string=} options.axis 限制方向，可选值包括 'x' 'y'
+     * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
+     * @property {function(Object)=} options.onDragStart 开始拖拽
+     * @property {function(Object)=} options.onDrag 正在拖拽
+     * @property {function(Object)=} options.onDragEnd 结束拖拽
      */
     function Draggable(options) {
         $.extend(this, Draggable.defaultOptions, options);

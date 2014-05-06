@@ -24,20 +24,20 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 点击打开文件选择框的元素
-     * @param {string} options.action 上传地址
-     * @param {boolean=} options.multiple 是否支持多文件上传
-     * @param {Object=} options.data 上传的其他数据
-     * @param {string=} options.fileName 上传文件的 name 值，默认是 Filedata
-     * @param {Array.<string>=} options.accept 可上传的文件类型，如
+     * @property {jQuery} options.element 点击打开文件选择框的元素
+     * @property {string} options.action 上传地址
+     * @property {boolean=} options.multiple 是否支持多文件上传
+     * @property {Object=} options.data 上传的其他数据
+     * @property {string=} options.fileName 上传文件的 name 值，默认是 Filedata
+     * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                         [ 'jpg', 'png' ]
      *
-     * @param {Function=} options.onFileChange
-     * @param {function(Object)=} options.onUploadStart
-     * @param {function(Object)=} options.onUploadProgress
-     * @param {function(Object)=} options.onUploadSuccess
-     * @param {function(Object)=} options.onUploadError
-     * @param {function(Object)=} options.onUploadComplete
+     * @property {Function=} options.onFileChange
+     * @property {function(Object)=} options.onUploadStart
+     * @property {function(Object)=} options.onUploadProgress
+     * @property {function(Object)=} options.onUploadSuccess
+     * @property {function(Object)=} options.onUploadError
+     * @property {function(Object)=} options.onUploadComplete
      */
     function AjaxUploader(options) {
         $.extend(this, AjaxUploader.defaultOptions, options);
@@ -253,7 +253,7 @@ define(function (require, exports, module) {
     /**
      * ext -> mimeType
      *
-     * @private
+     * @inner
      * @type {Object}
      */
     var ext2MimeType = {
@@ -371,7 +371,7 @@ define(function (require, exports, module) {
     /**
      * 事件处理函数
      *
-     * @private
+     * @inner
      * @type {Object}
      */
     var eventHandler = {
@@ -454,7 +454,7 @@ define(function (require, exports, module) {
     /**
      * 上传完成后执行
      *
-     * @private
+     * @inner
      * @param {AjaxUploader} uploader
      * @param {Object} fileItem
      */
@@ -480,7 +480,7 @@ define(function (require, exports, module) {
     /**
      * 设置选择的文件
      *
-     * @private
+     * @inner
      * @param {AjaxUploader} uploader
      * @param {Array.<File>} files
      */
@@ -505,7 +505,7 @@ define(function (require, exports, module) {
     /**
      * 获取当前正在上传的文件
      *
-     * @private
+     * @inner
      * @param {AjaxUploader} uploader
      * @return {?Object}
      */
@@ -521,7 +521,7 @@ define(function (require, exports, module) {
      * 把 [ 'jpg', 'png' ] 格式的 accept 转为
      * 浏览器可识别的 'image/jpg,image/png'
      *
-     * @private
+     * @inner
      * @param {Array.<string>} accept
      * @return {string}
      */
@@ -538,7 +538,7 @@ define(function (require, exports, module) {
     /**
      * 把 File 对象统一为简单对象格式
      *
-     * @private
+     * @inner
      * @param {File} file
      * @return {Object}
      */

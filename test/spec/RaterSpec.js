@@ -18,7 +18,7 @@ define(function (require, exports, module) {
                 value: 1
             });
 
-            expect(instance.element.find('img').length).toBe(5);
+            expect(instance.element.find('i').length).toBe(5);
 
             instance.dispose();
         });
@@ -38,22 +38,22 @@ define(function (require, exports, module) {
                 offIcon: offIcon
             });
 
-            var imgs = instance.element.find('img');
+            var imgs = instance.element.find('i');
             $(imgs[2]).trigger('mouseenter');
 
-            expect(imgs[0].src).toBe(onIcon);
-            expect(imgs[1].src).toBe(onIcon);
-            expect(imgs[2].src).toBe(onIcon);
-            expect(imgs[3].src).toBe(offIcon);
-            expect(imgs[4].src).toBe(offIcon);
+            expect(imgs[0].className).toBe(onIcon);
+            expect(imgs[1].className).toBe(onIcon);
+            expect(imgs[2].className).toBe(onIcon);
+            expect(imgs[3].className).toBe(offIcon);
+            expect(imgs[4].className).toBe(offIcon);
 
             $(imgs[2]).trigger('mouseleave');
 
-            expect(imgs[0].src).toBe(onIcon);
-            expect(imgs[1].src).toBe(offIcon);
-            expect(imgs[2].src).toBe(offIcon);
-            expect(imgs[3].src).toBe(offIcon);
-            expect(imgs[4].src).toBe(offIcon);
+            expect(imgs[0].className).toBe(onIcon);
+            expect(imgs[1].className).toBe(offIcon);
+            expect(imgs[2].className).toBe(offIcon);
+            expect(imgs[3].className).toBe(offIcon);
+            expect(imgs[4].className).toBe(offIcon);
 
             instance.dispose();
         });
@@ -77,24 +77,24 @@ define(function (require, exports, module) {
 
             expect(onSelect).toHaveBeenCalled();
 
-            var imgs = instance.element.find('img');
+            var imgs = instance.element.find('i');
             $(imgs[2]).trigger('click');
 
             expect(onSelect.calls.count()).toBe(2);
 
-            expect(imgs[0].src).toBe(onIcon);
-            expect(imgs[1].src).toBe(onIcon);
-            expect(imgs[2].src).toBe(onIcon);
-            expect(imgs[3].src).toBe(offIcon);
-            expect(imgs[4].src).toBe(offIcon);
+            expect(imgs[0].className).toBe(onIcon);
+            expect(imgs[1].className).toBe(onIcon);
+            expect(imgs[2].className).toBe(onIcon);
+            expect(imgs[3].className).toBe(offIcon);
+            expect(imgs[4].className).toBe(offIcon);
 
             $(imgs[2]).trigger('mouseleave');
 
-            expect(imgs[0].src).toBe(onIcon);
-            expect(imgs[1].src).toBe(onIcon);
-            expect(imgs[2].src).toBe(onIcon);
-            expect(imgs[3].src).toBe(offIcon);
-            expect(imgs[4].src).toBe(offIcon);
+            expect(imgs[0].className).toBe(onIcon);
+            expect(imgs[1].className).toBe(onIcon);
+            expect(imgs[2].className).toBe(onIcon);
+            expect(imgs[3].className).toBe(offIcon);
+            expect(imgs[4].className).toBe(offIcon);
 
             instance.dispose();
         });

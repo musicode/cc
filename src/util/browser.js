@@ -29,7 +29,7 @@ define(function (require, exports, module) {
     /**
      * 获取 UA 的结构化信息
      *
-     * @private
+     * @inner
      * @param {string} ua
      * @return {Object}
      */
@@ -60,7 +60,7 @@ define(function (require, exports, module) {
      *
      * 要特殊处理的是 IE11+ 和 IE7-
      *
-     * @private
+     * @inner
      * @param {string} ua
      * @return {Array}
      */
@@ -90,7 +90,7 @@ define(function (require, exports, module) {
      *
      * 5.1.7 才是真实版本号...
      *
-     * @private
+     * @inner
      * @param {string} ua
      * @return {Array}
      */

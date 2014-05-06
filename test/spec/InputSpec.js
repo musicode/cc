@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-    var Input = require('cobble/base/Input');
+    var Input = require('cobble/helper/Input');
 
     function reset() {
         document.body.innerHTML = '<input type="text" />';

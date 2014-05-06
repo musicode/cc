@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rater</title>
+    <style>
+        .on,
+        .off {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-right: 3px;
+        }
+        .on {
+            background-color: red;
+        }
+        .off {
+            background-color: grey;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main"></div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Rater' ],
+
+            function (Rater) {
+
+                var rater = new Rater({
+                    element: $('#main'),
+                    value: 1,
+                    total: 5,
+                    onIcon: 'on',
+                    offIcon: 'off',
+                    onSelect: function (value) {
+                        console.log(value)
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

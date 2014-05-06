@@ -42,12 +42,12 @@ define(function (require, exports, module) {
 
             var html = [ ];
             for (var i = 1, len = me.total; i <= len; i++) {
-                html.push('<img src="' +
+                html.push('<i class="' +
                             (i <= me.value ? me.onIcon : me.offIcon)
                           + '"'
                           + ' data-value="' + i + '"'
                           + (me.hints[i] ? (' title="' + me.hints[i] + '"') : '')
-                          + ' />'
+                          + '></i>'
                 );
             }
 
@@ -59,9 +59,9 @@ define(function (require, exports, module) {
 
             if (!me.readOnly) {
                 me.element
-                  .on('mouseenter', 'img', $.proxy(onMouseEnter, me))
-                  .on('mouseleave', 'img', $.proxy(onMouseLeave, me))
-                  .on('click', 'img', $.proxy(onClick, me));
+                  .on('mouseenter', 'i', $.proxy(onMouseEnter, me))
+                  .on('mouseleave', 'i', $.proxy(onMouseLeave, me))
+                  .on('click', 'i', $.proxy(onClick, me));
             }
         },
 
@@ -161,9 +161,9 @@ define(function (require, exports, module) {
      * @param {value} value
      */
     function refresh(rater, value) {
-        var elements = rater.element.find('img');
+        var elements = rater.element.find('i');
         for (var i = 1; i <= rater.total; i++) {
-            elements[i - 1].src = i <= value ? rater.onIcon : rater.offIcon;
+            elements[i - 1].className = i <= value ? rater.onIcon : rater.offIcon;
         }
     }
 
