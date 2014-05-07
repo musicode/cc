@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FlashUploader</title>
+    <style>
+
+    </style>
+</head>
+<body>
+
+    <div id="uploader">
+        <span id="file"></span>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/FlashUploader' ],
+
+            function (FlashUploader) {
+
+                var uploader = new FlashUploader({
+                    element: $('#file'),
+                    action: 'http://localhost:8808/upload',
+                    multiple: true,
+                    accept: ['jpg', 'png', 'gif', 'bmp'],
+                    data: {
+                        company: 'baidu'
+                    },
+                    onFileChange: function () {
+                        this.upload({
+                            name: 'zhujl',
+                            age: 25,
+                            sex: 'man'
+                        });
+                    },
+                    onUploadStart: function (data) {
+                        console.log('upload start:');
+                        console.log(data.fileItem);
+                    },
+                    onUploadProgress: function (data) {
+                        console.log('upload progress:');
+                        console.log((100 * data.uploaded / data.total) + '%');
+                    },
+                    onUploadSuccess: function (data) {
+                        console.log('upload success');
+                        console.log(data.responseText);
+                    },
+                    onUploadError: function (data) {
+                        console.log('upload error');
+                        console.log(data);
+                    },
+                    onUploadComplete: function (data) {
+                        console.log('upload complete');
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

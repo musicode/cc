@@ -24,8 +24,9 @@ define(function (require, exports, module) {
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
+     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
-     *                                         [ 'jpg', 'png' ]
+     *                                            [ 'jpg', 'png' ]
      *
      * @property {Function=} options.onFileChange
      * @property {function(Object)=} options.onUploadStart
@@ -54,10 +55,11 @@ define(function (require, exports, module) {
                 flashUrl: me.flashUrl,
                 element: me.element[0],
                 action: me.action,
-                accept: me.accept ? me.accept.join(',') : '',
+                accept: me.accept,
                 multiple: me.multiple,
                 data: me.data,
                 fileName: me.fileName,
+                ignoreError: me.ignoreError,
                 customSettings: {
                     uploader: me
                 }
@@ -83,9 +85,11 @@ define(function (require, exports, module) {
 
         /**
          * 上传文件
+         *
+         * @param {Object=} data 需要上传的数据
          */
-        upload: function () {
-            this.supload.upload();
+        upload: function (data) {
+            this.supload.upload(data);
         },
 
         /**
@@ -128,6 +132,7 @@ define(function (require, exports, module) {
     FlashUploader.defaultOptions = {
         multiple: false,
         fileName: 'Filedata',
+        ignoreError: false,
         flashUrl: require.toUrl('../util/supload/supload.swf')
     };
 

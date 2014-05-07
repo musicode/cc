@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 星级评分
      *
@@ -12,8 +14,8 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element 主元素
      * @property {number} options.value 当前星级
      * @property {number} options.total 星星总数
-     * @property {string} options.onIcon 星星选中状态的图标
-     * @property {string} options.offIcon 星星选中状态的图标
+     * @property {string} options.onIcon 星星选中状态的图标 class
+     * @property {string} options.offIcon 星星未选中状态的图标 class
      * @property {Object=} options.hints key 是星星对应的值，value 是提示文本，如下：
      *                               {
      *                                   '1': '非常差',
@@ -24,6 +26,17 @@ define(function (require, exports, module) {
      *                               }
      * @property {boolean=} options.readOnly 是否只读
      * @property {Function=} options.onSelect 选中星星触发
+     * @example
+     * var rater = new Rater({
+     *     element: $('.rater'),
+     *     value: 2,                      // 当前选中 2 颗星
+     *     total: 5,                      // 总共有 5 颗星
+     *     onIcon: 'icon on',
+     *     offIcon: 'icon off'
+     *     onSelect: function (value) {
+     *         console.log('select ' + value);
+     *     }
+     * });
      */
     function Rater(options) {
         $.extend(this, Rater.defaultOptions, options);

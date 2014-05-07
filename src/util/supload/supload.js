@@ -8,6 +8,9 @@ define(function (require, exports, module) {
         return window.Supload;
     }
 
+    var cookie = require('../cookie');
+    var json = require('../json');
+
     /**
      * Supload 构造函数
      *
@@ -20,6 +23,7 @@ define(function (require, exports, module) {
      * @param {string=} options.accept 可上传的文件格式，如 'jpg,png'
      * @param {boolean=} options.multiple 是否支持多文件上传
      * @param {Object=} options.data 上传的其他数据
+     * @param {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件
      * @param {Function=} options.onLoaded
      * @param {Function=} options.onFileChange
      * @param {function(Object)=} options.onUploadStart
@@ -29,11 +33,7 @@ define(function (require, exports, module) {
      * @param {function(Object)=} options.onUploadComplete
      */
     function Supload(options) {
-        for (var key in options) {
-            if (options.hasOwnProperty(key)) {
-                this[key] = options[key];
-            }
-        }
+        $.extend(this, options);
         this.init();
     }
 
@@ -55,11 +55,11 @@ define(function (require, exports, module) {
             }
 
             var data = this.data || (this.data = { });
-            var cookie = getCookie();
+            var cookieData = cookie.get();
 
-            for (var key in cookie) {
+            for (var key in cookieData) {
                 if (typeof data[key] === 'undefined') {
-                    data[key] = cookie[key];
+                    data[key] = cookieData[key];
                 }
             }
 
@@ -76,15 +76,25 @@ define(function (require, exports, module) {
          * @return {string}
          */
         getFlashVars: function () {
-            var paramKeys = [ 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data' ];
+
+            var me = this;
             var result = [ ];
 
-            for (var i = 0, len = paramKeys.length, key; i < len; i++) {
-                key = paramKeys[i];
-                if (this[key] != null) {
-                    result.push(key + '=' + encodeURIComponent(this[key]));
+            $.each(
+                [ 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data', 'ignoreError' ],
+                function (index, key) {
+                    var value = me[key];
+                    if (value != null) {
+                        if ($.isPlainObject(value)) {
+                            value = json.stringify(value);
+                        }
+                        else if ($.isArray(value)) {
+                            value = value.join(',');
+                        }
+                        result.push(key + '=' + encodeURIComponent(value));
+                    }
                 }
-            }
+            )
 
             result.push('projectName=' + Supload.projectName);
 
@@ -102,9 +112,11 @@ define(function (require, exports, module) {
 
         /**
          * 上传
+         *
+         * @param {Object=} data 需要上传的数据
          */
-        upload: function () {
-            this.element.upload && this.element.upload();
+        upload: function (data) {
+            this.element.upload && this.element.upload(data);
         },
 
         /**
@@ -167,10 +179,7 @@ define(function (require, exports, module) {
                  + '" src="' + flashUrl
                  + '" wmode="transparent" allowscriptaccess="always" flashvars="' + flashVars + '" />';
 
-        var div = document.createElement('div');
-        div.innerHTML = html;
-
-        return div.firstChild;
+        return $(html)[0];
     };
 
     /**
@@ -235,7 +244,7 @@ define(function (require, exports, module) {
     /**
      * guid 初始值
      *
-     * @private
+     * @inner
      * @type {number}
      */
     var guidIndex = 0x2B845;
@@ -243,61 +252,11 @@ define(function (require, exports, module) {
     /**
      * 创建新的唯一的 guid
      *
-     * @private
+     * @inner
      * @return {string}
      */
     function createGuid() {
         return '_Supload_' + (guidIndex++);
-    }
-
-    /**
-     * 获得 cookie 的 Object 格式
-     *
-     * @private
-     * @return {Object}
-     */
-    function getCookie() {
-        var cookie = document.cookie;
-
-        if (cookie.indexOf('"') === 0) {
-            // This is a quoted cookie as according to RFC2068, unescape...
-            cookie = cookie.slice(1, -1)
-                           .replace(/\\"/g, '"')
-                           .replace(/\\\\/g, '\\');
-        }
-
-        var result = { };
-
-        try {
-
-            // Replace server-side written pluses with spaces.
-            // If we can't decode the cookie, ignore it, it's unusable.
-            // If we can't parse the cookie, ignore it, it's unusable.
-            cookie = decodeURIComponent(cookie.replace(/\+/g, ' '));
-
-            var parts = cookie.split(';');
-            for (var i = parts.length - 1; i >= 0; i--) {
-                var pair = parts[i].split('=');
-                result[trim(pair[0])] = trim(pair[1]);
-            }
-        }
-        catch (e) { }
-
-        return result;
-    }
-
-    // 实现一个简单的 trim 函数
-    var trim;
-
-    if (typeof String.prototype.trim === 'function') {
-        trim = function (str) {
-            return str.trim();
-        };
-    }
-    else {
-        trim = function (str) {
-            return str.replace(/^\s+|\s+$/g, '');
-        };
     }
 
     /**
@@ -306,6 +265,7 @@ define(function (require, exports, module) {
      * @type {Function}
      */
     window.Supload = Supload;
+
 
     return Supload;
 

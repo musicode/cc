@@ -117,4 +117,37 @@ define(function (require, exports, module) {
         return result + suffix;
     };
 
+    /**
+     * 对字符串进行 HTML 编码
+     *
+     * @param {string} source 字符串
+     * @return {string}
+     */
+    exports.encodeHTML = function (source) {
+        return String(source)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+    };
+
+    /**
+     * 对字符串进行 HTML 解码
+     *
+     * @param {string} source 字符串
+     * @return {string}
+     */
+    exports.decodeHTML = function (source) {
+        var str = String(source)
+                    .replace(/&quot;/g, '"')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&amp;/g, "&");
+        // 处理转义的中文和实体字符
+        return str.replace(/&#([\d]+);/g, function($0, $1){
+            return String.fromCharCode(parseInt($1, 10));
+        });
+    };
+
 });

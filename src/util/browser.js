@@ -17,6 +17,8 @@ define(function (require, exports, module) {
      *
      */
 
+    'use strict';
+
     var chromeExpr = /(chrome)[ \/]([\w.]+)/;
     var firefoxExpr = /(firefox)[ \/]([\w.]+)/;
     var operaExpr = /(opera)(?:.*version)?[ \/]([\w.]+)/;

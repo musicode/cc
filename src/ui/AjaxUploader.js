@@ -29,8 +29,9 @@ define(function (require, exports, module) {
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
      * @property {string=} options.fileName 上传文件的 name 值，默认是 Filedata
+     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
-     *                                         [ 'jpg', 'png' ]
+     *                                            [ 'jpg', 'png' ]
      *
      * @property {Function=} options.onFileChange
      * @property {function(Object)=} options.onUploadStart
@@ -121,8 +122,10 @@ define(function (require, exports, module) {
 
         /**
          * 上传文件
+         *
+         * @param {Object=} data 需要一起上传的数据
          */
-        upload: function () {
+        upload: function (data) {
 
             var me = this;
 
@@ -137,11 +140,9 @@ define(function (require, exports, module) {
                 fileItem.nativeFile
             );
 
-            var data = me.data;
-            if (data) {
-                for (var key in data) {
-                    formData.append(key, data[key]);
-                }
+            data = $.extend({ }, me.data, data);
+            for (var key in data) {
+                formData.append(key, data[key]);
             }
 
             var xhr = new XMLHttpRequest();
@@ -207,7 +208,8 @@ define(function (require, exports, module) {
      */
     AjaxUploader.defaultOptions = {
         multiple: false,
-        fileName: 'Filedata'
+        fileName: 'Filedata',
+        ignoreError: false
     };
 
     /**
@@ -367,7 +369,6 @@ define(function (require, exports, module) {
         pptx    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     };
 
-
     /**
      * 事件处理函数
      *
@@ -419,9 +420,6 @@ define(function (require, exports, module) {
                 }
 
                 uploadComplete(uploader, fileItem);
-
-                uploader.fileQueue.index = fileItem.index + 1;
-                uploader.upload();
             }
         },
 
@@ -446,7 +444,8 @@ define(function (require, exports, module) {
         uploadStop: {
             type: 'abort',
             handler: function (uploader, e) {
-                eventHandler.uploadError.handler(uploader, e, AjaxUploader.ERROR_CANCEL);
+                eventHandler.uploadError
+                            .handler(uploader, e, AjaxUploader.ERROR_CANCEL);
             }
         }
     };
@@ -474,6 +473,19 @@ define(function (require, exports, module) {
             uploader.onUploadComplete({
                 fileItem: fileItem
             });
+        }
+
+        if (fileItem.status === AjaxUploader.STATUS_UPLOAD_SUCCESS
+            || (fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR && uploader.ignoreError)
+        ) {
+            var index = fileItem.index + 1;
+            if (index < uploader.fileQueue.files.length) {
+                uploader.fileQueue.index = index;
+                uploader.upload();
+            }
+            else {
+                setFiles(uploader, [ ]);
+            }
         }
     }
 
