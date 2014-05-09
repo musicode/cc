@@ -20,7 +20,7 @@
 
         require(
 
-            [ 'cobble/ui/FlashUploader' ],
+            [ 'cobble/helper/FlashUploader' ],
 
             function (FlashUploader) {
 
@@ -32,7 +32,13 @@
                     data: {
                         company: 'baidu'
                     },
+                    onloaded: function () {
+                        console.log('loaded');
+                        uploader.disable();
+                    },
                     onFileChange: function () {
+                        console.log(uploader.getFiles().length);
+
                         this.upload({
                             name: 'zhujl',
                             age: 25,

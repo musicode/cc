@@ -1,6 +1,6 @@
 /**
  * @file Input
- * @author  zhujl
+ * @author zhujl
  */
 define(function (require, exports, module) {
 

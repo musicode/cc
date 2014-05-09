@@ -118,7 +118,10 @@ define(function (require, exports, module) {
                 onAfterHide
             );
 
-            var fn = me.element.css('display') === 'none' ? showEvent : hideEvent;
+            var fn = me.element.css('display') === 'none'
+                   ? showEvent
+                   : hideEvent;
+
             fn(me, 'add');
         },
 
@@ -312,7 +315,10 @@ define(function (require, exports, module) {
      * @param {HTMLElement=} triggerElement 触发显示的元素
      */
     function onBeforeShow(triggerElement) {
-        var element = this.element;
+
+        var me = this;
+
+        var element = me.element;
 
         // 可能出现多个 trigger 共用一个弹出层的情况
         var currentTrigger = element.data(currentTriggerKey);
@@ -326,8 +332,8 @@ define(function (require, exports, module) {
             currentTrigger.hide();
         }
 
-        if (typeof this.onBeforeShow === 'function') {
-            return this.onBeforeShow();
+        if (typeof me.onBeforeShow === 'function') {
+            return me.onBeforeShow();
         }
     }
 
@@ -339,22 +345,33 @@ define(function (require, exports, module) {
      */
     function onAfterShow(triggerElement) {
 
-        showEvent(this, 'remove');
-        hideEvent(this, 'add');
+        var me = this;
+
+        showEvent(me, 'remove');
+
+        // 如果浏览器支持事件 timeStamp，则不用 setTimeout
+        if (me.cache.clickTimestamp) {
+            hideEvent(me, 'add');
+        }
+        else {
+            setTimeout(function () {
+                hideEvent(me, 'add');
+            }, 0);
+        }
 
         // 如果手动调用 show()，不会有触发元素
         if (triggerElement) {
-            this.element.data(
+            me.element.data(
                 currentTriggerKey,
                 {
                     element: triggerElement,
-                    hide: $.proxy(this.hide, this)
+                    hide: $.proxy(me.hide, me)
                 }
             );
         }
 
-        if (typeof this.onAfterShow === 'function') {
-            this.onAfterShow();
+        if (typeof me.onAfterShow === 'function') {
+            me.onAfterShow();
         }
     }
 
@@ -364,12 +381,15 @@ define(function (require, exports, module) {
      * @inner
      */
     function onBeforeHide() {
-        if (this.element.css('display') === 'none') {
+
+        var me = this;
+
+        if (me.element.css('display') === 'none') {
             return false;
         }
 
-        if (typeof this.onBeforeHide === 'function') {
-            return this.onBeforeHide();
+        if (typeof me.onBeforeHide === 'function') {
+            return me.onBeforeHide();
         }
     }
 
@@ -379,12 +399,15 @@ define(function (require, exports, module) {
      * @inner
      */
     function onAfterHide() {
-        this.element.removeData(currentTriggerKey);
-        hideEvent(this, 'remove');
-        showEvent(this, 'add');
 
-        if (typeof this.onAfterHide === 'function') {
-            this.onAfterHide();
+        var me = this;
+
+        me.element.removeData(currentTriggerKey);
+        hideEvent(me, 'remove');
+        showEvent(me, 'add');
+
+        if (typeof me.onAfterHide === 'function') {
+            me.onAfterHide();
         }
     }
 

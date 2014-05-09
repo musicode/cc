@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Popup</title>
+    <style>
+        #ui-select {
+            display: inline-block;
+            *display: inline;
+            *zoom: 1;
+        }
+        #select-trigger {
+            border: 1px solid #DDD;
+            background-color: #F3F3F3;
+            cursor: pointer;
+            display: inline-block;
+            padding: 5px 10px;
+            width: 100px;
+            border-radius: 2px;
+            position: relative;
+        }
+        #select-trigger i {
+            display: inline-block;
+
+            position: absolute;
+            right: 10px;
+        }
+        .icon-arrow-down {
+            border: 5px solid #666;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            top: 10px;
+        }
+        .icon-arrow-up {
+            border: 5px solid #666;
+            border-left-color: transparent;
+            border-right-color: transparent;
+            border-top-color: transparent;
+            top: 5px;
+        }
+        #select-layer {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: none;
+
+            border: 1px solid #DDD;
+            background-color: #FFF;
+        }
+        #select-layer li {
+            cursor: pointer;
+            padding: 5px 10px;
+            border-top: 1px solid #EEE;
+        }
+        #select-layer li:first-child {
+            border-top: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="ui-select">
+        <span id="select-trigger">
+            <b>请选择</b>
+            <i class="icon-arrow-down"></i>
+        </span>
+        <ul id="select-layer">
+            <li>11111111111</li>
+            <li>22222222222</li>
+            <li>33333333333</li>
+            <li>44444444444</li>
+        </ul>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/helper/Popup' ],
+
+            function (Popup) {
+
+                var $layer = $('#select-layer');
+
+                var popup = new Popup({
+                    trigger: $('#select-trigger'),
+                    element: $layer,
+                    showBy: 'click',
+                    hideBy: 'blur',
+                    show: function () {
+                        this.element.slideDown(100);
+                    },
+                    hide: function () {
+                        this.element.slideUp(10);
+                    },
+                    onBeforeShow: function () {
+                        //console.log('beforeShow');
+                    },
+                    onAfterShow: function () {
+                        $('#select-trigger i').removeClass('icon-arrow-down')
+                                              .addClass('icon-arrow-up');
+                        //console.log('afterShow');
+                    },
+                    onBeforeHide:function () {
+                        //console.log('beforeHide');
+                    },
+                    onAfterHide: function () {
+                        $('#select-trigger i').removeClass('icon-arrow-up')
+                                              .addClass('icon-arrow-down');
+                        //console.log('afterHide');
+                    }
+                });
+
+                $layer.on('click', 'li', function (e) {
+                    popup.hide();
+                    $('#select-trigger b').html(e.target.innerHTML);
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

@@ -137,6 +137,8 @@ define(function (require, exports, module) {
          * 禁用鼠标点击打开文件选择窗口
          */
         disable: function () {
+            console.log(this.element.tagName)
+            console.log(this.element.disable)
             this.element.disable && this.element.disable();
         },
 
@@ -175,9 +177,14 @@ define(function (require, exports, module) {
      */
     Supload.createSWF = function(id, flashUrl, flashVars) {
 
-        var html = '<embed class="' + Supload.projectName.toLowerCase()
-                 + '" src="' + flashUrl
-                 + '" wmode="transparent" allowscriptaccess="always" flashvars="' + flashVars + '" />';
+        // 不加 ID 在 IE 下没法运行
+        var html = '<object id="' + id + '" class="' + Supload.projectName.toLowerCase()
+                 + '" type="application/x-shockwave-flash" data="' + flashUrl + '">'
+                 +     '<param name="src" value="' + flashUrl + '" />'
+                 +     '<param name="allowscriptaccess" value="always" />'
+                 +     '<param name="wmode" value="transparent" />'
+                 +     '<param name="flashvars" value="' + flashVars + '" />'
+                 + '</object>';
 
         return $(html)[0];
     };

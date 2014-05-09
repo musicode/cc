@@ -196,6 +196,19 @@ define(function (require, exports, module) {
      */
     var eventHandler = {
 
+        /**
+         * flash 加载完成
+         */
+        loaded: function () {
+            var uploader = this.customSettings.uploader;
+            if (typeof uploader.onReady === 'function') {
+                uploader.onReady();
+            }
+        },
+
+        /**
+         * 选择文件
+         */
         fileChange: function () {
             var uploader = this.customSettings.uploader;
             if (typeof uploader.onFileChange === 'function') {
