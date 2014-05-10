@@ -180,7 +180,7 @@ define(function (require, exports, module) {
         // 不加 ID 在 IE 下没法运行
         var html = '<object id="' + id + '" class="' + Supload.projectName.toLowerCase()
                  + '" type="application/x-shockwave-flash" data="' + flashUrl + '">'
-                 +     '<param name="src" value="' + flashUrl + '" />'
+                 +     '<param name="movie" value="' + flashUrl + '" />'
                  +     '<param name="allowscriptaccess" value="always" />'
                  +     '<param name="wmode" value="transparent" />'
                  +     '<param name="flashvars" value="' + flashVars + '" />'

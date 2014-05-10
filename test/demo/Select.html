@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select</title>
+    <style>
+
+        #menu {
+            display: none;
+        }
+        #menu a {
+            border-bottom: 1px solid #EEE;
+            display: block;
+        }
+        .active {
+            background-color: #EEE;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="select">
+        <button id="trigger">select ...</button>
+        <div id="menu">
+            <a data-value="1">111</a>
+            <a data-value="2">222</a>
+            <a data-value="3">333</a>
+            <a data-value="4">444</a>
+            <a data-text="xxxx" data-value="5">555</a>
+        </div>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Select' ],
+
+            function (Select) {
+
+                var select = new Select({
+                    trigger: $('#trigger'),
+                    menu: $('#menu'),
+                    value: 2,
+                    activeClass: 'active',
+                    onChange: function (data) {
+                        this.dispose();
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

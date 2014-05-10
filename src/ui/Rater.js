@@ -72,9 +72,9 @@ define(function (require, exports, module) {
 
             if (!me.readOnly) {
                 me.element
-                  .on('mouseenter', 'i', $.proxy(onMouseEnter, me))
-                  .on('mouseleave', 'i', $.proxy(onMouseLeave, me))
-                  .on('click', 'i', $.proxy(onClick, me));
+                  .on('mouseenter', 'i', me, onMouseEnter)
+                  .on('mouseleave', 'i', me, onMouseLeave)
+                  .on('click', 'i', me, onClick);
             }
         },
 
@@ -141,8 +141,9 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onMouseEnter(e) {
+        var rater = e.data;
         var target = $(e.target);
-        refresh(this, target.data('value'));
+        refresh(rater, target.data('value'));
     }
 
     /**
@@ -152,7 +153,8 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onMouseLeave(e) {
-        refresh(this, this.value);
+        var rater = e.data;
+        refresh(rater, rater.value);
     }
 
     /**
@@ -162,8 +164,9 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onClick(e) {
+        var rater = e.data;
         var target = $(e.target);
-        this.setValue(target.data('value'));
+        rater.setValue(target.data('value'));
     }
 
     /**
