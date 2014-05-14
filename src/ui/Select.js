@@ -157,6 +157,9 @@ define(function (require, exports, module) {
         if (typeof select.onChange === 'function') {
             select.onChange(data);
         }
+
+        // 如果 target 是 a，需要禁用默认行为
+        return false;
     }
 
 

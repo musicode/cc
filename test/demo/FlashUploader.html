@@ -56,9 +56,9 @@
                     data: {
                         company: 'baidu'
                     },
-                    onloaded: function () {
+                    onReady: function () {
                         console.log('loaded');
-                        uploader.disable();
+                        //uploader.disable();
                     },
                     onFileChange: function () {
                         console.log(uploader.getFiles().length);
