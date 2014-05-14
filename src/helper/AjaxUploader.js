@@ -175,14 +175,14 @@ define(function (require, exports, module) {
          * 启用
          */
         enable: function () {
-            this.element.removeProp('disabled');
+            this.element.prop('disabled', false);
         },
 
         /**
          * 禁用
          */
         disable: function () {
-            this.element.prop('disabled', 'disabled');
+            this.element.prop('disabled', true);
         },
 
         /**
