@@ -137,8 +137,6 @@ define(function (require, exports, module) {
          * 禁用鼠标点击打开文件选择窗口
          */
         disable: function () {
-            console.log(this.element.tagName)
-            console.log(this.element.disable)
             this.element.disable && this.element.disable();
         },
 
