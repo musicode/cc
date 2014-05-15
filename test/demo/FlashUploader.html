@@ -61,8 +61,7 @@
                         //uploader.disable();
                     },
                     onFileChange: function () {
-                        console.log(uploader.getFiles().length);
-
+                        uploader.disable();
                         this.upload({
                             name: 'zhujl',
                             age: 25,

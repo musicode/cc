@@ -355,7 +355,10 @@ define(function (require, exports, module) {
         }
         else {
             setTimeout(function () {
-                hideEvent(me, 'add');
+                // 异步调用要确保对象没有被销毁
+                if (me.cache) {
+                    hideEvent(me, 'add');
+                }
             }, 0);
         }
 

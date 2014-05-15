@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <title>Tooltip</title>
     <style>
+        html,
+        body {
+            height: 100%;
+        }
+
         #icon {
             background-color: #6A94EC;
             color: #FFF;
@@ -71,7 +76,7 @@
                 config.hide = function (tipElement) {
                     tipElement.fadeOut(100);
                 };
-                config.update = function (tipElement, triggerElement) {
+                config.update = function (tipElement) {
                     tipElement.find('.tooltip-content').html(this.title);
                 };
                 config.onBeforeShow = function () {
@@ -82,7 +87,7 @@
                 };
 
                 var tooltip = new Tooltip({
-                    element: $('#icon'),
+                    trigger: $('#icon'),
                     template: '<div class="tooltip">'
                             +    '<i class="arrow"></i>'
                             +    '<div class="tooltip-content"></div>'
