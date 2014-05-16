@@ -44,7 +44,7 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var position = require('../util/position');
-    var util = require('../util/main');
+    var magic = require('../util/magic');
 
     /**
      * 工具提示
@@ -142,36 +142,36 @@ define(function (require, exports, module) {
                         if (typeof me.onAfterHide === 'function') {
                             return me.onAfterHide();
                         }
+
                     },
                     onBeforeShow: function () {
 
                         var tipElement = getTipElement(me);
-                        var actualPlacement;
+                        var placement;
 
                         var update = me.update || $.noop;
 
                         // 如果 update 返回 false，表示后面的都不用继续了
                         if (update.call(me, tipElement) === false
-                            || !(actualPlacement = getTipPlacement(trigger, tipElement, me.placement))
+                            || !(placement = getTipPlacement(trigger, tipElement, me.placement))
                         ) {
                             return false;
                         }
                         else {
 
                             // 全局定位
-                            pinTip(me, actualPlacement);
+                            pinTip(me, placement);
 
                             if (me.hideBy.indexOf('blur') >= 0) {
-                                var resizeHandler =
-                                cache.resizeHandler =
-                                util.debounce(
-                                    function () {
-                                        pinTip(me, actualPlacement);
-                                    },
-                                    50
+                                $(window).resize(
+                                    cache.resizeHandler =
+                                    magic.debounce(
+                                        function () {
+                                            pinTip(me, placement);
+                                        },
+                                        50
+                                    )
                                 );
-
-                                $(window).resize(resizeHandler);
                             }
 
                             if (typeof me.onBeforeShow === 'function') {
@@ -234,8 +234,6 @@ define(function (require, exports, module) {
 
         showBy: 'over',
         hideBy: 'out,blur',
-        showDelay: 200,
-        hideDelay: 200,
 
         gapX: 5,
         gapY: 5,

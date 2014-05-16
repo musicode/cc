@@ -55,13 +55,13 @@ define(function (require, exports, module) {
 
             var html = [ ];
             for (var i = 1, len = me.total; i <= len; i++) {
-                html.push('<i class="' +
-                            (i <= me.value ? me.onIcon : me.offIcon)
-                          + '"'
-                          + ' data-value="' + i + '"'
-                          + (me.hints[i] ? (' title="' + me.hints[i] + '"') : '')
-                          + '></i>'
-                );
+                html.push('<i class="');
+                html.push(i <= me.value ? me.onIcon : me.offIcon);
+                html.push('" data-value="' + i + '"');
+                if (me.hints[i]) {
+                    html.push(' title="' + me.hints[i] + '"')
+                }
+                html.push('></i>');
             }
 
             me.element.html(html.join(''));
@@ -84,7 +84,7 @@ define(function (require, exports, module) {
          * @return {number}
          */
         getValue: function () {
-            return this.value;
+            return this.value || 0;
         },
 
         /**

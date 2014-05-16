@@ -1,13 +1,8 @@
 /**
  * @file string
- * @author  zhujl
+ * @author zhujl
  */
 define(function (require, exports, module) {
-
-    /**
-     * 1. 处理 UTF-8 字符相关
-     * 2. 处理各种字符键值，如 url 参数, cookie 等
-     */
 
     'use strict';
 
@@ -143,9 +138,9 @@ define(function (require, exports, module) {
                     .replace(/&quot;/g, '"')
                     .replace(/&lt;/g, '<')
                     .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, "&");
+                    .replace(/&amp;/g, '&');
         // 处理转义的中文和实体字符
-        return str.replace(/&#([\d]+);/g, function($0, $1){
+        return str.replace(/&#([\d]+);/g, function($0, $1) {
             return String.fromCharCode(parseInt($1, 10));
         });
     };
