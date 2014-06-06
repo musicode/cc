@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Keyboard</title>
+</head>
+<body>
+
+    <input type="text" />
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/helper/Keyboard' ],
+
+            function (Keyboard) {
+
+                new Keyboard({
+                    element: $(document.body),
+                    onLongPressStart: function (keyCode) {
+                        console.log('---------------------longPress start: ' + keyCode, this);
+                    },
+                    onLongPressEnd: function (keyCode) {
+                        console.log('---------------------longPress end: ' + keyCode, this);
+                    },
+                    onKeyDown: function () {
+                        console.log('keyDown', this);
+                    },
+                    onKeyUp: function () {
+                        console.log('keyUp', this);
+                    },
+                    events: {
+                        'ctrl+c': function () {
+                            console.log('ctrl + c');
+                        },
+                        'shift+c': function () {
+                            console.log('shift + c');
+                        },
+                        'meta+c': function () {
+                            console.log('meta + c');
+                        },
+                        'alt+c': function () {
+                            console.log('alt + c');
+                        },
+                        'shift+ctrl+c': function () {
+                            console.log('shift + ctrl + c');
+                        },
+                        'shift+alt+c': function () {
+                            console.log('shift + alt + c');
+                        },
+                        'ctrl+alt+c': function () {
+                            console.log('ctrl + alt + c');
+                        },
+                        'shift+ctrl+alt+c': function () {
+                            console.log('shift + ctrl + alt + c');
+                        },
+                        'enter': function () {
+                            console.log('keyEvents -> enter', this);
+                        }
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

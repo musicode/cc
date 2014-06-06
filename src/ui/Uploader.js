@@ -22,7 +22,7 @@ define(function (require, exports, module) {
 
         function supportAjaxUploadProgressEvents() {
            var xhr = new XMLHttpRequest();
-           return xhr && ('upload' in xhr) && ('onprogress' in xhr.upload);
+           return ('upload' in xhr) && ('onprogress' in xhr.upload);
         }
 
         return supportFileAPI() && supportAjaxUploadProgressEvents();

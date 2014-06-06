@@ -13,6 +13,7 @@ define(function (require, exports, module) {
      *
      *    常见的触发方式包括：
      *
+     *    focus 专用于输入框
      *    click
      *    over ( mouseover 简写 )
      *
@@ -85,6 +86,8 @@ define(function (require, exports, module) {
      * @property {Function=} options.onAfterShow
      * @property {Function=} options.onBeforeHide 返回 false 可阻止隐藏
      * @property {Function=} options.onAfterHide
+     *
+     * @property {*} options.scope 指定 onBeforeShow、onAfterShow、onBeforeHide、onAfterHide 的 this
      */
     function Popup(options) {
         $.extend(this, Popup.defaultOptions, options);
@@ -140,7 +143,6 @@ define(function (require, exports, module) {
             }
 
             showEvent(me, 'remove');
-            hideEvent(me, 'remove');
 
             me.trigger =
             me.element =
@@ -170,14 +172,21 @@ define(function (require, exports, module) {
      */
     Popup.showBy = {
 
-        click: {
+        focus: {
             addTrigger: function (popup) {
-                var trigger = popup.trigger;
-                trigger.on('click', popup, showByClick);
+                popup.trigger.on('focus', popup, showByFocus);
             },
             removeTrigger: function (popup) {
-                var trigger = popup.trigger;
-                trigger.off('click', showByClick);
+                popup.trigger.off('focus', showByFocus);
+            }
+        },
+
+        click: {
+            addTrigger: function (popup) {
+                popup.trigger.on('click', popup, showByClick);
+            },
+            removeTrigger: function (popup) {
+                popup.trigger.off('click', showByClick);
             }
         },
 
@@ -312,28 +321,41 @@ define(function (require, exports, module) {
      * 显示之前的拦截方法
      *
      * @inner
-     * @param {HTMLElement=} triggerElement 触发显示的元素
+     * @param {Event=} event 触发事件
      */
-    function onBeforeShow(triggerElement) {
+    function onBeforeShow(event) {
+
+        // 这里不能写下面这句代码：
+        //
+        // if (me.element.css('display') !== 'none') {
+        //     return false;
+        // }
+        //
+        // 因为当多个 trigger 公用一个弹出层时
+        // 弹出层显示之后，可能又被另一个 trigger 触发显示
+        // 这时仍然要走正常的显示流程
 
         var me = this;
-
         var element = me.element;
 
         // 可能出现多个 trigger 共用一个弹出层的情况
         var currentTrigger = element.data(currentTriggerKey);
+
         // 如果弹出元素当前处于显示状态
         if (currentTrigger) {
+
             // 无视重复触发显示
-            if (currentTrigger.element === triggerElement) {
+            if (event && currentTrigger.element === (event.toElement || event.target)) {
                 return false;
             }
+
             // 如果是新的 trigger，则需隐藏旧的
             currentTrigger.hide();
         }
 
-        if (typeof me.onBeforeShow === 'function') {
-            return me.onBeforeShow();
+        var onBeforeShow = me.onBeforeShow;
+        if (typeof onBeforeShow === 'function') {
+            return onBeforeShow.call(me.scope, event);
         }
     }
 
@@ -341,40 +363,35 @@ define(function (require, exports, module) {
      * 显示完之后需要绑定事件触发隐藏逻辑
      *
      * @inner
-     * @param {HTMLElement} triggerElement
+     * @param {Event=} event
      */
-    function onAfterShow(triggerElement) {
+    function onAfterShow(event) {
 
         var me = this;
 
         showEvent(me, 'remove');
 
-        // 如果浏览器支持事件 timeStamp，则不用 setTimeout
-        if (me.cache.clickTimestamp) {
-            hideEvent(me, 'add');
-        }
-        else {
-            setTimeout(function () {
-                // 异步调用要确保对象没有被销毁
-                if (me.cache) {
-                    hideEvent(me, 'add');
-                }
-            }, 0);
-        }
+        setTimeout(function () {
+            // 异步调用要确保对象没有被销毁
+            if (me.cache) {
+                hideEvent(me, 'add');
+            }
+        }, 150);
 
-        // 如果手动调用 show()，不会有触发元素
-        if (triggerElement) {
+        // 如果手动调用 show()，不会有事件
+        if (event) {
             me.element.data(
                 currentTriggerKey,
                 {
-                    element: triggerElement,
+                    element: event.toElement || event.target,
                     hide: $.proxy(me.hide, me)
                 }
             );
         }
 
-        if (typeof me.onAfterShow === 'function') {
-            me.onAfterShow();
+        var onAfterShow = me.onAfterShow;
+        if (typeof onAfterShow === 'function') {
+            onAfterShow.call(me.scope, event);
         }
     }
 
@@ -382,8 +399,9 @@ define(function (require, exports, module) {
      * 隐藏之前要确保元素是显示状态的
      *
      * @inner
+     * @param {Event=} event
      */
-    function onBeforeHide() {
+    function onBeforeHide(event) {
 
         var me = this;
 
@@ -391,8 +409,9 @@ define(function (require, exports, module) {
             return false;
         }
 
-        if (typeof me.onBeforeHide === 'function') {
-            return me.onBeforeHide();
+        var onBeforeHide = me.onBeforeHide;
+        if (typeof onBeforeHide === 'function') {
+            return onBeforeHide.call(me.scope, event);
         }
     }
 
@@ -400,8 +419,9 @@ define(function (require, exports, module) {
      * 隐藏之后需要解绑事件
      *
      * @inner
+     * @param {Event=} event
      */
-    function onAfterHide() {
+    function onAfterHide(event) {
 
         var me = this;
 
@@ -409,8 +429,9 @@ define(function (require, exports, module) {
         hideEvent(me, 'remove');
         showEvent(me, 'add');
 
-        if (typeof me.onAfterHide === 'function') {
-            me.onAfterHide();
+        var onAfterHide = me.onAfterHide;
+        if (typeof onAfterHide === 'function') {
+            onAfterHide.call(me.scope, event);
         }
     }
 
@@ -483,6 +504,26 @@ define(function (require, exports, module) {
     }
 
     /**
+     * 输入框 facus 事件触发显示
+     *
+     * @inner
+     * @param {Event} e
+     */
+    function showByFocus(e) {
+
+        var popup = e.data;
+
+        setDelay(
+            popup,
+            popup.showDelay,
+            function () {
+                popup.show(e);
+            },
+            Popup.showBy.focus
+        );
+    }
+
+    /**
      * click 事件触发显示
      *
      * @inner
@@ -491,13 +532,12 @@ define(function (require, exports, module) {
     function showByClick(e) {
 
         var popup = e.data;
-        popup.cache.clickTimestamp = e.timeStamp;
 
         setDelay(
             popup,
             popup.showDelay,
             function () {
-                popup.show(e.target);
+                popup.show(e);
             },
             Popup.showBy.click
         );
@@ -517,7 +557,7 @@ define(function (require, exports, module) {
             popup,
             popup.showDelay,
             function () {
-                popup.show(e.toElement);
+                popup.show(e);
             },
             Popup.showBy.over
         );
@@ -532,25 +572,13 @@ define(function (require, exports, module) {
      */
     function hideByBlur(popup) {
         return function (e) {
-
-            // 避免 showByClick 冒泡到 document 带来的问题
-            var cache = popup.cache;
-            var clickTimestamp = cache.clickTimestamp;
-            if (clickTimestamp) {
-                // 如果是冒泡的同一个事件，event.timeStamp 是相同的
-                if (e.timeStamp === clickTimestamp) {
-                    return;
-                }
-                else {
-                    cache.clickTimestamp = null;
-                }
-            }
-
             if (isOutside(e.target, popup.element[0])) {
                 setDelay(
                     popup,
                     popup.hideDelay,
-                    $.proxy(popup.hide, popup),
+                    function () {
+                        popup.hide(e);
+                    },
                     Popup.hideBy.blur
                 );
             }
@@ -575,7 +603,9 @@ define(function (require, exports, module) {
             setDelay(
                 popup,
                 popup.hideDelay,
-                $.proxy(popup.hide, popup),
+                function () {
+                    popup.hide(e);
+                },
                 Popup.hideBy.out
             );
         }

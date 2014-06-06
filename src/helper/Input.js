@@ -23,7 +23,7 @@ define(function (require, exports, module) {
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      *
-     * 3. chrome 下按方向键上会使光标跑到最左侧
+     * 3. chrome 下 <input type="text" /> 按方向键上会使光标跑到最左侧
      *
      * 4. 处理中文输入
      *
@@ -31,19 +31,25 @@ define(function (require, exports, module) {
      *
      * keyCode 在中文输入下比较特殊，如下：
      *
-     * keydown: 0   keyup: undefined(没触发)  【火狐】
-     * keydown: 229
+     * keydown: 0   [火狐]
+     * keydown: 229 [其他]
      *
      * 需要注意的是，空格和回车这些键会触发输入法文字写入输入框
-     * 但这些按键不一定会触发 keyup
      *
-     * 5. 键盘事件不一定是 keydown -> keyup 这种顺序
-     *    火狐有时也可能连续触发多次 keyup
+     * 5. 组合键，如 ctrl+a 的触发顺序如下：
+     *
+     *    按下 ctrl
+     *    按下 a
+     *    松开 ctrl
+     *    松开 a
+     *
+     *    因为不是对称的 按下-松开 顺序，所以本模块不处理组合键
      */
 
     'use strict';
 
     var advice = require('../util/advice');
+    var Keyboard = require('./Keyboard');
 
     /**
      * 使输入框元素具有 input 事件
@@ -54,12 +60,33 @@ define(function (require, exports, module) {
      * @property {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
      *                                        因为长按产生的一般是无效输入
      *
+     * @property {Function=} options.onKeyDown 按下键位触发
+     * @property {Function=} options.onKeyUp 松开键位触发
      * @property {Function=} options.onChange 内容变化触发
-     * @property {Funciton=} options.onEnter 按下回车触发
+     *
+     * @property {Funciton=} options.onEnter 按下回车触发，类似的还支持以下事件
+     *                                       onUp, onDown, onLeft, onRight, onSpace, onEsc
+     *
      * @property {Function=} options.onLongPressStart 长按开始
+     * @argument {number=} options.onLongPressStart.keyCode 按下的键码
      * @property {Function=} options.onLongPressEnd 长按结束
+     * @argument {number=} options.onLongPressStart.keyCode 松开的键码
+     *
      * @property {Object=} options.keyEvents 按下某键，发出某事件
-     *                                       如 { '43': function () { // up } }
+     *                                       组合键只支持 shift/ctrl/alt/meta + 字母/数字
+     *                                       举个例子：
+     *                                       {
+     *                                           'up': function () {
+     *                                               // up
+     *                                           },
+     *                                           'ctrl+c': function () {
+     *                                               // copy
+     *                                           },
+     *                                           'ctrl+alt+a': function () {
+     *                                               // 截图
+     *                                           }
+     *                                       }
+     *
      */
     function Input(options) {
         $.extend(this, Input.defaultOptions, options);
@@ -75,65 +102,100 @@ define(function (require, exports, module) {
          */
         init: function () {
 
-            var element = this.element;
+            var me = this;
+            var events = me.keyEvents || { };
 
-            /**
-             * 用来存放一些私有变量
-             */
-            var cache = this.cache = {
-                val: element.val
-            };
+            $.each(
+                getOnEvents(me),
+                function (index, item) {
+                    advice.before(
+                        events,
+                        item.type,
+                        item.handler
+                    );
+                }
+            );
 
-            // 拦截是否手动改值
+            var element = me.element;
+
+            // IE8- 改值会触发 propertychange
             advice.before(
                 element,
                 'val',
                 function (value) {
-                    // 调用 setter 方法
-                    if (value != null) {
-                        cache.hasCallVal = true;
+                    if (typeof value !== 'undefined') {
+                        me.cache.changeByCall = true;
                     }
                 }
             );
 
-            // 绑定事件
-            var events = {
-                keydown: onKeyDown,
-                keyup: onKeyUp
+            // 处理 input 事件
+            element.on(inputConf.type, me, inputConf.handler);
+
+            me.cache = {
+
+                mode: element.prop('tagName').toLowerCase(),
+
+                keyboard: new Keyboard({
+
+                    element: element,
+                    events: events,
+                    onKeyDown: onKeyDown,
+                    onKeyUp: onKeyUp,
+                    onLongPressStart: me.onLongPressStart,
+                    onLongPressEnd: me.onLongPressEnd,
+
+                    // 把作用域改为 Input 实例
+                    scope: me
+                })
             };
 
-            if (supportInputEvent) {
-                events.input = onInput;
-            }
-            else {
-                events.propertychange = onPropertyChange;
-            }
+        },
 
-            for (var type in events) {
-                element.on(type, this, events[type]);
-            }
+        /**
+         * 自动变高
+         */
+        autoHeight: function () {
 
-            cache.events = events;
+            var me = this;
+            var element = me.element;
+            var originHeight = element.height();
+
+            advice.before(
+                me,
+                'onChange',
+                function () {
+
+                    var oldHeight = element.height();
+
+                    // 把高度重置为原始值才能取到正确的 newHeight
+                    if (oldHeight !== originHeight) {
+                        element.height(originHeight);
+                    }
+
+                    var newHeight = element.prop('scrollHeight');
+
+                    // 必须每次都更新，不然用输入法的时候，chrome 会有点问题
+                    element.height(newHeight);
+
+                }
+            );
         },
 
         /**
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
-            var cache = me.cache;
-            var element = me.element;
 
             // 解绑事件
-            var events = cache.events;
-            for (var type in events) {
-                element.off(type, events[type]);
-            }
+            me.element.off(inputConf.type, inputConf.handler);
 
-            // 还原 val 方法
-            element.val = cache.val;
+            me.cache.keyboard.dispose();
 
             // 垃圾回收
+            me.keyEvents =
             me.cache =
             me.element = null;
         }
@@ -153,26 +215,45 @@ define(function (require, exports, module) {
      * 特性检测是否支持 input 事件
      *
      * @inner
-     * @return {boolean}
+     * @type {boolean}
      */
     var supportInputEvent = (function () {
         var input = document.createElement('input');
         return 'oninput' in input;
     })();
 
+    var inputConf = {
+        type: supportInputEvent ? 'input' : 'propertychange',
+        handler: supportInputEvent ? onInput : onPropertyChange
+    };
+
+    // 用完就删掉
+    supportInputEvent = null;
+
     /**
-     * 是否是中文输入
+     * 获得所有的 onXXX 函数
      *
      * @inner
-     * @param {number} keyDownCode
-     * @param {number=} keyUpCode
-     * @return {boolean}
+     * @param {Input} input
+     * @return {Array}
      */
-    function isImsInput(keyDownCode, keyUpCode) {
-        // 1. keydown: 0 keyup: undefined(没触发)  【火狐】
-        // 2. keydown: 229 【其他浏览器】
-        return (keyDownCode === 0 || typeof keyUpCode === 'undefined')
-            || keyDownCode === 229;
+    function getOnEvents(input) {
+
+        var result = [ ];
+
+        for (var name in input) {
+            if (input.hasOwnProperty(name)
+                && name.indexOf('on') === 0
+                && typeof input[name] === 'function'
+            ) {
+                result.push({
+                    type: name.toLowerCase().substr(2),
+                    handler: input[name]
+                });
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -221,45 +302,34 @@ define(function (require, exports, module) {
         var cache = input.cache;
         var keyDownCode = cache.keyDownCode;
 
-        if (typeof keyDownCode === 'number') {
+        if (keyDownCode || keyUpCode) {
 
-            // 判断中文输入法是否正在输入中
-            if (isImsInput(keyDownCode, keyUpCode)) {
+            if (keyDownCode) {
 
-                // 以 chrome 举例
-                // 触发中文输入法开启的 keyDownCode 是 229
-                // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
+                // 中文输入法开启时，keydown 的 keyCode 只可能是这两个值
+                if (keyDownCode === 0 || keyDownCode === 229) {
 
-                if (!isImsKey(keyUpCode)) { // 是否正在输入
+                    // 以 chrome 举例
+                    // 触发中文输入法开启的 keyDownCode 是 229
+                    // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
+
+                    if (!isImsKey(keyUpCode)) { // 是否正在输入
+                        return;
+                    }
+                }
+
+                // 过滤长按
+                if (!input.longPress && cache.keyboard.isLongPressing) {
                     return;
                 }
             }
-            // 不是字符键肯定也不会触发
-            else if (!isCharKey(keyDownCode)) {
+
+            // 如果按下 ctrl+a，最后一次触发 keyup 事件是松开 ctrl 键
+            // 这时 keyDownCode 已被清除，所以两个变量都要判断一下
+
+            if (!isCharKey(keyUpCode || keyDownCode)) {
                 return;
             }
-
-            // 过滤长按
-            if (!input.longPress // 是否长按不需要触发 change 事件
-                && cache.longPressCouter > 1 // 是否正在长按
-            ) {
-                return;
-            }
-        }
-
-        // 过滤手动改值
-        if (cache.hasCallVal) {
-            cache.hasCallVal = null;
-            return;
-        }
-
-        var keyUpCodeType = typeof keyUpCode;
-
-        // 这两个类型表示触发了 keyup 事件
-        if (keyUpCodeType === 'undefined'
-            || keyUpCodeType === 'number'
-        ) {
-            cache.keyDownCode = null;
         }
 
         if (typeof input.onChange === 'function') {
@@ -289,6 +359,14 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onPropertyChange(e) {
+        var cache = e.data.cache;
+
+        // 不是通过改值触发的才响应
+        if (cache.changeByCall) {
+            cache.changeByCall = false;
+            return;
+        }
+
         var name = e.originalEvent.propertyName;
         if (name === 'value') {
             onInput(e);
@@ -302,55 +380,26 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onKeyDown(e) {
-        var input = e.data;
+
+        var input = this;
         var cache = input.cache;
         var keyCode = e.keyCode;
 
-        // chrome 按上键会跳到最左侧
-        if (keyCode === 38) {
-            e.preventDefault();
-        }
-
-        // 长按字符键
-        if (cache.keyDownCode === keyCode  // 前后两次按键相同
-            && cache.longPressCouter > 0 // 长按的是字符键
-        ) {
-            if (cache.longPressCouter === 1
-                && typeof input.onLongPressStart === 'function'
-            ) {
-                input.onLongPressStart();
-            }
-
-            cache.longPressCouter++;
-
+        if (cache.keyboard.isLongPressing) {
             triggerChangeEvent(input, null);
         }
         else {
             cache.keyDownCode = keyCode;
-
-            if (isCharKey(keyCode)) {
-                cache.longPressCouter = 1;
-            }
-
-            if (cache.keyUpFaker) {
-                clearTimeout(cache.keyUpFaker);
-                cache.keyUpFaker = null;
-            }
-
-            // 避免被上次手动调用影响
-            cache.hasCallVal = null;
-
-            // 中文输入法开启时，有可能不会触发 keyup 事件
-            if (isImsInput(keyCode)) {
-                cache.keyUpFaker = setTimeout(
-                    function () {
-                        triggerChangeEvent(input);
-                    },
-                    500
-                );
-            }
         }
 
+        // chrome 按上键会跳到最左侧
+        if (keyCode === 38 && cache.mode === 'input') {
+            e.preventDefault();
+        }
+
+        if (typeof input.onKeyDown === 'function') {
+            return input.onKeyDown(e);
+        }
     }
 
     /**
@@ -360,38 +409,14 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onKeyUp(e) {
-        var input = e.data;
-        var cache = input.cache;
-        var keyCode = e.keyCode;
 
-        if (cache.longPressCouter > 1) {
-            if (typeof input.onLongPressEnd === 'function') {
-                input.onLongPressEnd();
-            }
-        }
-        cache.longPressCouter = null;
+        var input = this;
 
-        // 如果中文输入法开启后，依然触发了 keyup，就要干掉那个定时器
-        if (cache.keyUpFaker) {
-            clearTimeout(cache.keyUpFaker);
-            cache.keyUpFaker = null;
-        }
+        triggerChangeEvent(input, e.keyCode);
+        input.cache.keyDownCode = null;
 
-        triggerChangeEvent(input, keyCode);
-
-        if (keyCode === 13
-            && typeof input.onEnter === 'function'
-        ) {
-            input.onEnter();
-        }
-
-        // 广播自定义事件
-        var keyEvents = input.keyEvents;
-        if (keyEvents) {
-            var handler = keyEvents[keyCode];
-            if (typeof handler === 'function') {
-                handler.call(input);
-            }
+        if (typeof input.onKeyUp === 'function') {
+            return input.onKeyUp(e);
         }
     }
 

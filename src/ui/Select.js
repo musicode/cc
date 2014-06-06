@@ -19,11 +19,17 @@ define(function (require, exports, module) {
      * @param {string=} options.textAttr 读取 text 的元素属性，没有则读取元素 innerHTML
      * @param {string=} options.valueAttr 读取 value 的元素属性，必须设置这个选项，至少要在 defaultOptions 设置
      * @param {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
+     * @param {Function=} options.onOpen
+     * @param {Function=} options.onClose
+     *
      * @param {Function=} options.onChange 选中菜单项触发
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
-     * @param {Function=} options.setText 选中菜单项后设置 trigger 文本的方法，默认是 trigger.html(text)
+     * @param {Function=} options.setText 选中菜单项后设置 trigger 文本的方法
+     * @argument {Object} options.onChange.data
+     * @property {string} options.onChange.data.text
+     * @property {string} options.onChange.data.value
      */
     function Select(options) {
         $.extend(this, Select.defaultOptions, options);
@@ -49,7 +55,10 @@ define(function (require, exports, module) {
                     trigger: me.trigger,
                     element: menu,
                     showBy: 'click',
-                    hideBy: 'blur'
+                    hideBy: 'blur',
+                    onAfterShow: me.onOpen,
+                    onAfterHide: me.onClose,
+                    scope: me
                 })
             };
 
@@ -57,7 +66,7 @@ define(function (require, exports, module) {
                 me.setValue(me.value);
             }
 
-            menu.on('click', '[' + me.valueAttr +']', me, onClick);
+            menu.on('click', '[' + me.valueAttr +']', me, clickItem);
         },
 
         /**
@@ -73,20 +82,39 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
+         * @param {boolean=} triggerChange 是否触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, triggerChange) {
 
             var me = this;
             var menu = me.menu;
             var target = menu.find('[' + me.valueAttr + '="' + value + '"]');
 
             if (target.size() === 1) {
+
                 me.value = value;
 
                 var activeClass = me.activeClass;
                 if (activeClass) {
                     menu.find('.' + activeClass).removeClass(activeClass);
                     target.addClass(activeClass);
+                }
+
+                var data = {
+                    value: target.attr(me.valueAttr),
+                    text: target.attr(me.textAttr)
+                };
+
+                if (typeof data.text !== 'string') {
+                    data.text = target.html();
+                }
+
+                if (typeof me.setText === 'function') {
+                    me.setText(data);
+                }
+
+                if (triggerChange && typeof me.onChange === 'function') {
+                    me.onChange(data);
                 }
             }
         },
@@ -98,7 +126,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.menu.off('click', onClick);
+            me.menu.off('click', clickItem);
             me.cache.popup.dispose();
 
             me.cache =
@@ -115,10 +143,7 @@ define(function (require, exports, module) {
      */
     Select.defaultOptions = {
         textAttr: 'data-text',
-        valueAttr: 'data-value',
-        setText: function (data) {
-            this.trigger.html(data.text);
-        }
+        valueAttr: 'data-value'
     };
 
     /**
@@ -127,36 +152,18 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onClick(e) {
+    function clickItem(e) {
 
         var select = e.data;
-        var target = $(e.currentTarget);
 
         // 处理 DOM
         select.cache.popup.hide();
 
-        // 收集数据
-        var data = {
-            value: target.attr(select.valueAttr),
-            text: target.attr(select.textAttr)
-        };
-
-        if (typeof data.text !== 'string') {
-            data.text = target.html();
-        }
-
         // 更新 value
-        select.setValue(data.value);
-
-        // 更新 text
-        if (typeof select.setText === 'function') {
-            select.setText(data);
-        }
-
-        // 触发外部接口
-        if (typeof select.onChange === 'function') {
-            select.onChange(data);
-        }
+        select.setValue(
+            $(e.currentTarget).attr(select.valueAttr),
+            true
+        );
 
         // 如果 target 是 a，需要禁用默认行为
         return false;

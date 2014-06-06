@@ -46,6 +46,9 @@
                     menu: $('#menu'),
                     value: 2,
                     activeClass: 'active',
+                    setText: function (data) {
+                        this.trigger.html(data.text);
+                    },
                     onChange: function (data) {
                         this.dispose();
                     }

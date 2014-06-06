@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var magic = require('../util/magic');
+
     /**
      * 星级评分
      *
@@ -16,14 +18,18 @@ define(function (require, exports, module) {
      * @property {number} options.total 星星总数
      * @property {string} options.onIcon 星星选中状态的图标 class
      * @property {string} options.offIcon 星星未选中状态的图标 class
+     * @property {string} options.halfIcon 星星半选中状态的图标 class
      * @property {Object=} options.hints key 是星星对应的值，value 是提示文本，如下：
-     *                               {
-     *                                   '1': '非常差',
-     *                                   '2': '差',
-     *                                   '3': '一般',
-     *                                   '4': '好',
-     *                                   '5': '非常好'
-     *                               }
+     *                                   {
+     *                                       '1': '非常差',
+     *                                       '2': '差',
+     *                                       '3': '一般',
+     *                                       '4': '好',
+     *                                       '5': '非常好'
+     *                                   }
+     *                                   如果允许半选中，不可用此配置
+     *
+     * @property {boolean=} options.half 是否允许半选中
      * @property {boolean=} options.readOnly 是否只读
      * @property {Function=} options.onSelect 选中星星触发
      * @example
@@ -32,7 +38,7 @@ define(function (require, exports, module) {
      *     value: 2,                      // 当前选中 2 颗星
      *     total: 5,                      // 总共有 5 颗星
      *     onIcon: 'icon on',
-     *     offIcon: 'icon off'
+     *     offIcon: 'icon off',
      *     onSelect: function (value) {
      *         console.log('select ' + value);
      *     }
@@ -51,30 +57,41 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
+
             var me = this;
+            me.cache = { };
 
-            var html = [ ];
-            for (var i = 1, len = me.total; i <= len; i++) {
-                html.push('<i class="');
-                html.push(i <= me.value ? me.onIcon : me.offIcon);
-                html.push('" data-value="' + i + '"');
-                if (me.hints[i]) {
-                    html.push(' title="' + me.hints[i] + '"')
+            var html = '';
+            var hints = me.hints;
+
+            traverse(
+                me.value,
+                me.total,
+                function (index, className) {
+
+                    index++;
+
+                    html += '<i class="'+ me[className] + '" data-value="' + index + '"';
+
+                    if (hints && hints[index]) {
+                        html += ' title="' + hints[index] + '"';
+                    }
+
+                    html += '></i>';
                 }
-                html.push('></i>');
-            }
+            )
 
-            me.element.html(html.join(''));
+            var element = me.element;
+            element.html(html);
+
+            if (!me.readOnly) {
+                element.on('mouseenter', 'i', me, previewValue)
+                       .on('mouseleave', 'i', me, restoreValue)
+                       .on('click', 'i', me, changeValue);
+            }
 
             if (typeof me.onSelect === 'function') {
                 me.onSelect(me.value);
-            }
-
-            if (!me.readOnly) {
-                me.element
-                  .on('mouseenter', 'i', me, onMouseEnter)
-                  .on('mouseleave', 'i', me, onMouseLeave)
-                  .on('click', 'i', me, onClick);
             }
         },
 
@@ -112,15 +129,17 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            if (!this.readOnly) {
-                this.element
-                    .off('mouseenter', onMouseEnter)
-                    .off('mouseleave', onMouseLeave)
-                    .off('click', onClick);
+            var me = this;
+            if (!me.readOnly) {
+                me.element
+                  .off('mouseenter', previewValue)
+                  .off('mouseleave', restoreValue)
+                  .off('click', changeValue);
             }
+            me.element =
+            me.cache = null;
         }
     };
-
 
     /**
      * 默认参数
@@ -129,8 +148,8 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Rater.defaultOptions = {
-        readOnly: false,
-        hints: { }
+        half: false,
+        readOnly: false
     };
 
 
@@ -140,10 +159,47 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onMouseEnter(e) {
+    function previewValue(e) {
+
         var rater = e.data;
+        var cache = rater.cache;
+
+        var isMouseEnter = e.type === 'mouseenter';
+        if (isMouseEnter) {
+            cache.leave = false;
+        }
+        else if (cache.leave) {
+            return;
+        }
+
         var target = $(e.target);
-        refresh(rater, target.data('value'));
+        var value = target.data('value');
+
+        if (rater.half) {
+
+            var offsetX = e.offsetX;
+
+            // FF 不支持 offsetX
+            if (typeof offsetX !== 'number') {
+                offsetX = e.clientX - target.offset().left;
+            }
+
+            if (offsetX / target.width() <= 0.5) {
+                value -= 0.5;
+            }
+
+            if (isMouseEnter) {
+                target.on(
+                    'mousemove',
+                    rater,
+                    magic.debounce(previewValue, 50)
+                );
+            }
+        }
+
+        cache.value = value;
+
+        refresh(rater, value);
     }
 
     /**
@@ -152,8 +208,12 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onMouseLeave(e) {
+    function restoreValue(e) {
         var rater = e.data;
+        if (rater.half) {
+            rater.cache.leave = true;
+            $(e.target).off('mousemove');
+        }
         refresh(rater, rater.value);
     }
 
@@ -163,10 +223,9 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onClick(e) {
+    function changeValue(e) {
         var rater = e.data;
-        var target = $(e.target);
-        rater.setValue(target.data('value'));
+        rater.setValue(rater.cache.value);
     }
 
     /**
@@ -177,12 +236,37 @@ define(function (require, exports, module) {
      * @param {value} value
      */
     function refresh(rater, value) {
+
         var elements = rater.element.find('i');
-        for (var i = 1; i <= rater.total; i++) {
-            elements[i - 1].className = i <= value ? rater.onIcon : rater.offIcon;
-        }
+
+        traverse(
+            value,
+            rater.total,
+            function (index, className) {
+                elements[index].className = rater[className];
+            }
+        );
     }
 
+    function traverse(value, total, callback) {
+
+        for (var i = 0, result, className; i < total; i++) {
+
+            result = value - (i + 1);
+
+            if (result >= 0) {
+                className = 'onIcon';
+            }
+            else if (result <= -1) {
+                className = 'offIcon';
+            }
+            else {
+                className = 'halfIcon';
+            }
+
+            callback(i, className);
+        }
+    }
 
     return Rater;
 

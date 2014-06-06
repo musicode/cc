@@ -44,7 +44,11 @@ define(function (require, exports, module) {
             }
 
             if (result !== false) {
-                result = origin.apply(this, arguments);
+
+                if (typeof origin === 'function') {
+                    result = origin.apply(this, arguments);
+                }
+
                 if (typeof after === 'function') {
                     var temp = after.apply(this, arguments);
                     // 覆盖返回值

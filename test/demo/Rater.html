@@ -5,7 +5,8 @@
     <title>Rater</title>
     <style>
         .on,
-        .off {
+        .off,
+        .half {
             display: inline-block;
             width: 16px;
             height: 16px;
@@ -16,6 +17,9 @@
         }
         .off {
             background-color: grey;
+        }
+        .half {
+            background-color: lightblue;
         }
     </style>
 </head>
@@ -36,12 +40,14 @@
 
                 var rater = new Rater({
                     element: $('#main'),
-                    value: 1,
+                    value: 0.5,
                     total: 5,
                     onIcon: 'on',
                     offIcon: 'off',
+                    halfIcon: 'half',
+                    half: true,
                     onSelect: function (value) {
-                        console.log(value)
+                        console.log(value);
                     }
                 });
 

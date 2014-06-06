@@ -307,7 +307,7 @@ define(function (require, exports, module) {
      * 是否支持 onselectstart 禁用选区
      *
      * @inner
-     * @return {boolean}
+     * @type {boolean}
      */
     var supportSelectStart = typeof doc[0].onselectstart !== 'undefined';
 

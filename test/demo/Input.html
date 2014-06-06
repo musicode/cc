@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Input</title>
+</head>
+<body>
+
+    <input type="text" />
+    <textarea></textarea>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/helper/Input' ],
+
+            function (Input) {
+
+                var input1 = new Input({
+                    element: $('input'),
+                    longPress: false,
+
+                    onEnter: function () {
+                        console.log('onEnter', this);
+                    },
+                    onLeft: function () {
+                        console.log('onLeft', this);
+                    },
+                    onKeyDown: function (e) {
+                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e);
+                    },
+                    onKeyUp: function (e) {
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e);
+                    },
+
+                    onChange: function () {
+                        console.log('change', this);
+                    }
+                });
+
+                var input2 = new Input({
+                    element: $('textarea'),
+                    longPress: false,
+
+                    onEnter: function () {
+                        console.log('onEnter', this);
+                    },
+                    onLeft: function () {
+                        console.log('onLeft', this);
+                    },
+                    onKeyDown: function (e) {
+                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e);
+                    },
+                    onKeyUp: function (e) {
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e);
+                    },
+
+                    onChange: function () {
+                        console.log('change', this);
+                    }
+                });
+            }
+        );
+    </script>
+</body>
+</html>

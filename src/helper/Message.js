@@ -46,7 +46,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {string} options.agentUrl 代理页面，必须和最终产品页域名保持一致
-     * @property {number=} options.time 间隔时间，默认 100 ms 发送一次信息
+     * @property {number=} options.wait 间隔时间，默认 100 ms 发送一次信息
      * @property {function():Object} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
@@ -70,7 +70,7 @@ define(function (require, exports, module) {
 
             function poll() {
                 me.send(me.reader() || { });
-                me.timer = setTimeout(poll, me.time);
+                me.timer = setTimeout(poll, me.wait);
             }
 
             poll();
@@ -79,7 +79,8 @@ define(function (require, exports, module) {
         /**
          * 发送信息
          */
-        send: 'postMessage' in window
+        send: typeof window.postMessage === 'function' && 'onmessage' in window
+
             ? function (data) {
                 // postMessage 可以完美跨域
                 window.top.postMessage(
@@ -87,9 +88,11 @@ define(function (require, exports, module) {
                     this.origin
                 );
             }
+
             : function (data) {
                 // 创建同域代理 iframe，同域才能通信
                 var me = this;
+
                 var iframe = $('#' + me.id);
                 if (iframe.length === 0) {
                     iframe = $('<iframe id="' + me.id  + '" style="display:none;"></iframe>').appendTo(document.body);
@@ -118,7 +121,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Message.defaultOptions = {
-        time: 100
+        wait: 100
     };
 
     /**

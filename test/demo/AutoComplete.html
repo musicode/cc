@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AutoComplete</title>
+    <style>
+
+        body {
+            font-size: 13px;
+        }
+
+        #auto-complete {
+            display: inline-block;
+            position: relative;
+        }
+
+        input {
+            margin: 0;
+            padding: 4px 8px;
+        }
+
+        #menu {
+            border: 1px solid #CCC;
+            display: none;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            position: absolute;
+            top: 28px;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        li {
+            border-top: 1px solid #DDD;
+            padding: 0.5em 0.2em;
+        }
+        li:first-child {
+            border-top: none;
+        }
+
+        .item-hover {
+            background-color: #EEE;
+        }
+        .item-active {
+            background-color: #49A8B6;
+            color: #FFF;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="auto-complete">
+        <input type="text" />
+        <ul id="menu"></ul>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/AutoComplete' ],
+
+            function (AutoComplete) {
+
+                var input = $('input');
+                var menu = $('#menu');
+
+                new AutoComplete({
+                    input: input,
+                    menu: menu,
+                    itemTemplate: '<li data-url="">${word}</li>',
+                    onEnter: function (data) {
+                        console.log('enter', data);
+                    },
+                    onSelect: function (data) {
+                        this.dispose();
+                        console.log('select', data);
+                    },
+                    fetch: function (value, callback) {
+
+                        window.suggestion = function (response) {
+                            var data;
+                            if (response.status === 0) {
+                                data = response.data;
+                            }
+                            callback(data);
+                        };
+
+                        return $.get(
+                            'http://hui.baidu.com/api/suggestion.php',
+                            {
+                                trade: 'edu',
+                                query: value
+                            },
+                            null,
+                            'jsonp'
+                        );
+                    }
+
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>
