@@ -109,6 +109,15 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 获得可移动范围的矩形信息
+         *
+         * @return {Object}
+         */
+        getRectange: function () {
+            return getMovableRectange(this);
+        },
+
+        /**
          * 销毁对象
          */
         dispose: function () {
@@ -159,6 +168,53 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 获得可拖拽的矩形范围
+     *
+     * @inner
+     * @param {Draggable} draggable
+     * @param {Object=} containerRect
+     * @param {Object=} targetRect
+     * @return {Object}
+     */
+    function getMovableRectange(draggable, containerOffset, elementOffset) {
+
+        var container = draggable.container;
+        var element = draggable.element;
+
+        containerOffset = containerOffset
+                       || container.offset();
+
+        elementOffset = elementOffset
+                     || element.offset();
+
+        var isChild = draggable.cache.isChild;
+        var borderLeftWidth = parseInt(container.css('border-left-width'), 10);
+        var borderTopWidth = parseInt(container.css('border-top-width'), 10);
+
+        var left = isChild
+                 ? 0
+                 : (containerOffset.left + borderLeftWidth || 0);
+
+        var top = isChild
+                ? 0
+                : (containerOffset.top + borderTopWidth || 0);
+
+        var width = container.innerWidth() - element.outerWidth();
+        var height = container.innerHeight() - element.outerHeight();
+
+        return {
+
+            left: left,
+            top: top,
+            right: left + width,
+            bottom: top + height,
+
+            width: width,
+            height: height
+        };
+    }
+
+    /**
      * mousedown 触发拖拽
      *
      * @inner
@@ -184,29 +240,20 @@ define(function (require, exports, module) {
             return;
         }
 
-
-        // ==============================================================
-        // 计算坐标
-        // ==============================================================
-        var containerRect = getRectange(draggable.container);
-        var targetRect = getRectange(element);
+        // 计算位置
+        var containerOffset = draggable.container.offset();
+        var targetOffset = draggable.element.offset();
 
         var pageX = e.pageX;
         var pageY = e.pageY;
 
-        var containerX = containerRect.left;
-        var containerY = containerRect.top;
-        var targetX = targetRect.left;
-        var targetY = targetRect.top;
-
         // 偏移量坐标
-        var offsetX = pageX - targetX;
-        var offsetY = pageY - targetY;
+        var offsetX = pageX - targetOffset.left;
+        var offsetY = pageY - targetOffset.top;
 
-        var isChild =  cache.isChild;
-        if (isChild) {
-            offsetX += containerX;
-            offsetY += containerY;
+        if (cache.isChild) {
+            offsetX += containerOffset.left;
+            offsetY += containerOffset.top;
         }
 
         // 开始点坐标
@@ -217,16 +264,7 @@ define(function (require, exports, module) {
         cache.offsetX = offsetX;
         cache.offsetY = offsetY;
 
-        // 可移动的范围
-        var left = isChild ? 0 : containerX;
-        var top = isChild ? 0 : containerY;
-
-        cache.movableRect = {
-            left: left,
-            top: top,
-            right: left + (containerRect.right - containerX) - (targetRect.right - targetX),
-            bottom: top + (containerRect.bottom - containerY) - (targetRect.bottom - targetY)
-        };
+        cache.movableRect = getMovableRectange(draggable, containerOffset, targetOffset);
 
         // 避免出现选区
         disableSelection(cache);
@@ -293,7 +331,8 @@ define(function (require, exports, module) {
             doc.off('mousemove', cache.onDrag);
             doc.off('mouseup', cache.onDragEnd);
 
-            cache.onDrag = cache.onDragEnd = null;
+            cache.onDrag =
+            cache.onDragEnd = null;
 
             enableSelection(cache);
 
@@ -346,23 +385,6 @@ define(function (require, exports, module) {
         };
         enableSelection = function (cache) {
             doc.css('MozUserSelect', cache.userSelect);
-        };
-    }
-
-    /**
-     * 获得元素的矩形区域
-     *
-     * @inner
-     * @param {jQuery} element
-     * @return {Object}
-     */
-    function getRectange(element) {
-        var offset = element.offset();
-        return {
-            left: offset.left,
-            top: offset.top,
-            right: offset.left + element.prop('offsetWidth'),
-            bottom: offset.top + element.prop('offsetHeight')
         };
     }
 

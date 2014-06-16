@@ -93,9 +93,8 @@ define(function (require, exports, module) {
                 me.cache.events = parseEvents(me.events);
             }
 
-            var element = me.element;
-            element.on('keydown', me, onKeyDown);
-            element.on('keyup', me, onKeyUp);
+            me.element.on('keydown', me, onKeyDown)
+                      .on('keyup', me, onKeyUp);
 
         },
 
@@ -105,17 +104,14 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var element = me.element;
 
-            element.off('keydown', onKeyDown);
-            element.off('keyup', onKeyUp);
+            me.element.off('keydown', onKeyDown)
+                      .off('keyup', onKeyUp);
 
             me.element =
             me.scope =
             me.cache = null;
-
         }
-
     };
 
     /**
@@ -127,7 +123,6 @@ define(function (require, exports, module) {
     Keyboard.defaultOptions = {
 
     };
-
 
     /**
      * 键名 -> keyCode 映射表

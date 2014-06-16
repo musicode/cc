@@ -79,7 +79,7 @@ define(function (require, exports, module) {
 
                     html += '></i>';
                 }
-            )
+            );
 
             var element = me.element;
             element.html(html);

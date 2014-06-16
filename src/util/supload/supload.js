@@ -94,7 +94,7 @@ define(function (require, exports, module) {
                         result.push(key + '=' + encodeURIComponent(value));
                     }
                 }
-            )
+            );
 
             result.push('projectName=' + Supload.projectName);
 

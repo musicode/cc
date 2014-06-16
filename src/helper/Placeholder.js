@@ -20,6 +20,12 @@ define(function (require, exports, module) {
      *
      * 不支持批量初始化，如果非要一次初始化整个页面的输入框，可使用 Placeholder.init();
      *
+     * # 更新
+     *
+     * 为了满足简单需求，加入 简单模式 和 复杂模式
+     *
+     * 1. 简单模式：通过 simpleClass 和 value 来实现（取值需要判断 input.hasClass(simpleClass)）
+     * 2. 复杂模式：通过包装输入框元素，用新的元素飘在输入框元素上来实现（取值不受影响）
      */
 
     'use strict';
@@ -30,8 +36,11 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options 配置对象
      * @property {jQuery} options.element 输入框元素，如文本框、密码框、文本域
-     * @property {boolean=} options.nativeFirst 是否优先使用浏览器原生的 placeholder，只针对低版本 IE 模拟实现，默认为 false
-     * @property {string=} options.template 使用模拟实现时的包装模版
+     * @property {string=} options.attr 元素上的 placeholder 属性，默认是 placeholder
+     * @property {string=} options.value 如果文字不写在元素 options.attr 上，也可以直接传值
+     * @property {boolean=} options.simple 是否使用简单模式
+     * @property {string=} options.simpleClass 简单模式使用的 class
+     * @property {string=} options.template 复杂模式使用的包装模版
      * @property {string=} options.placeholderSelector 从 template 里查找 placeholder 元素的选择器
      */
     function Placeholder(options) {
@@ -49,44 +58,33 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var element = me.element;
+            var element = this.element;
 
-            if (element.size() > 1) {
-                throw new Error('[Placeholder] options.element.size() should equals 1.');
+            var value = me.value
+                     || element.attr(me.attr)
+                     || '';
+
+            // 避免原生 placeholder 影响效果
+            if (supportPlaceholder && element.attr('placeholder')) {
+                element.removeAttr('placeholder');
             }
 
-            // 确定运行时类型
-            var isNative = supportPlaceholder && me.nativeFirst;
+            $.extend(
+                me,
+                modeConf[ me.simple ? 'simple' : 'complex' ]
+            );
 
-            // 把值取出来先，避免 attribute 设置为 'placeholder' 各种蛋疼...
-            var value = element.attr(me.attribute) || '';
+            me.init();
+            me.set(value);
 
-            // 统一放到 cache 里
-            var cache = me.cache = {
-                value: value,
-                isNative: isNative
-            };
-
-            // 未使用原生特性
-            if (!isNative) {
-
-                var wrapperElement = $(me.template);
-
-                element.replaceWith(wrapperElement);
-                wrapperElement.append(element);
-
-                var placeholderElement = wrapperElement.find(me.placeholderSelector);
-                placeholderElement.css(getInputStyle(element));
-
-                element.on('focus', me, onRefresh);
-                element.on('blur', me, onRefresh);
-                wrapperElement.on('click', me, onFocus);
-
-                cache.wrapperElement = wrapperElement;
-                cache.placeholderElement = placeholderElement;
-            }
-
-            me.setPlaceholder(value);
+            // 必须放最后，jquery 某些 DOM 操作会解绑事件
+            element.on(
+                {
+                    focus: onRefresh,
+                    blur: onRefresh
+                },
+                me
+            );
         },
 
         /**
@@ -94,33 +92,35 @@ define(function (require, exports, module) {
          *
          * @return {string}
          */
-        getPlaceholder: function () {
-            return this.cache.value;
+        get: function () {
+            return this.value;
         },
 
         /**
          * 修改 placeholder
          *
-         * @param {string} placeholder
+         * @param {string} value
          */
-        setPlaceholder: function (placeholder) {
-            placeholder = placeholder || '';
+        set: function (value) {
+            this.value = value;
+            this.refresh();
+        },
+
+        /**
+         * 使 placeholder 生效
+         */
+        refresh: function () {
 
             var me = this;
-            var cache = me.cache;
-            cache.value = placeholder;
+            var result = me.test();
 
-            var element = me.element;
-            var attribute = me.attribute;
-
-            if (cache.isNative) {
-                if (attribute !== 'placeholder') {
-                    element.attr('placeholder', placeholder);
+            if (typeof result === 'boolean') {
+                if (result) {
+                    me.show();
                 }
-            }
-            else {
-                element.attr('placeholder', '');
-                apply(me);
+                else {
+                    me.hide();
+                }
             }
         },
 
@@ -128,17 +128,15 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
-            var cache = me.cache;
 
-            if (!cache.isNative) {
-                var element = me.element;
-                element.off('focus', onRefresh);
-                element.off('blur', onRefresh);
-                cache.wrapperElement.off('click', onFocus);
-            }
+            me.element
+              .off({
+                  focus: onRefresh,
+                  blur: onRefresh
+              });
 
-            me.cache =
             me.element = null;
         }
     };
@@ -150,9 +148,9 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Placeholder.defaultOptions = {
-        nativeFirst: false,
-        attribute: 'placeholder',
-
+        attr: 'placeholder',
+        simple: true,
+        simpleClass: 'placeholder-active',
         placeholderSelector: 'div',
         template: '<div class="placeholder-wrapper">'
                 +    '<div></div>'
@@ -163,12 +161,13 @@ define(function (require, exports, module) {
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} elements
+     * @param {jQuery=} elements 需要初始化的元素
      * @return {Array.<Placeholder>}
      */
     Placeholder.init = function (elements) {
 
-        elements = elements || $('[' + Placeholder.defaultOptions.attribute + ']');
+        elements = elements
+                || $('[' + Placeholder.defaultOptions.attr + ']');
 
         var result = [ ];
 
@@ -183,51 +182,91 @@ define(function (require, exports, module) {
         return result;
     };
 
+    // 创建测试元素
+    var input = $('<input type="text" />')[0];
+
     /**
      * 特性检测浏览器是否支持 placeholder 特性
      *
      * @inner
      * @type {boolean}
      */
-    var supportPlaceholder = (function () {
-        var input = document.createElement('input');
-        input.type = 'text';
-        return 'placeholder' in input;
-    })();
+    var supportPlaceholder = 'placeholder' in input;
 
-    /**
-     * 获得和输入框元素一样的盒模型样式
-     *
-     * @inner
-     * @param {jQuery} inputElement
-     * @return {Object}
-     */
-    function getInputStyle(inputElement) {
-        return {
-            'border-top': inputElement.css('border-top-width') + ' solid transparent',
-            'border-right': inputElement.css('border-right-width') + ' solid transparent',
-            'border-bottom': inputElement.css('border-bottom-width') + ' solid transparent',
-            'border-left': inputElement.css('border-left-width') + ' solid transparent',
-            'padding-top': inputElement.css('padding-top'),
-            'padding-right': inputElement.css('padding-right'),
-            'padding-bottom': inputElement.css('padding-bottom'),
-            'padding-left': inputElement.css('padding-left'),
-            'width': inputElement.width(),
-            'height': inputElement.height(),
-            'line-height': inputElement.css('line-height')
-        };
-    }
+    // 删除变量
+    input = null;
 
-    /**
-     * 元素是否获得焦点
-     *
-     * @inner
-     * @param {HTMLElement} element
-     * @return {boolean}
-     */
-    function hasFocus(element) {
-        return element.ownerDocument.activeElement === element;
-    }
+    var modeConf = {
+        simple: {
+            init: $.noop,
+            show: function () {
+                this.element
+                    .addClass(this.simpleClass)
+                    .val(this.value);
+            },
+            hide: function () {
+                this.element
+                    .removeClass(this.simpleClass)
+                    .val('');
+            },
+            test: function () {
+
+                var element = this.element;
+
+                // before focus 的状态如果正在显示 placeholder，隐藏 placeholder
+                if (document.activeElement === element[0]) {
+                    if (element.hasClass(this.simpleClass)) {
+                        return false;
+                    }
+                }
+
+                // before blur 的状态如果输入框没值，显示 placeholder
+                else if (!element.val()) {
+                    return true;
+                }
+            }
+        },
+        complex: {
+            init: function () {
+
+                var element = this.element;
+                var wrapperElement = $(this.template);
+
+                element.replaceWith(wrapperElement);
+                wrapperElement.append(element);
+
+                var placeholderElement = wrapperElement.find(this.placeholderSelector);
+                placeholderElement.on('click', this, focusByClick);
+
+                this.placeholderElement = placeholderElement;
+
+            },
+            show: function () {
+                this.placeholderElement
+                    .html(this.value)
+                    .show();
+            },
+            hide: function () {
+                this.placeholderElement
+                    .hide();
+            },
+            test: function () {
+                var element = this.element;
+                return document.activeElement !== element[0]
+                     && !element.val();
+            },
+            dispose: function () {
+
+                this.placeholderElement.off('click', focusByClick);
+                this.placeholderElement = null;
+
+                delete this.dispose;
+
+                // 调用原型方法
+                this.dispose();
+            }
+        }
+    };
 
     /**
      * 手动触发输入框的 focus 事件
@@ -235,41 +274,20 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onFocus(e) {
+    function focusByClick(e) {
         var placeholder = e.data;
         placeholder.element.focus();
-        apply(placeholder);
+        placeholder.refresh();
     }
 
     /**
-     * 刷新 placeholder 状态
+     * focus / blur 切换时触发刷新
      *
      * @inner
      * @param {Event} e
      */
     function onRefresh(e) {
-        apply(e.data);
-    }
-
-    /**
-     * 使 placeholder 生效
-     *
-     * @inner
-     * @param {Placeholder} placeholder
-     */
-    function apply(placeholder) {
-        var element = placeholder.element;
-        var placeholderElement = placeholder.cache.placeholderElement;
-
-        if (!hasFocus(element[0])
-            && element.val() === ''
-        ) {
-            placeholderElement.html(placeholder.getPlaceholder())
-                              .show();
-        }
-        else {
-            placeholderElement.hide();
-        }
+        e.data.refresh();
     }
 
 

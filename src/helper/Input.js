@@ -63,14 +63,15 @@ define(function (require, exports, module) {
      * @property {Function=} options.onKeyDown 按下键位触发
      * @property {Function=} options.onKeyUp 松开键位触发
      * @property {Function=} options.onChange 内容变化触发
+     * @argument {string} options.onChange.value 变化的值
      *
      * @property {Funciton=} options.onEnter 按下回车触发，类似的还支持以下事件
      *                                       onUp, onDown, onLeft, onRight, onSpace, onEsc
      *
      * @property {Function=} options.onLongPressStart 长按开始
-     * @argument {number=} options.onLongPressStart.keyCode 按下的键码
+     * @argument {Event} options.onLongPressStart.event 按下的键码
      * @property {Function=} options.onLongPressEnd 长按结束
-     * @argument {number=} options.onLongPressStart.keyCode 松开的键码
+     * @argument {Event} options.onLongPressStart.event 松开的键码
      *
      * @property {Object=} options.keyEvents 按下某键，发出某事件
      *                                       组合键只支持 shift/ctrl/alt/meta + 字母/数字
@@ -175,6 +176,8 @@ define(function (require, exports, module) {
 
                     var newHeight = element.prop('scrollHeight');
 
+                    $('#debug').html(oldHeight + ', ' + newHeight);
+
                     // 必须每次都更新，不然用输入法的时候，chrome 会有点问题
                     element.height(newHeight);
 
@@ -211,24 +214,29 @@ define(function (require, exports, module) {
         longPress: false
     };
 
+    var input = $('<input type="text" />');
+
     /**
      * 特性检测是否支持 input 事件
      *
      * @inner
      * @type {boolean}
      */
-    var supportInputEvent = (function () {
-        var input = document.createElement('input');
-        return 'oninput' in input;
-    })();
+    var supportInputEvent = 'oninput' in input;
 
+    /**
+     * 配置 input 事件名 和 事件处理函数
+     *
+     * @inner
+     * @type {Object}
+     */
     var inputConf = {
         type: supportInputEvent ? 'input' : 'propertychange',
         handler: supportInputEvent ? onInput : onPropertyChange
     };
 
     // 用完就删掉
-    supportInputEvent = null;
+    input = supportInputEvent = null;
 
     /**
      * 获得所有的 onXXX 函数
@@ -332,8 +340,11 @@ define(function (require, exports, module) {
             }
         }
 
+        var value = input.element.val();
+        cache.value = value;
+
         if (typeof input.onChange === 'function') {
-            input.onChange();
+            input.onChange(value);
         }
     }
 
@@ -359,7 +370,9 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function onPropertyChange(e) {
-        var cache = e.data.cache;
+
+        var input = e.data;
+        var cache = input.cache;
 
         // 不是通过改值触发的才响应
         if (cache.changeByCall) {
@@ -367,8 +380,13 @@ define(function (require, exports, module) {
             return;
         }
 
+        // propertychange 事件在 IE67 下可能出现死循环，原因不明
+        // 简单的判断 propertyName 是否为 value 不够
+        // 必须跟上次的值比较一下
         var name = e.originalEvent.propertyName;
-        if (name === 'value') {
+        var value = input.element.val();
+
+        if (name === 'value' && cache.value !== value) {
             onInput(e);
         }
     }

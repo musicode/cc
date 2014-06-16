@@ -5,11 +5,13 @@
 define(function (require, exports, module) {
 
     /**
+     * @description
+     *
      * 解决 iframe 嵌套其他域页面的兼容问题
      *
      * 被嵌套页面需加载此 js，才能和 top window 进行通讯
      *
-     * 如果支持 postMessage，就用 postMessage
+     * 1. 如果支持 postMessage，就用 postMessage
      *
      *     window.onmessage = function (e) {
      *         e = e || event; // 兼容 IE8
@@ -19,11 +21,12 @@ define(function (require, exports, module) {
      *     };
      *
      *
-     * 如果不支持 postMessage, 就要用到代理页，代理页和嵌入页同域，
-     * 如 baidu.com 要嵌入 jd.com，需要加一个 baidu.com/agent.html 作为代理页
+     * 2. 如果不支持 postMessage, 就要用到代理页，代理页和嵌入页同域，
      *
-     * 因为不支持 postMessage 的浏览器只有 IE67，且它们同样不支持 hashchange 事件，
-     * 所以只能用轮询监听 hash 变化
+     *    如 baidu.com 要嵌入 jd.com，需要加一个 baidu.com/agent.html 作为代理页
+     *
+     *    因为不支持 postMessage 的浏览器只有 IE67，且它们同样不支持 hashchange 事件，
+     *    所以只能用轮询监听 hash 变化
      *
      *     function poll() {
      *         var hash = location.hash.slice(1);
@@ -35,7 +38,9 @@ define(function (require, exports, module) {
      *     }
      *     poll();
      *
-     * 上面的代码使用到 top.window.onmessage，因此 baidu.com 可以用一个 onmessage 函数搞定，不用再次判断了
+     *     上面的代码使用到 top.window.onmessage
+     *     因此 baidu.com 可以用一个 window.onmessage 函数搞定
+     *     不用再次判断是否支持 postMessage 了
      */
 
     'use strict';
@@ -79,7 +84,8 @@ define(function (require, exports, module) {
         /**
          * 发送信息
          */
-        send: typeof window.postMessage === 'function' && 'onmessage' in window
+        send: typeof window.postMessage === 'function'
+           && 'onmessage' in window
 
             ? function (data) {
                 // postMessage 可以完美跨域
@@ -90,17 +96,21 @@ define(function (require, exports, module) {
             }
 
             : function (data) {
+
                 // 创建同域代理 iframe，同域才能通信
                 var me = this;
 
                 var iframe = $('#' + me.id);
                 if (iframe.length === 0) {
-                    iframe = $('<iframe id="' + me.id  + '" style="display:none;"></iframe>').appendTo(document.body);
+                    iframe = $('<iframe id="' + me.id  + '"></iframe>')
+                                .hide()
+                                .appendTo(document.body);
                 }
 
-                var src = me.agentUrl + '#' + $.param(data);
-
-                iframe.prop('src', src);
+                iframe.prop(
+                    'src',
+                    me.agentUrl + '#' + $.param(data)
+                );
             },
 
         /**
@@ -138,6 +148,12 @@ define(function (require, exports, module) {
         return match ? match[0] : '';
     }
 
+    /**
+     * guid 初始值
+     *
+     * @inner
+     * @type {number}
+     */
     var guid = 0;
 
     /**

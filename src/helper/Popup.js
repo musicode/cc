@@ -105,6 +105,10 @@ define(function (require, exports, module) {
 
             var me = this;
 
+            if (!me.scope) {
+                me.scope = me;
+            }
+
             me.cache = { };
 
             advice.around(
@@ -278,12 +282,15 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function hideEvent(popup, action) {
-        each(popup.hideBy, function (hideBy) {
-            var target = Popup.hideBy[hideBy];
-            if (target) {
-                target[action + 'Trigger'](popup);
-            }
-        });
+        var hideBy = popup.hideBy;
+        if (hideBy) {
+            each(hideBy, function (hideBy) {
+                var target = Popup.hideBy[hideBy];
+                if (target) {
+                    target[action + 'Trigger'](popup);
+                }
+            });
+        }
     }
 
     /**
