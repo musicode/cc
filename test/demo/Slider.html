@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slider</title>
+    <style>
+
+        .slider-track {
+            background: #EEE;
+            position: relative;
+        }
+        .slider-thumb {
+            background: #BBB;
+            position: absolute;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+        }
+
+        #horizontal-slider,
+        #vertical-slider {
+            margin-bottom: 1em;
+        }
+
+        #horizontal-slider,
+        #step-slider {
+            height: 10px;
+            width: 200px;
+        }
+
+        #horizontal-slider .slider-thumb,
+        #step-slider .slider-thumb {
+            width: 10px;
+            height: 10px;
+        }
+
+        #vertical-slider {
+            width: 10px;
+            height: 200px;
+        }
+        #vertical-slider .slider-thumb {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #999;
+        }
+
+        .slider-active .slider-thumb {
+            background: #999;
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="horizontal-slider" class="slider-track"></div>
+    <div id="vertical-slider" class="slider-track"></div>
+    <div id="step-slider" class="slider-track"></div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/jquery.mousewheel.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Slider' ],
+
+            function (Slider) {
+
+                var horizontalSlider = new Slider({
+                    element: $('#horizontal-slider'),
+                    draggingClass: 'slider-active',
+                    hoverClass: 'slider-active',
+                    onChange: function (value) {
+                        console.log(this.value);
+                    },
+                    onBeforeDrag: function (data) {
+                        console.log(data);
+                    },
+                    onAfterDrag: function (data) {
+                        console.log(data);
+                    }
+                });
+
+
+                var verticalSlider = new Slider({
+                    element: $('#vertical-slider'),
+                    direction: 'vertical',
+                    onChange: function (value) {
+                        console.log(this.value);
+                    }
+                });
+
+                var stepSlider = new Slider({
+                    element: $('#step-slider'),
+                    value: 2,
+                    min: 1,
+                    max: 10,
+                    step: 1,
+                    scroll: true,
+                    onChange: function (value) {
+                        console.log(this.value);
+                    }
+                });
+            }
+        );
+    </script>
+</body>
+</html>

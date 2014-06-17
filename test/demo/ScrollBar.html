@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ScrollBar</title>
+    <style>
+
+    #scroll-panel {
+        border: 1px solid #CCC;
+        overflow: hidden;
+        width: 200px;
+        height: 100px;
+    }
+    #content {
+        width: 400px;
+    }
+
+    .scroll-bar-h,
+    .scroll-bar-v {
+        background-color: #F0F0F0;
+        display: none;
+        position: absolute;
+
+    }
+    .scroll-bar-v {
+        width: 10px;
+        height: 30px;
+        left: 410px;
+        top: 8px;
+    }
+    .scroll-bar-h {
+        border: 1px solid #666;
+        height: 10px;
+        width: 250px;
+        left: 8px;
+    }
+
+    .scroll-bar-h .scroll-thumb,
+    .scroll-bar-v .scroll-thumb {
+        background-color: #999;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+    .scroll-bar-h .scroll-thumb {
+        height: 10px;
+        border: 1px solid #fff;
+    }
+    .scroll-bar-v .scroll-thumb {
+        width: 10px;
+    }
+
+
+    #textarea {
+        position: absolute;
+        top: 100px;
+        left: 50%;
+    }
+    #textarea .scroll-bar-v {
+        right: -10px;
+        left: auto;
+        top: 0;
+        bottom: 0;
+        height: auto;
+    }
+    textarea {
+        height: 100px;
+        resize: none;
+        overflow: hidden;
+    }
+
+
+    </style>
+</head>
+<body>
+
+    <div id="scroll-position">
+        <div id="scroll-panel">
+            <div id="content">
+            气候研究者早已对南极洲冰川融化将带来的严重后果发出警告。但他们未曾考虑到的是，南极冰雪消融使地球出现隆起，甚至改变了地球自转。
+
+　　英国纽卡斯尔大学格雷丝·尼尔德领导的研究小组在专业刊物《地球与行星科学通讯》上发表文章称，地壳正在以每年至少 15 毫米的速度隆起。分散在南极洲西部尖角沿岸的七处全球定位系统(GPS)的站点监测数据表明了这一点。
+
+　　一大片地区似乎受到隆起影响：犹如一根手指伸向南美洲的南极半岛。研究人员认为，在远离这些监测站、冰雪大规模消融的地区，地壳的隆起幅度或许更大。
+
+　　其中一个原因似乎很容易找到：摆脱冰雪负重的陆地像被拿掉砝码的天平一样拔高。
+
+　　但还有一个原因导致了南极洲的猛烈隆起———地下在沸腾。在地表以下大约 60 公里深处，上千摄氏度的岩浆在沸腾，岩石圈犹如大洋中的冰山一样漂浮在其表层。一旦漂浮物的重量减轻，它就会像水中的软木塞一样上浮。
+
+　　这就是正在南极洲发生的情况：冰雪消融导致地壳隆起———速度明显快于预期。
+
+　　研究人员说，地球内部粘稠的岩浆出人意料地猛烈上涌，抬高了岩石圈。“冰川融化一直影响到数百公里深的地下，令人着迷，”报告的共同作者、纽卡斯尔大学的彼得·克拉克说。
+
+　　南极洲的隆起对整个地球产生影响。“地球的自转速度因冰雪消融和地球内部的大规模运动而轻微减慢，”亥姆霍兹波茨坦研究中心的地球物理学家伯恩哈德·施泰因贝格尔说。因此，每天的时间将变长一点点。原因是“花样滑冰效应”，即像花滑运动员在旋转时伸展手臂，地球在有凸起后旋转的速度会放慢。
+            </div>
+        </div>
+
+        <div class="scroll-bar-h">
+        </div>
+
+        <div class="scroll-bar-v">
+        </div>
+    </div>
+
+
+    <div id="textarea">
+        <textarea></textarea>
+        <div class="scroll-bar-v">
+        </div>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [
+                'cobble/ui/ScrollBar',
+                'cobble/helper/Input'
+            ],
+
+            function (ScrollBar, Input) {
+
+                var scrollHBar = new ScrollBar({
+                    target: $('#scroll-panel'),
+                    element: $('#scroll-position .scroll-bar-h'),
+                    direction: 'horizontal',
+                    autoHide: true
+                });
+
+                var scrollVBar = new ScrollBar({
+                    target: $('#scroll-panel'),
+                    element: $('#scroll-position .scroll-bar-v'),
+                    pos: '20%',
+                    draggingClass: 'dragging',
+                    hoverClass: 'hover',
+                    direction: 'vertical'
+                });
+
+                var textarea = $('#textarea textarea');
+                new Input({
+                    element: textarea,
+                    onKeyDown: function () {
+                        console.log('before: ' + textarea.prop('scrollTop'))
+                        scrollBar.refresh();
+                        console.log('after: ' + textarea.prop('scrollTop'))
+                    },
+                    onChange: function () {
+                        scrollBar.refresh();
+                    }
+
+                });
+                var scrollBar = new ScrollBar({
+                    target: textarea,
+                    element: $('#textarea .scroll-bar-v'),
+                    direction: 'vertical'
+                });
+            }
+        );
+    </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tab</title>
+    <style>
+
+        .tab-active {
+            background: red;
+        }
+
+        .tab-content > div {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main">
+        <div class="tab-nav">
+            <a href="">111</a>
+            <a href="">222</a>
+            <a href="">333</a>
+        </div>
+        <div class="tab-content">
+            <div>111111111</div>
+            <div>22222222</div>
+            <div>33333333</div>
+        </div>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Tab' ],
+
+            function (Tab) {
+
+                var tab = new Tab({
+                    element: $('#main'),
+
+                    navSelector: '.tab-nav a',
+                    contentSelector: '.tab-content > div',
+
+                    activeIndex: 1,
+                    activeClass: 'tab-active',
+
+                    onChange: function (index) {
+                        console.log(index)
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Placeholder</title>
+    <style>
+        .placeholder-wrapper {
+            display: inline-block;
+            font-size: 13px;
+        }
+        .placeholder-wrapper div {
+            position: absolute;
+            color: #BBB;
+            cursor: text;
+            height: 16px;
+            padding: 6px 10px;
+        }
+        .placeholder-active {
+            color: #BBB;
+        }
+        input {
+            border: 1px solid #CCC;
+            height: 16px;
+            margin: 0;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <input type="text" placeholder="请输入用户名" />
+    <input type="text" placeholder="请输入用户名" />
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/helper/Placeholder' ],
+
+            function (Placeholder) {
+
+                var placeholder1 = new Placeholder({
+                    element: $(':text:eq(0)')
+                });
+
+                var placeholder2 = new Placeholder({
+                    element: $(':text:eq(1)'),
+                    simple: false
+                });
+
+                return;
+
+                placeholder1.dispose();
+                placeholder2.dispose();
+            }
+        );
+    </script>
+</body>
+</html>
