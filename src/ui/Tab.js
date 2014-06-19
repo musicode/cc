@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      * @property {number=} options.activeIndex
      * @property {string} options.activeClass
      * @property {Function} options.onChange
-     * @argument {number} options.onChange.index
+     * @argument {Object} options.onChange.data
      */
     function Tab(options) {
         $.extend(this, Tab.defaultOptions, options);
@@ -68,21 +68,38 @@ define(function (require, exports, module) {
             }
 
             var contents = element.find(me.contentSelector);
+            var navTarget = navs.eq(index);
+            var contentTarget;
+
+            var oldIndex = me.activeIndex;
             var activeClass = me.activeClass;
 
-            var activeIndex = me.activeIndex;
-            if ($.isNumeric(activeIndex)) {
-                navs.eq(activeIndex).removeClass(activeClass);
-                contents.eq(activeIndex).hide();
+            // 切换 nav
+            if (oldIndex >= 0) {
+                navs.eq(oldIndex).removeClass(activeClass);
             }
+            navTarget.addClass(activeClass);
 
-            navs.eq(index).addClass(activeClass);
-            contents.eq(index).show();
+            // 如果只有一个内容，不需要切换
+            if (contents.length !== 1) {
+                if (oldIndex >= 0) {
+                    contents.eq(oldIndex).hide();
+                }
+                contentTarget = contents.eq(index);
+                contentTarget.show();
+            }
+            else {
+                contentTarget = contents.eq(0);
+            }
 
             this.activeIndex = index;
 
             if ($.isFunction(me.onChange)) {
-                me.onChange(index);
+                me.onChange({
+                    index: index,
+                    nav: navTarget,
+                    content: contentTarget
+                });
             }
         },
 

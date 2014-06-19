@@ -181,7 +181,8 @@ define(function (require, exports, module) {
 
             // FF 不支持 offsetX
             if (typeof offsetX !== 'number') {
-                offsetX = e.clientX - target.offset().left;
+                offsetX = e.clientX
+                        - target[0].getBoundingClientRect().left;
             }
 
             if (offsetX / target.width() <= 0.5) {

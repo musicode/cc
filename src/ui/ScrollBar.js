@@ -31,6 +31,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.target 滚动目标
      * @property {number=} options.pos 面板当前滚动的位置
      * @property {number=} options.step 滑动滚轮产生的单位距离
+     * @property {boolean=} options.scrollByBar 是否由滚动条带动滚动元素，默认为 true
      * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
      * @property {number=} options.minSize 滚动条的最小大小，避免过小无法操作
      * @property {string=} options.draggingClass 拖拽滑块时的 class
@@ -64,14 +65,15 @@ define(function (require, exports, module) {
 
             var slider = createSlider(me);
 
-            me.cache = $.extend(
+            var cache = me.cache
+                      = $.extend(
                             {
                                 slider: slider,
                                 wheel: new Wheel({
                                     element: target,
                                     onScroll: function (data) {
                                         return !slider.setValue(
-                                                me.pos + data.delta * me.step
+                                                me.pos + data.delta * cache.step
                                             );
                                     }
                                 })
@@ -125,6 +127,12 @@ define(function (require, exports, module) {
                 var factor = cache.factor
                            = contentSize / trackSize;
 
+                // 实际滚动的单位距离
+                var step = cache.step
+                         = me.scrollByBar
+                         ? me.step
+                         : me.step / factor;
+
                 // 如果没有传入 pos
                 // 需要从 target 读取 scrollTop/Left 值
                 var value = data && data.pos;
@@ -132,7 +140,10 @@ define(function (require, exports, module) {
                     value = target.prop(cache.scroll) / factor;
                 }
 
-                slider.refresh({ value: value });
+                slider.refresh({
+                    step: step,
+                    value: value
+                });
 
                 me.show();
             }
@@ -196,6 +207,7 @@ define(function (require, exports, module) {
         step: 10,
         minSize: 5,
         autoHide: false,
+        scrollByBar: true,
         direction: 'vertical',
         thumbSelector: '.scroll-thumb',
         template: '<i class="scroll-thumb"></i>',

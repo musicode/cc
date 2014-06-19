@@ -434,7 +434,7 @@ define(function (require, exports, module) {
         // FF 不支持 offsetX
         if (!$.isNumeric(value)) {
             value = e[ 'client' + upper ]
-                  - cache.track.offset().left;
+                  - cache.track[0].getBoundingClientRect()[ cache.position ];
         }
 
         setValueByPx(slider, value);

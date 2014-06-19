@@ -263,6 +263,7 @@ define(function (require, exports, module) {
         cache.originY = point.top;
         cache.offsetX = offsetX;
         cache.offsetY = offsetY;
+        cache.dragging = false;
 
         cache.movableRect = getMovableRectange(draggable, containerOffset, targetOffset);
 
@@ -306,6 +307,9 @@ define(function (require, exports, module) {
             }
             cache.point = point;
 
+            // 标识拖拽过，而不是 mousedown mouseup 完事
+            cache.dragging = true;
+
             // 如果是静默的，则什么也不做
             if (!draggable.silence) {
                 draggable.element.css(point);
@@ -328,16 +332,19 @@ define(function (require, exports, module) {
         return function () {
 
             var cache = draggable.cache;
-            doc.off('mousemove', cache.onDrag);
-            doc.off('mouseup', cache.onDragEnd);
+
+            doc.off('mousemove', cache.onDrag)
+               .off('mouseup', cache.onDragEnd);
 
             cache.onDrag =
             cache.onDragEnd = null;
 
             enableSelection(cache);
 
-            if (typeof draggable.onDragEnd === 'function') {
-                draggable.onDragEnd(cache.point);
+            if (cache.dragging) {
+                if (typeof draggable.onDragEnd === 'function') {
+                    draggable.onDragEnd(cache.point);
+                }
             }
         };
     }

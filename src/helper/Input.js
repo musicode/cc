@@ -160,26 +160,43 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
+
+            // 自动变高必须设置 overflow-y: hidden
+            if (element.css('overflow-y') !== 'hidden') {
+                element.css('overflow-y', 'hidden');
+            }
+
+            // 要自动高度必须响应长按
+            if (!me.longPress) {
+                me.longPress = true;
+            }
+
             var originHeight = element.height();
 
-            advice.before(
+            var oldHeight = originHeight;
+            var newHeight;
+
+            var lineHeight = parseInt(element.css('font-size'), 10);
+            var padding = element.innerHeight() - originHeight;
+
+            advice.after(
                 me,
                 'onChange',
                 function () {
 
-                    var oldHeight = element.height();
-
                     // 把高度重置为原始值才能取到正确的 newHeight
                     if (oldHeight !== originHeight) {
+                        oldHeight = originHeight;
                         element.height(originHeight);
                     }
 
-                    var newHeight = element.prop('scrollHeight');
+                    // scrollHeight 包含上下 padding 和 height
+                    newHeight = element.prop('scrollHeight') - padding;
 
-                    $('#debug').html(oldHeight + ', ' + newHeight);
-
-                    // 必须每次都更新，不然用输入法的时候，chrome 会有点问题
-                    element.height(newHeight);
+                    if (Math.abs(newHeight - oldHeight) > lineHeight) {
+                        element.height(newHeight);
+                        oldHeight = newHeight;
+                    }
 
                 }
             );
@@ -214,7 +231,7 @@ define(function (require, exports, module) {
         longPress: false
     };
 
-    var input = $('<input type="text" />');
+    var input = $('<input type="text" />')[0];
 
     /**
      * 特性检测是否支持 input 事件
@@ -272,9 +289,11 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function isImsKey(keyCode) {
-        return (keyCode >= 49 && keyCode <= 54)   // 主键盘数字键 1-6
-                || keyCode === 32                 // 空格
-                || keyCode === 13;                // 回车
+        return (keyCode >= 49 && keyCode <= 54)         // 主键盘数字键 1-6
+                || (keyCode >= 186 && keyCode <= 192)   // 中文标点符号
+                || (keyCode >= 219 && keyCode <= 222)   // 中文标点符号
+                || keyCode === 32                       // 空格
+                || keyCode === 13                       // 回车
     }
 
     /**
@@ -294,7 +313,8 @@ define(function (require, exports, module) {
                 || keyCode === 111                     // 小键盘 /
                 || keyCode === 32                      // 空格键
                 || keyCode === 8                       // 退格键
-                || keyCode === 46;                     // delete 键
+                || keyCode === 46                      // delete 键
+                || keyCode === 13;                     // 回车
     }
 
 
@@ -410,6 +430,17 @@ define(function (require, exports, module) {
             cache.keyDownCode = keyCode;
         }
 
+        // 某些情况下，keyup 不会触发
+        cache.keyUpTimer = setTimeout(
+            function () {
+                if (input.cache) {
+                    e.keyCode = 13;
+                    onKeyUp.call(input, e);
+                }
+            },
+            200
+        );
+
         // chrome 按上键会跳到最左侧
         if (keyCode === 38 && cache.mode === 'input') {
             e.preventDefault();
@@ -429,6 +460,12 @@ define(function (require, exports, module) {
     function onKeyUp(e) {
 
         var input = this;
+        var cache = input.cache;
+
+        if (cache.keyUpTimer) {
+            clearTimeout(cache.keyUpTimer);
+            cache.keyUpTimer = null;
+        }
 
         triggerChangeEvent(input, e.keyCode);
         input.cache.keyDownCode = null;

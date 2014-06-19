@@ -42,15 +42,29 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
-            this.element.on(support, this, onScroll);
+
+            var me = this;
+            var element = me.element;
+
+            me.cache = {
+                lineHeight: getLineHeight(element),
+                pageHeight: element.height()
+            };
+
+            element.on(support, me, handler);
         },
 
         /**
          * 销毁对象
          */
         dispose: function () {
-            this.element.off(support, onScroll);
-            this.element = null;
+
+            var me = this;
+
+            me.element.off(support, handler);
+
+            me.element =
+            me.cache = null;
         }
     };
 
@@ -74,12 +88,81 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var support = 'onwheel' in element
-                ? 'wheel'                      // 现代浏览器支持 wheel
+                ? 'wheel'
                 : 'onmousewheel' in element
                   ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
                   : 'DOMMouseScroll';          // 火狐的老版本
 
+    /**
+     * 对应的事件处理器
+     *
+     * @inner
+     * @type {Function}
+     */
+    var handler = support === 'wheel'
+                ? onWheel
+                : onMouseWheel;
+
     element = null;
+
+
+    /**
+     * 最新标准滚轮事件
+     *
+     * @inner
+     * @param {Event} e
+     */
+    function onWheel(e) {
+
+        var wheel = e.data;
+
+        if ($.isFunction(wheel.onScroll)) {
+
+            var event = e.originalEvent;
+
+            // deltaMode 0 is by pixels, nothing to do
+            // deltaMode 1 is by lines
+            // deltaMode 2 is by pages
+            // 统一转成行
+
+            var cache = wheel.cache;
+            var factor = 1;
+
+            switch (event.deltaMode) {
+                case 0:
+                    factor = cache.lineHeight;
+                    break;
+                case 2:
+                    factor = cache.pageHeight;
+                    break;
+            }
+
+            return wheel.onScroll({
+                delta: Math.round(
+                            (event.deltaY || event.deltaX)
+                            /
+                            (3 * factor)
+                        )
+            });
+        }
+    }
+
+    /**
+     * 获得元素的行高
+     * 根据 wheel 事件规范描述，行高要取自 font-size ...
+     *
+     * @inner
+     * @param {jQuery} element
+     * @return {number}
+     */
+    function getLineHeight(element) {
+        var parent = element.offsetParent();
+        if (!parent.length) {
+            parent = $(document.body);
+        }
+        return parseInt(parent.css('font-size'), 10);
+    }
+
 
     /**
      * 处理浏览器的兼容问题
@@ -91,31 +174,47 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onScroll(e) {
+    function onMouseWheel(e) {
 
-        var wheel = e.data;
+        var originalEvent;
 
-        var event = e.originalEvent;
-        var delta;
-
-        if (event.wheelDelta) {   // mousewheel
-            delta = (-1 / 120) * event.wheelDelta;
+        if (e.type === 'wheel') {
+            originalEvent = event;
         }
-        else if (event.detail) {  // DOMMouseScroll
-            delta = event.detail / 3;
+        else {
+
+            var event = e.originalEvent;
+
+            if (event.type === 'wheel') {
+                originalEvent = event;
+            }
+            else {
+
+                var deltaX;
+                var deltaY;
+
+                if (support === 'mousewheel') {
+                    deltaY = - (1 / 40) * event.wheelDelta;
+                    if (event.wheelDeltaX) {
+                        deltaX = - (1 / 40) * event.wheelDeltaX;
+                    }
+                } else {
+                    deltaY = event.detail;
+                }
+
+                originalEvent = {
+                    deltaMode: 1,
+                    deltaX: deltaX,
+                    deltaY: deltaY
+                };
+            }
         }
 
-        // 经过 jquery.mousewheel 处理过的事件
-        // 直接从 e 上取值
-        if (!delta) {
-            delta = -1 * (e.deltaY || e.deltaX);
-        }
-
-        if (typeof wheel.onScroll === 'function') {
-            return wheel.onScroll({
-                delta: delta
-            });
-        }
+        onWheel({
+            type: 'wheel',
+            data: e.data,
+            originalEvent: originalEvent
+        });
     }
 
 
