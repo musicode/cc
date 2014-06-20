@@ -7,19 +7,27 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
-     * container 是否包含 element
+     * 向上寻找最近的非 static 定位元素
+     *
+     * jQuery 的 offsetParent 不靠谱
      *
      * @param {jQuery} element
      * @return {?jQuery}
      */
     return function (element) {
-        if (element.parent().length > 0) {
-            var target = element.offsetParent();
-            return target.is('html') ? $(document.body) : target;
+
+        element = element.parent();
+
+        if (element.length > 0) {
+
+            while (!element.is('body')
+                && element.css('position') === 'static'
+            ) {
+                element = element.parent();
+            }
         }
-        else {
-            return $([ ]);
-        }
+
+        return element;
     };
 
 });

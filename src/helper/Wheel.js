@@ -20,6 +20,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var offsetParent = require('../function/offsetParent');
 
     /**
      * 处理鼠标滚轮事件
@@ -156,7 +157,7 @@ define(function (require, exports, module) {
      * @return {number}
      */
     function getLineHeight(element) {
-        var parent = element.offsetParent();
+        var parent = offsetParent(element);
         if (!parent.length) {
             parent = $(document.body);
         }
