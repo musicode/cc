@@ -21,6 +21,7 @@ define(function (require, exports, module) {
 
     var Slider = require('./Slider');
     var Wheel = require('../helper/Wheel');
+    var contains = require('../function/contains');
 
     /**
      * 自定义滚动条
@@ -319,19 +320,6 @@ define(function (require, exports, module) {
         if (typeof scrollBar.onScroll === 'function') {
             scrollBar.onScroll(pos);
         }
-    }
-
-    /**
-     * 简单封装一下 jQ 的 contains 函数
-     *
-     * @inner
-     * @param {HTMLElement} container 容器元素
-     * @param {HTMLElement} target 目标元素
-     * @return {boolean}
-     */
-    function contains(container, target) {
-        return container === target
-            || $.contains(container, target);
     }
 
     /**

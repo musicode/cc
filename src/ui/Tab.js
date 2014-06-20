@@ -49,15 +49,16 @@ define(function (require, exports, module) {
                 }
             }
 
-            me.activate(index);
+            me.activate(index, true);
         },
 
         /**
          * 激活 tab
          *
          * @param {number} index
+         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
          */
-        activate: function (index) {
+        activate: function (index, silence) {
 
             var me = this;
             var element = me.element;
@@ -94,7 +95,7 @@ define(function (require, exports, module) {
 
             this.activeIndex = index;
 
-            if ($.isFunction(me.onChange)) {
+            if (!silence && $.isFunction(me.onChange)) {
                 me.onChange({
                     index: index,
                     nav: navTarget,

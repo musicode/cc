@@ -22,6 +22,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var offsetParent = require('../function/offsetParent');
+    var position = require('../function/position');
+    var contains = require('../function/contains');
+
     /**
      * 拖拽
      *
@@ -56,56 +60,18 @@ define(function (require, exports, module) {
             var element = me.element;
             var container = me.container;
             var isChild = contains(container[0], element[0]);
-
-            // 实际定位的容器
-            // 即离 element 最近的非 static 父元素
             var realContainer = isChild ? container : body;
 
-            // 不满足这个条件就不要玩了...
-            if (!isUnstaticParent(realContainer, element)) {
+            if (offsetParent(element)[0] !== realContainer[0]) {
                 throw new Error('[Draggable] options.element\'s closest unstatic parent element is wrong.');
             }
 
-            var style = { };
-
-            // 避免调用时忘了设置 position
-            var position = element.css('position');
-            if (position === 'static') {
-                style.position = 'absolute';
-            }
-
-            // 确定初始坐标
-            var x = element.css('left');
-            var y = element.css('top');
-
-            // 初始化元素起始坐标
-            // 如果坐标值是 auto，第一次拖动可能会闪跳一次
-            var isAutoX = x === 'auto';
-            var isAutoY = y === 'auto';
-
-            if (isAutoX || isAutoY) {
-                var containerOffset = realContainer.offset();
-                var targetOffset = element.offset();
-
-                if (isAutoX) {
-                    x = style.left = targetOffset.left - containerOffset.left;
-                }
-                if (isAutoY) {
-                    y = style.top = targetOffset.top - containerOffset.top;
-                }
-            }
-
             me.cache = {
-                isChild: isChild,
-                position: position,
-                point: {
-                    left: typeof x === 'string' ? parseInt(x, 10) : x,
-                    top: typeof y === 'string' ? parseInt(y, 10) : y
-                }
+                isChild: isChild
             };
 
-            element.css(style);
-            element.on('mousedown', me, onDragStart);
+            element.css(position(element))
+                   .on('mousedown', me, onDragStart);
         },
 
         /**
@@ -130,7 +96,6 @@ define(function (require, exports, module) {
                 cache.onDragEnd();
             }
             element.off('mousedown', onDragStart);
-            element.css('position', cache.position);
 
             me.cache =
             me.element =
@@ -258,11 +223,21 @@ define(function (require, exports, module) {
 
         // 开始点坐标
         var point = cache.point;
+        if (!point) {
+            var data = position(element);
+            point = cache.point
+                  = {
+                        left: parseInt(data.left, 10),
+                        top: parseInt(data.top, 10)
+                    };
+        }
 
         cache.originX = point.left;
         cache.originY = point.top;
         cache.offsetX = offsetX;
         cache.offsetY = offsetY;
+        cache.marginX = parseInt(element.css('margin-left'), 10);
+        cache.marginY = parseInt(element.css('margin-top'), 10);
         cache.dragging = false;
 
         cache.movableRect = getMovableRectange(draggable, containerOffset, targetOffset);
@@ -293,8 +268,8 @@ define(function (require, exports, module) {
 
             // 转为相对于父容器的坐标
             var point = {
-                left: axis === 'y' ? cache.originX : (e.pageX - cache.offsetX),
-                top: axis === 'x' ? cache.originY : (e.pageY - cache.offsetY)
+                left: axis === 'y' ? cache.originX : (e.pageX - cache.marginX - cache.offsetX),
+                top: axis === 'x' ? cache.originY : (e.pageY - cache.marginY - cache.offsetY)
             };
 
             // 纠正范围
@@ -443,44 +418,6 @@ define(function (require, exports, module) {
             }
         });
         return result;
-    }
-
-    /**
-     * 是否是非 static 父元素
-     *
-     * @inner
-     * @param {jQuery} parentElement
-     * @param {jQuery} childElement
-     * @return {boolean}
-     */
-    function isUnstaticParent(parentElement, childElement) {
-        do {
-            childElement = childElement.parent();
-
-            if (childElement[0] === parentElement[0]) {
-                return true;
-            }
-
-            if (childElement.css('position') !== 'static') {
-                return false;
-            }
-        }
-        while (childElement[0]);
-    }
-
-    /**
-     * container 是否包含 element
-     *
-     * @inner
-     * @param {HTMLElement} container
-     * @param {HTMLElement} element
-     * @return {boolean}
-     */
-    function contains(container, element) {
-        if (container === element) {
-            return true;
-        }
-        return $.contains(container, element);
     }
 
 

@@ -45,8 +45,8 @@ define(function (require, exports, module) {
         var originY = attachmentOffset.top + parseY(attachment, options.attachmentY);
 
         // element 必须是 body 的第一级子元素，否则定位条件太复杂了
-        if (element.parent().prop('tagName') !== 'BODY') {
-            element.appendTo(body);
+        if (!element.parent().is('body')) {
+            body.append(element);
         }
 
         // 相对原点的偏移量

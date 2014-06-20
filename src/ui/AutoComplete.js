@@ -37,9 +37,9 @@ define(function (require, exports, module) {
      * @param {number=} options.wait 长按上下键遍历的等待间隔时间
      * @param {boolean=} options.includeInput 上下遍历是否包含输入框
      *
-     * @param {Function} options.fetch 拉取数据
-     * @argument {string} options.fetch.text 用户输入的文本
-     * @argument {Function} options.fetch.callback 拉取完数据后的回调
+     * @param {Function} options.load 加载数据，可以是远程或本地数据
+     * @argument {string} options.load.text 用户输入的文本
+     * @argument {Function} options.load.callback 拉取完数据后的回调
      *
      * @param {Function} options.onSelect 用户点击选中某个菜单项触发
      * @param {Function} options.onEnter 用户按下回车触发
@@ -335,7 +335,7 @@ define(function (require, exports, module) {
             update(data, true);
         }
         else {
-            autoComplete.fetch(query, update);
+            autoComplete.load(query, update);
         }
     }
 

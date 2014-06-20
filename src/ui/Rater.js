@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var magic = require('../util/magic');
+    var debounce = require('../function/debounce');
 
     /**
      * 星级评分
@@ -193,7 +193,7 @@ define(function (require, exports, module) {
                 target.on(
                     'mousemove',
                     rater,
-                    magic.debounce(previewValue, 50)
+                    debounce(previewValue, 50)
                 );
             }
         }

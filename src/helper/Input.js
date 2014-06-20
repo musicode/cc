@@ -412,6 +412,41 @@ define(function (require, exports, module) {
     }
 
     /**
+     * 某些按键不会触发 keyup 事件
+     * 为了保证 onChange 的准确性，以回车代替
+     *
+     * @inner
+     * @param {Input} input
+     * @param {Event} e
+     */
+    function createKeyUpTimer(input, e) {
+        input.cache.keyUpTimer = setTimeout(
+            function () {
+                if (input.cache) {
+                    e.keyCode = 13;
+                    onKeyUp.call(input, e);
+                }
+            },
+            500
+        );
+    }
+
+    /**
+     * 移除 keyup 定时器
+     *
+     * @inner
+     * @param {Input} input
+     */
+    function removeKeyUpTimer(input) {
+        var cache = input.cache;
+        if (cache.keyUpTimer) {
+            clearTimeout(cache.keyUpTimer);
+            cache.keyUpTimer = null;
+        }
+    }
+
+
+    /**
      * 处理各种兼容问题
      *
      * @inner
@@ -425,21 +460,12 @@ define(function (require, exports, module) {
 
         if (cache.keyboard.isLongPressing) {
             triggerChangeEvent(input, null);
+            removeKeyUpTimer(input);
         }
         else {
             cache.keyDownCode = keyCode;
+            createKeyUpTimer(input, e);
         }
-
-        // 某些情况下，keyup 不会触发
-        cache.keyUpTimer = setTimeout(
-            function () {
-                if (input.cache) {
-                    e.keyCode = 13;
-                    onKeyUp.call(input, e);
-                }
-            },
-            200
-        );
 
         // chrome 按上键会跳到最左侧
         if (keyCode === 38 && cache.mode === 'input') {
@@ -460,12 +486,8 @@ define(function (require, exports, module) {
     function onKeyUp(e) {
 
         var input = this;
-        var cache = input.cache;
 
-        if (cache.keyUpTimer) {
-            clearTimeout(cache.keyUpTimer);
-            cache.keyUpTimer = null;
-        }
+        removeKeyUpTimer(input);
 
         triggerChangeEvent(input, e.keyCode);
         input.cache.keyDownCode = null;

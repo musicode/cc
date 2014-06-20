@@ -44,7 +44,7 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var position = require('../util/position');
-    var magic = require('../util/magic');
+    var debounce = require('../function/debounce');
 
     /**
      * 工具提示
@@ -165,7 +165,7 @@ define(function (require, exports, module) {
                             if (me.hideBy.indexOf('blur') >= 0) {
                                 $(window).resize(
                                     cache.resizeHandler =
-                                    magic.debounce(
+                                    debounce(
                                         function () {
                                             pinTip(me, placement);
                                         },

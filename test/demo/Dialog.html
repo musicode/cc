@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dialog</title>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+    <style>
+        html,
+        body {
+            height: 2000px;
+        }
+    </style>
+</head>
+<body>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Dialog' ],
+
+            function (Dialog) {
+
+                var dialog = new Dialog({
+
+                    title: '标题',
+                    content: '内容',
+                    hidden: false,
+                    disposeOnHide: false,
+
+                    x: '20%',
+
+                    headerSelector: '.modal-header',
+                    titleSelector: '.modal-title',
+                    bodySelector: '.modal-body',
+                    closeSelector: '.close',
+
+                    template: '<div class="modal-dialog">'
+                            +     '<div class="modal-content">'
+                            +       '<div class="modal-header">'
+                            +         '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'
+                            +         '<h4 class="modal-title">Modal title</h4>'
+                            +       '</div>'
+                            +       '<div class="modal-body">'
+                            +         '<p>One fine body&hellip;</p>'
+                            +       '</div>'
+                            +       '<div class="modal-footer">'
+                            +         '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>'
+                            +         '<button type="button" class="btn btn-primary">Save changes</button>'
+                            +       '</div>'
+                            +     '</div>'
+                            +   '</div>',
+
+                    maskTemplate: '<div class="modal fade"></div>'
+                });
+
+
+            }
+        );
+    </script>
+</body>
+</html>
