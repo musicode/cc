@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var debounce = require('../function/debounce');
+    var eventOffset = require('../function/eventOffset');
 
     /**
      * 星级评分
@@ -177,15 +178,7 @@ define(function (require, exports, module) {
 
         if (rater.half) {
 
-            var offsetX = e.offsetX;
-
-            // FF 不支持 offsetX
-            if (typeof offsetX !== 'number') {
-                offsetX = e.clientX
-                        - target[0].getBoundingClientRect().left;
-            }
-
-            if (offsetX / target.width() <= 0.5) {
+            if (eventOffset(e).x / target.width() <= 0.5) {
                 value -= 0.5;
             }
 

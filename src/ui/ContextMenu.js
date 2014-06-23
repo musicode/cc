@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var Popup = require('../helper/Popup');
-    var position = require('../util/position');
+    var pin = require('../function/pin');
 
     /**
      * 鼠标右键菜单
@@ -137,7 +137,7 @@ define(function (require, exports, module) {
 
         cache.popup.show();
 
-        position.pin({
+        pin({
             element: cache.element,
             x: 0,
             y: 0,

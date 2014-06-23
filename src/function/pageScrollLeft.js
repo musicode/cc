@@ -1,0 +1,21 @@
+/**
+ * @file 获得网页水平滚动距离
+ * @author zhujl
+ */
+define(function (require, exports, module) {
+
+    'use strict';
+
+    /**
+     * 获得网页水平滚动距离
+     *
+     * @return {number}
+     */
+    return function () {
+        return Math.max(
+                    document.documentElement.scrollLeft,
+                    document.body.scrollLeft
+                );
+    };
+
+});

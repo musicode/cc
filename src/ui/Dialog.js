@@ -7,8 +7,17 @@ define(function (require, exports, module) {
     'use strict';
 
     var Draggable = require('../helper/Draggable');
-    var position = require('../util/position');
+    var pin = require('../function/pin');
+    var page = require('../function/page');
+    var viewport = require('../function/viewport');
+    var pageScrollTop = require('../function/pageScrollTop');
+    var pageScrollLeft = require('../function/pageScrollLeft');
+    var viewportWidth = require('../function/viewportWidth');
+    var viewportHeight = require('../function/viewportHeight');
+    var pageWidth = require('../function/pageWidth');
+    var pageHeight = require('../function/pageHeight');
     var offsetParent = require('../function/offsetParent');
+    var debounce = require('../function/debounce');
 
     /**
      * 对话框
@@ -20,12 +29,13 @@ define(function (require, exports, module) {
      *                                     如果未传，必须传 title/content
      * @property {string=} options.title 对话框标题
      * @property {string=} options.content 对话框内容
-     * @property {number} options.width 对话框整体宽度
+     * @property {number=} options.width 对话框整体宽度
      * @property {number=} options.x 窗口出现的 x 位置
      * @property {number=} options.y 窗口出现的 y 位置
      * @property {boolean=} options.fixed 是否 fixed 定位
      * @property {boolean=} options.modal 是否是窗口模态，默认为 true
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
+     * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
      * @property {boolean=} options.hidden 初始化时是否隐藏，默认为 false
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
@@ -59,64 +69,73 @@ define(function (require, exports, module) {
             var element = me.element
                         || (me.element = $(me.template));
 
-            var title = me.title;
-            var content = me.content;
-            var closeSelector = me.closeSelector;
+            var width = me.width;
+            if ($.isNumeric(width)) {
+                element.width(width);
+            }
 
+            var title = me.title;
             if (title) {
                 element.find(me.titleSelector).html(title);
             }
+
+            var content = me.content;
             if (content) {
                 element.find(me.bodySelector).html(content);
             }
+
+            var closeSelector = me.closeSelector;
             if (closeSelector) {
                 element.on('click', closeSelector, me, closeDialog);
             }
 
-            // 把元素扔到 body 下
-            if (!element.parent().length) {
-                element.appendTo('body');
+            var position = me.fixed ? 'fixed' : 'absolute';
+            if (element.css('position') !== position) {
+                element.css('position', position);
             }
 
-            if (me.draggable) {
-                me.cache = {
-                    draggable: new Draggable({
-                        element: element,
-                        container: offsetParent(element),
-                        handle: me.headerSelector,
-                        cancel: me.titleSelector
-                    })
-                };
-            }
+            me.cache = { };
 
             me.hidden ? me.hide() : me.show();
 
         },
 
+        /**
+         * 显示对话框
+         */
         show: function () {
 
             var me = this;
+
+            if ($.isFunction(me.onBeforeShow)) {
+                if (me.onBeforeShow() === false) {
+                    return;
+                }
+            }
+
+            var cache = me.cache;
             var element = me.element;
             var mask = me.mask;
 
-            // 定位元素
-            position.pin({
-                element: element,
-                attachment: offsetParent(element),
-                x: me.x === '50%' ? '50%' : 0,
-                y: me.y === '50%' ? '50%' : 0,
-                attachmentX: me.x,
-                attachmentY: me.y
-            });
+            if (!me.scrollable) {
+                var body = $(document.body);
+                cache.overflow = body.css('overflow');
+                body.css('overflow', 'hidden');
+            }
+
+            if (!element.parent().length) {
+                element.appendTo('body');
+            }
 
             if (me.modal) {
                 // 遮罩放到对话框前面
+                // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
                 if (!mask) {
                     mask = me.mask = $(me.maskTemplate);
                     element.before(mask);
                 }
 
-                // 如果 mask 的 z-index 比 element 高，需要重置下
+                // 如果 mask 的 z-index 比 element 高，需要重置
                 var zIndex = 'z-index';
                 var maskZ = mask.css(zIndex);
                 if (maskZ > element.css(zIndex)) {
@@ -124,24 +143,58 @@ define(function (require, exports, module) {
                 }
             }
 
-            if ($.isFunction(me.onBeforeShow)) {
-                me.onBeforeShow();
+            refresh(me);
+
+            if (me.draggable) {
+                cache.draggable = createDraggable(me);
             }
 
-            mask && mask.show();
+            if (mask) {
+                mask.show();
+            }
+
             element.show();
+
+            me.hidden = false;
+
+            cache.resizer = debounce(
+                                function () {
+                                    refresh(me);
+                                },
+                                50
+                            );
+
+            $(window).resize(cache.resizer);
 
             if ($.isFunction(me.onAterShow)) {
                 me.onAterShow();
             }
         },
 
+        /**
+         * 隐藏对话框
+         */
         hide: function () {
 
             var me = this;
-
             if ($.isFunction(me.onBeforeHide)) {
-                me.onBeforeHide();
+                if (me.onBeforeHide() === false) {
+                    return;
+                }
+            }
+
+            var cache = me.cache;
+
+            if (!me.scrollable) {
+                $(document.body).css('overflow', cache.overflow);
+            }
+
+            if (cache.resizer) {
+                $(window).off('resize', cache.resizer);
+            }
+
+            if (cache.draggable) {
+                cache.draggable.dispose();
             }
 
             var mask = me.mask;
@@ -149,11 +202,12 @@ define(function (require, exports, module) {
                 mask.hide();
             }
 
+            me.element.hide();
+
+            me.hidden = true;
+
             if (me.disposeOnHide) {
                 me.dispose();
-            }
-            else {
-                me.element.hide();
             }
 
             if ($.isFunction(me.onAfterHide)) {
@@ -168,11 +222,13 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
             var element = me.element;
 
-            if (cache.draggable) {
-                cache.draggable.dispose();
+            // 避免循环调用
+            me.disposeOnHide = false;
+
+            if (!me.hidden) {
+                me.hide();
             }
 
             if (me.closeSelector) {
@@ -204,8 +260,10 @@ define(function (require, exports, module) {
         modal: true,
         hidden: false,
         draggable: true,
+        scrollable: false,
         disposeOnHide: true,
         removeOnDispose: true,
+        fixed: true,
 
         x: '50%',
         y: '50%',
@@ -226,6 +284,83 @@ define(function (require, exports, module) {
         maskTemplate: '<div class="dialog-mask"></div>'
     };
 
+    /**
+     * 创建可拖拽组件
+     *
+     * @inner
+     * @param {Dialog} dialog
+     * @return {Draggable}
+     */
+    function createDraggable(dialog) {
+
+        var element = dialog.element;
+
+        var instance = new Draggable({
+                            element: element,
+                            container: offsetParent(element),
+                            handle: dialog.headerSelector,
+                            cancel: [ dialog.titleSelector, dialog.closeSelector ]
+                        });
+
+        instance.setRectange(function () {
+
+            var scrollable = dialog.scrollable;
+            var fixed = dialog.fixed;
+
+            return {
+                x: (fixed || scrollable) ? 0 : pageScrollLeft(),
+                y: (fixed || scrollable) ? 0 : pageScrollTop(),
+                width: (fixed || !scrollable) ? viewportWidth() : pageWidth(),
+                height: (fixed || !scrollable) ? viewportHeight() : pageHeight()
+            };
+        });
+
+        return instance;
+    }
+
+    /**
+     * 刷新对话框的位置
+     *
+     * @inner
+     * @param {Dialog} dialog
+     */
+    function refresh(dialog) {
+
+        var pWidth = pageWidth();
+        var pHeight = pageHeight();
+        var vWidth = viewportWidth();
+        var vHeight = viewportHeight();
+
+        var fixed = dialog.fixed;
+        var scrollable = dialog.scrollable;
+
+        var pinOptions = {
+            element: dialog.element,
+            x: dialog.x === '50%' ? '50%' : 0,
+            y: dialog.y === '50%' ? '50%' : 0,
+
+            attachment: $(fixed ? viewport() : page()),
+            attachmentWidth: (fixed || !scrollable) ? vWidth : pWidth,
+            attachmentHeight: (fixed || !scrollable) ? vHeight : pHeight,
+            attachmentX: dialog.x,
+            attachmentY: dialog.y
+        };
+
+        if (!fixed && !scrollable) {
+            pinOptions.offsetX = pageScrollLeft();
+            pinOptions.offsetY = pageScrollTop();
+        }
+
+        pin(pinOptions);
+
+        var mask = dialog.mask;
+        if (mask) {
+            mask.css({
+                width: pWidth,
+                height: pHeight
+            });
+        }
+    }
 
     /**
      * 点击关闭按钮关闭对话框
@@ -236,7 +371,6 @@ define(function (require, exports, module) {
     function closeDialog(e) {
         e.data.hide();
     }
-
 
     return Dialog;
 

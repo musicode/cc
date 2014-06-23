@@ -18,6 +18,6 @@ define(function (require, exports, module) {
             return true;
         }
         return $.contains(container, element);
-    }
+    };
 
 });

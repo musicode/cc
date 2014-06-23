@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var eventOffset = require('../function/eventOffset');
     var Draggable = require('../helper/Draggable');
     var Wheel = require('../helper/Wheel');
 
@@ -19,7 +20,7 @@ define(function (require, exports, module) {
      * @property {number=} options.min 允许的最小值
      * @property {number=} options.max 允许的最大值
      * @property {number=} options.step 间隔，默认是 1
-     * @property {boolean=} options.scroll 是否可以滚动触发，如果设为 true，需要设置 step
+     * @property {boolean=} options.scrollable 是否可以滚动触发，如果设为 true，需要设置 step
      * @property {string=} options.direction 方向，可选值有 horizontal 和 vertical，默认是 horizontal
      * @property {string=} options.template
      * @property {string=} options.trackSelector
@@ -82,7 +83,7 @@ define(function (require, exports, module) {
                             .on('mouseleave' + namespace, me, leaveTrack);
             }
 
-            if (me.scroll) {
+            if (me.scrollable) {
                 cache.wheel = new Wheel({
                     element: trackElement,
                     onScroll: function (data) {
@@ -123,7 +124,7 @@ define(function (require, exports, module) {
                 byUnit = true;
             }
 
-            var maxPx = cache.draggable.getRectange()[ cache.dimension ];
+            var maxPx = cache.draggable.getRectange(true)[ cache.dimension ];
             if (byUnit) {
                 var count = (max - min) / me.step;
                 // 保留 2 位小数足够了
@@ -290,7 +291,7 @@ define(function (require, exports, module) {
     Slider.defaultOptions = {
 
         step: 1,
-        scroll: false,
+        scrollable: false,
         direction: 'horizontal',
 
         thumbSelector: '.slider-thumb',
@@ -428,16 +429,10 @@ define(function (require, exports, module) {
             return;
         }
 
-        var upper = cache.axis.toUpperCase();
-        var value = e[ 'offset' + upper ];
-
-        // FF 不支持 offsetX
-        if (!$.isNumeric(value)) {
-            value = e[ 'client' + upper ]
-                  - cache.track[0].getBoundingClientRect()[ cache.position ];
-        }
-
-        setValueByPx(slider, value);
+        setValueByPx(
+            slider,
+            eventOffset(e)[ cache.axis ]
+        );
     }
 
     /**

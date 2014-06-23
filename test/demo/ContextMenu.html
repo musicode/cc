@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ContextMenu</title>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+    <style>
+
+        body {
+            font-size: 12px;
+        }
+        #song-list {
+            border: 1px solid #DDD;
+            width: 300px;
+        }
+        #song-list a {
+            color: #777;
+            display: block;
+            padding: 10px;
+            border-top: 1px solid #EEE;
+        }
+        #song-list a:first-child {
+            border-top: none;
+        }
+        #song-list a:nth-of-type(even) {
+            background-color: #EAF7FD;
+        }
+
+        #song-list-menu {
+            display: none;
+        }
+        .context-menu {
+            border: 1px solid #DDD;
+            background-color: #FFF;
+            padding: 1px;
+            width: 70px;
+            box-shadow: 1px 1px 2px #F0F0F0;
+            position: absolute;
+        }
+        .context-menu a {
+            border-top: 1px solid #EEE;
+            cursor: pointer;
+            display: block;
+            padding: 6px 10px;
+        }
+        .context-menu a:first-child {
+            border-top: none;
+        }
+        .context-menu a:hover {
+            background-color: #61A1E6;
+            color: #FFF;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 歌曲列表 -->
+    <div id="song-list">
+        <a data-url="http://music.baidu.com/1.mp3">adele - rolling in the deep</a>
+        <a data-url="http://music.baidu.com/2.mp3">blue - one love</a>
+        <a data-url="http://music.baidu.com/3.mp3">celion dion - a new day has come</a>
+        <a data-url="http://music.baidu.com/4.mp3">adam lambert - whataya want from me</a>
+        <a data-url="http://music.baidu.com/5.mp3">alicia keys - if i aint got you</a>
+        <a data-url="http://music.baidu.com/6.mp3">amy diamond - heartbeats</a>
+        <a data-url="http://music.baidu.com/7.mp3">angela ammons - always getting over you</a>
+        <a data-url="http://music.baidu.com/8.mp3">avril lavigne - losing grip</a>
+    </div>
+
+    <!-- 右键点击歌曲列表后出现的菜单 -->
+    <div id="song-list-menu">
+        <a data-action="play">播放</a>
+        <a data-action="like">收藏</a>
+        <a data-action="download">下载</a>
+        <a data-action="remove">删除</a>
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/ContextMenu' ],
+
+            function (ContextMenu) {
+
+                var songListMenu = new ContextMenu({
+                    element: $('#song-list-menu'),
+                    container: $('#song-list'),
+                    clickEvents: {
+                        '[data-action="play"]': function (e) {
+                            var $target = $(e.target);
+                            console.log('播放: ' + $target.data('url'));
+                            this.hide();
+                        },
+                        '[data-action="like"]': function (e) {
+                            var $target = $(e.target);
+                            console.log('收藏: ' + $target.data('url'));
+                            this.hide();
+                        },
+                        '[data-action="download"]': function (e) {
+                            var $target = $(e.target);
+                            console.log('下载: ' + $target.data('url'));
+                            this.hide();
+                        },
+                        '[data-action="remove"]': function (e) {
+                            var $target = $(e.target);
+                            console.log('删除: ' + $target.data('url'));
+                            this.hide();
+                        }
+                    }
+                });
+
+
+            }
+        );
+    </script>
+</body>
+</html>

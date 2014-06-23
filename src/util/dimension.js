@@ -6,6 +6,13 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var pageScrollTop = require('../function/pageScrollTop');
+    var pageScrollLeft = require('../function/pageScrollTop');
+    var pageWidth = require('../function/pageWidth');
+    var pageHeight = require('../function/pageHeight');
+    var viewportWidth = require('../function/viewportWidth');
+    var viewportHeight = require('../function/viewportHeight');
+
     /**
      * @description
      *
@@ -18,79 +25,46 @@ define(function (require, exports, module) {
      * 还有类似的取视窗大小等
      */
 
-    var documentElement = document.documentElement;
-    var body = document.body;
-
     /**
-     * 获取窗口垂直滚动距离
+     * 获取网页垂直滚动距离
      *
      * @return {number}
      */
-    exports.getWindowScrollTop = function () {
-        return Math.max(
-                    documentElement.scrollTop,
-                    body.scrollTop
-                );
-    };
+    exports.getPageScrollTop = pageScrollTop;
 
     /**
-     * 获取窗口水平滚动距离
+     * 获取网页水平滚动距离
      *
      * @return {number}
      */
-    exports.getWindowScrollLeft = function () {
-        return Math.max(
-                    documentElement.scrollLeft,
-                    body.scrollLeft
-                );
-    };
+    exports.getPageScrollLeft = pageScrollTop;
 
     /**
-     * 获取窗口的滚动宽度
+     * 获取网页的滚动宽度
      *
      * @return {number}
      */
-    exports.getWindowScrollWidth = function () {
-        return Math.max(
-                    body.clientWidth,
-                    documentElement.clientWidth
-                );
-    };
+    exports.getPageWidth = pageWidth;
 
     /**
-     * 获取窗口的滚动高度
+     * 获取网页的滚动高度
      *
      * @return {number}
      */
-    exports.getWindowScrollHeight = function () {
-        return Math.max(
-                    body.clientHeight,
-                    documentElement.clientHeight
-                );
-    };
+    exports.getPageHeight = pageHeight;
 
     /**
      * 获取视窗宽度
      *
      * @return {number}
      */
-    exports.getViewportWidth = function () {
-        return Math.min(
-                    body.clientWidth,
-                    documentElement.clientWidth
-                );
-    };
+    exports.getViewportWidth = viewportWidth;
 
     /**
      * 获取视窗高度
      *
      * @return {number}
      */
-    exports.getViewportHeight = function () {
-        return Math.min(
-                    body.clientHeight,
-                    documentElement.clientHeight
-                );
-    };
+    exports.getViewportHeight = viewportHeight;
 
 });

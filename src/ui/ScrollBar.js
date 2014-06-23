@@ -335,7 +335,7 @@ define(function (require, exports, module) {
             element: scrollBar.element,
             direction: scrollBar.direction,
             step: scrollBar.step,
-            scroll: true,
+            scrollable: true,
 
             hoverClass: scrollBar.hoverClass,
             draggingClass: scrollBar.draggingClass,

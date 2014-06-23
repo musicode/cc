@@ -351,16 +351,19 @@ define(function (require, exports, module) {
 
         var result = [ ];
 
-        $.each(data, function (index, item) {
-            result.push(
-                tpl.replace(
-                    /\${(\w+)}/g,
-                    function ($0, $1) {
-                        return item[$1] != null ? item[$1] : '';
-                    }
-                )
-            );
-        });
+        $.each(
+            data,
+            function (index, item) {
+                result.push(
+                    tpl.replace(
+                        /\${(\w+)}/g,
+                        function ($0, $1) {
+                            return item[$1] != null ? item[$1] : '';
+                        }
+                    )
+                );
+            }
+        );
 
         return result.join('');
     }

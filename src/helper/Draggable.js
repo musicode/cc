@@ -33,8 +33,8 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 需要拖拽的元素
      * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 body
-     * @property {string=} options.handle 触发拖拽的区域 (css 选择器)
-     * @property {string=} options.cancel 不触发拖拽的区域 (css 选择器)
+     * @property {(string|Array.<string>)=} options.handle 触发拖拽的区域 (css 选择器)
+     * @property {(string|Array.<string>)=} options.cancel 不触发拖拽的区域 (css 选择器)
      * @property {string=} options.axis 限制方向，可选值包括 'x' 'y'
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
      * @property {function(Object)=} options.onDragStart 开始拖拽
@@ -66,21 +66,52 @@ define(function (require, exports, module) {
                 throw new Error('[Draggable] options.element\'s closest unstatic parent element is wrong.');
             }
 
+            var style = position(element);
+
             me.cache = {
-                isChild: isChild
+                isChild: isChild,
+                position: style.position === 'fixed' ? 'client' : 'page'
             };
 
-            element.css(position(element))
+            element.css(style)
                    .on('mousedown', me, onDragStart);
         },
 
         /**
          * 获得可移动范围的矩形信息
          *
+         * @param {boolean=} forDrag 是否是拖拽元素可移动的范围
          * @return {Object}
          */
-        getRectange: function () {
-            return getMovableRectange(this);
+        getRectange: function (forDrag) {
+
+            var me = this;
+            var rect = me.rect;
+
+            if ($.isFunction(rect)) {
+                rect = me.rect();
+            }
+
+            if (forDrag) {
+                var element = me.element;
+                rect.width -= element.outerWidth(true);
+                rect.height -= element.outerHeight(true);
+            }
+
+            return rect;
+        },
+
+        /**
+         * 设置容器可移动范围的矩形信息
+         *
+         * @param {Object|Function} rect
+         * @property {number} rect.x 矩形的 x 坐标
+         * @property {number} rect.y 矩形的 y 坐标
+         * @proeprty {number} rect.width 矩形的宽度
+         * @property {number} rect.height 矩形的高度
+         */
+        setRectange: function (rect) {
+            this.rect = rect;
         },
 
         /**
@@ -126,58 +157,36 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Draggable.defaultOptions = {
+
         // 读取高度，不同浏览器需要用不同的元素
         container: doc.prop('scrollHeight') > body.prop('scrollHeight')
                  ? doc
-                 : body
+                 : body,
+
+        rect: function () {
+
+            var me = this;
+
+            var container = me.container;
+            var element = me.element;
+
+            var containerOffset = container.offset();
+            var elementOffset = element.offset();
+
+            var isChild = me.cache.isChild;
+            var borderLeftWidth = parseInt(container.css('border-left-width'), 10) || 0;
+            var borderTopWidth = parseInt(container.css('border-top-width'), 10) || 0;
+
+            return {
+
+                x: isChild ? 0 : (containerOffset.left + borderLeftWidth),
+                y: isChild ? 0 : (containerOffset.top + borderTopWidth),
+
+                width: container.innerWidth(),
+                height: container.innerHeight()
+            };
+        }
     };
-
-    /**
-     * 获得可拖拽的矩形范围
-     *
-     * @inner
-     * @param {Draggable} draggable
-     * @param {Object=} containerRect
-     * @param {Object=} targetRect
-     * @return {Object}
-     */
-    function getMovableRectange(draggable, containerOffset, elementOffset) {
-
-        var container = draggable.container;
-        var element = draggable.element;
-
-        containerOffset = containerOffset
-                       || container.offset();
-
-        elementOffset = elementOffset
-                     || element.offset();
-
-        var isChild = draggable.cache.isChild;
-        var borderLeftWidth = parseInt(container.css('border-left-width'), 10);
-        var borderTopWidth = parseInt(container.css('border-top-width'), 10);
-
-        var left = isChild
-                 ? 0
-                 : (containerOffset.left + borderLeftWidth || 0);
-
-        var top = isChild
-                ? 0
-                : (containerOffset.top + borderTopWidth || 0);
-
-        var width = container.innerWidth() - element.outerWidth();
-        var height = container.innerHeight() - element.outerHeight();
-
-        return {
-
-            left: left,
-            top: top,
-            right: left + width,
-            bottom: top + height,
-
-            width: width,
-            height: height
-        };
-    }
 
     /**
      * mousedown 触发拖拽
@@ -236,11 +245,17 @@ define(function (require, exports, module) {
         cache.originY = point.top;
         cache.offsetX = offsetX;
         cache.offsetY = offsetY;
-        cache.marginX = parseInt(element.css('margin-left'), 10);
-        cache.marginY = parseInt(element.css('margin-top'), 10);
+        cache.marginX = parseInt(element.css('margin-left'), 10) || 0;
+        cache.marginY = parseInt(element.css('margin-top'), 10) || 0;
         cache.dragging = false;
 
-        cache.movableRect = getMovableRectange(draggable, containerOffset, targetOffset);
+        var rect = draggable.getRectange(true);
+        cache.movableRect = {
+            left: rect.x,
+            top: rect.y,
+            right: rect.x + rect.width,
+            bottom: rect.y + rect.height
+        };
 
         // 避免出现选区
         disableSelection(cache);
@@ -268,8 +283,8 @@ define(function (require, exports, module) {
 
             // 转为相对于父容器的坐标
             var point = {
-                left: axis === 'y' ? cache.originX : (e.pageX - cache.marginX - cache.offsetX),
-                top: axis === 'x' ? cache.originY : (e.pageY - cache.marginY - cache.offsetY)
+                left: axis === 'y' ? cache.originX : (e[ cache.position + 'X' ] - cache.marginX - cache.offsetX),
+                top: axis === 'x' ? cache.originY : (e[ cache.position + 'Y' ] - cache.marginY - cache.offsetY)
             };
 
             // 纠正范围
@@ -406,17 +421,33 @@ define(function (require, exports, module) {
      * @inner
      * @param {HTMLElement} target
      * @param {jQuery} container
-     * @param {string} selector
+     * @param {string|Array.<string>} selector
      * @return {boolean}
      */
     function inRegion(target, container, selector) {
+
         var result = false;
-        container.find(selector).each(function () {
-            if (contains(this, target)) {
-                result = true;
-                return false;
+
+        if (typeof selector === 'string') {
+            selector = [ selector ];
+        }
+
+        $.each(
+            selector,
+            function (index, item) {
+                if (item) {
+                    container.find(item).each(
+                        function () {
+                            if (contains(this, target)) {
+                                result = true;
+                                return false;
+                            }
+                        }
+                    );
+                }
             }
-        });
+        );
+
         return result;
     }
 
