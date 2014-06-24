@@ -59,17 +59,21 @@ define(function (require, exports, module) {
      * @property {string=} options.placement 提示元素出现的位置，可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto，可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      * @property {string=} options.placementAttr 优先级比 placement 更高的位置配置
      * @property {string=} options.placementPrefix 提示方位的 class 前缀，有助于实现小箭头之类的效果
-     * @property {string=} options.showBy 触发显示的方式，可选值包括 over click
+     * @property {string=} options.showBy 触发显示的方式，可选值包括 over click focus
      * @property {string=} options.hideBy 触发隐藏的方式，可选值包括 out blur 可组合使用，如 out,blur
-     * @property {number=} options.showDelay 当 showBy 为 over 的显示延时
-     * @property {number=} options.hideDelay 当 hideBy 包含 out 的隐藏延时
-     * @property {number=} options.gapX 横向间距，如果为 0，提示会和元素贴在一起
-     * @property {number=} options.gapY 纵向间距，如果为 0，提示会和元素贴在一起
+     *
+     * @property {Object=} options.delay
+     * @property {number=} options.delay.show 显示延时
+     * @property {number=} options.delay.hide 隐藏延时
+     * @property {Object=} options.gap
+     * @property {number=} options.gap.x 横向间距，如果为 0，提示会和元素贴在一起
+     * @property {number=} options.gap.y 纵向间距，如果为 0，提示会和元素贴在一起
      * @property {Object=} options.offset 设置 left right top bottom topLeft topRight bottomLeft bottomRight 方向的偏移量
+     *
      * @property {string=} options.template 提示元素的模版，可配合使用 placementPrefix, update 实现特殊需求
-     * @property {function(jQuery)=} options.show 显示提示的方式，可扩展实现动画
-     * @property {function(jQuery)=} options.hide 显示提示的方式，可扩展实现动画
-     * @property {function(jQuery)=} options.update 更新 tip 元素的内容
+     * @property {Function(jQuery)=} options.show 显示提示的方式，可扩展实现动画
+     * @property {Function(jQuery)=} options.hide 显示提示的方式，可扩展实现动画
+     * @property {Function(jQuery)=} options.update 更新 tip 元素的内容
      * @property {Function=} options.onBeforeShow
      * @property {Function=} options.onAfterShow
      * @property {Function=} options.onBeforeHide
@@ -123,8 +127,7 @@ define(function (require, exports, module) {
                     showBy: me.showBy,
                     hideBy: me.hideBy,
 
-                    showDelay: me.showDelay,
-                    hideDelay: me.hideDelay,
+                    delay: me.delay,
 
                     show: function () {
                         show.call(me, getTipElement(me));
@@ -238,8 +241,8 @@ define(function (require, exports, module) {
         showBy: 'over',
         hideBy: 'out,blur',
 
-        gapX: 5,
-        gapY: 5,
+        gap: { },
+        delay: { },
         offset: { },
 
         template: '<div class="tooltip"></div>',
@@ -418,8 +421,9 @@ define(function (require, exports, module) {
             tipElement.removeData(placementClassKey);
         }
 
-        if (tooltip.placementPrefix) {
-            placementClass = tooltip.placementPrefix + placement.toLowerCase();
+        var placementPrefix = tooltip.placementPrefix;
+        if (typeof placementPrefix === 'string') {
+            placementClass = placementPrefix + placement.toLowerCase();
             tipElement.addClass(placementClass);
             tipElement.data(placementClassKey, placementClass);
         }
@@ -435,15 +439,16 @@ define(function (require, exports, module) {
     function pinTip(tooltip, placement) {
 
         var target = placementMap[placement];
+        var gap = tooltip.gap;
 
         var options = {
             element: getTipElement(tooltip),
             attachment: tooltip.trigger,
-            offsetX: typeof tooltip.gapX === 'number'
-                   ? tooltip.gapX
+            offsetX: typeof gap.x === 'number'
+                   ? gap.x
                    : 0,
-            offsetY: typeof tooltip.gapY === 'number'
-                   ? tooltip.gapY
+            offsetY: typeof gap.y === 'number'
+                   ? gap.y
                    : 0
         };
 

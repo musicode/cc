@@ -26,7 +26,7 @@ define(function (require, exports, module) {
      *
      * #延时#
      *
-     *    有时为了避免过于灵敏的触发，会设置一个 showDelay/hideDelay 来减少误操作
+     *    有时为了避免过于灵敏的触发，会设置 delay 来减少误操作
      *
      * #多种触发方式#
      *
@@ -58,14 +58,14 @@ define(function (require, exports, module) {
      *
      *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
      *
-     *    在配置 showDelay 时，只作用于第一个触发方式，如 showBy 配置为 'over,click'，只有 over 才会 delay
-     *    hideDelay 同理
+     *    在配置 delay 时，只作用于第一个触发方式，如 showBy 配置为 'over,click'，只有 over 才会 delay
      *
      */
 
     'use strict';
 
     var advice = require('../util/advice');
+    var contains = require('../function/contains');
     var instance = require('../util/instance');
 
     /**
@@ -79,8 +79,9 @@ define(function (require, exports, module) {
      * @property {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
      * @property {string=} options.showBy 可选值请看 Popup.showBy 的 key，可组合使用，如 'click,over'
      * @property {string} options.hideBy 可选值请看 Popup.hideBy 的 key，可组合使用，如 'blur,out'
-     * @property {number=} options.showDelay 给 showBy 的第一个触发方式加显示延时，如 'over,click' 中的 over
-     * @property {number=} options.hideDelay 给 hideBy 的第一个触发方式加隐藏延时，如 'out,blur' 中的 out
+     * @property {Object=} options.delay 延时
+     * @property {number=} options.delay.show 显示延时
+     * @property {number=} options.delay.hide 隐藏延时
      * @property {Function=} options.show 可选，默认是 element.show()
      * @property {Function=} options.hide 可选，默认是 element.hide()
      * @property {Function=} options.onBeforeShow 返回 false 可阻止显示
@@ -162,6 +163,10 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Popup.defaultOptions = {
+        delay: {
+            show: 0,
+            hide: 0
+        },
         show: function () {
             this.element.show();
         },
@@ -515,7 +520,7 @@ define(function (require, exports, module) {
 
         setDelay(
             popup,
-            popup.showDelay,
+            popup.delay.show,
             function () {
                 popup.show(e);
             },
@@ -535,7 +540,7 @@ define(function (require, exports, module) {
 
         setDelay(
             popup,
-            popup.showDelay,
+            popup.delay.show,
             function () {
                 popup.show(e);
             },
@@ -555,7 +560,7 @@ define(function (require, exports, module) {
 
         setDelay(
             popup,
-            popup.showDelay,
+            popup.delay.show,
             function () {
                 popup.show(e);
             },
@@ -575,7 +580,7 @@ define(function (require, exports, module) {
             if (isOutside(e.target, popup.element[0])) {
                 setDelay(
                     popup,
-                    popup.hideDelay,
+                    popup.delay.hide,
                     function () {
                         popup.hide(e);
                     },
@@ -602,7 +607,7 @@ define(function (require, exports, module) {
         ) {
             setDelay(
                 popup,
-                popup.hideDelay,
+                popup.delay.hide,
                 function () {
                     popup.hide(e);
                 },
@@ -621,8 +626,7 @@ define(function (require, exports, module) {
      */
     function isOutside(target, container) {
         for (var i = 1, len = arguments.length; i < len; i++) {
-            container = arguments[i];
-            if (container === target || $.contains(container, target)) {
+            if (contains(arguments[i], target)) {
                 return false;
             }
         }

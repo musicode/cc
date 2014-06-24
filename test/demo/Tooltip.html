@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Tooltip</title>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
     <style>
         html,
         body {
@@ -24,27 +25,18 @@
             left: 40%;
         }
 
-        .tooltip {
-            border: 1px solid #DDD;
-            background-color: #FFF;
-            position: absolute;
-            padding: 5px;
-            box-shadow: 1px 1px 3px #EEE;
-        }
-        .tooltip > i {
-            border: 5px solid #DDD;
-            border-top-color: transparent;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            position: absolute;
-            top: -10px;
-            left: 10px;
-        }
     </style>
 </head>
 <body>
 
     <i id="icon" title="提示内容">?</i>
+
+    <div class="tooltip fade left in">
+        <div class="tooltip-inner">
+            Tooltip!
+        </div>
+        <div class="tooltip-arrow"></div>
+    </div>
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -64,9 +56,15 @@
                                 + '</div>';
 
                 config.hideDelay = 0;
-                config.gapX = config.gapY = 8;
+                config.gap = {
+                    x: 8,
+                    y: 8
+                };
+                config.delay = {
+                    hide: 500
+                };
                 config.offset.bottom = {
-                    x: 17,
+                    x: 0,
                     y: 0
                 };
 
@@ -77,7 +75,7 @@
                     tipElement.fadeOut(100);
                 };
                 config.update = function (tipElement) {
-                    tipElement.find('.tooltip-content').html(this.title);
+                    tipElement.find('.tooltip-inner').html(this.title);
                 };
                 config.onBeforeShow = function () {
                     console.log(this);
@@ -88,9 +86,10 @@
 
                 var tooltip = new Tooltip({
                     trigger: $('#icon'),
-                    template: '<div class="tooltip">'
-                            +    '<i class="arrow"></i>'
-                            +    '<div class="tooltip-content"></div>'
+                    placementPrefix: '',
+                    template: '<div class="tooltip fade in">'
+                            +    '<div class="tooltip-inner"></div>'
+                            +    '<div class="tooltip-arrow"></div>'
                             + '</div>'
                 });
 
