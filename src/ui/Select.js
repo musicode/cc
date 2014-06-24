@@ -13,23 +13,29 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.trigger 点击触发下拉菜单显示的元素
-     * @param {jQuery} options.menu 下拉菜单元素
-     * @param {string=} options.value 当前选中的值
-     * @param {string=} options.textAttr 读取 text 的元素属性，没有则读取元素 innerHTML
-     * @param {string=} options.valueAttr 读取 value 的元素属性，必须设置这个选项，至少要在 defaultOptions 设置
-     * @param {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
-     * @param {Function=} options.onOpen
-     * @param {Function=} options.onClose
+     * @property {jQuery} options.element 如果需要容器包着 trigger 和 menu, 可以设置主元素
+     *                                    openClass 会优先作用于它，否则作用于 trigger
+     * @property {jQuery} options.trigger 点击触发下拉菜单显示的元素
+     * @property {jQuery} options.menu 下拉菜单元素
+     * @property {string=} options.value 当前选中的值
+     * @property {string} options.itemSelector 菜单项的选择器，默认是选择具有 options.valueAttr 属性的元素
+     * @property {string=} options.textAttr 读取 text 的元素属性，没有则读取元素 innerHTML
+     * @property {string=} options.valueAttr 读取 value 的元素属性，必须设置这个选项，至少要在 defaultOptions 设置
+     * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
+     * @property {string=} options.openClass 展开状态的 class
+     * @property {Function=} options.onOpen
+     * @property {Function=} options.onClose
      *
-     * @param {Function=} options.onChange 选中菜单项触发
+     * @property {Function=} options.onChange 选中菜单项触发
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
-     * @param {Function=} options.setText 选中菜单项后设置 trigger 文本的方法
+     * @property {Function=} options.setText 选中菜单项后设置 trigger 文本的方法
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
+     *
+     * @property {Function=} options.onClickItem 如果没有使用 valueAttr，而是想要完全自定义选中逻辑，可配置此方法
      */
     function Select(options) {
         $.extend(this, Select.defaultOptions, options);
@@ -48,7 +54,17 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
+
+            var valueAttr = me.valueAttr;
+            var itemSelector = me.itemSelector;
+            if (!itemSelector) {
+                itemSelector = me.itemSelector
+                             = '[' + valueAttr +']';
+            }
+
             var menu = me.menu;
+            var main = me.element || me.trigger;
+            var openClass = me.openClass;
 
             me.cache = {
                 popup: new Popup({
@@ -56,17 +72,39 @@ define(function (require, exports, module) {
                     element: menu,
                     showBy: 'click',
                     hideBy: 'blur',
-                    onAfterShow: me.onOpen,
-                    onAfterHide: me.onClose,
-                    scope: me
+                    onAfterShow: function () {
+                        if (openClass) {
+                            main.addClass(openClass);
+                        }
+                        if ($.isFunction(me.onOpen)) {
+                            me.onOpen();
+                        }
+                    },
+                    onAfterHide: function () {
+                        if (openClass) {
+                            main.removeClass(openClass);
+                        }
+                        if ($.isFunction(me.onClose)) {
+                            me.onClose();
+                        }
+                    }
                 })
             };
 
-            if (me.value != null) {
-                me.setValue(me.value);
+            var value = me.value;
+            if (value == null) {
+                value = menu.find('.' + me.itemActiveClass)
+                            .attr(valueAttr);
             }
 
-            menu.on('click', '[' + me.valueAttr +']', me, clickItem);
+            if (value != null) {
+                me.setValue(value, true);
+            }
+
+            if (!menu.find(itemSelector).length) {
+                throw new Error('[Select] [' + itemSelector +'] find 0 result.');
+            }
+            menu.on('click', itemSelector, me, clickItem);
         },
 
         /**
@@ -82,9 +120,9 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
-         * @param {boolean=} triggerChange 是否触发 change 事件
+         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
          */
-        setValue: function (value, triggerChange) {
+        setValue: function (value, silence) {
 
             var me = this;
             var menu = me.menu;
@@ -94,10 +132,10 @@ define(function (require, exports, module) {
 
                 me.value = value;
 
-                var activeClass = me.activeClass;
-                if (activeClass) {
-                    menu.find('.' + activeClass).removeClass(activeClass);
-                    target.addClass(activeClass);
+                var itemActiveClass = me.itemActiveClass;
+                if (itemActiveClass) {
+                    menu.find('.' + itemActiveClass).removeClass(itemActiveClass);
+                    target.addClass(itemActiveClass);
                 }
 
                 var data = {
@@ -113,10 +151,24 @@ define(function (require, exports, module) {
                     me.setText(data);
                 }
 
-                if (triggerChange && typeof me.onChange === 'function') {
+                if (!silence && $.isFunction(me.onChange)) {
                     me.onChange(data);
                 }
             }
+        },
+
+        /**
+         * 显示菜单
+         */
+        showMenu: function () {
+            this.cache.popup.show();
+        },
+
+        /**
+         * 隐藏菜单
+         */
+        hideMenu: function () {
+            this.cache.popup.hide();
         },
 
         /**
@@ -143,7 +195,9 @@ define(function (require, exports, module) {
      */
     Select.defaultOptions = {
         textAttr: 'data-text',
-        valueAttr: 'data-value'
+        valueAttr: 'data-value',
+        itemActiveClass: 'item-active',
+        openClass: 'select-open'
     };
 
     /**
@@ -157,13 +211,17 @@ define(function (require, exports, module) {
         var select = e.data;
 
         // 处理 DOM
-        select.cache.popup.hide();
+        select.hideMenu();
 
         // 更新 value
-        select.setValue(
-            $(e.currentTarget).attr(select.valueAttr),
-            true
-        );
+        var value = $(e.currentTarget).attr(select.valueAttr);
+
+        if (value != null) {
+            select.setValue(value);
+        }
+        else if ($.isFunction(select.onClickItem)) {
+            select.onClickItem(e);
+        }
 
         // 如果 target 是 a，需要禁用默认行为
         return false;

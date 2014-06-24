@@ -25,6 +25,10 @@ define(function (require, exports, module) {
     var offsetParent = require('../function/offsetParent');
     var position = require('../function/position');
     var contains = require('../function/contains');
+    var enableSelection = require('../function/enableSelection');
+    var disableSelection = require('../function/disableSelection');
+    var page = require('../function/page');
+    var instance = require('../util/instance');
 
     /**
      * 拖拽
@@ -32,7 +36,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 需要拖拽的元素
-     * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 body
+     * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
      * @property {(string|Array.<string>)=} options.handle 触发拖拽的区域 (css 选择器)
      * @property {(string|Array.<string>)=} options.cancel 不触发拖拽的区域 (css 选择器)
      * @property {string=} options.axis 限制方向，可选值包括 'x' 'y'
@@ -60,7 +64,7 @@ define(function (require, exports, module) {
             var element = me.element;
             var container = me.container;
             var isChild = contains(container[0], element[0]);
-            var realContainer = isChild ? container : body;
+            var realContainer = isChild ? container : instance.body;
 
             if (offsetParent(element)[0] !== realContainer[0]) {
                 throw new Error('[Draggable] options.element\'s closest unstatic parent element is wrong.');
@@ -118,37 +122,21 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            var me = this;
 
-            var element = me.element;
+            var me = this;
             var cache = me.cache;
 
             if (cache.onDragEnd) {
                 cache.onDragEnd();
             }
-            element.off('mousedown', onDragStart);
+
+            me.element.off('mousedown', onDragStart);
 
             me.cache =
             me.element =
             me.container = null;
         }
     };
-
-    /**
-     * document 元素
-     *
-     * @inner
-     * @type {jQuery}
-     */
-    var doc = $(document.documentElement);
-
-    /**
-     * body 元素
-     *
-     * @inner
-     * @type {jQuery}
-     */
-    var body = $(document.body);
 
     /**
      * 默认配置
@@ -158,10 +146,7 @@ define(function (require, exports, module) {
      */
     Draggable.defaultOptions = {
 
-        // 读取高度，不同浏览器需要用不同的元素
-        container: doc.prop('scrollHeight') > body.prop('scrollHeight')
-                 ? doc
-                 : body,
+        container: page(),
 
         rect: function () {
 
@@ -258,8 +243,9 @@ define(function (require, exports, module) {
         };
 
         // 避免出现选区
-        disableSelection(cache);
+        disableSelection();
 
+        var doc = instance.document;
         doc.on('mousemove', cache.onDrag = onDrag(draggable));
         doc.on('mouseup', cache.onDragEnd = onDragEnd(draggable));
 
@@ -323,65 +309,20 @@ define(function (require, exports, module) {
 
             var cache = draggable.cache;
 
+            var doc = instance.document;
             doc.off('mousemove', cache.onDrag)
                .off('mouseup', cache.onDragEnd);
 
             cache.onDrag =
             cache.onDragEnd = null;
 
-            enableSelection(cache);
+            enableSelection();
 
             if (cache.dragging) {
                 if (typeof draggable.onDragEnd === 'function') {
                     draggable.onDragEnd(cache.point);
                 }
             }
-        };
-    }
-
-    /**
-     * 是否支持 onselectstart 禁用选区
-     *
-     * @inner
-     * @type {boolean}
-     */
-    var supportSelectStart = typeof doc[0].onselectstart !== 'undefined';
-
-    /**
-     * 禁掉拖动时产生的选区
-     *
-     * @inner
-     * @param {Object} cache
-     */
-    var disableSelection;
-
-    /**
-     * 选区恢复原状
-     *
-     * @inner
-     * @param {Object} cache
-     */
-    var enableSelection;
-
-    if (supportSelectStart) {
-        disableSelection = function (cache) {
-            var target = doc[0];
-            cache.selectStart = target.onselectstart;
-            target.onselectstart = function () {
-                return false;
-            };
-        };
-        enableSelection = function (cache) {
-            doc[0].onselectstart = cache.selectStart;
-        };
-    }
-    else {
-        disableSelection = function (cache) {
-            cache.userSelect = doc.css('MozUserSelect');
-            doc.css('MozUserSelect', 'none');
-        };
-        enableSelection = function (cache) {
-            doc.css('MozUserSelect', cache.userSelect);
         };
     }
 

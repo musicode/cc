@@ -11,12 +11,13 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element
-     * @property {string} options.navSelector
-     * @property {string} options.contentSelector
-     * @property {number=} options.activeIndex
-     * @property {string} options.activeClass
-     * @property {Function} options.onChange
+     * @property {jQuery} options.element 主元素
+     * @property {string} options.navSelector 导航项的选择器，如 .nav-item
+     * @property {string} options.contentSelector 内容区的选择器，如 .tab-panel
+     * @property {number=} options.activeIndex 当前选中的索引
+     * @property {string} options.navActiveClass 导航项选中状态的class
+     * @property {string=} options.contentActiveClass 内容区选中状态的 class，如果未设置，直接 show/hide
+     * @property {Function=} options.onChange 切换 tab 触发
      * @argument {Object} options.onChange.data
      */
     function Tab(options) {
@@ -41,8 +42,9 @@ define(function (require, exports, module) {
             var index = me.activeIndex;
 
             if (!$.isNumeric(index)) {
+
                 index = element.find(me.navSelector)
-                               .index(element.find('.' + me.activeClass));
+                               .index(element.find('.' + me.navActiveClass));
 
                 if (!$.isNumeric(index)) {
                     return;
@@ -63,43 +65,67 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
+            // 先处理 nav 再处理 content
+            // 因为 nav 的数量是稳定的
+            // content 的数量可以和 nav 一致，或者只有一个（切换时刷新，而非隐藏显示）
+
             var navs = element.find(me.navSelector);
-            if (index < 0 || index >= navs.length) {
+            var maxIndex = navs.length - 1;
+
+            if (index < 0 || index > maxIndex) {
                 return;
             }
 
-            var contents = element.find(me.contentSelector);
-            var navTarget = navs.eq(index);
-            var contentTarget;
-
             var oldIndex = me.activeIndex;
-            var activeClass = me.activeClass;
+            var navActiveClass = me.navActiveClass;
 
             // 切换 nav
-            if (oldIndex >= 0) {
-                navs.eq(oldIndex).removeClass(activeClass);
+            var validOldIndex = oldIndex >= 0 && oldIndex <= maxIndex;
+            if (validOldIndex) {
+                navs.eq(oldIndex).removeClass(navActiveClass);
             }
-            navTarget.addClass(activeClass);
 
-            // 如果只有一个内容，不需要切换
+            var navItem = navs.eq(index);
+            navItem.addClass(navActiveClass);
+
+            // 切换 content
+            var contents = element.find(me.contentSelector);
+            var contentItem;
+
             if (contents.length !== 1) {
-                if (oldIndex >= 0) {
-                    contents.eq(oldIndex).hide();
+
+                var contentActiveClass = me.contentActiveClass;
+
+                if (validOldIndex) {
+                    contentItem = contents.eq(oldIndex);
+                    if (contentActiveClass) {
+                        contentItem.removeClass(contentActiveClass);
+                    }
+                    else {
+                        contentItem.hide();
+                    }
                 }
-                contentTarget = contents.eq(index);
-                contentTarget.show();
+
+                contentItem = contents.eq(index);
+
+                if (contentActiveClass) {
+                    contentItem.addClass(contentActiveClass);
+                }
+                else {
+                    contentItem.show();
+                }
             }
             else {
-                contentTarget = contents.eq(0);
+                contentItem = contents.eq(0);
             }
 
-            this.activeIndex = index;
+            me.activeIndex = index;
 
             if (!silence && $.isFunction(me.onChange)) {
                 me.onChange({
                     index: index,
-                    nav: navTarget,
-                    content: contentTarget
+                    nav: navItem,
+                    content: contentItem
                 });
             }
         },
@@ -108,11 +134,8 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-
             me.element.off(namespace);
-
-            me.element =
-            me.cache = null;
+            me.element = null;
         }
 
     };
@@ -124,7 +147,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Tab.defaultOptions = {
-        activeClass: 'tab-active'
+        navActiveClass: 'tab-active'
     };
 
     /**
@@ -155,6 +178,7 @@ define(function (require, exports, module) {
         // 防止 target 是 <a>
         return false;
     }
+
 
     return Tab;
 

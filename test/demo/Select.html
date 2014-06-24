@@ -3,31 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Select</title>
-    <style>
-
-        #menu {
-            display: none;
-        }
-        #menu a {
-            border-bottom: 1px solid #EEE;
-            display: block;
-        }
-        .active {
-            background-color: #EEE;
-        }
-    </style>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
 </head>
 <body>
 
-    <div id="select">
-        <button id="trigger">select ...</button>
-        <div id="menu">
-            <a data-value="1">111</a>
-            <a data-value="2">222</a>
-            <a data-value="3">333</a>
-            <a data-value="4">444</a>
-            <a data-text="xxxx" data-value="5">555</a>
-        </div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            Action <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+            <li><a href="#">Action</a></li>
+            <li><a href="#">Another action</a></li>
+            <li><a href="#">Something else here</a></li>
+            <li class="divider"></li>
+            <li><a href="#">Separated link</a></li>
+        </ul>
     </div>
 
     <script src="./js/jquery.js"></script>
@@ -42,8 +32,9 @@
             function (Select) {
 
                 var select = new Select({
-                    trigger: $('#trigger'),
-                    menu: $('#menu'),
+                    trigger: $('.btn'),
+                    menu: $('.dropdown-menu'),
+                    itemSelector: 'a',
                     value: 2,
                     activeClass: 'active',
                     setText: function (data) {
@@ -51,6 +42,13 @@
                     },
                     onChange: function (data) {
                         this.dispose();
+                    },
+                    onClickItem: function (e) {
+                        var text = $(e.currentTarget).html();
+                        this.setText({
+                            text: text
+                        });
+
                     }
                 });
 

@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var body = $(document.body);
+    var instance = require('../util/instance');
 
     /**
      * 解析配置中的横坐标值，可选值有以下几种：
@@ -116,7 +116,7 @@ define(function (require, exports, module) {
     return function (options) {
 
         var element = options.element;
-        var attachment = options.attachment || body;
+        var attachment = options.attachment || instance.body;
 
         var attachmentOffset = attachment.offset();
 
@@ -129,7 +129,7 @@ define(function (require, exports, module) {
 
         // element 必须是 body 的第一级子元素，否则定位条件太复杂了
         if (!element.parent().is('body')) {
-            body.append(element);
+            instance.body.append(element);
         }
 
         // 相对原点的偏移量

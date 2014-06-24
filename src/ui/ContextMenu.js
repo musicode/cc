@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var Popup = require('../helper/Popup');
+    var instance = require('../util/instance');
     var pin = require('../function/pin');
 
     /**
@@ -86,13 +87,6 @@ define(function (require, exports, module) {
     };
 
     /**
-     * body 元素
-     *
-     * @type {jQuery}
-     */
-    var body = $(document.body);
-
-    /**
      * 当前正在显示的菜单
      * 同一时刻只能显示一个菜单
      *
@@ -108,7 +102,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ContextMenu.defaultOptions = {
-        container: body,
+        container: instance.body,
         className: 'context-menu'
     };
 
@@ -206,8 +200,8 @@ define(function (require, exports, module) {
             element.hide();
         }
         // 必须是 body 的直接子元素
-        if (element.parent().prop('tagName') !== 'BODY') {
-            element.appendTo(body);
+        if (!element.parent().is('body')) {
+            instance.body.append(element);
         }
     }
 

@@ -21,6 +21,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var offsetParent = require('../function/offsetParent');
+    var instance = require('../util/instance');
 
     /**
      * 处理鼠标滚轮事件
@@ -76,7 +77,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Wheel.defaultOptions = {
-        element: $(document)
+        element: instance.document
     };
 
 
@@ -159,7 +160,7 @@ define(function (require, exports, module) {
     function getLineHeight(element) {
         var parent = offsetParent(element);
         if (!parent.length) {
-            parent = $(document.body);
+            parent = instance.body;
         }
         return parseInt(parent.css('font-size'), 10);
     }

@@ -7,6 +7,8 @@ define(function (require, exports, module) {
     'use strict';
 
     var Draggable = require('../helper/Draggable');
+    var instance = require('../util/instance');
+
     var pin = require('../function/pin');
     var page = require('../function/page');
     var viewport = require('../function/viewport');
@@ -40,9 +42,10 @@ define(function (require, exports, module) {
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
      * @property {string=} options.template
-     * @property {string=} options.headerSelector 可拖拽的部分（一般是头部）
-     * @property {string=} options.titleSelector
-     * @property {string=} options.bodySelector
+     * @property {string=} options.headerSelector 可拖拽的元素（一般是头部）
+     * @property {string=} options.titleSelector 填充 title 的元素
+     * @property {string=} options.closeSelector 点击可关闭对话框的元素
+     * @property {string=} options.bodySelector 填充 content 的元素
      * @property {string=} options.maskTemplate 遮罩模板
      *
      * @property {Function} options.onBeforeShow
@@ -118,7 +121,7 @@ define(function (require, exports, module) {
             var mask = me.mask;
 
             if (!me.scrollable) {
-                var body = $(document.body);
+                var body = instance.body;
                 cache.overflow = body.css('overflow');
                 body.css('overflow', 'hidden');
             }
@@ -164,7 +167,7 @@ define(function (require, exports, module) {
                                 50
                             );
 
-            $(window).resize(cache.resizer);
+            instance.window.resize(cache.resizer);
 
             if ($.isFunction(me.onAterShow)) {
                 me.onAterShow();
@@ -186,11 +189,11 @@ define(function (require, exports, module) {
             var cache = me.cache;
 
             if (!me.scrollable) {
-                $(document.body).css('overflow', cache.overflow);
+                instance.body.css('overflow', cache.overflow);
             }
 
             if (cache.resizer) {
-                $(window).off('resize', cache.resizer);
+                instance.window.off('resize', cache.resizer);
             }
 
             if (cache.draggable) {
@@ -269,8 +272,8 @@ define(function (require, exports, module) {
         y: '50%',
 
         headerSelector: '.dialog-header',
-        closeSelector: '.dialog-close',
         titleSelector: '.dialog-title',
+        closeSelector: '.dialog-close',
         bodySelector: '.dialog-body',
 
         template: '<div class="dialog">'
@@ -339,7 +342,7 @@ define(function (require, exports, module) {
             x: dialog.x === '50%' ? '50%' : 0,
             y: dialog.y === '50%' ? '50%' : 0,
 
-            attachment: $(fixed ? viewport() : page()),
+            attachment: fixed ? viewport() : page(),
             attachmentWidth: (fixed || !scrollable) ? vWidth : pWidth,
             attachmentHeight: (fixed || !scrollable) ? vHeight : pHeight,
             attachmentX: dialog.x,

@@ -66,6 +66,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var advice = require('../util/advice');
+    var instance = require('../util/instance');
 
     /**
      * 简单的弹出式交互
@@ -220,13 +221,13 @@ define(function (require, exports, module) {
 
         blur: {
             addTrigger: function (popup) {
-                doc.click('click', popup.cache.blurHandler = hideByBlur(popup));
+                instance.document.click('click', popup.cache.blurHandler = hideByBlur(popup));
             },
             removeTrigger: function (popup) {
                 var cache = popup.cache;
                 var handler = cache.blurHandler;
                 if (handler) {
-                    doc.off('click', handler);
+                    instance.document.off('click', handler);
                     cache.blurHandler = null;
                 }
             }
@@ -307,14 +308,6 @@ define(function (require, exports, module) {
             }
         );
     }
-
-    /**
-     * document 比较常用的
-     *
-     * @inner
-     * @type {jQuery}
-     */
-    var doc = $(document);
 
     /**
      * 存储当前触发元素的 key

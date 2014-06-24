@@ -13,9 +13,9 @@ define(function (require, exports, module) {
      */
     return function () {
         return Math.max(
-                    document.documentElement.scrollLeft,
-                    document.body.scrollLeft
-                );
+                document.body.scrollLeft,
+                document.documentElement.scrollLeft
+            );
     };
 
 });

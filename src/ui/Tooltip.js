@@ -44,7 +44,10 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var position = require('../util/position');
+    var instance = require('../util/instance');
     var debounce = require('../function/debounce');
+    var pageWidth = require('../function/pageWidth');
+    var pageHeight = require('../function/pageHeight');
 
     /**
      * 工具提示
@@ -135,7 +138,7 @@ define(function (require, exports, module) {
                     onAfterHide: function () {
 
                         if (cache.resizeHandler) {
-                            $(window).off('resize', cache.resizeHandler);
+                            instance.window.off('resize', cache.resizeHandler);
                             cache.resizeHandler = null;
                         }
 
@@ -163,7 +166,7 @@ define(function (require, exports, module) {
                             pinTip(me, placement);
 
                             if (me.hideBy.indexOf('blur') >= 0) {
-                                $(window).resize(
+                                instance.window.resize(
                                     cache.resizeHandler =
                                     debounce(
                                         function () {
@@ -423,22 +426,6 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 获取页面容器元素
-     *
-     * @inner
-     * @return {jQuery}
-     */
-    function getPageElement() {
-        var documentElement = document.documentElement;
-        var body = document.body;
-        return $(
-                documentElement.scrollHeight > body.scrollHeight
-              ? documentElement
-              : body
-            );
-    }
-
-    /**
      * 全局定位 tip 元素
      *
      * @inner
@@ -530,12 +517,6 @@ define(function (require, exports, module) {
      */
     function getFreeSpace(triggerElement, tipElement) {
 
-        var pageElement = getPageElement();
-
-        // 页面宽高
-        var pageWidth = pageElement.prop('scrollWidth');
-        var pageHeight = pageElement.prop('scrollHeight');
-
         // tip 元素宽高
         var tipWidth = tipElement.outerWidth();
         var tipHeight = tipElement.outerHeight();
@@ -549,9 +530,9 @@ define(function (require, exports, module) {
         // 算出上下左右区域，放入 tip 后剩下的大小
         return {
             top: triggerPosition.top - tipHeight,
-            bottom: pageHeight - (triggerPosition.top + triggerHeight + tipHeight),
+            bottom: pageHeight() - (triggerPosition.top + triggerHeight + tipHeight),
             left: triggerPosition.left - tipWidth,
-            right: pageWidth - (triggerPosition.left + triggerWidth + tipWidth)
+            right: pageWidth() - (triggerPosition.left + triggerWidth + tipWidth)
         };
     }
 
