@@ -25,16 +25,18 @@ define(function (require, exports, module) {
      * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.openClass 展开状态的 class
      *
-     * @property {Function=} options.showMenu 可自定义显示动画，默认直接显示
-     * @property {Function=} options.hideMenu 可自定义隐藏动画，默认直接隐藏
+     * @property {Object=} options.animation
+     * @property {Function=} options.animation.open 展开动画
+     * @property {Function=} options.animation.close 关闭动画
      *
-     * @property {Function=} options.onOpen
-     * @property {Function=} options.onClose
+     * @property {Function=} options.onOpen 菜单展开时触发
+     * @property {Function=} options.onClose 菜单关闭时触发
      *
      * @property {Function=} options.onChange 选中菜单项触发
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
+     *
      * @property {Function=} options.setText 选中菜单项后设置 trigger 文本的方法
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
@@ -139,14 +141,14 @@ define(function (require, exports, module) {
         /**
          * 显示菜单
          */
-        showMenu: function () {
+        open: function () {
             this.cache.popup.show();
         },
 
         /**
          * 隐藏菜单
          */
-        hideMenu: function () {
+        close: function () {
             this.cache.popup.hide();
         },
 
@@ -177,13 +179,7 @@ define(function (require, exports, module) {
         valueAttr: 'data-value',
         itemActiveClass: 'item-active',
         openClass: 'select-open',
-
-        showMenu: function () {
-            this.menu.show();
-        },
-        hideMenu: function () {
-            this.menu.hide();
-        }
+        animation: { }
     };
 
     /**
@@ -198,23 +194,11 @@ define(function (require, exports, module) {
         var main = select.element || select.trigger;
         var openClass = select.openClass;
 
-        var showMenu = select.showMenu;
-        var hideMenu = select.hideMenu;
-
-        delete select.showMenu;
-        delete select.hideMenu;
-
-        return new Popup({
+        var options = {
             trigger: select.trigger,
             element: select.menu,
             showBy: 'click',
             hideBy: 'blur',
-            show: function () {
-                showMenu.call(select);
-            },
-            hide: function () {
-                hideMenu.call(select);
-            },
             onAfterShow: function () {
                 if (openClass) {
                     main.addClass(openClass);
@@ -231,7 +215,17 @@ define(function (require, exports, module) {
                     select.onClose();
                 }
             }
-        });
+        };
+
+        var animation = select.animation;
+        if (animation.open) {
+            options.show = $.proxy(animation.open, select);
+        }
+        if (animation.close) {
+            options.hide = $.proxy(animation.close, select);
+        }
+
+        return new Popup(options);
     }
 
     /**
@@ -245,7 +239,7 @@ define(function (require, exports, module) {
         var select = e.data;
 
         // 处理 DOM
-        select.hideMenu();
+        select.close();
 
         // 更新 value
         var value = $(e.currentTarget).attr(select.valueAttr);

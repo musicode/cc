@@ -21,14 +21,16 @@ define(function (require, exports, module) {
      * @param {jQuery} options.input 输入框元素
      * @param {jQuery} options.menu 补全菜单
      *
-     * @param {Function} options.renderMenu 如果是简单需求，配置 options.itemTemplate 即可
-     * @param {Function} options.showMenu 显示菜单的方式
-     * @param {Function} options.hideMenu 隐藏菜单的方式
+     * @property {Object=} options.animation
+     * @property {Function=} options.animation.open 展开动画
+     * @property {Function=} options.animation.close 关闭动画
      *
+     * @param {Function} options.renderMenu 如果是简单需求，配置 options.itemTemplate 即可
      * @param {string=} options.itemTemplate 菜单项模板
      * @param {string} options.itemSelector 可上下键遍历的菜单项元素选择器
      * @param {string} options.itemHoverClass 菜单项 hover 时的 className
      * @param {string} options.itemActiveClass 菜单项 active 时的 className
+     *
      * @param {Function=} options.onItemActive 菜单项 active 时的事件处理函数
      * @argument {Object} options.onItemActive.data 用 options.parseItem 解析 active 菜单项获得的数据
      *
@@ -102,14 +104,14 @@ define(function (require, exports, module) {
         /**
          * 显示下拉菜单
          */
-        showMenu: function () {
+        open: function () {
             this.cache.popup.show();
         },
 
         /**
          * 隐藏下拉菜单
          */
-        hideMenu: function () {
+        close: function () {
             this.cache.popup.hide();
         },
 
@@ -145,10 +147,12 @@ define(function (require, exports, module) {
 
         wait: 60,
         includeInput: true,
+        animation: { },
 
         itemSelector: 'li',
         itemHoverClass: 'item-hover',
         itemActiveClass: 'item-active',
+
         parseItem: function (item) {
             return {
                 text: item.innerHTML
@@ -156,16 +160,15 @@ define(function (require, exports, module) {
         },
         onItemActive: function (data) {
             this.input.val(data.text);
-        },
-
-        showMenu: function () {
-            this.menu.show();
-        },
-        hideMenu: function () {
-            this.menu.hide();
         }
     };
 
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
     var namespace = '.cobble-ui-autocomplete';
 
     /**
@@ -177,24 +180,15 @@ define(function (require, exports, module) {
      */
     function createPopup(autoComplete) {
 
-        var showMenu = autoComplete.showMenu;
-        var hideMenu = autoComplete.hideMenu;
-
-        // 保证最后调用的是原型上的方法
-        delete autoComplete.showMenu;
-        delete autoComplete.hideMenu;
-
         var input = autoComplete.input;
         var menu = autoComplete.menu;
         var cache = autoComplete.cache;
 
-        return new Popup({
+        var options = {
             trigger: input,
             element: menu,
             showBy: 'focus',
             hideBy: 'blur',
-            show: $.proxy(showMenu, autoComplete),
-            hide: $.proxy(hideMenu, autoComplete),
             onBeforeShow: function (event) {
                 // 由 focus 事件触发的要调一下 suggest
                 if (event) {
@@ -230,7 +224,17 @@ define(function (require, exports, module) {
                 cache.elementItems =
                 cache.dataItems = null;
             }
-        });
+        };
+
+        var animation = autoComplete.animation;
+        if (animation.open) {
+            options.show = $.proxy(animation.open, autoComplete);
+        }
+        if (animation.close) {
+            options.hide = $.proxy(animation.close, autoComplete);
+        }
+
+        return new Popup(options);
     }
 
     /**
@@ -281,7 +285,7 @@ define(function (require, exports, module) {
                 },
                 enter: function () {
                     var data = cache.activeData;
-                    autoComplete.hideMenu();
+                    autoComplete.close();
                     if (typeof autoComplete.onEnter === 'function') {
                         autoComplete.onEnter(data);
                     }
@@ -321,10 +325,10 @@ define(function (require, exports, module) {
                     autoComplete.renderMenu(data);
                 }
 
-                autoComplete.showMenu();
+                autoComplete.open();
             }
             else {
-                autoComplete.hideMenu();
+                autoComplete.close();
             }
         };
 
@@ -383,7 +387,7 @@ define(function (require, exports, module) {
         var data = cache.dataItems[index];
 
         activeItem(autoComplete, index);
-        autoComplete.hideMenu();
+        autoComplete.close();
 
         if (typeof autoComplete.onSelect === 'function') {
             autoComplete.onSelect(data);

@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var pageElement = require('./page')()[0];
+    var page = require('./page');
 
     /**
      * 获得网页可滚动高度
@@ -14,7 +14,7 @@ define(function (require, exports, module) {
      * @return {number}
      */
     return function () {
-        return pageElement.clientHeight;
+        return page()[0].scrollHeight;
     };
 
 });

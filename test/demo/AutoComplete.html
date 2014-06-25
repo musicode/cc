@@ -73,6 +73,11 @@
                     input: input,
                     menu: menu,
                     itemTemplate: '<li data-url="">${word}</li>',
+                    animation: {
+                        close: function () {
+                            this.menu.slideUp();
+                        }
+                    },
                     onEnter: function (data) {
                         console.log('enter', data);
                     },

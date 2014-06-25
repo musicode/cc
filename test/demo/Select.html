@@ -37,6 +37,11 @@
                     itemSelector: 'a',
                     value: 2,
                     activeClass: 'active',
+                    animation: {
+                        open: function () {
+                            this.menu.slideDown();
+                        }
+                    },
                     setText: function (data) {
                         this.trigger.html(data.text);
                     },

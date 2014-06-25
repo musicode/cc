@@ -32,15 +32,18 @@ define(function (require, exports, module) {
      * @property {string=} options.title 对话框标题
      * @property {string=} options.content 对话框内容
      * @property {number=} options.width 对话框整体宽度
-     * @property {number=} options.x 窗口出现的 x 位置
-     * @property {number=} options.y 窗口出现的 y 位置
-     * @property {boolean=} options.fixed 是否 fixed 定位
+     * @property {(number|string)=} options.x 窗口出现的 x 位置，可以是 数字(10) 或 百分比(50%)
+     * @property {(number|string)=} options.y 窗口出现的 y 位置，可以是 数字(10) 或 百分比(50%)
+     *
+     * @property {boolean=} options.fixed 是否 fixed 定位，默认为 false
      * @property {boolean=} options.modal 是否是窗口模态，默认为 true
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
      * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
      * @property {boolean=} options.hidden 初始化时是否隐藏，默认为 false
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
+     * @property {boolean=} options.hideByClickMask 点击遮罩是否隐藏对话框，默认为 false
+     *
      * @property {string=} options.template
      * @property {string=} options.headerSelector 可拖拽的元素（一般是头部）
      * @property {string=} options.titleSelector 填充 title 的元素
@@ -48,10 +51,10 @@ define(function (require, exports, module) {
      * @property {string=} options.bodySelector 填充 content 的元素
      * @property {string=} options.maskTemplate 遮罩模板
      *
-     * @property {Function} options.onBeforeShow
-     * @property {Function} options.onAterShow
-     * @property {Function} options.onBeforeHide
-     * @property {Function} options.onAterHide
+     * @property {Function=} options.onBeforeShow
+     * @property {Function=} options.onAterShow
+     * @property {Function=} options.onBeforeHide
+     * @property {Function=} options.onAterHide
      */
     function Dialog(options) {
         $.extend(this, Dialog.defaultOptions, options);
@@ -89,7 +92,7 @@ define(function (require, exports, module) {
 
             var closeSelector = me.closeSelector;
             if (closeSelector) {
-                element.on('click', closeSelector, me, closeDialog);
+                element.on('click' + namespace, closeSelector, $.proxy(me.hide, me));
             }
 
             var position = me.fixed ? 'fixed' : 'absolute';
@@ -97,9 +100,19 @@ define(function (require, exports, module) {
                 element.css('position', position);
             }
 
-            me.cache = { };
+            var body = instance.body;
 
-            me.hidden ? me.hide() : me.show();
+            if (!element.parent().length) {
+                body.append(element);
+            }
+
+            me.cache = {
+                overflow: body.css('overflow')
+            };
+
+            me.hidden
+            ? me.hide()
+            : me.show();
 
         },
 
@@ -110,64 +123,66 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            if ($.isFunction(me.onBeforeShow)) {
-                if (me.onBeforeShow() === false) {
-                    return;
-                }
+            if ($.isFunction(me.onBeforeShow)
+                && me.onBeforeShow() === false
+            ) {
+                return;
             }
 
-            var cache = me.cache;
+            instance.body
+                    .css(
+                        'overflow',
+                        me.scrollable ? 'auto' : 'hidden'
+                    );
+
             var element = me.element;
             var mask = me.mask;
 
-            if (!me.scrollable) {
-                var body = instance.body;
-                cache.overflow = body.css('overflow');
-                body.css('overflow', 'hidden');
-            }
-
-            if (!element.parent().length) {
-                element.appendTo('body');
-            }
-
-            if (me.modal) {
+            // 初始化遮罩
+            if (me.modal && !mask) {
                 // 遮罩放到对话框前面
                 // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
-                if (!mask) {
-                    mask = me.mask = $(me.maskTemplate);
-                    element.before(mask);
+                mask = me.mask = $(me.maskTemplate);
+                element.before(mask);
+
+                // 是否点击遮罩关闭对话框
+                if (me.hideByClickMask) {
+                    mask.on('click' + namespace, $.proxy(me.hide, me));
                 }
 
-                // 如果 mask 的 z-index 比 element 高，需要重置
                 var zIndex = 'z-index';
                 var maskZ = mask.css(zIndex);
-                if (maskZ > element.css(zIndex)) {
+
+                // 如果 mask 的 z-index 比 element 高，需要重置
+                if ($.isNumeric(maskZ)
+                    && maskZ > element.css(zIndex)
+                ) {
                     element.css(zIndex, maskZ);
                 }
             }
 
             refresh(me);
 
+            var cache = me.cache;
             if (me.draggable) {
                 cache.draggable = createDraggable(me);
             }
 
-            if (mask) {
-                mask.show();
-            }
-
             element.show();
+            mask && mask.show();
 
             me.hidden = false;
 
-            cache.resizer = debounce(
-                                function () {
-                                    refresh(me);
-                                },
-                                50
-                            );
-
-            instance.window.resize(cache.resizer);
+            instance.window
+                    .resize(
+                        cache.resizer =
+                        debounce(
+                            function () {
+                                refresh(me);
+                            },
+                            50
+                        )
+                    );
 
             if ($.isFunction(me.onAterShow)) {
                 me.onAterShow();
@@ -180,17 +195,15 @@ define(function (require, exports, module) {
         hide: function () {
 
             var me = this;
-            if ($.isFunction(me.onBeforeHide)) {
-                if (me.onBeforeHide() === false) {
-                    return;
-                }
+
+            if ($.isFunction(me.onBeforeHide)
+                && me.onBeforeHide() === false
+            ) {
+                return;
             }
 
             var cache = me.cache;
-
-            if (!me.scrollable) {
-                instance.body.css('overflow', cache.overflow);
-            }
+            instance.body.css('overflow', cache.overflow);
 
             if (cache.resizer) {
                 instance.window.off('resize', cache.resizer);
@@ -200,23 +213,20 @@ define(function (require, exports, module) {
                 cache.draggable.dispose();
             }
 
-            var mask = me.mask;
-            if (mask) {
-                mask.hide();
-            }
-
             me.element.hide();
 
-            me.hidden = true;
+            var mask = me.mask;
+            mask && mask.hide();
 
-            if (me.disposeOnHide) {
-                me.dispose();
-            }
+            me.hidden = true;
 
             if ($.isFunction(me.onAfterHide)) {
                 me.onAfterHide();
             }
 
+            if (me.disposeOnHide) {
+                me.dispose();
+            }
         },
 
         /**
@@ -225,24 +235,22 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var element = me.element;
 
             // 避免循环调用
             me.disposeOnHide = false;
-
             if (!me.hidden) {
                 me.hide();
             }
 
-            if (me.closeSelector) {
-                element.off('click', closeDialog);
-            }
+            var element = me.element;
+            var mask = me.mask;
+
+            element.off(namespace);
+            mask && mask.off(namespace);
 
             if (me.removeOnDispose) {
                 element.remove();
-                if (me.mask) {
-                    me.mask.remove();
-                }
+                mask && mask.remove();
             }
 
             me.element =
@@ -260,16 +268,17 @@ define(function (require, exports, module) {
      */
     Dialog.defaultOptions = {
 
+        x: '50%',
+        y: '50%',
+
         modal: true,
+        fixed: false,  // 为了支持 IE6...
         hidden: false,
         draggable: true,
         scrollable: false,
         disposeOnHide: true,
         removeOnDispose: true,
-        fixed: true,
-
-        x: '50%',
-        y: '50%',
+        hideByClickMask: false,
 
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-title',
@@ -286,6 +295,14 @@ define(function (require, exports, module) {
 
         maskTemplate: '<div class="dialog-mask"></div>'
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_ui_dialog';
 
     /**
      * 创建可拖拽组件
@@ -365,15 +382,6 @@ define(function (require, exports, module) {
         }
     }
 
-    /**
-     * 点击关闭按钮关闭对话框
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function closeDialog(e) {
-        e.data.hide();
-    }
 
     return Dialog;
 

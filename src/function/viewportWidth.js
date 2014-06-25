@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var viewportElement = require('./viewport')()[0];
+    var viewport = require('./viewport');
 
     /**
      * 获得视窗宽度
@@ -14,7 +14,7 @@ define(function (require, exports, module) {
      * @return {number}
      */
     return function () {
-        return viewportElement.clientWidth;
+        return viewport()[0].clientWidth;
     };
 
 });
