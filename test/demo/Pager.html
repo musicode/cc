@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pager</title>
+    <style>
+        a {
+            background: lightblue;
+            display: inline-block;
+            padding: 3px 6px;
+            margin-left: 4px;
+        }
+        .pager-prev,
+        .pager-next {
+            background-color: red;
+        }
+
+        .pager-selected {
+            background-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pager">
+
+    </div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/Pager' ],
+
+            function (Pager) {
+
+                var pager = new Pager({
+                    element: $('#pager'),
+                    page: 0,
+                    first: 0,
+                    total: 10,
+
+                    count: 4,
+                    startCount: 2,
+                    endCount: 2,
+
+                    onChange: function (page) {
+                        console.log(page);
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

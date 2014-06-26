@@ -45,6 +45,6 @@ define(function (require, exports, module) {
             left: x,
             top: y
         };
-    }
+    };
 
 });

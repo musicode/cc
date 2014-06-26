@@ -14,8 +14,8 @@ define(function (require, exports, module) {
      * @return {jQuery}
      */
     return function () {
-        if (instance.body.prop('clientHeight') > instance.documentElement.prop('clientHeight')) {
-            return instance.documentElement;
+        if (instance.body.prop('clientHeight') > instance.html.prop('clientHeight')) {
+            return instance.html;
         }
         else {
             return instance.body;

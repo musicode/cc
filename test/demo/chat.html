@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+    <link rel="stylesheet" href="./css/chat.less">
+    <style>
+
+        body {
+            background-color: #F0E6DA;
+        }
+
+    </style>
+</head>
+<body>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/etpl.js"></script>
+    <script>
+
+        require(
+
+            [
+              'cobble/helper/Input',
+              'cobble/helper/Placeholder',
+              'cobble/helper/Popup',
+              'cobble/util/string'
+            ],
+
+function (Input, Placeholder, Popup, string) {
+
+
+    /**
+     * 聊天窗口模板
+     *
+     * @inner
+     * @const
+     * @type {string}
+     */
+    var TPL_WINDOW = '<div id="chat-window">'
+
+                   +     '<div class="chat-header">'
+                   +         '<h2>高考报志愿咨询机器人</h2>'
+                   +         '<i class="chat-icon-message"></i>'
+                   +         '<i class="chat-icon-robot"></i>'
+                   +         '<span class="window-toggle">'
+                   +             '<i class="chat-icon-minute"></i>'
+                   +         '</span>'
+                   +     '</div>'
+
+                   +     '<div class="chat-content"></div>'
+
+                   +     '<div class="chat-input">'
+                   +         '<div class="question-tips">'
+                   +             '<i class="chat-icon-tip"></i>'
+                   +         '</div>'
+                   +         '<textarea placeholder="我要咨询" maxlength="36"></textarea>'
+                   +         '<span class="btn-send btn-send-disabled">发送</span>'
+                   +     '</div>'
+
+                   +     '<div class="question-list"></div>'
+
+                   + '</div>';
+
+    /**
+     * 保持一次会话的 id
+     *
+     * 使后端能够识别对话上下文
+     *
+     * @inner
+     * @type {number}
+     */
+    var qid;
+
+    /**
+     * 每行汉字字符字数（汉字是 16 个）
+     *
+     * @inner
+     * @type {number}
+     */
+    var lineChar = 32;
+
+    /**
+     * nlp 接口
+     *
+     * @inner
+     * @type {string}
+     */
+    var nlpUrl = 'http://cp01-rdqa-dev011.cp01.baidu.com:8106/nlp/query';
+    var nlpSug = 'http://cp01-rdqa-dev011.cp01.baidu.com:8106/nlp/getsuggestion';
+
+    /**
+     * 预览三行
+     *
+     * @inner
+     * @param {jQuery} element
+     */
+    function preview(element) {
+
+        var content = element.html();
+
+        // 大于 3 行显示更多
+        if (string.getLength(content) / lineChar > 3) {
+
+            // 显示 2 行半的字符，后面跟 ...
+            element.html(string.truncate(content, 2.5 * lineChar, '...'));
+
+            var moreBtn = $('<a href="#" class="more"></a>');
+            moreBtn.appendTo(element);
+            moreBtn.click(function () {
+                moreBtn.remove();
+                element.html(content);
+                return false;
+            });
+        }
+    }
+
+    /**
+     *
+     * @type {Object}
+     */
+    var tplConf = {
+
+        // 没有答案
+        '0': {
+            html: '童鞋，你的问题我无法回答，去 <a href="http://www.baidu.com" target="_blank">百度一下</a> 吧！'
+        },
+
+        // 通用表格
+        'table': {
+            html: [ '<!-- if: ${title} -->',
+                    '<h4>${title}</h4>',
+                    '<table>',
+                       '<caption>${school}</caption>',
+                        '<thead>',
+                            '<tr>',
+                                '<!-- for: ${head} as ${text} -->',
+                                '<th>${text}</th>',
+                                '<!-- /for -->',
+                            '</tr>',
+                        '</thead>',
+                        '<tbody>',
+                            '<!-- for: ${content} as ${item} -->',
+                            '<tr>',
+                                '<!-- for: ${item} as ${text} -->',
+                                '<td>${text}</td>',
+                                '<!-- /for -->',
+                            '</tr>',
+                            '<!-- /for -->',
+                        '</tbody>',
+                    '</table>',
+                    '<!-- /if -->'
+                    ].join('')
+        },
+
+        // 排行榜
+        '2': {
+            html: [ '<h4>${title}</h4>',
+                    '<table>',
+                        '<thead>',
+                            '<tr>',
+                                '<!-- for: ${head} as ${text} -->',
+                                '<th>${text}</th>',
+                                '<!-- /for -->',
+                            '</tr>',
+                        '</thead>',
+                        '<tbody>',
+                            '<!-- for: ${content} as ${item} -->',
+                            '<tr>',
+                                '<td>${item.school}</td>',
+                                '<td>',
+                                    '<div class="percent-bar">',
+                                       '<div class="percent-value" style="width:${item.rate}%" title="${item.rate}%"></div>',
+                                    '</div>',
+                                '</td>',
+                            '</tr>',
+                            '<!-- /for -->',
+                        '</tbody>',
+                    '</table>'
+                  ].join('')
+        },
+
+        // 评价
+        '3': {
+            html: [ '<div class="switch-panel">',
+                        '<div class="eval-overview">',
+                            '<h4>${title}</h4>',
+                            '<!-- for: ${content} as ${item} -->',
+                            '<dl data-url="${item.url}" title="点击查看${item.row_name}详情">',
+                                '<dt>${item.row_name}</dt>',
+                                '<dd>',
+                                    '<label>好评：</label>',
+                                    '<span>${item.good_rate}%</span>',
+                                    '<div class="percent-bar">',
+                                        '<div class="percent-value" style="width:${item.good_rate}%" title="${item.good_rate}%"></div>',
+                                    '</div>',
+                                '</dd>',
+                                '<dd>',
+                                    '<label>差评：</label>',
+                                    '<span>${item.bad_rate}%</span>',
+                                    '<div class="percent-bar">',
+                                        '<div class="percent-value" style="width:${item.bad_rate}%" title="${item.bad_rate}%"></div>',
+                                    '</div>',
+                                '</dd>',
+                            '</dl>',
+                            '<!-- /for -->',
+                            '<a class="eval-more" href="#">更多维度对比&gt;</a>',
+                        '</div>',
+                        '<div class="eval-detail">',
+
+                        '</div>',
+                    '</div>'
+                  ].join(''),
+
+            ready: function (element) {
+
+                var overview = element.find('.eval-overview');
+                var detail = element.find('.eval-detail');
+
+                detail.hide();
+
+                var items = element.find('.eval-overview dl:gt(0)');
+                var more = element.find('.eval-overview .eval-more');
+
+                if (items.length > 0) {
+                    items.hide();
+                    more.click(function () {
+                        items.show();
+                        more.hide();
+                    });
+                }
+                else {
+                    more.hide();
+                }
+
+                element
+                .on('click', 'dl', function (e) {
+                    var target = $(e.currentTarget);
+                    var url = target.data('url');
+                    if (url) {
+                        ask({
+                            url: url,
+                            callback: function (type, info) {
+
+                                overview.hide();
+                                detail.show();
+
+                                var target = tplConf[type];
+                                detail.html(target.render(info));
+
+                                if (typeof target.ready === 'function') {
+                                    target.ready(detail);
+                                }
+                            }
+                        });
+                    }
+                })
+                .on('click', '.back', function (e) {
+                    overview.show();
+                    detail.hide();
+                    return false;
+                });
+
+                return false;
+            }
+        },
+
+        '5': {
+            html: [ '<h4>${title}</h4>',
+                    '<dl>',
+                        '<dt>${head}</dt>',
+                        '<dd>${content.text}</dd>',
+                    '</dl>'
+                  ].join(''),
+
+            ready: function (element) {
+                preview(element.find('dd'));
+            }
+        },
+
+        '7': {
+            html: '${text}'
+        },
+
+        '9': {
+            html: [
+                '${text}',
+                '<!-- if: ${tips} -->',
+                '<ul class="tips">',
+                '<!-- for: ${tips} as ${tip} -->',
+                    '<li>${tip}</li>',
+                '<!-- /for -->',
+                '</ul>',
+                '<!-- /if -->'
+            ].join('')
+        },
+
+        '101': {
+            html: [ '<h4>${title}</h4>',
+                    '<!-- if: ${content.good_eval.length} > 0 -->',
+                    '<!-- for: ${content.good_eval} as ${text} -->',
+                    '<dl class="good-eval">',
+                        '<dt>好评</dt>',
+                        '<dd>${text}</dd>',
+                    '</dl>',
+                    '<!-- /for -->',
+                    '<!-- /if -->',
+
+                    '<!-- if: ${content.bad_eval.length} > 0 -->',
+                    '<!-- for: ${content.bad_eval} as ${text} -->',
+                    '<dl class="bad-eval">',
+                        '<dt>差评</dt>',
+                        '<dd>${text}</dd>',
+                    '</dl>',
+                    '<!-- /for -->',
+                    '<!-- /if -->',
+
+                    '<a href="#" class="back">&lt;返回</a>'
+                  ].join(''),
+
+            ready: function (element) {
+
+                var goodEval = element.find('.good-eval');
+                var badEval = element.find('.bad-eval');
+
+                // 所有评论预览三行，超出 3 行加上 更多 按钮
+                element.find('dd').each(function () {
+                    preview($(this));
+                });
+
+                var goodCount = goodEval.length;
+                var badCount = badEval.length;
+
+                // 好评 + 差评 共显示 3 条
+                if (goodCount + badCount > 3) {
+
+                    // 按比例分配
+                    var rate = 3 / (goodCount + badCount);
+
+                    goodCount = Math.ceil(goodCount * rate);
+
+                    // 如果有差评，不能完全按比例四舍五入，否则差评数量可能变成 0
+                    if (goodCount === 3 && badCount > 0) {
+                        goodCount = 2;
+                        badCount = 1;
+                    }
+                    else {
+                        badCount = 3 - goodCount;
+                    }
+
+                    var hiddenGoodEval = goodEval.filter(':gt(' + (goodCount - 1) + ')');
+                    var hiddenBadEval = badEval.filter(':gt(' + (badCount - 1) + ')');
+
+                    hiddenGoodEval.hide();
+                    hiddenBadEval.hide();
+
+                    // 在 返回 后面加一个 显示全部 按钮
+                    var showAll = $('<a href="#" class="show-all">显示全部&gt;</a>');
+                    element.find('.back').before(showAll);
+
+                    showAll.click(function () {
+                        showAll.remove();
+                        hiddenGoodEval.show();
+                        hiddenBadEval.show();
+                        return false;
+                    });
+                }
+            }
+        }
+    };
+
+    tplConf['4'] =
+    tplConf['1001'] =
+    tplConf['1002'] =
+    tplConf['1004'] =
+    tplConf['1005'] =
+    tplConf['1008'] =
+    tplConf['1009'] =
+    tplConf['1016'] =
+    tplConf['1020'] =
+    tplConf['1033'] = tplConf.table;
+
+    // etpl 预编译
+    for (var key in tplConf) {
+        tplConf[key].render = etpl.compile(tplConf[key].html);
+    }
+
+
+    var robot = {
+
+        /**
+         * 提问
+         *
+         * @param {string} text
+         */
+        ask: function (text) {
+
+            var html = '<div class="ask-section">'
+                     +     '<i class="ask-avatar"></i>'
+                     +     '<div class="ask-content">'
+                     +         text.replace(/(?:\n|\\n)/g, '<br />')
+                     +     '</div>'
+                     + '</div>';
+
+            robot.appendContent(html);
+
+            ask({
+                question: text
+            });
+
+        },
+
+        /**
+         * 回答
+         *
+         * @param {string} text
+         * @param {Function} ready
+         */
+        answer: function (text, ready) {
+
+            var html = '<div class="answer-section">'
+                     +     '<i class="answer-avatar"></i>'
+                     +     '<div class="answer-content">'
+                     +         text.replace(/(?:\n|\\n)/g, '<br />')
+                     +     '</div>'
+                     + '</div>';
+
+            var element = robot.appendContent(html);
+
+            if (typeof ready === 'function') {
+                ready(element);
+            }
+        },
+
+        /**
+         * 往内容区追加内容
+         *
+         * @param {string} content
+         * @return {jQuery}
+         */
+        appendContent: function (content) {
+
+            var chatContent = robot.chatContent;
+
+            content = $(content);
+            content.appendTo(chatContent);
+
+            content[0].scrollIntoView();
+
+            return content;
+        },
+
+        /**
+         * 点击 `发送按钮` 或 `ctrl+enter` 发送问题
+         *
+         * @param {Event} e
+         */
+        send: function (e) {
+
+            if (e) {
+                e.preventDefault();
+            }
+
+            var inputElement = robot.input.element;
+            var value = $.trim(inputElement.val());
+            if (value) {
+                robot.ask(value);
+                inputElement.val('');
+                robot.sendButton.addClass('btn-send-disabled');
+            }
+        },
+
+        /**
+         * 展开
+         */
+        open: function () {
+            robot.isClosed = false;
+            robot.chatContent.show();
+            robot.chatInput.show();
+            robot.toggleButton.find('.chat-icon-plus')
+                              .prop('className', 'chat-icon-minute');
+
+            robot.popup.show();
+        },
+
+        /**
+         * 收起
+         */
+        close: function () {
+            robot.isClosed = true;
+            robot.chatContent.hide();
+            robot.chatInput.hide();
+            robot.toggleButton.find('.chat-icon-minute')
+                              .prop('className', 'chat-icon-plus');
+        },
+
+        initSuggestion: function () {
+            $.get(
+                nlpSug,
+                function (response) {
+                    if (response.status === 0) {
+
+                        var tips = response.data.tips;
+                        tips = $.map(tips, function (tip, index) {
+                            return '<li class="' + (index % 2 ? 'even' : 'odd') +'">' + tip + '</li>';
+                        });
+
+                        robot.questionList.html(
+                            '<h3>同学，你可以这样问我：</h3>'
+                          + '<ul>'
+                          +     tips.join('')
+                          + '</ul>'
+                        );
+                    }
+                },
+                'jsonp'
+            );
+        },
+
+        init: function () {
+
+            var chatElement = $(TPL_WINDOW);
+            chatElement.appendTo(document.body);
+
+            robot.toggleButton = chatElement.find('.window-toggle');
+            robot.chatContent = chatElement.find('.chat-content');
+            robot.chatInput = chatElement.find('.chat-input');
+            robot.questionList = chatElement.find('.question-list');
+            robot.textarea = chatElement.find('textarea');
+            robot.sendButton = chatElement.find('.btn-send');
+
+            // 是否默认收起
+            robot.isClosed = true;
+
+            if (robot.isClosed) {
+                robot.close();
+            }
+            else {
+                robot.open();
+            }
+
+            var textarea = robot.textarea;
+
+            // 使用 placeholder
+            robot.placeholder = new Placeholder({
+                element: textarea,
+                simple: false,
+                template: '<div class="question-input">'
+                        +    '<div class="placeholder"></div>'
+                        + '</div>'
+            });
+
+            robot.input = new Input({
+                element: textarea,
+                onChange: function () {
+                    var value = $.trim(textarea.val());
+                    robot.sendButton[ value ? 'removeClass' : 'addClass' ]('btn-send-disabled');
+                },
+                keyEvents: {
+                    'enter': robot.send,
+                    'ctrl+enter': robot.send
+                }
+            });
+
+            // 用表格实现垂直居中对齐
+            var table = $('<table><tr><td></td></tr></table');
+            table.find('td').append(textarea);
+            table.appendTo('.question-input');
+
+            // 输入框随内容调整高度
+            robot.input.autoHeight();
+
+            robot.popup = new Popup({
+                trigger: chatElement.find('.chat-icon-tip'),
+                element: robot.questionList,
+                showBy: 'click',
+                hideBy: 'blur'
+            });
+
+            // 初始化展开收起按钮
+            robot.toggleButton.click(function () {
+                if (robot.isClosed) {
+                    robot.open();
+                }
+                else {
+                    robot.close();
+                }
+            });
+
+            robot.questionList
+                 .on('click', 'li', function (e) {
+
+                    var target = $(e.currentTarget);
+                    robot.ask(target.html());
+                    robot.popup.hide();
+
+                 });
+
+            robot.sendButton.click(robot.send);
+
+            robot.initSuggestion();
+        }
+    };
+
+    /**
+     * 提问
+     *
+     * @inner
+     * @param {Object} options
+     * @param {string=} options.question
+     * @param {string=} options.url
+     * @param {Function=} options.callback
+     */
+    function ask(options) {
+
+        var data;
+        var question = options.question;
+
+        if (question) {
+            // 上次返回如果有一个问题列表
+            // 当用户输入序号时，匹配问题文本
+            if (robot.tips && robot.tips[question]) {
+                question = robot.tips[question];
+            }
+            data = {
+                question: question
+            };
+        }
+
+        if (data && qid) {
+            data.qid = qid;
+        }
+
+        $.get(
+            options.url || nlpUrl,
+            data,
+            function (response) {
+                var type;
+                var info = { };
+
+                if (response.status === 0) {
+                    var data = response.data;
+                    type = data.type;
+                    info = data.info;
+                    qid = data.qid;
+                }
+
+                robot.tips = info && info.tips;
+
+                (options.callback || renderAnswer)(type, info);
+            },
+            'jsonp'
+        );
+
+    }
+
+    /**
+     * 通过返回数据渲染答案
+     *
+     * @inner
+     * @param {number} type
+     * @param {string|Object} info
+     */
+    function renderAnswer(type, info) {
+
+        if (typeof info === 'string') {
+            robot.answer(info);
+        }
+        else {
+
+            var target = tplConf[type];
+
+            if (!target) {
+                target = tplConf[0];
+            }
+
+            var html = target.render(info);
+
+            if (html) {
+                robot.answer(
+                    html,
+                    target.ready
+                );
+            }
+
+            if (info && info.nextq) {
+                robot.answer(info.nextq);
+            }
+        }
+    }
+
+
+
+    robot.init();
+
+}
+        );
+    </script>
+</body>
+</html>

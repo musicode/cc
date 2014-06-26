@@ -8,6 +8,8 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var instance = require('../util/instance');
+
+    var offsetParent = require('../function/offsetParent');
     var pin = require('../function/pin');
 
     /**
@@ -16,8 +18,9 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.container 在 container 内部右键弹出菜单
-     * @property {jQuery|string} options.element 菜单元素，也可以是字符串模版
-     * @property {string=} options.className 可选，菜单元素的 className
+     * @property {jQuery=} options.element 菜单元素，也可以是字符串模版
+     * @property {string=} options.template 如果想动态生成元素，可不传 element，而是传入模板
+     * @property {string=} options.menuClass 可选，菜单元素的 className，便于全局统一样式，无需模板到处写
      * @property {Object=} options.clickEvents 可选，配置点击事件处理器
      *                     {
      *                         '.add-user': function (e) { },
@@ -38,19 +41,27 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
+
             var me = this;
-            var element = me.element;
-            if (typeof element !== 'string') {
-                initMenuElement(element);
-            }
 
             me.cache = { };
-            me.container.on('contextmenu', me, popupMenu);
+
+            if (me.element) {
+                initElement(me);
+            }
+
+            me.container.on('contextmenu' + namespace, me, popupMenu);
         },
 
         /**
-         * 显示是通过右键点击触发的
-         * 隐藏则可能需要手动触发，如选中某个菜单命令
+         * 显示菜单
+         */
+        show: function () {
+            this.cache.popup.show();
+        },
+
+        /**
+         * 隐藏菜单
          */
         hide: function () {
             this.cache.popup.hide();
@@ -60,30 +71,40 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
 
             if (currentMenu === me) {
                 currentMenu = null;
             }
 
-            var element = me.element;
-
-            var cache = me.cache;
-            if (cache.popup) {
-                element = cache.element;
-                cache.popup.dispose();
+            var popup = me.cache.popup;
+            if (popup) {
+                popup.dispose();
             }
 
-            if (element && typeof element !== 'string') {
+            var element = me.element;
+            if (element) {
                 element.remove();
             }
 
-            me.container.off('contextmenu', popupMenu);
+            me.container.off(namespace);
 
             me.cache =
             me.element =
             me.container = null;
         }
+    };
+
+    /**
+     * 默认配置
+     *
+     * @static
+     * @type {Object}
+     */
+    ContextMenu.defaultOptions = {
+        container: instance.body,
+        menuClass: 'context-menu'
     };
 
     /**
@@ -96,47 +117,47 @@ define(function (require, exports, module) {
     var currentMenu;
 
     /**
-     * 默认配置
+     * jquery 事件命名空间
      *
-     * @static
-     * @type {Object}
+     * @inner
+     * @type {string}
      */
-    ContextMenu.defaultOptions = {
-        container: instance.body,
-        className: 'context-menu'
-    };
+    var namespace = '.cobble_ui_contextmenu';
 
     /**
-     * contenxtmenu 事件处理器
+     * contextmenu 事件处理器
      *
      * @inner
      * @param {Event} e
      */
     function popupMenu(e) {
-        var contextMenu = e.data;
-        var cache = contextMenu.cache;
 
-        if (!cache.element) {
+        var contextMenu = e.data;
+
+        if (!contextMenu.element) {
             createMenu(contextMenu);
         }
 
         if (currentMenu && currentMenu !== contextMenu) {
-            currentMenu.cache.popup.hide();
+            currentMenu.hide();
         }
 
         // 记录当前事件
-        cache.event = e;
+        contextMenu.cache.event = e;
 
         currentMenu = contextMenu;
 
-        cache.popup.show();
+        currentMenu.show();
 
         pin({
-            element: cache.element,
+            element: contextMenu.element,
             x: 0,
             y: 0,
-            attachmentX: e.pageX,
-            attachmentY: e.pageY
+            attachment: {
+                element: instance.body,
+                x: e.pageX,
+                y: e.pageY
+            }
         });
 
         // 防止被外层响应
@@ -152,57 +173,65 @@ define(function (require, exports, module) {
      * @param {ContextMenu} contextMenu
      */
     function createMenu(contextMenu) {
-        var cache = contextMenu.cache;
-        var element = contextMenu.element;
 
-        if (typeof element === 'string') {
-            element = $(element);
-            initMenuElement(element);
+        var template = contextMenu.template;
+
+        if (!contextMenu.element && template) {
+            contextMenu.element = $(template);
+            initElement(contextMenu);
         }
-
-        var events = contextMenu.clickEvents;
-        if (events) {
-            for (var type in events) {
-                element.on(
-                    'click',
-                    type,
-                    (function (handler) {
-                        return function (e) {
-                            handler.call(contextMenu, cache.event);
-                        };
-                    })(events[type])
-                );
-            }
-        }
-
-        if (contextMenu.className) {
-            element.addClass(contextMenu.className);
-        }
-
-        var popup = new Popup({
-            element: element,
-            hideBy: 'blur'
-        });
-
-        cache.element = element;
-        cache.popup = popup;
     }
 
     /**
      * 简单的初始化菜单元素
      *
      * @inner
-     * @param {jQuery} element
+     * @param {ContextMenu} contextMenu
      */
-    function initMenuElement(element) {
+    function initElement(contextMenu) {
+
+        var element = contextMenu.element;
+
+        // 添加全局样式
+        var menuClass = contextMenu.menuClass;
+        if (menuClass) {
+            element.addClass(menuClass);
+        }
+
         // 默认隐藏
         if (element.css('display') !== 'none') {
             element.hide();
         }
-        // 必须是 body 的直接子元素
-        if (!element.parent().is('body')) {
+
+        // body 必须是定位容器
+        if (!offsetParent(element).is('body')) {
             instance.body.append(element);
         }
+
+        // 绑定点击事件
+        var cache = contextMenu.cache;
+        var events = contextMenu.clickEvents;
+
+        if (events) {
+            for (var selector in events) {
+                element.on(
+                    'click',
+                    selector,
+                    (function (handler) {
+                        return function () {
+                            handler.call(contextMenu, cache.event);
+                        };
+                    })(events[selector])
+                );
+            }
+        }
+
+        cache.popup = new Popup({
+                            element: element,
+                            trigger: {
+                                hide: 'blur'
+                            }
+                        });
     }
 
 

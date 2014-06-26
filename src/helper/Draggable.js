@@ -151,12 +151,9 @@ define(function (require, exports, module) {
         rect: function () {
 
             var me = this;
-
             var container = me.container;
-            var element = me.element;
 
             var containerOffset = container.offset();
-            var elementOffset = element.offset();
 
             var isChild = me.cache.isChild;
             var borderLeftWidth = parseInt(container.css('border-left-width'), 10) || 0;

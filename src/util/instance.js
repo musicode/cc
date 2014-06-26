@@ -12,7 +12,7 @@ define(function (require, exports, module) {
 
     exports.document = $(document);
 
-    exports.documentElement = $(document.documentElement);
+    exports.html = $(document.documentElement);
 
     exports.body = $(document.body);
 

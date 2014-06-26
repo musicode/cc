@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>position</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+        .rect {
+            background-color: #2E8DE4;
+            width: 50px;
+            height: 50px;
+            position: absolute;
+        }
+        #center {
+            background-color: #F3E1B1;
+            width: 150px;
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="center" class="rect"></div>
+
+    <div id="top-left" class="rect"></div>
+    <div id="top-center" class="rect"></div>
+    <div id="top-right" class="rect"></div>
+
+    <div id="middle-left" class="rect"></div>
+    <div id="middle-center" class="rect"></div>
+    <div id="middle-right" class="rect"></div>
+
+    <div id="bottom-left" class="rect"></div>
+    <div id="bottom-center" class="rect"></div>
+    <div id="bottom-right" class="rect"></div>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/util/position' ],
+
+            function (position) {
+
+                var $center = $('#center');
+                var $topLeft = $('#top-left')
+                var $topCenter = $('#top-center');
+                var $topRight = $('#top-right');
+                var $middleLeft = $('#middle-left');
+                var $middleCenter = $('#middle-center');
+                var $middleRight = $('#middle-right');
+                var $bottomLeft = $('#bottom-left');
+                var $bottomCenter = $('#bottom-center');
+                var $bottomRight = $('#bottom-right');
+
+                position.middleCenter({
+                    element: $center,
+                    attachmentElement: $(document.body)
+                });
+
+                position.topLeft({
+                    element: $topLeft,
+                    attachmentElement: $center
+                });
+
+                position.topCenter({
+                    element: $topCenter,
+                    attachmentElement: $center
+                });
+
+                position.topRight({
+                    element: $topRight,
+                    attachmentElement: $center
+                });
+
+                position.middleLeft({
+                    element: $middleLeft,
+                    attachmentElement: $center
+                });
+
+                position.middleCenter({
+                    element: $middleCenter,
+                    attachmentElement: $center
+                });
+
+                position.middleRight({
+                    element: $middleRight,
+                    attachmentElement: $center
+                });
+
+                position.bottomLeft({
+                    element: $bottomLeft,
+                    attachmentElement: $center
+                });
+
+                position.bottomCenter({
+                    element: $bottomCenter,
+                    attachmentElement: $center
+                });
+
+                position.bottomRight({
+                    element: $bottomRight,
+                    attachmentElement: $center
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

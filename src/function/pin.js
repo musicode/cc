@@ -6,8 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var instance = require('../util/instance');
-
     /**
      * 解析配置中的横坐标值，可选值有以下几种：
      *
@@ -18,12 +16,15 @@ define(function (require, exports, module) {
      * xx     (纯数字)
      *
      * @inner
-     * @param {jQuery} element
-     * @param {string|number} x
-     * @param {number=} width
+     * @param {Object} options
+     * @property {jQuery} options.element
+     * @property {number=} options.width
+     * @property {string|number} options.x
      * @return {number}
      */
-    function parseX(element, x, width) {
+    function parseX(options) {
+
+        var x = options.x;
 
         if (x === 'left') {
             return 0;
@@ -35,8 +36,8 @@ define(function (require, exports, module) {
             x = '100%';
         }
 
-        if (typeof x === 'string' && percentExpr.test(x)) {
-            x = (RegExp.$1 / 100) * (width || element.outerWidth(true));
+        if ($.type(x) === 'string' && percentExpr.test(x)) {
+            x = (RegExp.$1 / 100) * (options.width || options.element.outerWidth(true));
         }
 
         return x;
@@ -52,12 +53,15 @@ define(function (require, exports, module) {
      * yy     (纯数字)
      *
      * @inner
-     * @param {jQuery} element
-     * @param {string|number} y
-     * @param {number} height
+     * @param {Object} options
+     * @property {jQuery} options.element
+     * @property {number=} options.height
+     * @property {string|number} options.y
      * @return {number}
      */
-    function parseY(element, y, height) {
+    function parseY(options) {
+
+        var y = options.y;
 
         if (y === 'top') {
             return 0;
@@ -69,8 +73,8 @@ define(function (require, exports, module) {
             y = '100%';
         }
 
-        if (typeof y === 'string' && percentExpr.test(y)) {
-            y = (RegExp.$1 / 100) * (height || element.outerHeight(true));
+        if ($.type(y) === 'string' && percentExpr.test(y)) {
+            y = (RegExp.$1 / 100) * (options.height || options.element.outerHeight(true));
         }
 
         return y;
@@ -100,50 +104,48 @@ define(function (require, exports, module) {
      * });
      *
      * @param {Object} options
+     *
      * @property {jQuery} options.element 需要定位的元素
-     * @property {jQuery=} options.attachment 参照物元素，默认是 body
      * @property {string|number} options.x 目标元素的横坐标定位点，值可以是 'left' 'center' 'right' 'xx%' 10(纯数字)
      * @property {string|number} options.y 目标元素的纵坐标定位点，值可以是 'top' 'middle' 'bottom' 'yy%' 10(纯数字)
-     * @property {string|number} options.attachmentX 参照物元素的横坐标定位点，取值同 options.x
-     * @property {string|number} options.attachmentY 参照物元素的纵坐标定位点，取值同 options.y
-     * @property {number=} options.attachmentWidth 参照物元素的宽度，默认取 attachment.outerWidth(true)
-     * @property {number=} options.attachmentHeight 参照物元素的高度，默认取 attachment.outerHeight(true)
-     * @property {number=} options.offsetX 目标元素的横坐标偏移量，单位是 px
-     * @property {number=} options.offsetY 目标元素的纵坐标偏移量，单位是 px
+     *
+     * @property {jQuery} options.attachment 参照对象
+     * @property {jQuery} options.attachment.element 参照元素，默认是 body
+     * @property {jQuery} options.attachment.x 参照物元素的横坐标定位点，取值同 options.x
+     * @property {jQuery} options.attachment.y 参照物元素的纵坐标定位点，取值同 options.y
+     * @property {jQuery=} options.attachment.width 参照物元素的宽度，默认取 attachment.outerWidth(true)
+     * @property {jQuery=} options.attachment.height 参照物元素的高度，默认取 attachment.outerHeight(true)
+     *
+     * @property {Object=} options.offset 偏移量
+     * @property {number=} options.offset.x 水平方向偏移量，单位是 px
+     * @property {number=} options.offset.y 垂直方向偏移量，单位是 px
+     *
      * @property {boolean=} options.silence 是否不设置样式，而是返回样式
+     *
      * @return {?Object}
      */
     return function (options) {
 
         var element = options.element;
-        var attachment = options.attachment || instance.body;
+        var attachment = options.attachment || { };
 
-        var attachmentOffset = attachment.offset();
+        var attachmentOffset = attachment.element.offset();
 
         // 计算的原点
-        var originX = attachmentOffset.left
-                    + parseX(attachment, options.attachmentX, options.attachmentWidth);
+        var originX = attachmentOffset.left + parseX(attachment);
+        var originY = attachmentOffset.top + parseY(attachment);
 
-        var originY = attachmentOffset.top
-                    + parseY(attachment, options.attachmentY, options.attachmentHeight);
+        var x = originX - parseX(options);
+        var y = originY - parseY(options);
 
-        // element 必须是 body 的第一级子元素，否则定位条件太复杂了
-        if (!element.parent().is('body')) {
-            instance.body.append(element);
-        }
-
-        // 相对原点的偏移量
-        var offsetX = parseX(element, options.x);
-        var offsetY = parseY(element, options.y);
-
-        var x = originX - offsetX;
-        var y = originY - offsetY;
-
-        if (typeof options.offsetX === 'number') {
-            x += options.offsetX;
-        }
-        if (typeof options.offsetY === 'number') {
-            y += options.offsetY;
+        var offset = options.offset;
+        if (offset) {
+            if ($.type(offset.x) === 'number') {
+                x += offset.x;
+            }
+            if ($.type(offset.y) === 'number') {
+                y += offset.y;
+            }
         }
 
         var style = {

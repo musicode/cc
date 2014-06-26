@@ -88,15 +88,19 @@
                 var $layer = $('#select-layer');
 
                 var popup = new Popup({
-                    trigger: $('#select-trigger'),
+                    source: $('#select-trigger'),
                     element: $layer,
-                    showBy: 'click',
-                    hideBy: 'blur',
-                    show: function () {
-                        this.element.slideDown(100);
+                    trigger: {
+                        show: 'click',
+                        hide: 'blur'
                     },
-                    hide: function () {
-                        this.element.slideUp(10);
+                    animation: {
+                        show: function () {
+                            this.element.slideDown(100);
+                        },
+                        hide: function () {
+                            this.element.slideUp(10);
+                        }
                     },
                     onBeforeShow: function () {
                         //console.log('beforeShow');

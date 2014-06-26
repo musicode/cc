@@ -57,12 +57,12 @@ define(function (require, exports, module) {
 
             var prevSelector = me.prevSelector;
             if (prevSelector) {
-                element.on('click' + namespace, prevSelector, me, prevSlide);
+                element.on('click' + namespace, prevSelector, $.proxy(me.prev, me));
             }
 
             var nextSelector = me.nextSelector;
             if (nextSelector) {
-                element.on('click' + namespace, nextSelector, me, nextSlide);
+                element.on('click' + namespace, nextSelector, $.proxy(me.next, me));
             }
 
             var indicatorSelector = me.indicatorSelector;
@@ -74,7 +74,7 @@ define(function (require, exports, module) {
                 var selector = indicatorSelector
                              + (
                                   indicatorActiveClass
-                                ? ':not(.' + indicatorActiveClass +')'
+                                ? (':not(.' + indicatorActiveClass +')')
                                 : ''
                             );
 
@@ -295,28 +295,6 @@ define(function (require, exports, module) {
     var namespace = '.cobble_ui_carousel';
 
     /**
-     * 点击触发的上一个
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function prevSlide(e) {
-        e.data.prev();
-        return false;
-    }
-
-    /**
-     * 点击触发的下一个
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function nextSlide(e) {
-        e.data.next();
-        return false;
-    }
-
-    /**
      * 直接跳去第 N 个
      *
      * @inner
@@ -366,6 +344,7 @@ define(function (require, exports, module) {
             cache.changeTimer = null;
         }
     }
+
 
     return Carousel;
 

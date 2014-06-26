@@ -109,8 +109,9 @@ define(function (require, exports, module) {
          * 设置当前星级
          *
          * @param {number} value
+         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
          */
-        setValue: function (value) {
+        setValue: function (value, silence) {
 
             var me = this;
 
@@ -121,7 +122,7 @@ define(function (require, exports, module) {
             refresh(me, value);
             me.value = value;
 
-            if (typeof me.onSelect === 'function') {
+            if (!silence && $.isFunction(me.onSelect)) {
                 me.onSelect(value);
             }
         },
@@ -130,13 +131,16 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
+
             if (!me.readOnly) {
                 me.element
                   .off('mouseenter', previewValue)
                   .off('mouseleave', restoreValue)
                   .off('click', changeValue);
             }
+
             me.element =
             me.cache = null;
         }
@@ -242,6 +246,14 @@ define(function (require, exports, module) {
         );
     }
 
+    /**
+     * 遍历的策略提个方法出来
+     *
+     * @inner
+     * @param {number} value
+     * @param {number} total
+     * @param {Function} callback
+     */
     function traverse(value, total, callback) {
 
         for (var i = 0, result, className; i < total; i++) {

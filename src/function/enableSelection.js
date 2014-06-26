@@ -19,7 +19,7 @@ define(function (require, exports, module) {
         return function (target) {
             target = target || document.body;
             target.style.MozUserSelect = '';
-        }
+        };
     }
 
     element = null;

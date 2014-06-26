@@ -37,7 +37,7 @@ define(function (require, exports, module) {
      *
      * @return {number}
      */
-    exports.getPageScrollLeft = pageScrollTop;
+    exports.getPageScrollLeft = pageScrollLeft;
 
     /**
      * 获取网页的滚动宽度

@@ -102,12 +102,14 @@ define(function (require, exports, module) {
 
             var body = instance.body;
 
-            if (!element.parent().length) {
+            if (!offsetParent(element).is('body')) {
                 body.append(element);
             }
 
             me.cache = {
-                overflow: body.css('overflow')
+                // IE67 需要设置 document.documentElement 元素
+                htmlOverflow: instance.html.css('overflow'),
+                bodyOverflow: body.css('overflow')
             };
 
             me.hidden
@@ -129,11 +131,9 @@ define(function (require, exports, module) {
                 return;
             }
 
-            instance.body
-                    .css(
-                        'overflow',
-                        me.scrollable ? 'auto' : 'hidden'
-                    );
+            var overflow = me.scrollable ? 'auto' : 'hidden';
+            instance.html.css('overflow', overflow);
+            instance.body.css('overflow', overflow);
 
             var element = me.element;
             var mask = me.mask;
@@ -203,7 +203,8 @@ define(function (require, exports, module) {
             }
 
             var cache = me.cache;
-            instance.body.css('overflow', cache.overflow);
+            instance.html.css('overflow', cache.htmlOverflow);
+            instance.body.css('overflow', cache.bodyOverflow);
 
             if (cache.resizer) {
                 instance.window.off('resize', cache.resizer);
@@ -355,20 +356,25 @@ define(function (require, exports, module) {
         var scrollable = dialog.scrollable;
 
         var pinOptions = {
+
             element: dialog.element,
             x: dialog.x === '50%' ? '50%' : 0,
             y: dialog.y === '50%' ? '50%' : 0,
 
-            attachment: fixed ? viewport() : page(),
-            attachmentWidth: (fixed || !scrollable) ? vWidth : pWidth,
-            attachmentHeight: (fixed || !scrollable) ? vHeight : pHeight,
-            attachmentX: dialog.x,
-            attachmentY: dialog.y
+            attachment: {
+                element: fixed ? viewport() : page(),
+                width: (fixed || !scrollable) ? vWidth : pWidth,
+                height: (fixed || !scrollable) ? vHeight : pHeight,
+                x: dialog.x,
+                y: dialog.y
+            }
         };
 
         if (!fixed && !scrollable) {
-            pinOptions.offsetX = pageScrollLeft();
-            pinOptions.offsetY = pageScrollTop();
+            pinOptions.offset = {
+                x: pageScrollLeft(),
+                y: pageScrollTop()
+            };
         }
 
         pin(pinOptions);

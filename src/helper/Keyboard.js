@@ -93,8 +93,8 @@ define(function (require, exports, module) {
                 me.cache.events = parseEvents(me.events);
             }
 
-            me.element.on('keydown', me, onKeyDown)
-                      .on('keyup', me, onKeyUp);
+            me.element.on('keydown' + namespace, me, onKeyDown)
+                      .on('keyup' + namespace, me, onKeyUp);
 
         },
 
@@ -105,8 +105,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.element.off('keydown', onKeyDown)
-                      .off('keyup', onKeyUp);
+            me.element.off(namespace);
 
             me.element =
             me.scope =
@@ -123,6 +122,14 @@ define(function (require, exports, module) {
     Keyboard.defaultOptions = {
 
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_keyboard';
 
     /**
      * 键名 -> keyCode 映射表

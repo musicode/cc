@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    // 好像有个 offsetParent 属性？
+
     /**
      * 向上寻找最近的非 static 定位元素
      *

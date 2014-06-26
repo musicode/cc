@@ -10,8 +10,8 @@
             height: 100%;
         }
 
-        #icon {
-            background-color: #6A94EC;
+        .icon {
+            background-color: #DD5ACD;
             color: #FFF;
             font-size: 1.5em;
             font-style: normal;
@@ -25,11 +25,18 @@
             left: 40%;
         }
 
+        #icon2 {
+            left: 5%;
+            top: 60%;
+        }
+
     </style>
 </head>
 <body>
 
-    <i id="icon" title="提示内容">?</i>
+    <i id="icon1" class="icon" title="提示内容">?</i>
+
+    <i id="icon2" class="icon" title="提示内容111111111111">?</i>
 
     <div class="tooltip fade left in">
         <div class="tooltip-inner">
@@ -50,12 +57,13 @@
             function (Tooltip) {
 
                 var config = Tooltip.defaultOptions;
-                config.template = '<div class="tooltip">'
-                                +    '<i></i>'
-                                +    '<div class="tooltip-content"></div>'
+
+                config.placementPrefix = '';
+                config.template = '<div class="tooltip fade in">'
+                                +    '<div class="tooltip-inner"></div>'
+                                +    '<div class="tooltip-arrow"></div>'
                                 + '</div>';
 
-                config.hideDelay = 0;
                 config.gap = {
                     x: 8,
                     y: 8
@@ -67,31 +75,29 @@
                     x: 0,
                     y: 0
                 };
+                config.animation = {
+                    show: function () {
+                        this.element.fadeIn(200);
+                    },
+                    hide: function () {
+                        this.element.fadeOut(100);
+                    }
+                }
 
-                config.show = function (tipElement) {
-                    tipElement.fadeIn(200);
-                };
-                config.hide = function (tipElement) {
-                    tipElement.fadeOut(100);
-                };
-                config.update = function (tipElement) {
-                    tipElement.find('.tooltip-inner').html(this.title);
+                config.update = function () {
+                    this.element.find('.tooltip-inner').html(this.title);
                 };
                 config.onBeforeShow = function () {
-                    console.log(this);
+                    //console.log(this);
+                    console.log('====================================');
                 };
                 config.onAfterHide = function () {
-                    console.log(this);
+                    //console.log(this);
+                    console.log('====================================');
                 };
 
-                var tooltip = new Tooltip({
-                    trigger: $('#icon'),
-                    placementPrefix: '',
-                    template: '<div class="tooltip fade in">'
-                            +    '<div class="tooltip-inner"></div>'
-                            +    '<div class="tooltip-arrow"></div>'
-                            + '</div>'
-                });
+
+                Tooltip.init();
 
             }
         );

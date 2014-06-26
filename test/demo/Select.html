@@ -12,11 +12,11 @@
             Action <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
-            <li><a href="#">Action</a></li>
-            <li><a href="#">Another action</a></li>
-            <li><a href="#">Something else here</a></li>
+            <li><a href="#" data-value="1">Action</a></li>
+            <li><a href="#" data-value="2">Another action</a></li>
+            <li><a href="#" data-value="3">Something else here</a></li>
             <li class="divider"></li>
-            <li><a href="#">Separated link</a></li>
+            <li><a href="#" data-value="4">Separated link</a></li>
         </ul>
     </div>
 
@@ -32,26 +32,28 @@
             function (Select) {
 
                 var select = new Select({
-                    trigger: $('.btn'),
+                    button: $('.btn'),
                     menu: $('.dropdown-menu'),
                     itemSelector: 'a',
                     value: 2,
-                    activeClass: 'active',
+                    itemActiveClass: 'active',
                     animation: {
                         open: function () {
                             this.menu.slideDown();
+                        },
+                        close: function () {
+                            this.menu.hide(300);
                         }
                     },
                     setText: function (data) {
-                        this.trigger.html(data.text);
+                        this.button.html(data.text);
                     },
                     onChange: function (data) {
-                        this.dispose();
+                        //this.dispose();
                     },
-                    onClickItem: function (e) {
-                        var text = $(e.currentTarget).html();
+                    onClickItem1: function (e) {
                         this.setText({
-                            text: text
+                            text: $(e.currentTarget).html()
                         });
 
                     }

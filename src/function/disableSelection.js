@@ -21,7 +21,7 @@ define(function (require, exports, module) {
         return function (target) {
             target = target || document.body;
             target.style.MozUserSelect = 'none';
-        }
+        };
     }
 
     element = null;

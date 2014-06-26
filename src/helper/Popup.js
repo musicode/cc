@@ -21,7 +21,7 @@ define(function (require, exports, module) {
      *
      *    常见的触发方式包括：
      *
-     *    blur ( 没有这个原生事件，因为类似输入框失焦，所以取同名 )
+     *    blur ( 非输入框元素没有这个原生事件，因为类似输入框失焦，所以取同名 )
      *    out ( mouseout 简写 )
      *
      * #延时#
@@ -37,13 +37,13 @@ define(function (require, exports, module) {
      *
      * #可配置的触发方式#
      *
-     *    因为触发显示和隐藏的方式的配置需求太强了，所以暴露了两个接口：
+     *    因为触发显示和隐藏的方式的配置需求太强了，所以暴露了一个接口：
      *
-     *    Popup.showBy 和 Popup.hideBy
+     *    Popup.trigger
      *
      *    它们的结构都是
      *
-     *    trigger: {
+     *    {
      *        addTrigger: function (popup),             // 传入 popup 实例，绑定触发事件
      *        removeTrigger: function (popup),          // 传入 popup 实例，解绑触发事件
      *
@@ -51,20 +51,18 @@ define(function (require, exports, module) {
      *                                                  // 如 鼠标移出触发延时，鼠标再次移入就需要中断它
      *                                                  // breaker 参数不用关心实现，只需知道执行它能中断异步就行
      *        removeBreaker: function (popup, breaker)  // 解绑中断事件
-     *
      *    }
      *
-     *    构造函数的 showBy 参数值取决于 Popup.showBy 的键值
+     *    构造函数的 trigger.show 可选的值取决于 Popup.trigger.show 的键值
      *
      *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
      *
-     *    在配置 delay 时，只作用于第一个触发方式，如 showBy 配置为 'over,click'，只有 over 才会 delay
+     *    在配置 delay 时，只作用于第一个触发方式，如 trigger.show 配置为 'over,click'，只有 over 才会 delay
      *
      */
 
     'use strict';
 
-    var advice = require('../util/advice');
     var contains = require('../function/contains');
     var instance = require('../util/instance');
 
@@ -75,21 +73,27 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 弹出显示的元素
-     * @property {jQuery=} options.trigger 触发显示的元素，如果是调用方法触发显示，可不传
-     * @property {string=} options.showBy 可选值请看 Popup.showBy 的 key，可组合使用，如 'click,over'
-     * @property {string} options.hideBy 可选值请看 Popup.hideBy 的 key，可组合使用，如 'blur,out'
+     * @property {jQuery} options.element 弹出的元素
+     * @property {jQuery=} options.source 触发弹出的元素，如果是调用方法触发显示，可不传
+     *
+     * @property {Object} options.trigger 触发方式
+     * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
+     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 blur out，可组合使用，以逗号分隔
+     *
      * @property {Object=} options.delay 延时
      * @property {number=} options.delay.show 显示延时
      * @property {number=} options.delay.hide 隐藏延时
-     * @property {Function=} options.show 可选，默认是 element.show()
-     * @property {Function=} options.hide 可选，默认是 element.hide()
+     *
+     * @property {Object=} options.animation 动画
+     * @property {Function=} options.animation.show 显示动画，如果未设置，默认是 element.show()
+     * @property {Function=} options.animation.hide 隐藏动画，如果未设置，默认是 element.hide()
+     *
      * @property {Function=} options.onBeforeShow 返回 false 可阻止显示
      * @property {Function=} options.onAfterShow
      * @property {Function=} options.onBeforeHide 返回 false 可阻止隐藏
      * @property {Function=} options.onAfterHide
      *
-     * @property {*} options.scope 指定 onBeforeShow、onAfterShow、onBeforeHide、onAfterHide 的 this
+     * @property {*} options.scope 指定以上这些函数的 this
      */
     function Popup(options) {
         $.extend(this, Popup.defaultOptions, options);
@@ -111,27 +115,72 @@ define(function (require, exports, module) {
                 me.scope = me;
             }
 
-            me.cache = { };
+            var hidden = me.element.css('display') === 'none';
+            var action = hidden ? showEvent : hideEvent;
 
-            advice.around(
-                me,
-                'show',
-                onBeforeShow,
-                onAfterShow
-            );
+            me.cache = {
+                hidden: hidden
+            };
 
-            advice.around(
-                me,
-                'hide',
-                onBeforeHide,
-                onAfterHide
-            );
+            action(me, 'add');
+        },
 
-            var fn = me.element.css('display') === 'none'
-                   ? showEvent
-                   : hideEvent;
+        /**
+         * 显示
+         */
+        show: function () {
 
-            fn(me, 'add');
+            var me = this;
+            var event = arguments[0];
+
+            if (onBeforeShow.call(me, event) === false) {
+                return;
+            }
+
+            var show = me.animation.show;
+
+            if ($.isFunction(show)) {
+                show.call(me.scope);
+            }
+            else {
+                me.element.show();
+            }
+
+            me.cache.hidden = false;
+
+            onAfterShow.call(me, event);
+        },
+
+        /**
+         * 隐藏
+         */
+        hide: function () {
+
+            var me = this;
+            var cache = me.cache;
+
+            if (cache.hidden) {
+                return;
+            }
+
+            var event = arguments[0];
+
+            if (onBeforeHide.call(me, event) === false) {
+                return;
+            }
+
+            var hide = me.animation.hide;
+
+            if ($.isFunction(hide)) {
+                hide.call(me.scope);
+            }
+            else {
+                me.element.hide();
+            }
+
+            cache.hidden = true;
+
+            onAfterHide.call(me, event);
         },
 
         /**
@@ -140,17 +189,12 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
 
             me.hide();
 
-            if (cache.removeBreaker) {
-                cache.removeBreaker();
-            }
-
             showEvent(me, 'remove');
 
-            me.trigger =
+            me.source =
             me.element =
             me.cache = null;
         }
@@ -163,98 +207,114 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Popup.defaultOptions = {
+        trigger: { },
+        animation: { },
         delay: {
             show: 0,
             hide: 0
-        },
-        show: function () {
-            this.element.show();
-        },
-        hide: function () {
-            this.element.hide();
         }
     };
 
     /**
-     * 提供 showBy 扩展
+     * 提供 显示/隐藏 触发方式扩展
      *
+     * @inner
      * @type {Object}
      */
-    Popup.showBy = {
+    Popup.trigger = {
 
-        focus: {
-            addTrigger: function (popup) {
-                popup.trigger.on('focus', popup, showByFocus);
-            },
-            removeTrigger: function (popup) {
-                popup.trigger.off('focus', showByFocus);
-            }
-        },
+        show: {
 
-        click: {
-            addTrigger: function (popup) {
-                popup.trigger.on('click', popup, showByClick);
-            },
-            removeTrigger: function (popup) {
-                popup.trigger.off('click', showByClick);
-            }
-        },
-
-        over: {
-            addTrigger: function (popup) {
-                popup.trigger.on('mouseenter', popup, showByOver);
-            },
-            removeTrigger: function (popup) {
-                popup.trigger.off('mouseenter', showByOver);
+            focus: {
+                addTrigger: function (popup) {
+                    popup.source.on('focus', popup, showByFocus);
+                },
+                removeTrigger: function (popup) {
+                    popup.source.off('focus', showByFocus);
+                }
             },
 
-            addBreaker: function (popup, breaker) {
-                popup.trigger.on('mouseleave', breaker);
+            click: {
+                addTrigger: function (popup) {
+                    popup.source.on('click', popup, showByClick);
+                },
+                removeTrigger: function (popup) {
+                    popup.source.off('click', showByClick);
+                }
             },
-            removeBreaker: function (popup, breaker) {
-                popup.trigger.off('mouseleave', breaker);
-            }
-        }
-    };
 
-    /**
-     * 提供 hideBy 扩展
-     *
-     * @type {Object}
-     */
-    Popup.hideBy = {
+            over: {
+                addTrigger: function (popup) {
+                    popup.source.on('mouseenter', popup, showByOver);
+                },
+                removeTrigger: function (popup) {
+                    popup.source.off('mouseenter', showByOver);
+                },
 
-        blur: {
-            addTrigger: function (popup) {
-                instance.document.click('click', popup.cache.blurHandler = hideByBlur(popup));
-            },
-            removeTrigger: function (popup) {
-                var cache = popup.cache;
-                var handler = cache.blurHandler;
-                if (handler) {
-                    instance.document.off('click', handler);
-                    cache.blurHandler = null;
+                addBreaker: function (popup, breaker) {
+                    popup.source.on('mouseleave', breaker);
+                },
+                removeBreaker: function (popup, breaker) {
+                    popup.source.off('mouseleave', breaker);
                 }
             }
         },
 
-        out: {
-            addTrigger: function (popup) {
-                popup.trigger.on('mouseleave', popup, hideByOut);
-                popup.element.on('mouseleave', popup, hideByOut);
-            },
-            removeTrigger: function (popup) {
-                popup.trigger.off('mouseleave', hideByOut);
-                popup.element.off('mouseleave', hideByOut);
+        hide: {
+
+            blur: {
+                addTrigger: function (popup) {
+                    var cache = popup.cache;
+                    cache.blurTimer = setTimeout(
+                        function () {
+                            if (popup) {
+                                instance.document
+                                        .click(
+                                            'click',
+                                            cache.blurHandler = hideByBlur(popup)
+                                        );
+                            }
+                        },
+                        150
+                    );
+
+                },
+                removeTrigger: function (popup) {
+
+                    var cache = popup.cache;
+                    var blurTimer = cache.blurTimer;
+                    var blurHandler = cache.blurHandler;
+
+                    if (blurTimer) {
+                        clearTimeout(blurTimer);
+                        cache.blurTimer = null;
+                    }
+
+                    if (blurHandler) {
+                        instance.document.off('click', blurHandler);
+                        cache.blurHandler = null;
+                    }
+                }
             },
 
-            addBreaker: function (popup, breaker) {
-                popup.trigger.on('mouseenter', breaker);
-                popup.element.on('mouseenter', breaker);
-            },
-            removeBreaker: function (popup, breaker) {
-                popup.trigger.off('mouseenter', breaker);
-                popup.element.off('mouseenter', breaker);
+            out: {
+                addTrigger: function (popup) {
+                    popup.source.on('mouseleave', popup, hideByOut);
+                    popup.element.on('mouseleave', popup, hideByOut);
+                },
+                removeTrigger: function (popup) {
+                    popup.source.off('mouseleave', hideByOut);
+                    popup.element.off('mouseleave', hideByOut);
+                },
+
+                addBreaker: function (popup, breaker) {
+                    popup.source.on('mouseenter', breaker);
+                    popup.element.on('mouseenter', breaker);
+                },
+                removeBreaker: function (popup, breaker) {
+                    popup.source.off('mouseenter', breaker);
+                    popup.element.off('mouseenter', breaker);
+                }
             }
         }
     };
@@ -267,16 +327,20 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function showEvent(popup, action) {
-        // 显示可能来自 popup.show 调用
-        // 这种情况不需要设置 showBy 也可以
-        var showBy = popup.showBy;
-        if (showBy) {
-            each(showBy, function (showBy) {
-                var target = Popup.showBy[showBy];
-                if (target) {
-                    target[action + 'Trigger'](popup);
+
+        var showTrigger = Popup.trigger.show;
+        var trigger = popup.trigger;
+
+        if (trigger && trigger.show) {
+            each(
+                trigger.show,
+                function (name) {
+                    var target = showTrigger[name];
+                    if (target) {
+                        target[action + 'Trigger'](popup);
+                    }
                 }
-            });
+            );
         }
     }
 
@@ -288,14 +352,20 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function hideEvent(popup, action) {
-        var hideBy = popup.hideBy;
-        if (hideBy) {
-            each(hideBy, function (hideBy) {
-                var target = Popup.hideBy[hideBy];
-                if (target) {
-                    target[action + 'Trigger'](popup);
+
+        var hideTrigger = Popup.trigger.hide;
+        var trigger = popup.trigger;
+
+        if (trigger && trigger.hide) {
+            each(
+                trigger.hide,
+                function (name) {
+                    var target = hideTrigger[name];
+                    if (target) {
+                        target[action + 'Trigger'](popup);
+                    }
                 }
-            });
+            );
         }
     }
 
@@ -320,7 +390,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var currentTriggerKey = '__currentTrigger__';
+    var currentSourceKey = '__currentSource__';
 
     /**
      * 显示之前的拦截方法
@@ -330,36 +400,30 @@ define(function (require, exports, module) {
      */
     function onBeforeShow(event) {
 
-        // 这里不能写下面这句代码：
-        //
-        // if (me.element.css('display') !== 'none') {
-        //     return false;
-        // }
-        //
-        // 因为当多个 trigger 公用一个弹出层时
-        // 弹出层显示之后，可能又被另一个 trigger 触发显示
-        // 这时仍然要走正常的显示流程
-
         var me = this;
         var element = me.element;
 
-        // 可能出现多个 trigger 共用一个弹出层的情况
-        var currentTrigger = element.data(currentTriggerKey);
+        // 触发元素（mousenter 和 mouseleave 都有 target 元素，试了几次还比较可靠）
+        var target = me.cache.target
+                   = event && event.target;
+
+        // 可能出现多个 source 共用一个弹出层的情况
+        var currentSource = element.data(currentSourceKey);
 
         // 如果弹出元素当前处于显示状态
-        if (currentTrigger) {
+        if (currentSource) {
 
             // 无视重复触发显示
-            if (event && currentTrigger.element === (event.toElement || event.target)) {
+            if (currentSource.element === target) {
                 return false;
             }
 
-            // 如果是新的 trigger，则需隐藏旧的
-            currentTrigger.hide();
+            // 如果是新的 source 则需隐藏旧的
+            currentSource.hide();
         }
 
         var onBeforeShow = me.onBeforeShow;
-        if (typeof onBeforeShow === 'function') {
+        if ($.isFunction(onBeforeShow)) {
             return onBeforeShow.call(me.scope, event);
         }
     }
@@ -375,27 +439,21 @@ define(function (require, exports, module) {
         var me = this;
 
         showEvent(me, 'remove');
+        hideEvent(me, 'add');
 
-        setTimeout(function () {
-            // 异步调用要确保对象没有被销毁
-            if (me.cache) {
-                hideEvent(me, 'add');
-            }
-        }, 150);
-
-        // 如果手动调用 show()，不会有事件
-        if (event) {
+        var target = me.cache.target;
+        if (target) {
             me.element.data(
-                currentTriggerKey,
+                currentSourceKey,
                 {
-                    element: event.toElement || event.target,
+                    element: target,
                     hide: $.proxy(me.hide, me)
                 }
             );
         }
 
         var onAfterShow = me.onAfterShow;
-        if (typeof onAfterShow === 'function') {
+        if ($.isFunction(onAfterShow)) {
             onAfterShow.call(me.scope, event);
         }
     }
@@ -409,13 +467,9 @@ define(function (require, exports, module) {
     function onBeforeHide(event) {
 
         var me = this;
-
-        if (me.element.css('display') === 'none') {
-            return false;
-        }
-
         var onBeforeHide = me.onBeforeHide;
-        if (typeof onBeforeHide === 'function') {
+
+        if ($.isFunction(onBeforeHide)) {
             return onBeforeHide.call(me.scope, event);
         }
     }
@@ -430,12 +484,12 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.element.removeData(currentTriggerKey);
+        me.element.removeData(currentSourceKey);
         hideEvent(me, 'remove');
         showEvent(me, 'add');
 
         var onAfterHide = me.onAfterHide;
-        if (typeof onAfterHide === 'function') {
+        if ($.isFunction(onAfterHide)) {
             onAfterHide.call(me.scope, event);
         }
     }
@@ -446,40 +500,37 @@ define(function (require, exports, module) {
      * @inner
      * @param {Popup} popup
      * @param {number} time
-     * @param {Function} handler
      * @param {Object} condition 延时条件
+     * @param {Function} handler
      */
-    function setDelay(popup, time, handler, condition) {
+    function setDelay(popup, time, condition, handler) {
 
         var cache = popup.cache;
 
         if (time > 0) {
-            if (cache.delayTask) {
+
+            if (cache.delayTimer) {
                 return;
             }
 
             var addBreaker = condition.addBreaker || $.noop;
-            var removeBreaker = function () {
-                cache.removeBreaker = null;
-                clearDelay(popup);
-                if (typeof condition.removeBreaker === 'function') {
-                    condition.removeBreaker(popup, breaker);
+            var removeBreaker = condition.removeBreaker || $.noop;
+
+            var breaker = function () {
+                if (clearDelay(popup)) {
+                    removeBreaker(popup, breaker);
+                    return true;
                 }
             };
 
-            var breaker = function () {
-                removeBreaker();
-                clearDelay(popup);
-            };
-
-            cache.removeBreaker = removeBreaker;
-            cache.delayTask = setTimeout(
-                function () {
-                    removeBreaker();
-                    handler();
-                },
-                time
-            );
+            cache.delayTimer = setTimeout(
+                                    function () {
+                                        if (breaker()) {
+                                            handler();
+                                        }
+                                    },
+                                    time
+                                );
 
             addBreaker(popup, breaker);
         }
@@ -499,11 +550,9 @@ define(function (require, exports, module) {
 
         var cache = popup.cache;
 
-        // 调用 dispose 会把 popup.cache 置为 null
-        // 异步必须检查一下
-        if (cache && cache.delayTask) {
-            clearTimeout(cache.delayTask);
-            cache.delayTask = null;
+        if (cache && cache.delayTimer) {
+            clearTimeout(cache.delayTimer);
+            cache.delayTimer = null;
             return true;
         }
     }
@@ -521,10 +570,10 @@ define(function (require, exports, module) {
         setDelay(
             popup,
             popup.delay.show,
+            Popup.trigger.show.focus,
             function () {
                 popup.show(e);
-            },
-            Popup.showBy.focus
+            }
         );
     }
 
@@ -541,10 +590,10 @@ define(function (require, exports, module) {
         setDelay(
             popup,
             popup.delay.show,
+            Popup.trigger.show.click,
             function () {
                 popup.show(e);
-            },
-            Popup.showBy.click
+            }
         );
     }
 
@@ -561,10 +610,10 @@ define(function (require, exports, module) {
         setDelay(
             popup,
             popup.delay.show,
+            Popup.trigger.show.over,
             function () {
                 popup.show(e);
-            },
-            Popup.showBy.over
+            }
         );
     }
 
@@ -577,14 +626,14 @@ define(function (require, exports, module) {
      */
     function hideByBlur(popup) {
         return function (e) {
-            if (isOutside(e.target, popup.element[0])) {
+            if (!contains(popup.element[0], e.target)) {
                 setDelay(
                     popup,
                     popup.delay.hide,
+                    Popup.trigger.hide.blur,
                     function () {
                         popup.hide(e);
-                    },
-                    Popup.hideBy.blur
+                    }
                 );
             }
         };
@@ -599,38 +648,20 @@ define(function (require, exports, module) {
     function hideByOut(e) {
 
         var popup = e.data;
+        var target = e.relatedTarget;
 
-        if (isOutside(
-                e.toElement,
-                popup.trigger[0],
-                popup.element[0])
+        if (!contains(popup.source[0], target)
+            && !contains(popup.element[0], target)
         ) {
             setDelay(
                 popup,
                 popup.delay.hide,
+                Popup.trigger.hide.out,
                 function () {
                     popup.hide(e);
-                },
-                Popup.hideBy.out
+                }
             );
         }
-    }
-
-    /**
-     * target 是否在 arguments[1], arguments[2], ... 之外
-     *
-     * @inner
-     * @param {HTMLElement} target 目标元素
-     * @param {...HTMLElement} container 容器元素
-     * @return {boolean}
-     */
-    function isOutside(target, container) {
-        for (var i = 1, len = arguments.length; i < len; i++) {
-            if (contains(arguments[i], target)) {
-                return false;
-            }
-        }
-        return true;
     }
 
 

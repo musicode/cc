@@ -13,11 +13,12 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 如果需要容器包着 trigger 和 menu, 可以设置主元素
-     *                                    openClass 会优先作用于它，否则作用于 trigger
-     * @property {jQuery} options.trigger 点击触发下拉菜单显示的元素
+     * @property {jQuery} options.element 如果需要容器包着 button 和 menu, 可以设置主元素
+     *                                    openClass 会优先作用于它，否则作用于 button
+     * @property {jQuery} options.button 点击触发下拉菜单显示的元素
      * @property {jQuery} options.menu 下拉菜单元素
      * @property {string=} options.value 当前选中的值
+     *
      * @property {string} options.itemSelector 菜单项的选择器，默认是选择具有 options.valueAttr 属性的元素
      *                                         查找方式是 menu.find(itemSelector)
      * @property {string=} options.textAttr 读取 text 的元素属性，没有则读取元素 innerHTML
@@ -25,7 +26,7 @@ define(function (require, exports, module) {
      * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.openClass 展开状态的 class
      *
-     * @property {Object=} options.animation
+     * @property {Object=} options.animation 动画
      * @property {Function=} options.animation.open 展开动画
      * @property {Function=} options.animation.close 关闭动画
      *
@@ -37,7 +38,7 @@ define(function (require, exports, module) {
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
      *
-     * @property {Function=} options.setText 选中菜单项后设置 trigger 文本的方法
+     * @property {Function=} options.setText 选中菜单项后设置 button 文本的方法
      * @argument {Object} options.onChange.data
      * @property {string} options.onChange.data.text
      * @property {string} options.onChange.data.value
@@ -163,7 +164,7 @@ define(function (require, exports, module) {
             me.cache.popup.dispose();
 
             me.cache =
-            me.trigger =
+            me.button =
             me.menu = null;
         }
     };
@@ -191,14 +192,22 @@ define(function (require, exports, module) {
      */
     function createPopup(select) {
 
-        var main = select.element || select.trigger;
+        var main = select.element || select.button;
         var openClass = select.openClass;
+        var animation = select.animation;
 
-        var options = {
-            trigger: select.trigger,
+        return new Popup({
+            source: select.button,
             element: select.menu,
-            showBy: 'click',
-            hideBy: 'blur',
+            scope: select,
+            trigger: {
+                show: 'click',
+                hide: 'blur'
+            },
+            animation: {
+                show: animation.open,
+                hide: animation.close
+            },
             onAfterShow: function () {
                 if (openClass) {
                     main.addClass(openClass);
@@ -215,17 +224,7 @@ define(function (require, exports, module) {
                     select.onClose();
                 }
             }
-        };
-
-        var animation = select.animation;
-        if (animation.open) {
-            options.show = $.proxy(animation.open, select);
-        }
-        if (animation.close) {
-            options.hide = $.proxy(animation.close, select);
-        }
-
-        return new Popup(options);
+        });
     }
 
     /**
@@ -241,14 +240,13 @@ define(function (require, exports, module) {
         // 处理 DOM
         select.close();
 
-        // 更新 value
-        var value = $(e.currentTarget).attr(select.valueAttr);
-
-        if (value != null) {
-            select.setValue(value);
-        }
-        else if ($.isFunction(select.onClickItem)) {
+        if ($.isFunction(select.onClickItem)) {
             select.onClickItem(e);
+        }
+        else {
+            select.setValue(
+                $(e.currentTarget).attr(select.valueAttr)
+            );
         }
 
         // 如果 target 是 a，需要禁用默认行为

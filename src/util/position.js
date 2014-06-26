@@ -8,18 +8,6 @@ define(function (require, exports, module) {
 
     var pin = require('../function/pin');
 
-    /**
-     * 拷贝对象
-     *
-     * @inner
-     * @param {Object} options
-     * @return {Object}
-     */
-    function copy(options) {
-        return $.extend({ }, options);
-    }
-
-
     exports.pin = pin;
 
     /**
@@ -27,17 +15,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.topLeft = function (options) {
-        options = copy(options);
-        options.x = 'right';
-        options.y = 'bottom';
-        options.attachmentX = 'left';
-        options.attachmentY = 'top';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'right',
+            y: 'bottom',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'left',
+                y: 'top'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -45,17 +41,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.topCenter = function (options) {
-        options = copy(options);
-        options.x = 'center';
-        options.y = 'bottom';
-        options.attachmentX = 'center';
-        options.attachmentY = 'top';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'center',
+            y: 'bottom',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'center',
+                y: 'top'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -63,17 +67,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.topRight = function (options) {
-        options = copy(options);
-        options.x = 'left';
-        options.y = 'bottom';
-        options.attachmentX = 'right';
-        options.attachmentY = 'top';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'left',
+            y: 'bottom',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'right',
+                y: 'top'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -81,17 +93,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.middleLeft = function (options) {
-        options = copy(options);
-        options.x = 'right';
-        options.y = 'middle';
-        options.attachmentX = 'left';
-        options.attachmentY = 'middle';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'right',
+            y: 'middle',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'left',
+                y: 'middle'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -99,17 +119,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.middleCenter = function (options) {
-        options = copy(options);
-        options.x = 'center';
-        options.y = 'middle';
-        options.attachmentX = 'center';
-        options.attachmentY = 'middle';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'center',
+            y: 'middle',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'center',
+                y: 'middle'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -117,17 +145,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.middleRight = function (options) {
-        options = copy(options);
-        options.x = 'left';
-        options.y = 'middle';
-        options.attachmentX = 'right';
-        options.attachmentY = 'middle';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'left',
+            y: 'middle',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'right',
+                y: 'middle'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -135,17 +171,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.bottomLeft = function (options) {
-        options = copy(options);
-        options.x = 'right';
-        options.y = 'top';
-        options.attachmentX = 'left';
-        options.attachmentY = 'bottom';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'right',
+            y: 'top',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'left',
+                y: 'bottom'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -153,17 +197,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.bottomCenter = function (options) {
-        options = copy(options);
-        options.x = 'center';
-        options.y = 'top';
-        options.attachmentX = 'center';
-        options.attachmentY = 'bottom';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'center',
+            y: 'top',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'center',
+                y: 'bottom'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
     /**
@@ -171,17 +223,25 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachment
+     * @property {jQuery=} options.attachmentElement
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
     exports.bottomRight = function (options) {
-        options = copy(options);
-        options.x = 'left';
-        options.y = 'top';
-        options.attachmentX = 'right';
-        options.attachmentY = 'bottom';
-        pin(options);
+        pin({
+            element: options.element,
+            x: 'left',
+            y: 'top',
+            attachment: {
+                element: options.attachmentElement,
+                x: 'right',
+                y: 'bottom'
+            },
+            offset: {
+                x: options.offsetX,
+                y: options.offsetY
+            }
+        });
     };
 
 });

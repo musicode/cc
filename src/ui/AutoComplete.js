@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
+    var template = require('../function/template');
 
     /**
      * [TODO] Input 支持 scope
@@ -183,12 +184,20 @@ define(function (require, exports, module) {
         var input = autoComplete.input;
         var menu = autoComplete.menu;
         var cache = autoComplete.cache;
+        var animation = autoComplete.animation;
 
-        var options = {
-            trigger: input,
+        return new Popup({
+            source: input,
             element: menu,
-            showBy: 'focus',
-            hideBy: 'blur',
+            scope: autoComplete,
+            trigger: {
+                show: 'focus',
+                hide: 'blur'
+            },
+            animation: {
+                show: animation.open,
+                hide: animation.close
+            },
             onBeforeShow: function (event) {
                 // 由 focus 事件触发的要调一下 suggest
                 if (event) {
@@ -212,6 +221,7 @@ define(function (require, exports, module) {
 
                 cache.elementItems = elementItems;
                 cache.dataItems = dataItems;
+
             },
             onBeforeHide: function (event) {
                 // 点击 input 不触发失焦隐藏
@@ -224,17 +234,7 @@ define(function (require, exports, module) {
                 cache.elementItems =
                 cache.dataItems = null;
             }
-        };
-
-        var animation = autoComplete.animation;
-        if (animation.open) {
-            options.show = $.proxy(animation.open, autoComplete);
-        }
-        if (animation.close) {
-            options.hide = $.proxy(animation.close, autoComplete);
-        }
-
-        return new Popup(options);
+        });
     }
 
     /**
@@ -319,7 +319,14 @@ define(function (require, exports, module) {
 
                 var itemTemplate = autoComplete.itemTemplate;
                 if (itemTemplate) {
-                    autoComplete.menu.html(template(itemTemplate, data));
+                    autoComplete.menu.html(
+                        $.map(
+                            data,
+                            function (item) {
+                                return template(itemTemplate, item);
+                            }
+                        ).join('')
+                    );
                 }
                 else {
                     autoComplete.renderMenu(data);
@@ -341,35 +348,6 @@ define(function (require, exports, module) {
         else {
             autoComplete.load(query, update);
         }
-    }
-
-    /**
-     * 渲染模板
-     *
-     * @inner
-     * @param {string} tpl
-     * @param {Array.<Object>} data
-     * @return {string}
-     */
-    function template(tpl, data) {
-
-        var result = [ ];
-
-        $.each(
-            data,
-            function (index, item) {
-                result.push(
-                    tpl.replace(
-                        /\${(\w+)}/g,
-                        function ($0, $1) {
-                            return item[$1] != null ? item[$1] : '';
-                        }
-                    )
-                );
-            }
-        );
-
-        return result.join('');
     }
 
     /**
