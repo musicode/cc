@@ -25,7 +25,7 @@ define(function (require, exports, module) {
      * @property {string} options.slideSelector
      *
      * @property {string=} options.indicatorActiveClass
-     * @property {string=} options.indicatorTrigger 触发 change 的方式，可选值有 over click， 默认是 over
+     * @property {string=} options.trigger 触发 change 的方式，可选值有 over click， 默认是 over
      * @property {string=} options.indexAttr indicator 元素存储索引的属性名称
      *
      * @property {Function} options.transition 转场动画函数
@@ -70,7 +70,7 @@ define(function (require, exports, module) {
 
             if (indicatorSelector) {
 
-                var type = me.indicatorTrigger;
+                var type = me.trigger;
                 var selector = indicatorSelector
                              + (
                                   indicatorActiveClass
@@ -114,7 +114,7 @@ define(function (require, exports, module) {
                 var target = indicators.filter('.' + indicatorActiveClass);
 
                 if (target.length === 1) {
-                    index = indicators.index(target);
+                    index = me.index = indicators.index(target);
                 }
             }
 
@@ -263,7 +263,8 @@ define(function (require, exports, module) {
             var me = this;
 
             me.pause();
-            me.slides.off(namespace);
+
+            me.cache.slides.off(namespace);
             me.element.off(namespace);
 
             me.element =
@@ -283,7 +284,7 @@ define(function (require, exports, module) {
         auto: true,
         cycle: true,
         pauseable: true,
-        indicatorTrigger: 'over'
+        trigger: 'over'
     };
 
     /**

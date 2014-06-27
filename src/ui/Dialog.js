@@ -29,8 +29,10 @@ define(function (require, exports, module) {
      * @property {jQuery=} options.element 对话框元素，此配置可选
      *                                     如果传参，可把 title/content 写到模板上，把元素传进来
      *                                     如果未传，必须传 title/content
+     *
      * @property {string=} options.title 对话框标题
      * @property {string=} options.content 对话框内容
+     *
      * @property {number=} options.width 对话框整体宽度
      * @property {(number|string)=} options.x 窗口出现的 x 位置，可以是 数字(10) 或 百分比(50%)
      * @property {(number|string)=} options.y 窗口出现的 y 位置，可以是 数字(10) 或 百分比(50%)
@@ -42,14 +44,15 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hidden 初始化时是否隐藏，默认为 false
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
-     * @property {boolean=} options.hideByClickMask 点击遮罩是否隐藏对话框，默认为 false
      *
      * @property {string=} options.template
      * @property {string=} options.headerSelector 可拖拽的元素（一般是头部）
      * @property {string=} options.titleSelector 填充 title 的元素
      * @property {string=} options.closeSelector 点击可关闭对话框的元素
      * @property {string=} options.bodySelector 填充 content 的元素
+     *
      * @property {string=} options.maskTemplate 遮罩模板
+     * @property {boolean=} options.hideByClickMask 点击遮罩是否隐藏对话框，默认为 false
      *
      * @property {Function=} options.onBeforeShow
      * @property {Function=} options.onAterShow
@@ -154,10 +157,15 @@ define(function (require, exports, module) {
                 var maskZ = mask.css(zIndex);
 
                 // 如果 mask 的 z-index 比 element 高，需要重置
-                if ($.isNumeric(maskZ)
-                    && maskZ > element.css(zIndex)
-                ) {
-                    element.css(zIndex, maskZ);
+                if ($.isNumeric(maskZ)) {
+
+                    var dialogZ = element.css(zIndex);
+
+                    if (!$.isNumeric(dialogZ)
+                        || maskZ > dialogZ
+                    ) {
+                        element.css(zIndex, maskZ);
+                    }
                 }
             }
 
