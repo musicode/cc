@@ -35,6 +35,13 @@
         left: 8px;
     }
 
+    .hover {
+        background-color: lightblue;
+    }
+    .dragging {
+        background-color: red;
+    }
+
     .scroll-bar-h .scroll-thumb,
     .scroll-bar-v .scroll-thumb {
         background-color: #999;
@@ -128,16 +135,24 @@
                     element: $('#scroll-position .scroll-bar-h'),
                     direction: 'horizontal',
                     autoHide: true,
-                    step: 20,
-                    step4bar: true
+                    step: 10,
+                    scrollByBar: true,
+                    animation: {
+                        show: function () {
+                            this.element.show(300);
+                        }
+                    }
+
                 });
 
                 var scrollVBar = new ScrollBar({
                     target: $('#scroll-panel'),
                     element: $('#scroll-position .scroll-bar-v'),
                     pos: '20%',
-                    draggingClass: 'dragging',
-                    hoverClass: 'hover',
+                    className: {
+                        dragging: 'dragging',
+                        hover: 'hover'
+                    },
                     direction: 'vertical'
                 });
 

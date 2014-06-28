@@ -17,11 +17,16 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
+     * @property {jQuery=} options.element 菜单元素
      * @property {jQuery} options.container 在 container 内部右键弹出菜单
-     * @property {jQuery=} options.element 菜单元素，也可以是字符串模版
+     *
+     * @property {Object=} options.animation 动画
+     * @property {Function=} options.animation.show 显示动画
+     * @property {Function=} options.animation.hide 隐藏动画
+     *
      * @property {string=} options.template 如果想动态生成元素，可不传 element，而是传入模板
-     * @property {string=} options.menuClass 可选，菜单元素的 className，便于全局统一样式，无需模板到处写
-     * @property {Object=} options.clickEvents 可选，配置点击事件处理器
+     *
+     * @property {Object=} options.action 可选，配置点击事件处理器
      *                     {
      *                         '.add-user': function (e) { },
      *                         '.remove-user': function (e) { }
@@ -47,7 +52,7 @@ define(function (require, exports, module) {
             me.cache = { };
 
             if (me.element) {
-                initElement(me);
+                initMenu(me);
             }
 
             me.container.on('contextmenu' + namespace, me, popupMenu);
@@ -104,7 +109,7 @@ define(function (require, exports, module) {
      */
     ContextMenu.defaultOptions = {
         container: instance.body,
-        menuClass: 'context-menu'
+        animation: { }
     };
 
     /**
@@ -133,9 +138,12 @@ define(function (require, exports, module) {
     function popupMenu(e) {
 
         var contextMenu = e.data;
+        var element = contextMenu.element;
+        var template = contextMenu.template;
 
-        if (!contextMenu.element) {
-            createMenu(contextMenu);
+        if (!element && template) {
+            element = contextMenu.element = $(template);
+            initMenu(contextMenu);
         }
 
         if (currentMenu && currentMenu !== contextMenu) {
@@ -150,7 +158,7 @@ define(function (require, exports, module) {
         currentMenu.show();
 
         pin({
-            element: contextMenu.element,
+            element: element,
             x: 0,
             y: 0,
             attachment: {
@@ -167,36 +175,14 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 创建菜单面板
-     *
-     * @inner
-     * @param {ContextMenu} contextMenu
-     */
-    function createMenu(contextMenu) {
-
-        var template = contextMenu.template;
-
-        if (!contextMenu.element && template) {
-            contextMenu.element = $(template);
-            initElement(contextMenu);
-        }
-    }
-
-    /**
      * 简单的初始化菜单元素
      *
      * @inner
      * @param {ContextMenu} contextMenu
      */
-    function initElement(contextMenu) {
+    function initMenu(contextMenu) {
 
         var element = contextMenu.element;
-
-        // 添加全局样式
-        var menuClass = contextMenu.menuClass;
-        if (menuClass) {
-            element.addClass(menuClass);
-        }
 
         // 默认隐藏
         if (element.css('display') !== 'none') {
@@ -210,7 +196,7 @@ define(function (require, exports, module) {
 
         // 绑定点击事件
         var cache = contextMenu.cache;
-        var events = contextMenu.clickEvents;
+        var events = contextMenu.action;
 
         if (events) {
             for (var selector in events) {
@@ -228,6 +214,8 @@ define(function (require, exports, module) {
 
         cache.popup = new Popup({
                             element: element,
+                            animation: contextMenu.animation,
+                            scope: contextMenu,
                             trigger: {
                                 hide: 'blur'
                             }

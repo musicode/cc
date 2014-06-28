@@ -4,22 +4,23 @@
     <meta charset="UTF-8">
     <title>Rater</title>
     <style>
-        .on,
-        .off,
-        .half {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            margin-right: 3px;
-        }
         .on {
-            background-color: red;
+            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -50px;
+            display: inline-block;
+            width: 12px;
+            height: 12px;
         }
         .off {
-            background-color: grey;
+            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -62px;
+            display: inline-block;
+            width: 12px;
+            height: 12px;
         }
         .half {
-            background-color: lightblue;
+            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -166px;
+            display: inline-block;
+            width: 12px;
+            height: 12px;
         }
     </style>
 </head>
@@ -40,11 +41,17 @@
 
                 var rater = new Rater({
                     element: $('#main'),
-                    value: 0.5,
-                    total: 5,
-                    onIcon: 'on',
-                    offIcon: 'off',
-                    halfIcon: 'half',
+                    value: 3.5,
+                    total: 6,
+                    min: 2,
+                    max: 4,
+
+                    className: {
+                        on: 'on',
+                        off: 'off',
+                        half: 'half'
+                    },
+
                     half: true,
                     onSelect: function (value) {
                         console.log(value);

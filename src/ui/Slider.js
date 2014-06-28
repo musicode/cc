@@ -22,11 +22,19 @@ define(function (require, exports, module) {
      * @property {number=} options.step 间隔，默认是 1
      * @property {boolean=} options.scrollable 是否可以滚动触发，如果设为 true，需要设置 step
      * @property {string=} options.direction 方向，可选值有 horizontal 和 vertical，默认是 horizontal
-     * @property {string=} options.template
-     * @property {string=} options.trackSelector
-     * @property {string=} options.thumbSelector
-     * @property {string=} options.draggingClass 滑块正在拖拽时的 class
-     * @property {string=} options.hoverClass 鼠标悬浮滑道时的 class
+     * @property {string=} options.template 模板，如果 element 结构已完整，可不传模板
+     *
+     * @property {Object=} options.selector 选择器
+     * @property {string=} options.selector.track 滑道选择器
+     * @property {string=} options.selector.thumb 滑块选择器
+     *
+     * @property {Object=} options.className 样式
+     * @property {string=} options.className.dragging 滑块正在拖拽时的 class
+     * @property {string=} options.className.hover 鼠标悬浮滑道时的 class
+     *
+     * @property {Object=} options.animation 动画
+     * @property {Function=} options.animation.to 通过点击直接滑到某个位置的动画（先占位，还没实现..）
+     *
      * @property {Function=} options.onChange 当 value 变化时触发
      * @property {Function=} options.onBeforeDrag
      * @property {Function=} options.onAfterDrag
@@ -47,15 +55,18 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
+            var template = me.template;
 
-            element.html(me.template);
+            if (template) {
+                element.html(template);
+            }
 
-            var trackSelector = me.trackSelector;
-            var trackElement = trackSelector
-                             ? element.find(trackSelector)
+            var selector = me.selector;
+            var trackElement = selector.track
+                             ? element.find(selector.track)
                              : element;
 
-            var thumbElement = element.find(me.thumbSelector);
+            var thumbElement = element.find(selector.thumb);
 
             var cache = me.cache
                       = $.extend(
@@ -78,7 +89,7 @@ define(function (require, exports, module) {
 
             trackElement.on('click' + namespace, me, clickTrack);
 
-            if (me.hoverClass) {
+            if (me.className.hover) {
                 trackElement.on('mouseenter' + namespace, me, enterTrack)
                             .on('mouseleave' + namespace, me, leaveTrack);
             }
@@ -125,6 +136,9 @@ define(function (require, exports, module) {
             }
 
             var maxPx = cache.draggable.getRectange(true)[ cache.dimension ];
+            console.log('max: ' + maxPx)
+            console.log(me.element[0]);
+
             if (byUnit) {
                 var count = (max - min) / me.step;
                 // 保留 2 位小数足够了
@@ -257,7 +271,7 @@ define(function (require, exports, module) {
                 offset = thumb[ cache.outerDimension ]()
                        - thumb[ dimension ]();
 
-                thumb[ dimension ]( data.thumb - offset);
+                thumb[ dimension ](data.thumb - offset);
             }
         },
 
@@ -293,10 +307,13 @@ define(function (require, exports, module) {
         step: 1,
         scrollable: false,
         direction: 'horizontal',
+        template: '<i class="slider-thumb"></i>',
 
-        thumbSelector: '.slider-thumb',
-        template: '<i class="slider-thumb"></i>'
-
+        className: { },
+        animation: { },
+        selector: {
+            thumb: '.slider-thumb'
+        }
     };
 
     /**
@@ -341,7 +358,9 @@ define(function (require, exports, module) {
     function createDraggable(slider, options) {
 
         var cache = slider.cache;
-        var draggingClass = slider.draggingClass;
+        var className = slider.className;
+
+        var draggingClass = className.dragging
 
         options.onDragStart = function () {
 
@@ -444,7 +463,7 @@ define(function (require, exports, module) {
     function enterTrack(e) {
         var slider = e.data;
         slider.cache.leave = false;
-        slider.element.addClass(slider.hoverClass);
+        slider.element.addClass(slider.className.hover);
     }
 
     /**
@@ -457,14 +476,14 @@ define(function (require, exports, module) {
 
         var slider = e.data;
         var cache = slider.cache;
-        var hoverClass = slider.hoverClass;
+        var className = slider.className;
 
         cache.leave = true;
 
         if (!cache.dragging
-            || hoverClass !== slider.draggingClass
+            || className.hover !== className.dragging
         ) {
-            slider.element.removeClass(hoverClass);
+            slider.element.removeClass(className.hover);
         }
     }
 

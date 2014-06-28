@@ -7,18 +7,29 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
+     * 满意度：★★★★☆
+     */
+
+    /**
      * 标签页
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 主元素
-     * @property {string} options.navSelector 导航项的选择器，如 .nav-item
-     * @property {string} options.contentSelector 内容区的选择器，如 .tab-panel
-     * @property {number=} options.activeIndex 当前选中的索引
-     * @property {string} options.navActiveClass 导航项选中状态的class
-     * @property {string=} options.contentActiveClass 内容区选中状态的 class，如果未设置，直接 show/hide
+     * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 className.navActive 算出索引
+     *
+     * @property {Object} options.selector 选择器
+     * @property {string} options.selector.nav 导航项的选择器，如 .nav-item
+     * @property {string} options.selector.content 内容区的选择器，如 .tab-panel
+     *
+     * @property {Object} options.className 样式
+     * @property {string} options.className.navActive 导航项选中状态的 class
+     * @property {string=} options.className.contentActive 内容区选中状态的 class，如果未设置，直接 show/hide
+     *
+     * @property {Object=} options.animation 动画
+     * @property {Function=} options.animation.switchContent 切换内容的动画，如果 contentActive 不能满足需求，可自行实现
+     *
      * @property {Function=} options.onChange 切换 tab 触发
-     * @argument {Object} options.onChange.data
      */
     function Tab(options) {
         $.extend(this, Tab.defaultOptions, options);
@@ -36,97 +47,92 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
+            var navSelector = me.selector.nav;
 
-            element.on('click' + namespace, me.navSelector, me, clickNav);
+            // 这里最好检测一下 navActive 和 index 是不是同一个导航项
+            // 避免某种 2b 情况出现后，不知道哪里出了问题
 
-            var index = me.activeIndex;
+            var passIndex = me.index;
+            var realIndex = element.find(navSelector)
+                                   .index(element.find('.' + me.className.navActive));
 
-            if (!$.isNumeric(index)) {
-
-                index = element.find(me.navSelector)
-                               .index(element.find('.' + me.navActiveClass));
-
-                if (!$.isNumeric(index)) {
-                    return;
-                }
+            if (!$.isNumeric(passIndex)) {
+                passIndex = realIndex;
+            }
+            else if ($.isNumeric(realIndex) && passIndex !== realIndex) {
+                throw new Error('[Tab] index is conflict.');
             }
 
-            me.activate(index, true);
+            element.on('click' + namespace, navSelector, me, clickNav);
+            me.to(passIndex, true);
         },
 
         /**
          * 激活 tab
          *
          * @param {number} index
-         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
+         * @param {boolean=} silence 是否不触发 onChange 事件，默认为 false
          */
-        activate: function (index, silence) {
+        to: function (index, silence) {
 
             var me = this;
             var element = me.element;
+
+            var selector = me.selector;
 
             // 先处理 nav 再处理 content
             // 因为 nav 的数量是稳定的
             // content 的数量可以和 nav 一致，或者只有一个（切换时刷新，而非隐藏显示）
 
-            var navs = element.find(me.navSelector);
+            var navs = element.find(selector.nav);
             var maxIndex = navs.length - 1;
 
             if (index < 0 || index > maxIndex) {
                 return;
             }
 
-            var oldIndex = me.activeIndex;
-            var navActiveClass = me.navActiveClass;
+            var oldIndex = me.index;
+            var className = me.className;
+
+            var activeClass = className.navActive;
 
             // 切换 nav
-            var validOldIndex = oldIndex >= 0 && oldIndex <= maxIndex;
-            if (validOldIndex) {
-                navs.eq(oldIndex).removeClass(navActiveClass);
-            }
+            navs.eq(oldIndex).removeClass(activeClass);
+            navs.eq(index).addClass(activeClass);
 
-            var navItem = navs.eq(index);
-            navItem.addClass(navActiveClass);
-
-            // 切换 content
-            var contents = element.find(me.contentSelector);
-            var contentItem;
-
-            if (contents.length !== 1) {
-
-                var contentActiveClass = me.contentActiveClass;
-
-                if (validOldIndex) {
-                    contentItem = contents.eq(oldIndex);
-                    if (contentActiveClass) {
-                        contentItem.removeClass(contentActiveClass);
+            // 切换 content，优先使用动画
+            var switchContent = me.animation.switchContent;
+            if ($.isFunction(switchContent)) {
+                switchContent.call(
+                    me,
+                    {
+                        oldIndex: oldIndex,
+                        newIndex: index
                     }
-                    else {
-                        contentItem.hide();
-                    }
-                }
-
-                contentItem = contents.eq(index);
-
-                if (contentActiveClass) {
-                    contentItem.addClass(contentActiveClass);
-                }
-                else {
-                    contentItem.show();
-                }
+                );
             }
             else {
-                contentItem = contents.eq(0);
+
+                var contents = element.find(selector.content);
+
+                // 单个 content 表示不需要切换，每次都是刷新这块内容区
+                if (contents.length !== 1) {
+                    activeClass = className.contentActive;
+                    if (activeClass) {
+                        contents.eq(oldIndex).removeClass(activeClass);
+                        contents.eq(index).addClass(activeClass);
+                    }
+                    else {
+                        contents.eq(oldIndex).hide();
+                        contents.eq(index).show();
+                    }
+                }
             }
 
-            me.activeIndex = index;
+            me.index = index;
 
             if (!silence && $.isFunction(me.onChange)) {
-                me.onChange({
-                    index: index,
-                    nav: navItem,
-                    content: contentItem
-                });
+                me.onChange({ index: index });
             }
         },
 
@@ -147,7 +153,11 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Tab.defaultOptions = {
-        navActiveClass: 'tab-active'
+        selector: { },
+        animation: { },
+        className: {
+            navActive: 'tab-active'
+        }
     };
 
     /**
@@ -170,10 +180,10 @@ define(function (require, exports, module) {
         var target = $(e.currentTarget);
 
         var index = tab.element
-                       .find(tab.navSelector)
+                       .find(tab.selector.nav)
                        .index(target);
 
-        tab.activate(index);
+        tab.to(index);
 
         // 防止 target 是 <a>
         return false;

@@ -63,23 +63,34 @@
             function (Carousel) {
 
                 new Carousel({
+
                     element: $('#carousel'),
-                    indicatorSelector: '.carousel-indicators li',
-                    prevSelector: '[data-slide="prev"]',
-                    nextSelector: '[data-slide="next"]',
-                    slideSelector: '.carousel-inner .item',
-                    indexAttr: 'data-slide-to',
-                    indicatorActiveClass: 'active',
-                    transition: function (data) {
 
-                        var from = data.fromIndex;
-                        var to = data.toIndex;
+                    trigger: 'click',
 
-                        var slides = this.element.find(this.slideSelector);
-                        slides.eq(from).removeClass('active');
-                        slides.eq(to).addClass('active');
-
+                    selector: {
+                        indicator: '.carousel-indicators li',
+                        prev: '[data-slide="prev"]',
+                        next: '[data-slide="next"]',
+                        slide: '.carousel-inner .item'
                     },
+
+                    attribute: {
+                        index: 'data-slide-to'
+                    },
+
+                    className: {
+                        indicatorActive: 'active',
+                        slideActive: 'active'
+                    },
+
+                    animation: {
+                        transition:  function (data) {
+                            var from = data.fromIndex;
+                            var to = data.toIndex;
+                        }
+                    },
+
                     onChange: function (data) {
                         console.log(data);
                     }

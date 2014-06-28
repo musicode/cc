@@ -14,7 +14,6 @@ define(function (require, exports, module) {
      * 1. 计算 视窗高度 / 内容高度，用这个比值渲染滚动滑块
      * 2. 计算 内容大小 / 滚动条大小，算出滑块每滚动 1px，内容元素滚动多少
      *
-     * 其中涉及的兼容问题都交给 Draggable 和 Wheel 解决
      */
 
     'use strict';
@@ -28,20 +27,32 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @property {Object} options
+     *
      * @property {jQuery} options.element 滚动条元素
      * @property {jQuery} options.target 滚动目标
+     *
      * @property {number=} options.pos 面板当前滚动的位置
      * @property {number=} options.step 滑动滚轮产生的单位距离
      * @property {boolean=} options.scrollByBar 是否由滚动条带动滚动元素，默认为 true
-     * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
-     * @property {number=} options.minSize 滚动条的最小大小，避免过小无法操作
-     * @property {string=} options.draggingClass 拖拽滑块时的 class
-     * @property {string=} options.hoverClass 鼠标悬浮于滚动条时的 class
      * @property {boolean=} options.autoHide 是否开启自动隐藏
-     * @property {Function=} options.show 显示滚动条的方式，可自定义显示动画
-     * @property {Function=} options.hide 隐藏滚动条的方式，可自定义隐藏动画
-     * @property {string=} options.template
-     * @property {string=} options.thumbSelector 从 template 选中滑块的选择器
+     *
+     * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
+     * @property {number=} options.minWidth 滚动条的最小宽度，当 direction 为 horizontal 时生效
+     * @property {number=} options.minHeight 滚动条的最小高度，当 direction 为 vertical 时生效
+     *
+     * @property {Object=} options.selector 选择器
+     * @property {string=} options.selector.thumb 从 template 选中滑块的选择器
+     *
+     * @property {Object=} options.className 样式
+     * @property {string=} options.className.dragging 拖拽滑块时的 class
+     * @property {string=} options.className.hover 鼠标悬浮于滚动条时的 class
+     *
+     * @property {Object=} options.animation 动画
+     * @property {Function=} options.animation.show 显示滚动条的方式，可自定义显示动画
+     * @property {Function=} options.animation.hide 隐藏滚动条的方式，可自定义隐藏动画
+     *
+     * @property {string=} options.template 滚动条的模板
+     *
      * @property {Function=} options.onScroll
      * @argument {number} options.onScroll.pos
      */
@@ -121,8 +132,9 @@ define(function (require, exports, module) {
 
                 // 计算滑块大小
                 var trackSize = slider.getSize().track;
+
                 slider.setSize({
-                    thumb: Math.max(ratio * trackSize, me.minSize)
+                    thumb: Math.max(ratio * trackSize, me[cache.min] || 0)
                 });
 
                 var factor = cache.factor
@@ -150,6 +162,38 @@ define(function (require, exports, module) {
             }
             else {
                 me.hide();
+            }
+        },
+
+        /**
+         * 显示滚动条
+         */
+        show: function () {
+
+            var me = this;
+            var animation = me.animation;
+
+            if (animation && $.isFunction(animation.show)) {
+                animation.show.call(me);
+            }
+            else {
+                me.element.show();
+            }
+        },
+
+        /**
+         * 隐藏滚动条
+         */
+        hide: function () {
+
+            var me = this;
+            var animation = me.animation;
+
+            if (animation && $.isFunction(animation.hide)) {
+                animation.hide.call(me);
+            }
+            else {
+                me.element.hide();
             }
         },
 
@@ -206,18 +250,16 @@ define(function (require, exports, module) {
      */
     ScrollBar.defaultOptions = {
         step: 10,
-        minSize: 5,
         autoHide: false,
         scrollByBar: true,
         direction: 'vertical',
-        thumbSelector: '.scroll-thumb',
         template: '<i class="scroll-thumb"></i>',
-        show: function () {
-            this.element.fadeIn(200);
+
+        selector: {
+            thumb: '.scroll-thumb'
         },
-        hide: function () {
-            this.element.fadeOut(200);
-        }
+        animation: { },
+        className: { }
     };
 
     /**
@@ -236,6 +278,7 @@ define(function (require, exports, module) {
      */
     var directionConf = {
         horizontal: {
+            min: 'minWidth',
             scroll: 'scrollLeft',
             getViewportSize: function (element) {
                 return element.innerWidth();
@@ -245,6 +288,7 @@ define(function (require, exports, module) {
             }
         },
         vertical: {
+            min: 'minHeight',
             scroll: 'scrollTop',
             getViewportSize: function (element) {
                 return element.innerHeight();
@@ -317,7 +361,7 @@ define(function (require, exports, module) {
 
         scrollBar.pos = pos;
 
-        if (typeof scrollBar.onScroll === 'function') {
+        if ($.isFunction(scrollBar.onScroll)) {
             scrollBar.onScroll(pos);
         }
     }
@@ -330,6 +374,7 @@ define(function (require, exports, module) {
      * @return {Slider}
      */
     function createSlider(scrollBar) {
+
         return new Slider({
 
             element: scrollBar.element,
@@ -337,9 +382,9 @@ define(function (require, exports, module) {
             step: scrollBar.step,
             scrollable: true,
 
-            hoverClass: scrollBar.hoverClass,
-            draggingClass: scrollBar.draggingClass,
-            thumbSelector: scrollBar.thumbSelector,
+            className: scrollBar.className,
+            selector: scrollBar.selector,
+
             template: scrollBar.template,
 
             onBeforeDrag: function () {

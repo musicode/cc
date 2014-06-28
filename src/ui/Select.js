@@ -13,8 +13,9 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 如果需要容器包着 button 和 menu, 可以设置主元素
+     * @property {jQuery=} options.element 如果需要容器包着 button 和 menu, 可以设置主元素
      *                                    openClass 会优先作用于它，否则作用于 button
+     *
      * @property {jQuery} options.button 点击触发下拉菜单显示的元素
      * @property {jQuery} options.menu 下拉菜单元素
      * @property {string=} options.value 当前选中的值
@@ -39,9 +40,9 @@ define(function (require, exports, module) {
      * @property {string} options.onChange.data.value
      *
      * @property {Function=} options.setText 选中菜单项后设置 button 文本的方法
-     * @argument {Object} options.onChange.data
-     * @property {string} options.onChange.data.text
-     * @property {string} options.onChange.data.value
+     * @argument {Object} options.setText.data
+     * @property {string} options.setText.data.text
+     * @property {string} options.setText.data.value
      *
      * @property {Function=} options.onClickItem 如果没有使用 valueAttr，而是想要完全自定义选中逻辑，可配置此方法
      */
@@ -63,13 +64,6 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var valueAttr = me.valueAttr;
-            var itemSelector = me.itemSelector;
-            if (!itemSelector) {
-                itemSelector = me.itemSelector
-                             = '[' + valueAttr +']';
-            }
-
             me.cache = {
                 popup: createPopup(me)
             };
@@ -77,6 +71,8 @@ define(function (require, exports, module) {
             var menu = me.menu;
 
             var value = me.value;
+            var valueAttr = me.valueAttr;
+
             if (value == null) {
                 value = menu.find('.' + me.itemActiveClass)
                             .attr(valueAttr);
@@ -86,7 +82,13 @@ define(function (require, exports, module) {
                 me.setValue(value, true);
             }
 
-            menu.on('click', itemSelector, me, clickItem);
+            var itemSelector = me.itemSelector;
+            if (!itemSelector) {
+                itemSelector = me.itemSelector
+                             = '[' + valueAttr +']';
+            }
+
+            menu.on('click' + namespace, itemSelector, me, clickItem);
         },
 
         /**
@@ -125,11 +127,11 @@ define(function (require, exports, module) {
                     text: target.attr(me.textAttr)
                 };
 
-                if (typeof data.text !== 'string') {
+                if ($.type(data.text) !== 'string') {
                     data.text = target.html();
                 }
 
-                if (typeof me.setText === 'function') {
+                if ($.isFunction(me.setText)) {
                     me.setText(data);
                 }
 
@@ -160,7 +162,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.menu.off('click', clickItem);
+            me.menu.off(namespace);
             me.cache.popup.dispose();
 
             me.cache =
@@ -182,6 +184,14 @@ define(function (require, exports, module) {
         openClass: 'select-open',
         animation: { }
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_ui_select';
 
     /**
      * 创建 Popup 实例

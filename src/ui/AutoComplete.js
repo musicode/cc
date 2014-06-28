@@ -8,7 +8,6 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
-    var template = require('../function/template');
 
     /**
      * [TODO] Input 支持 scope
@@ -22,27 +21,33 @@ define(function (require, exports, module) {
      * @param {jQuery} options.input 输入框元素
      * @param {jQuery} options.menu 补全菜单
      *
+     * @param {number=} options.wait 长按上下键遍历的等待间隔时间
+     * @param {boolean=} options.includeInput 上下遍历是否包含输入框
+     *
      * @property {Object=} options.animation
      * @property {Function=} options.animation.open 展开动画
      * @property {Function=} options.animation.close 关闭动画
      *
-     * @param {Function} options.renderMenu 如果是简单需求，配置 options.itemTemplate 即可
-     * @param {string=} options.itemTemplate 菜单项模板
-     * @param {string} options.itemSelector 可上下键遍历的菜单项元素选择器
-     * @param {string} options.itemHoverClass 菜单项 hover 时的 className
-     * @param {string} options.itemActiveClass 菜单项 active 时的 className
+     * @property {Object=} options.template
+     * @property {string=} options.template.item 菜单项模板，简单列表用这个够了
+     * @property {string=} options.template.menu 菜单模板，如果不是简单的列表，需配置此项
+     * @property {Function=} options.template.render 配置模板引擎的 render 方法
      *
-     * @param {Function=} options.onItemActive 菜单项 active 时的事件处理函数
-     * @argument {Object} options.onItemActive.data 用 options.parseItem 解析 active 菜单项获得的数据
+     * @property {Object=} options.selector
+     * @property {string} options.selector.item 可上下键遍历的菜单项元素选择器
+     *
+     * @property {Object=} options.className
+     * @property {string=} options.className.itemHover 菜单项 hover 时的 className
+     * @property {string=} options.className.itemActive 菜单项 active 时的 className
      *
      * @param {Function=} options.parseItem 获得菜单项数据，返回格式为 { text: '' }
-     *
-     * @param {number=} options.wait 长按上下键遍历的等待间隔时间
-     * @param {boolean=} options.includeInput 上下遍历是否包含输入框
      *
      * @param {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
+     *
+     * @param {Function=} options.onItemActive 菜单项 active 时的事件处理函数
+     * @argument {Object} options.onItemActive.data 用 options.parseItem 解析 active 菜单项获得的数据
      *
      * @param {Function} options.onSelect 用户点击选中某个菜单项触发
      * @param {Function} options.onEnter 用户按下回车触发
@@ -74,12 +79,14 @@ define(function (require, exports, module) {
                 resetIndex: function () {
 
                     var elementItems = cache.elementItems;
+                    var className = me.className;
+
                     if (elementItems) {
                         if (cache.hoverIndex > cache.startIndex) {
-                            elementItems.eq(cache.hoverIndex).removeClass(me.itemHoverClass);
+                            elementItems.eq(cache.hoverIndex).removeClass(className.itemHover);
                         }
                         if (cache.activeIndex > cache.startIndex) {
-                            elementItems.eq(cache.activeIndex).removeClass(me.itemActiveClass);
+                            elementItems.eq(cache.activeIndex).removeClass(className.itemActive);
                         }
                     }
 
@@ -94,7 +101,7 @@ define(function (require, exports, module) {
             cache.input = createInput(me);
             cache.popup = createPopup(me);
 
-            var itemSelector = me.itemSelector;
+            var itemSelector = me.selector.item;
 
             me.menu.on('click' + namespace, itemSelector, me, clickItem)
                    .on('mouseenter' + namespace, itemSelector, me, enterItem)
@@ -149,10 +156,11 @@ define(function (require, exports, module) {
         wait: 60,
         includeInput: true,
         animation: { },
-
-        itemSelector: 'li',
-        itemHoverClass: 'item-hover',
-        itemActiveClass: 'item-active',
+        template: { },
+        className: { },
+        selector: {
+            item: 'li'        // 比较常用
+        },
 
         parseItem: function (item) {
             return {
@@ -185,6 +193,7 @@ define(function (require, exports, module) {
         var menu = autoComplete.menu;
         var cache = autoComplete.cache;
         var animation = autoComplete.animation;
+        var selector = autoComplete.selector;
 
         return new Popup({
             source: input,
@@ -209,7 +218,7 @@ define(function (require, exports, module) {
 
                 cache.resetIndex();
 
-                var elementItems = menu.find(autoComplete.itemSelector);
+                var elementItems = menu.find(selector.item);
                 var dataItems = elementItems.map(function (index, item) {
                     return autoComplete.parseItem(item);
                 });
@@ -286,7 +295,7 @@ define(function (require, exports, module) {
                 enter: function () {
                     var data = cache.activeData;
                     autoComplete.close();
-                    if (typeof autoComplete.onEnter === 'function') {
+                    if ($.isFunction(autoComplete.onEnter)) {
                         autoComplete.onEnter(data);
                     }
                 }
@@ -317,19 +326,25 @@ define(function (require, exports, module) {
                     cache.data[query] = data;
                 }
 
-                var itemTemplate = autoComplete.itemTemplate;
+                var menu = autoComplete.menu;
+                var template = autoComplete.template;
+                var render = template.render;
+
+                var itemTemplate = template.item;
                 if (itemTemplate) {
-                    autoComplete.menu.html(
+                    menu.html(
                         $.map(
                             data,
                             function (item) {
-                                return template(itemTemplate, item);
+                                return render(itemTemplate, item);
                             }
                         ).join('')
                     );
                 }
                 else {
-                    autoComplete.renderMenu(data);
+                    menu.html(
+                        render(template.menu, data)
+                    );
                 }
 
                 autoComplete.open();
@@ -367,7 +382,7 @@ define(function (require, exports, module) {
         activeItem(autoComplete, index);
         autoComplete.close();
 
-        if (typeof autoComplete.onSelect === 'function') {
+        if ($.isFunction(autoComplete.onSelect)) {
             autoComplete.onSelect(data);
         }
     }
@@ -422,14 +437,14 @@ define(function (require, exports, module) {
 
         cache.elementItems
              .eq(index)
-             .addClass(autoComplete.itemActiveClass);
+             .addClass(autoComplete.className.itemActive);
 
         cache.activeIndex = index;
 
         var data = cache.dataItems[index];
         cache.activeData = data;
 
-        if (typeof autoComplete.onItemActive === 'function') {
+        if ($.isFunction(autoComplete.onItemActive)) {
             autoComplete.onItemActive(data);
         }
     }
@@ -448,7 +463,7 @@ define(function (require, exports, module) {
         cache.resetIndex();
 
         var target = $(e.currentTarget);
-        target.addClass(autoComplete.itemHoverClass);
+        target.addClass(autoComplete.className.itemHover);
 
         cache.hoverIndex =
         cache.activeIndex = cache.elementItems.index(target);

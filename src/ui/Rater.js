@@ -16,10 +16,15 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 主元素
      * @property {number} options.value 当前星级
-     * @property {number} options.total 星星总数
-     * @property {string} options.onIcon 星星选中状态的图标 class
-     * @property {string} options.offIcon 星星未选中状态的图标 class
-     * @property {string} options.halfIcon 星星半选中状态的图标 class
+     * @property {number=} options.total 星星总数
+     * @property {number=} options.min 可选最小值，默认为 1
+     * @property {number=} options.max 可选最大值，默认和 total 相同
+     *
+     * @property {Object=} options.className
+     * @property {string=} options.className.on 星星选中状态的图标 class
+     * @property {string=} options.className.off 星星未选中状态的图标 class
+     * @property {string=} options.className.half 星星半选中状态的图标 class
+     *
      * @property {Object=} options.hints key 是星星对应的值，value 是提示文本，如下：
      *                                   {
      *                                       '1': '非常差',
@@ -36,10 +41,12 @@ define(function (require, exports, module) {
      * @example
      * var rater = new Rater({
      *     element: $('.rater'),
-     *     value: 2,                      // 当前选中 2 颗星
-     *     total: 5,                      // 总共有 5 颗星
-     *     onIcon: 'icon on',
-     *     offIcon: 'icon off',
+     *     value: 2,                        // 当前选中 2 颗星
+     *     total: 5,                        // 总共有 5 颗星
+     *     className: {
+     *         on: 'icon on',
+     *         off: 'icon off'
+     *     },
      *     onSelect: function (value) {
      *         console.log('select ' + value);
      *     }
@@ -62,17 +69,25 @@ define(function (require, exports, module) {
             var me = this;
             me.cache = { };
 
+            var total = me.total;
+
+            var max = me.max;
+            if (!$.isNumeric(max)) {
+                me.max = total;
+            }
+
             var html = '';
             var hints = me.hints;
+            var className = me.className;
 
             traverse(
                 me.value,
-                me.total,
-                function (index, className) {
+                total,
+                function (index, klass) {
 
                     index++;
 
-                    html += '<i class="'+ me[className] + '" data-value="' + index + '"';
+                    html += '<i class="'+ className[klass] + '" data-value="' + index + '"';
 
                     if (hints && hints[index]) {
                         html += ' title="' + hints[index] + '"';
@@ -86,12 +101,12 @@ define(function (require, exports, module) {
             element.html(html);
 
             if (!me.readOnly) {
-                element.on('mouseenter', 'i', me, previewValue)
-                       .on('mouseleave', 'i', me, restoreValue)
-                       .on('click', 'i', me, changeValue);
+                element.on('mouseenter' + namespace, 'i', me, previewValue)
+                       .on('mouseleave' + namespace, 'i', me, restoreValue)
+                       .on('click' + namespace, 'i', me, changeValue);
             }
 
-            if (typeof me.onSelect === 'function') {
+            if ($.isFunction(me.onSelect)) {
                 me.onSelect(me.value);
             }
         },
@@ -135,10 +150,7 @@ define(function (require, exports, module) {
             var me = this;
 
             if (!me.readOnly) {
-                me.element
-                  .off('mouseenter', previewValue)
-                  .off('mouseleave', restoreValue)
-                  .off('click', changeValue);
+                me.element.off(namespace);
             }
 
             me.element =
@@ -153,10 +165,18 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Rater.defaultOptions = {
+        min: 1,
         half: false,
         readOnly: false
     };
 
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_ui_rater';
 
     /**
      * 鼠标移入
@@ -173,26 +193,41 @@ define(function (require, exports, module) {
         if (isMouseEnter) {
             cache.leave = false;
         }
+        // 防止 debounce 在 mouseleave 之后执行最后一次
         else if (cache.leave) {
             return;
         }
 
         var target = $(e.target);
         var value = target.data('value');
+        var half = rater.half;
 
-        if (rater.half) {
-
+        if (half) {
             if (eventOffset(e).x / target.width() <= 0.5) {
                 value -= 0.5;
             }
+        }
 
-            if (isMouseEnter) {
-                target.on(
-                    'mousemove',
-                    rater,
-                    debounce(previewValue, 50)
-                );
-            }
+        var min = rater.min;
+        var max = rater.max;
+
+        if (value < min) {
+            value = min;
+        }
+        else if (value > max) {
+            value = max;
+        }
+
+        if (value === cache.value) {
+            return;
+        }
+
+        if (half && isMouseEnter) {
+            target.on(
+                'mousemove' + namespace,
+                rater,
+                debounce(previewValue, 50)
+            );
         }
 
         cache.value = value;
@@ -208,10 +243,14 @@ define(function (require, exports, module) {
      */
     function restoreValue(e) {
         var rater = e.data;
+        var cache = rater.cache;
+        cache.value = null;
+
         if (rater.half) {
-            rater.cache.leave = true;
-            $(e.target).off('mousemove');
+            cache.leave = true;
+            $(e.target).off(namespace);
         }
+
         refresh(rater, rater.value);
     }
 
@@ -235,13 +274,14 @@ define(function (require, exports, module) {
      */
     function refresh(rater, value) {
 
-        var elements = rater.element.find('i');
+        var items = rater.element.find('i');
+        var className = rater.className;
 
         traverse(
             value,
             rater.total,
-            function (index, className) {
-                elements[index].className = rater[className];
+            function (index, klass) {
+                items[index].className = className[klass];
             }
         );
     }
@@ -261,13 +301,13 @@ define(function (require, exports, module) {
             result = value - (i + 1);
 
             if (result >= 0) {
-                className = 'onIcon';
+                className = 'on';
             }
             else if (result <= -1) {
-                className = 'offIcon';
+                className = 'off';
             }
             else {
-                className = 'halfIcon';
+                className = 'half';
             }
 
             callback(i, className);

@@ -15,25 +15,31 @@ define(function (require, exports, module) {
      *
      * @property {number=} options.index 从第几个开始播放，默认是 0
      * @property {number=} options.wait 每次等待时间，默认 5000
+     * @property {string=} options.trigger 触发改变的方式，可选值有 over click， 默认是 over
      * @property {boolean=} options.auto 是否自动播放
      * @property {boolean=} options.cycle 是否循环，即在最后一个调用 next() 是否回到第一个
      * @property {boolean=} options.pauseable 是否鼠标停留在 slide 时暂停播放，默认为 true
      *
-     * @property {string=} options.prevSelector
-     * @property {string=} options.nextSelector
-     * @property {string=} options.indicatorSelector
-     * @property {string} options.slideSelector
+     * @property {Object} options.selector 选择器
+     * @property {string=} options.selector.prev
+     * @property {string=} options.selector.next
+     * @property {string=} options.selector.indicator
+     * @property {string} options.selector.slide
      *
-     * @property {string=} options.indicatorActiveClass
-     * @property {string=} options.trigger 触发 change 的方式，可选值有 over click， 默认是 over
-     * @property {string=} options.indexAttr indicator 元素存储索引的属性名称
+     * @property {Object=} options.className
+     * @property {string=} options.className.indicatorActive 转场时会为 indicator 切换这个 class
+     * @property {string=} options.className.slideActive 转场时会为 slide 切换这个 class
      *
-     * @property {Function} options.transition 转场动画函数
-     * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.data.toIndex
-     * @property {number} options.onChnage.data.fromIndex
+     * @property {Object} options.attribute
+     * @property {string} options.attribute.index indicator 元素存储索引的属性名称
      *
-     * @property {Function} options.onChange index 发生变化时触发
+     * @property {Object} options.animation
+     * @property {Function} options.animation.transition 转场动画函数
+     * @argument {Object} options.animation.transition.data
+     * @property {number} options.animation.transition.data.toIndex
+     * @property {number} options.animation.transition.data.fromIndex
+     *
+     * @property {Function=} options.onChange 索引发生变化时触发
      * @argument {Object} options.onChange.data
      * @property {number} options.onChange.data.toIndex
      * @property {number} options.onChnage.data.fromIndex
@@ -55,40 +61,32 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            var prevSelector = me.prevSelector;
+            var selector = me.selector;
+
+            var prevSelector = selector.prev;
             if (prevSelector) {
                 element.on('click' + namespace, prevSelector, $.proxy(me.prev, me));
             }
 
-            var nextSelector = me.nextSelector;
+            var nextSelector = selector.next;
             if (nextSelector) {
                 element.on('click' + namespace, nextSelector, $.proxy(me.next, me));
             }
 
-            var indicatorSelector = me.indicatorSelector;
-            var indicatorActiveClass = me.indicatorActiveClass;
-
+            var indicatorSelector = selector.indicator;
             if (indicatorSelector) {
-
-                var type = me.trigger;
-                var selector = indicatorSelector
-                             + (
-                                  indicatorActiveClass
-                                ? (':not(.' + indicatorActiveClass +')')
-                                : ''
-                            );
-
-                if (type === 'click') {
-                    element.on('click' + namespace, selector, me, toSlide);
+                if (me.trigger === 'click') {
+                    element.on('click' + namespace, indicatorSelector, me, toSlide);
                 }
-                else if (type === 'over') {
-                    element.on('mouseenter' + namespace, selector, me, enterIndicator);
-                    element.on('mouseleave' + namespace, selector, me, leaveIndicator);
+                else {
+                    element.on('mouseenter' + namespace, indicatorSelector, me, enterIndicator);
+                    element.on('mouseleave' + namespace, indicatorSelector, me, leaveIndicator);
                 }
             }
 
             var auto = me.auto;
-            var slides = element.find(me.slideSelector);
+            var slides = element.find(selector.slide);
+
             if (auto && me.pauseable) {
                 slides.on('mouseenter' + namespace, $.proxy(me.pause, me));
                 slides.on('mouseleave' + namespace, $.proxy(me.play, me));
@@ -100,6 +98,7 @@ define(function (require, exports, module) {
             };
 
             var index = me.index;
+            var indicatorActiveClass = me.className.indicatorActive;
 
             // 如果没有设置 index
             // 需要从 indicator 是否有 activeClass 来获取 index
@@ -201,15 +200,28 @@ define(function (require, exports, module) {
                     toIndex: index
                 };
 
-                me.transition(data);
+                var transition = me.animation.transition;
+                if ($.isFunction(transition)) {
+                    transition.call(me, data);
+                }
 
-                var indicatorSelector = me.indicatorSelector;
-                var indicatorActiveClass = me.indicatorActiveClass;
+                var element = me.element;
+                var selector = me.selector;
+                var className = me.className;
 
-                if (indicatorSelector && indicatorActiveClass) {
-                    var indicators = me.element.find(indicatorSelector);
-                    indicators.eq(fromIndex).removeClass(indicatorActiveClass);
-                    indicators.eq(index).addClass(indicatorActiveClass);
+                var indicatorSelector = selector.indicator;
+                var activeClass = className.indicatorActive;
+                if (indicatorSelector && activeClass) {
+                    var indicators = element.find(indicatorSelector);
+                    indicators.eq(fromIndex).removeClass(activeClass);
+                    indicators.eq(index).addClass(activeClass);
+                }
+
+                activeClass = className.slideActive;
+                if (activeClass) {
+                    var slides = cache.slides;
+                    slides.eq(fromIndex).removeClass(activeClass);
+                    slides.eq(index).addClass(activeClass);
                 }
 
                 if ($.isFunction(me.onChange)) {
@@ -284,7 +296,11 @@ define(function (require, exports, module) {
         auto: true,
         cycle: true,
         pauseable: true,
-        trigger: 'over'
+        trigger: 'over',
+        selector: { },
+        animation: { },
+        attribute: { },
+        className: { }
     };
 
     /**
@@ -303,7 +319,7 @@ define(function (require, exports, module) {
      */
     function toSlide(e) {
         var carousel = e.data;
-        var index = $(e.currentTarget).attr(carousel.indexAttr);
+        var index = $(e.currentTarget).attr(carousel.attribute.index);
         carousel.to(Number(index));
         return false;
     }
@@ -318,7 +334,7 @@ define(function (require, exports, module) {
     function enterIndicator(e) {
 
         var carousel = e.data;
-        var index = $(e.currentTarget).attr(carousel.indexAttr);
+        var index = $(e.currentTarget).attr(carousel.attribute.index);
 
         carousel.cache.changeTimer
         = setTimeout(

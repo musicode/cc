@@ -42,7 +42,7 @@
                             this.menu.slideDown();
                         },
                         close: function () {
-                            this.menu.hide(300);
+                            this.menu.slideUp();
                         }
                     },
                     setText: function (data) {
@@ -51,7 +51,7 @@
                     onChange: function (data) {
                         //this.dispose();
                     },
-                    onClickItem1: function (e) {
+                    onClickItem: function (e) {
                         this.setText({
                             text: $(e.currentTarget).html()
                         });

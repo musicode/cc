@@ -29,6 +29,6 @@ define(function (require, exports, module) {
     }
 
     return supportAjaxUpload()
-        ? require('../helper/AjaxUploader')
-        : require('../helper/FlashUploader');
+         ? require('../helper/AjaxUploader')
+         : require('../helper/FlashUploader');
 });

@@ -62,9 +62,12 @@
 
         require(
 
-            [ 'cobble/ui/AutoComplete' ],
+            [
+                'cobble/ui/AutoComplete',
+                'cobble/util/etpl'
+            ],
 
-            function (AutoComplete) {
+            function (AutoComplete, etpl) {
 
                 var input = $('input');
                 var menu = $('#menu');
@@ -72,11 +75,23 @@
                 new AutoComplete({
                     input: input,
                     menu: menu,
-                    itemTemplate: '<li data-url="">${word}</li>',
+                    template: {
+                        item: '<li data-url="">${word}</li>',
+                        render: function (tpl, data) {
+                            return etpl.compile(tpl)(data);
+                        }
+                    },
+                    selector: {
+                        item: 'li'
+                    },
                     animation: {
                         close: function () {
                             this.menu.slideUp();
                         }
+                    },
+                    className: {
+                        itemHover: 'item-hover',
+                        itemActive: 'item-active'
                     },
                     onEnter: function (data) {
                         console.log('enter', data);

@@ -83,9 +83,9 @@ define(function (require, exports, module) {
      * @property {string=} options.template 提示元素的模版，可配合使用 placementPrefix, update 实现特殊需求
      * @property {Function} options.update 更新 tip 元素的内容
      *
-     * @property {Function=} options.onBeforeShow
+     * @property {Function=} options.onBeforeShow 返回 false 可阻止 tip 显示
      * @property {Function=} options.onAfterShow
-     * @property {Function=} options.onBeforeHide
+     * @property {Function=} options.onBeforeHide 返回 false 可阻止 tip 隐藏
      * @property {Function=} options.onAfterHide
      */
     function Tooltip(options) {

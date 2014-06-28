@@ -6,7 +6,7 @@
     <style>
 
         .slider-track {
-            background: #EEE;
+            background: red;
             position: relative;
         }
         .slider-thumb {
@@ -71,8 +71,10 @@
 
                 var horizontalSlider = new Slider({
                     element: $('#horizontal-slider'),
-                    draggingClass: 'slider-active',
-                    hoverClass: 'slider-active',
+                    className: {
+                        dragging: 'slider-active',
+                        hover: 'slider-active'
+                    },
                     onChange: function (value) {
                         console.log(this.value);
                     },

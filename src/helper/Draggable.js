@@ -37,10 +37,13 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 需要拖拽的元素
      * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
-     * @property {(string|Array.<string>)=} options.handle 触发拖拽的区域 (css 选择器)
-     * @property {(string|Array.<string>)=} options.cancel 不触发拖拽的区域 (css 选择器)
      * @property {string=} options.axis 限制方向，可选值包括 'x' 'y'
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
+     *
+     * @property {Object} options.selector 选择器
+     * @property {string|Array.<string>)=} options.selector.handle 触发拖拽的区域
+     * @property {string|Array.<string>)=} options.selector.cancel 不触发拖拽的区域
+     *
      * @property {function(Object)=} options.onDragStart 开始拖拽
      * @property {function(Object)=} options.onDrag 正在拖拽
      * @property {function(Object)=} options.onDragEnd 结束拖拽
@@ -148,6 +151,8 @@ define(function (require, exports, module) {
 
         container: page(),
 
+        selector: { },
+
         rect: function () {
 
             var me = this;
@@ -184,14 +189,16 @@ define(function (require, exports, module) {
         var cache = draggable.cache;
         var element = draggable.element;
 
+        var selector = draggable.selector;
+
         // 点击在 cancel 区域需要过滤掉
-        var cancel = draggable.cancel;
+        var cancel = selector.cancel;
         if (cancel && inRegion(target, element, cancel)) {
             return;
         }
 
         // 点击在 handle 区域之外需要过滤掉
-        var handle = draggable.handle;
+        var handle = selector.handle;
         if (handle && !inRegion(target, element, handle)) {
             return;
         }
@@ -246,7 +253,7 @@ define(function (require, exports, module) {
         doc.on('mousemove', cache.onDrag = onDrag(draggable));
         doc.on('mouseup', cache.onDragEnd = onDragEnd(draggable));
 
-        if (typeof draggable.onDragStart === 'function') {
+        if ($.isFunction(draggable.onDragStart)) {
             draggable.onDragStart(point);
         }
     }
@@ -288,7 +295,7 @@ define(function (require, exports, module) {
                 draggable.element.css(point);
             }
 
-            if (typeof draggable.onDrag === 'function') {
+            if ($.isFunction(draggable.onDrag)) {
                 draggable.onDrag(point);
             }
         };
@@ -316,7 +323,7 @@ define(function (require, exports, module) {
             enableSelection();
 
             if (cache.dragging) {
-                if (typeof draggable.onDragEnd === 'function') {
+                if ($.isFunction(draggable.onDragEnd)) {
                     draggable.onDragEnd(cache.point);
                 }
             }
@@ -366,7 +373,7 @@ define(function (require, exports, module) {
 
         var result = false;
 
-        if (typeof selector === 'string') {
+        if ($.type(selector) === 'string') {
             selector = [ selector ];
         }
 

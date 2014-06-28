@@ -6,8 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var template = require('../function/template');
-
     /**
      * 分页
      *
@@ -16,19 +14,21 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element
      * @property {number} options.page 当前页码
      * @property {number} options.total 总页数
-     * @property {number} options.first 起始页码，默认是 1
+     * @property {number=} options.first 起始页码，默认是 1
      *
      * @property {number} options.count 中间显示的数量
-     * @property {number} options.startCount ... 前面的数量
-     * @property {number} options.endCount ... 后面的数量
+     * @property {number=} options.startCount 省略号前面的数量，默认是 0
+     * @property {number=} options.endCount 省略号后面的数量，默认是 0
      *
      * @property {string=} options.pageAttr 存放页码的属性
+     *                                      点击可翻页的元素都要加上 pageAttr，包括 上一页/下一页
      *
-     * @property {string=} options.pageTemplate
-     * @property {string=} options.prevTemplate
-     * @property {string=} options.nextTemplate
-     * @property {string=} options.ellipsisTemplate
-     * @property {string=} options.selectedTemplate
+     * @property {Object=} options.template 各种模板
+     * @property {string=} options.template.page 页码模板
+     * @property {string=} options.template.prev 上一页模板
+     * @property {string=} options.template.next 下一页模板
+     * @property {string=} options.template.ellipsis 省略号模板
+     * @property {string=} options.template.active 页码选中状态的模板
      *
      * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
      *
@@ -49,8 +49,11 @@ define(function (require, exports, module) {
          * 初始化
          */
         init: function () {
+
             var me = this;
+
             me.render();
+
             me.element
               .on(
                 'click' + namespace,
@@ -128,7 +131,7 @@ define(function (require, exports, module) {
                 }
 
                 // 选中页码
-                html += renderPages(me.selectedTemplate, page);
+                html += renderPages(me.active, page);
 
                 if (end > page) {
                     html += renderPages(pageTemplate, [ page + 1, end ], offset);
@@ -216,14 +219,19 @@ define(function (require, exports, module) {
         first: 1,
         autoHide: true,
         pageAttr: 'data-page',
+        startCount: 0,
+        endCount: 0,
 
-        // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
-        // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
-        pageTemplate: '<a href="#" data-page="${value}" onclick="return false;">${text}</a>',
-        prevTemplate: '<a class="pager-prev" href="#" data-page="${value}" onclick="return false;">上一页</a>',
-        nextTemplate: '<a class="pager-next" href="#" data-page="${value}" onclick="return false;">下一页</a>',
-        ellipsisTemplate: '<a class="pager-ellipsis">...</a>',
-        selectedTemplate: '<a class="pager-selected" href="#" onclick="return false;">${text}</a>'
+        template: {
+            // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
+            // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
+            page: '<a href="#" data-page="${value}" onclick="return false;">${text}</a>',
+
+            prev: '<a class="pager-prev" href="#" data-page="${value}" onclick="return false;">上一页</a>',
+            next: '<a class="pager-next" href="#" data-page="${value}" onclick="return false;">下一页</a>',
+            ellipsis: '<a class="pager-ellipsis">...</a>',
+            active: '<a class="pager-selected" href="#" onclick="return false;">${text}</a>'
+        }
 
     };
 
