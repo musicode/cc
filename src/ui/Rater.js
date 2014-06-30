@@ -19,13 +19,15 @@ define(function (require, exports, module) {
      * @property {number=} options.total 星星总数
      * @property {number=} options.min 可选最小值，默认为 1
      * @property {number=} options.max 可选最大值，默认和 total 相同
+     * @property {boolean=} options.half 是否允许半选中
+     * @property {boolean=} options.readOnly 是否只读
      *
      * @property {Object=} options.className
      * @property {string=} options.className.on 星星选中状态的图标 class
      * @property {string=} options.className.off 星星未选中状态的图标 class
      * @property {string=} options.className.half 星星半选中状态的图标 class
      *
-     * @property {Object=} options.hints key 是星星对应的值，value 是提示文本，如下：
+     * @property {Object=} options.hint key 是星星对应的值，value 是提示文本，如下：
      *                                   {
      *                                       '1': '非常差',
      *                                       '2': '差',
@@ -35,9 +37,7 @@ define(function (require, exports, module) {
      *                                   }
      *                                   如果允许半选中，不可用此配置
      *
-     * @property {boolean=} options.half 是否允许半选中
-     * @property {boolean=} options.readOnly 是否只读
-     * @property {Function=} options.onSelect 选中星星触发
+     * @property {Function=} options.onChange 选中星星触发
      * @example
      * var rater = new Rater({
      *     element: $('.rater'),
@@ -47,7 +47,7 @@ define(function (require, exports, module) {
      *         on: 'icon on',
      *         off: 'icon off'
      *     },
-     *     onSelect: function (value) {
+     *     onChange: function (value) {
      *         console.log('select ' + value);
      *     }
      * });
@@ -77,7 +77,7 @@ define(function (require, exports, module) {
             }
 
             var html = '';
-            var hints = me.hints;
+            var hint = me.hint;
             var className = me.className;
 
             traverse(
@@ -89,8 +89,8 @@ define(function (require, exports, module) {
 
                     html += '<i class="'+ className[klass] + '" data-value="' + index + '"';
 
-                    if (hints && hints[index]) {
-                        html += ' title="' + hints[index] + '"';
+                    if (hint && hint[index]) {
+                        html += ' title="' + hint[index] + '"';
                     }
 
                     html += '></i>';
@@ -106,8 +106,8 @@ define(function (require, exports, module) {
                        .on('click' + namespace, 'i', me, changeValue);
             }
 
-            if ($.isFunction(me.onSelect)) {
-                me.onSelect(me.value);
+            if ($.isFunction(me.onChange)) {
+                me.onChange(me.value);
             }
         },
 
@@ -124,9 +124,10 @@ define(function (require, exports, module) {
          * 设置当前星级
          *
          * @param {number} value
-         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
+         * @param {Object=} options
+         * @property {boolean=} options.silence 是否不出发 onChange 事件，默认为 false
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
 
@@ -137,8 +138,11 @@ define(function (require, exports, module) {
             refresh(me, value);
             me.value = value;
 
-            if (!silence && $.isFunction(me.onSelect)) {
-                me.onSelect(value);
+            options = options || { };
+            if (!options.silence
+                && $.isFunction(me.onChange)
+            ) {
+                me.onChange(value);
             }
         },
 

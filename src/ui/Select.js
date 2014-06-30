@@ -14,18 +14,23 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.element 如果需要容器包着 button 和 menu, 可以设置主元素
-     *                                    openClass 会优先作用于它，否则作用于 button
+     *                                     className.open 会优先作用于它，否则作用于 button
      *
      * @property {jQuery} options.button 点击触发下拉菜单显示的元素
      * @property {jQuery} options.menu 下拉菜单元素
      * @property {string=} options.value 当前选中的值
      *
-     * @property {string} options.itemSelector 菜单项的选择器，默认是选择具有 options.valueAttr 属性的元素
-     *                                         查找方式是 menu.find(itemSelector)
-     * @property {string=} options.textAttr 读取 text 的元素属性，没有则读取元素 innerHTML
-     * @property {string=} options.valueAttr 读取 value 的元素属性，必须设置这个选项，至少要在 defaultOptions 设置
-     * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
-     * @property {string=} options.openClass 展开状态的 class
+     * @property {Object=} options.attribute 属性名
+     * @property {string=} options.attribute.text 读取 text 的元素属性，没有则读取元素 innerHTML
+     * @property {string=} options.attribute.value 读取 value 的元素属性，必须设置这个选项，至少要在 defaultOptions 设置
+     *
+     * @property {Object=} options.selector 选择器
+     * @property {string=} options.selector.item 菜单项的选择器，默认是选择具有 attribute.value 属性的元素
+     *                                           查找方式是 menu.find(selector.item)
+     *
+     * @property {Object=} options.className 样式
+     * @property {string=} options.className.itemActive 菜单项选中状态的 class，可提升用户体验
+     * @property {string=} options.className.open 菜单展开状态的 class
      *
      * @property {Object=} options.animation 动画
      * @property {Function=} options.animation.open 展开动画
@@ -74,15 +79,15 @@ define(function (require, exports, module) {
             var valueAttr = me.valueAttr;
 
             if (value == null) {
-                value = menu.find('.' + me.itemActiveClass)
+                value = menu.find('.' + me.className.itemActive)
                             .attr(valueAttr);
             }
 
             if (value != null) {
-                me.setValue(value, true);
+                me.setValue(value, { silence: true });
             }
 
-            var itemSelector = me.itemSelector;
+            var itemSelector = me.selector.item;
             if (!itemSelector) {
                 itemSelector = me.itemSelector
                              = '[' + valueAttr +']';
@@ -104,9 +109,10 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
-         * @param {boolean=} silence 是否不出发 onChange 事件，默认为 false
+         * @param {Object=} options
+         * @property {boolean=} options.silence 是否不出发 onChange 事件，默认为 false
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
             var menu = me.menu;
@@ -116,15 +122,16 @@ define(function (require, exports, module) {
 
                 me.value = value;
 
-                var itemActiveClass = me.itemActiveClass;
-                if (itemActiveClass) {
-                    menu.find('.' + itemActiveClass).removeClass(itemActiveClass);
-                    target.addClass(itemActiveClass);
+                var activeClass = me.className.itemActive;
+                if (activeClass) {
+                    menu.find('.' + activeClass).removeClass(activeClass);
+                    target.addClass(activeClass);
                 }
 
+                var attr = me.attribute;
                 var data = {
-                    value: target.attr(me.valueAttr),
-                    text: target.attr(me.textAttr)
+                    text: target.attr(attr.text),
+                    value: target.attr(attr.value)
                 };
 
                 if ($.type(data.text) !== 'string') {
@@ -135,7 +142,10 @@ define(function (require, exports, module) {
                     me.setText(data);
                 }
 
-                if (!silence && $.isFunction(me.onChange)) {
+                options = options || { };
+                if (!options.silence
+                    && $.isFunction(me.onChange)
+                ) {
                     me.onChange(data);
                 }
             }
@@ -178,11 +188,16 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Select.defaultOptions = {
-        textAttr: 'data-text',
-        valueAttr: 'data-value',
-        itemActiveClass: 'item-active',
-        openClass: 'select-open',
-        animation: { }
+        selector: { },
+        animation: { },
+        attribute: {
+            text: 'data-text',
+            value: 'data-value'
+        },
+        className: {
+            itemActive: 'item-active',
+            open: 'select-open'
+        }
     };
 
     /**
@@ -203,7 +218,7 @@ define(function (require, exports, module) {
     function createPopup(select) {
 
         var main = select.element || select.button;
-        var openClass = select.openClass;
+        var openClass = select.className.open;
         var animation = select.animation;
 
         return new Popup({

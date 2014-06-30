@@ -18,11 +18,11 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.input 输入框元素
-     * @param {jQuery} options.menu 补全菜单
+     * @property {jQuery} options.input 输入框元素
+     * @property {jQuery} options.menu 补全菜单
      *
-     * @param {number=} options.wait 长按上下键遍历的等待间隔时间
-     * @param {boolean=} options.includeInput 上下遍历是否包含输入框
+     * @property {number=} options.wait 长按上下键遍历的等待间隔时间
+     * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      *
      * @property {Object=} options.animation
      * @property {Function=} options.animation.open 展开动画
@@ -31,7 +31,7 @@ define(function (require, exports, module) {
      * @property {Object=} options.template
      * @property {string=} options.template.item 菜单项模板，简单列表用这个够了
      * @property {string=} options.template.menu 菜单模板，如果不是简单的列表，需配置此项
-     * @property {Function=} options.template.render 配置模板引擎的 render 方法
+     * @property {Function=} options.template.render 配置模板引擎的 render 方法，方法签名是 (tpl, data): string
      *
      * @property {Object=} options.selector
      * @property {string} options.selector.item 可上下键遍历的菜单项元素选择器
@@ -40,17 +40,17 @@ define(function (require, exports, module) {
      * @property {string=} options.className.itemHover 菜单项 hover 时的 className
      * @property {string=} options.className.itemActive 菜单项 active 时的 className
      *
-     * @param {Function=} options.parseItem 获得菜单项数据，返回格式为 { text: '' }
+     * @property {Function=} options.parseItem 获得菜单项数据，返回格式为 { text: '' }
      *
-     * @param {Function} options.load 加载数据，可以是远程或本地数据
+     * @property {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @param {Function=} options.onItemActive 菜单项 active 时的事件处理函数
+     * @property {Function=} options.onItemActive 菜单项 active 时的事件处理函数
      * @argument {Object} options.onItemActive.data 用 options.parseItem 解析 active 菜单项获得的数据
      *
-     * @param {Function} options.onSelect 用户点击选中某个菜单项触发
-     * @param {Function} options.onEnter 用户按下回车触发
+     * @property {Function} options.onSelect 用户点击选中某个菜单项触发
+     * @property {Function} options.onEnter 用户按下回车触发
      */
     function AutoComplete(options) {
         $.extend(this, AutoComplete.defaultOptions, options);
@@ -219,9 +219,11 @@ define(function (require, exports, module) {
                 cache.resetIndex();
 
                 var elementItems = menu.find(selector.item);
-                var dataItems = elementItems.map(function (index, item) {
-                    return autoComplete.parseItem(item);
-                });
+                var dataItems = elementItems.map(
+                                    function (index, item) {
+                                        return autoComplete.parseItem(item);
+                                    }
+                                );
 
                 if (autoComplete.includeInput) {
                     elementItems.splice(0, 0, input);
@@ -238,11 +240,7 @@ define(function (require, exports, module) {
                     return false;
                 }
             },
-            onAfterHide: function () {
-                cache.resetIndex();
-                cache.elementItems =
-                cache.dataItems = null;
-            }
+            onAfterHide: cache.resetIndex
         });
     }
 

@@ -12,19 +12,21 @@ define(function (require, exports, module) {
     var offsetParent = require('../function/offsetParent');
     var pin = require('../function/pin');
 
+    // [TODO] 右键失焦隐藏
+
     /**
      * 鼠标右键菜单
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.element 菜单元素
-     * @property {jQuery} options.container 在 container 内部右键弹出菜单
+     * @property {string=} options.template 如果想动态生成元素，可不传 element，而是传入模板
+     *
+     * @property {jQuery=} options.container 在 container 内部右键弹出菜单，默认是 body
      *
      * @property {Object=} options.animation 动画
      * @property {Function=} options.animation.show 显示动画
      * @property {Function=} options.animation.hide 隐藏动画
-     *
-     * @property {string=} options.template 如果想动态生成元素，可不传 element，而是传入模板
      *
      * @property {Object=} options.action 可选，配置点击事件处理器
      *                     {
@@ -154,7 +156,6 @@ define(function (require, exports, module) {
         contextMenu.cache.event = e;
 
         currentMenu = contextMenu;
-
         currentMenu.show();
 
         pin({

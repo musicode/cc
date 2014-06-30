@@ -131,7 +131,7 @@
             function (ScrollBar, Input) {
 
                 var scrollHBar = new ScrollBar({
-                    target: $('#scroll-panel'),
+                    panel: $('#scroll-panel'),
                     element: $('#scroll-position .scroll-bar-h'),
                     direction: 'horizontal',
                     autoHide: true,
@@ -146,9 +146,9 @@
                 });
 
                 var scrollVBar = new ScrollBar({
-                    target: $('#scroll-panel'),
+                    panel: $('#scroll-panel'),
                     element: $('#scroll-position .scroll-bar-v'),
-                    pos: '20%',
+                    value: '20%',
                     className: {
                         dragging: 'dragging',
                         hover: 'hover'
@@ -170,7 +170,7 @@
 
                 });
                 var scrollBar = new ScrollBar({
-                    target: textarea,
+                    panel: textarea,
                     element: $('#textarea .scroll-bar-v'),
                     direction: 'vertical'
                 });

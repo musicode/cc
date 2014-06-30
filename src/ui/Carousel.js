@@ -15,10 +15,12 @@ define(function (require, exports, module) {
      *
      * @property {number=} options.index 从第几个开始播放，默认是 0
      * @property {number=} options.wait 每次等待时间，默认 5000
-     * @property {string=} options.trigger 触发改变的方式，可选值有 over click， 默认是 over
      * @property {boolean=} options.auto 是否自动播放
      * @property {boolean=} options.cycle 是否循环，即在最后一个调用 next() 是否回到第一个
      * @property {boolean=} options.pauseable 是否鼠标停留在 slide 时暂停播放，默认为 true
+     *
+     * @property {Object=} options.trigger 触发条件
+     * @property {string=} options.trigger.indicator 触发改变的方式，可选值有 over click， 默认是 over
      *
      * @property {Object} options.selector 选择器
      * @property {string=} options.selector.prev
@@ -26,14 +28,14 @@ define(function (require, exports, module) {
      * @property {string=} options.selector.indicator
      * @property {string} options.selector.slide
      *
-     * @property {Object=} options.className
+     * @property {Object=} options.className 样式
      * @property {string=} options.className.indicatorActive 转场时会为 indicator 切换这个 class
      * @property {string=} options.className.slideActive 转场时会为 slide 切换这个 class
      *
-     * @property {Object} options.attribute
+     * @property {Object} options.attribute 属性名称
      * @property {string} options.attribute.index indicator 元素存储索引的属性名称
      *
-     * @property {Object} options.animation
+     * @property {Object} options.animation 动画
      * @property {Function} options.animation.transition 转场动画函数
      * @argument {Object} options.animation.transition.data
      * @property {number} options.animation.transition.data.toIndex
@@ -75,7 +77,7 @@ define(function (require, exports, module) {
 
             var indicatorSelector = selector.indicator;
             if (indicatorSelector) {
-                if (me.trigger === 'click') {
+                if (me.trigger.indicator === 'click') {
                     element.on('click' + namespace, indicatorSelector, me, toSlide);
                 }
                 else {
@@ -296,7 +298,9 @@ define(function (require, exports, module) {
         auto: true,
         cycle: true,
         pauseable: true,
-        trigger: 'over',
+        trigger: {
+            indicator: 'over'
+        },
         selector: { },
         animation: { },
         attribute: { },

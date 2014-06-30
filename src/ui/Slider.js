@@ -1,11 +1,13 @@
 /**
- * @file Slider
+ * @file 可滑动组件
  * @author zhujl
  */
 define(function (require, exports, module) {
 
     'use strict';
 
+    var contains = require('../function/contains');
+    var position = require('../function/position');
     var eventOffset = require('../function/eventOffset');
     var Draggable = require('../helper/Draggable');
     var Wheel = require('../helper/Wheel');
@@ -19,21 +21,24 @@ define(function (require, exports, module) {
      * @property {number=} options.value
      * @property {number=} options.min 允许的最小值
      * @property {number=} options.max 允许的最大值
-     * @property {number=} options.step 间隔，默认是 1
+     * @property {number=} options.step value 变化的最小间隔，默认是 10
      * @property {boolean=} options.scrollable 是否可以滚动触发，如果设为 true，需要设置 step
      * @property {string=} options.direction 方向，可选值有 horizontal 和 vertical，默认是 horizontal
      * @property {string=} options.template 模板，如果 element 结构已完整，可不传模板
      *
      * @property {Object=} options.selector 选择器
-     * @property {string=} options.selector.track 滑道选择器
      * @property {string=} options.selector.thumb 滑块选择器
+     * @property {string=} options.selector.track 滑道选择器，不传表示 element 是滑道
      *
      * @property {Object=} options.className 样式
      * @property {string=} options.className.dragging 滑块正在拖拽时的 class
      * @property {string=} options.className.hover 鼠标悬浮滑道时的 class
      *
      * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.to 通过点击直接滑到某个位置的动画（先占位，还没实现..）
+     * @property {Function=} options.animation.to 通过点击直接滑到某个位置的动画
+     * @property {Function=} options.animation.dragging 通过拖拽滑块到某个位置的动画
+     * @property {Function=} options.animation.show 显示动画
+     * @property {Function=} options.animation.hide 隐藏动画
      *
      * @property {Function=} options.onChange 当 value 变化时触发
      * @property {Function=} options.onBeforeDrag
@@ -62,17 +67,16 @@ define(function (require, exports, module) {
             }
 
             var selector = me.selector;
+            var thumbElement = element.find(selector.thumb);
             var trackElement = selector.track
                              ? element.find(selector.track)
                              : element;
 
-            var thumbElement = element.find(selector.thumb);
-
             var cache = me.cache
                       = $.extend(
                             {
-                                track: trackElement,
-                                thumb: thumbElement
+                                thumb: thumbElement,
+                                track: trackElement
                             },
                             directionConf[ me.direction ]
                         );
@@ -120,42 +124,30 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
-            var cache = me.cache;
-
             var max = me.max;
             var min = me.min;
 
-            var unit = cache.unit;
-            var byUnit = false;
+            var cache = me.cache;
+            var total = cache.draggable
+                             .getRectange(true)[ cache.dimension ];
 
-            if ($.isNumeric(unit)) {
-                byUnit = unit > 0;
-            }
-            else if ($.isNumeric(max) && $.isNumeric(min)) {
-                byUnit = true;
-            }
+            cache.min = 0;
+            cache.max = total;
 
-            var maxPx = cache.draggable.getRectange(true)[ cache.dimension ];
-            console.log('max: ' + maxPx)
-            console.log(me.element[0]);
-
-            if (byUnit) {
-                var count = (max - min) / me.step;
-                // 保留 2 位小数足够了
-                // 如果因为 x.xxx1 这样的精度产生 value 变化
-                // 看起来会很奇怪
-                unit = (maxPx / count).toFixed(2);
-            }
-            else {
-                me.min = unit = 0;
-                me.max = maxPx;
+            if ($.isNumeric(min) && $.isNumeric(max)) {
+                cache.stepPixel = total / ((max - min) / me.step);
             }
 
-            cache.unit = unit;
+            var value = me.value;
+            var options = { force: true };
 
-            if (me.value != null) {
-                me.setValue(me.value, true);
+            if (!$.isNumeric(value)) {
+                value = position(cache.thumb)[ cache.position ];
+                value = parseInt(value, 10);
+                options.pixel = true;
             }
+
+            me.setValue(value, options);
         },
 
         /**
@@ -171,57 +163,60 @@ define(function (require, exports, module) {
          * 设置当前值
          *
          * @param {number} value
-         * @param {boolean=} force 是否强制更新
+         * @param {Object=} options 可选项
+         * @property {boolean=} options.silence 是否不触发 onChange 事件，默认为 false
+         * @property {boolean=} options.force 是否强制更新
+         * @property {boolean=} options.pixel value 是否以像素为单位
+         * @property {Object=} options.animate
          * @return {boolean} 是否更新成功
          */
-        setValue: function (value, force) {
+        setValue: function (value, options) {
 
-            if (!$.isNumeric(value)) {
-                value = Number(value);
-            }
+            options = options || { };
 
             var me = this;
-            var max = me.max;
-            var min = me.min;
+            var cache = me.cache;
 
-            if (value < min) {
-                value = min;
-            }
-            else if (value > max) {
-                value = max;
-            }
+            var stepPixel = cache.stepPixel;
+            var pixel;
 
-            if (force || value !== me.value) {
-
-                me.value = value;
-
-                var cache = me.cache;
-                var unit = cache.unit;
-
-                // 需要步进
-                if (unit > 0) {
-
-                    var step = me.step;
-
-                    // 是否匹配 step
-                    if (/^\D+$/.test(value / step)) {
-                        throw new Error('[Slider] the value paramater of setValue method is invalid.');
-                    }
-
-                    value = unit * (value - min) / step;
+            if ($.isNumeric(stepPixel)) {
+                if (options.pixel) {
+                    value = pixel2Value(value, me.min, me.step, stepPixel);
                 }
-
-                cache.draggable.element
-                               .css(cache.position, value);
-
-                if ($.isFunction(me.onChange)) {
-                    me.onChange();
-                }
-
-                return true;
+                value = restrain(value, me.min, me.max);
+                pixel = value2Pixel(value, me.min, me.step, stepPixel);
+            }
+            else {
+                pixel = value
+                      = restrain(value, cache.min, cache.max);
             }
 
-            return false;
+            if (!options.force && value === me.value) {
+                return false;
+            }
+
+            me.value = value;
+
+            var element = cache.thumb;
+            var style = { };
+            style[ cache.position ] = pixel;
+
+            var animate = options.animate;
+            if ($.isFunction(animate)) {
+                animate.call(me, style, element);
+            }
+            else {
+                element.css(style);
+            }
+
+            if (!options.silence
+                && $.isFunction(me.onChange)
+            ) {
+                me.onChange();
+            }
+
+            return true;
         },
 
         /**
@@ -276,6 +271,38 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 显示
+         */
+        show: function () {
+
+            var me = this;
+            var show = me.animation.show;
+
+            if ($.isFunction(show)) {
+                show.call(me);
+            }
+            else {
+                me.element.show();
+            }
+        },
+
+        /**
+         * 隐藏
+         */
+        hide: function () {
+
+            var me = this;
+            var hide = me.animation.hide;
+
+            if ($.isFunction(hide)) {
+                hide.call(me);
+            }
+            else {
+                me.element.hide();
+            }
+        },
+
+        /**
          * 销毁对象
          */
         dispose: function () {
@@ -304,7 +331,7 @@ define(function (require, exports, module) {
      */
     Slider.defaultOptions = {
 
-        step: 1,
+        step: 10,
         scrollable: false,
         direction: 'horizontal',
         template: '<i class="slider-thumb"></i>',
@@ -348,6 +375,53 @@ define(function (require, exports, module) {
     };
 
     /**
+     * value 转成 pixel
+     *
+     * @inner
+     * @param {number} value 实际值
+     * @param {number} min 实际最小值
+     * @param {number} step 步进值
+     * @param {number} stepPixel 步进像素值
+     * @return {number}
+     */
+    function value2Pixel(value, min, step, stepPixel) {
+        return stepPixel * (value - min) / step;
+    }
+
+    /**
+     * pixel 转成 value
+     *
+     * @inner
+     * @param {number} pixel 像素值
+     * @param {number} min 实际最小值
+     * @param {number} step 步进值
+     * @param {number} stepPixel 步进像素值
+     * @return {number}
+     */
+    function pixel2Value(pixel, min, step, stepPixel) {
+        return min + Math.floor(pixel / stepPixel) * step;
+    }
+
+    /**
+     * 约束范围
+     *
+     * @inner
+     * @param {value} value
+     * @param {number} min
+     * @param {number} max
+     * @return {number}
+     */
+    function restrain(value, min, max) {
+        if (value < min) {
+            value = min;
+        }
+        else if (value > max) {
+            value = max;
+        }
+        return value;
+    }
+
+    /**
      * 创建可拖拽对象
      *
      * @inner
@@ -358,9 +432,7 @@ define(function (require, exports, module) {
     function createDraggable(slider, options) {
 
         var cache = slider.cache;
-        var className = slider.className;
-
-        var draggingClass = className.dragging
+        var draggingClass = slider.className.dragging;
 
         options.onDragStart = function () {
 
@@ -378,7 +450,7 @@ define(function (require, exports, module) {
             }
         };
 
-        options.onDragEnd = function () {
+        options.onDragEnd = function (point) {
 
             cache.dragging = false;
 
@@ -395,37 +467,16 @@ define(function (require, exports, module) {
         };
 
         options.onDrag = function (data) {
-            setValueByPx(
-                slider,
-                data[ cache.position ]
+            slider.setValue(
+                data[ cache.position ],
+                {
+                    pixel: true,
+                    animate: slider.animation.dragging
+                }
             );
         };
 
         return new Draggable(options);
-    }
-
-    /**
-     * 通过像素值设置 value
-     *
-     * @inner
-     * @param {Slider} slider
-     * @param {number} value 像素值
-     */
-    function setValueByPx(slider, value) {
-
-        var unit = slider.cache.unit;
-
-        if (unit > 0) {
-
-            // 转成和 unit 一样的精度
-            value = (value).toFixed(2);
-
-            // 第几个 * 步进值
-            value = slider.min
-                  + Math.floor(value / unit) * slider.step;
-        }
-
-        slider.setValue(value);
     }
 
     /**
@@ -439,18 +490,16 @@ define(function (require, exports, module) {
         var slider = e.data;
         var cache = slider.cache;
 
-        var targetElement = e.target;
-        var thumbElement = cache.thumb[0];
-
-        if (targetElement === thumbElement
-            || $.contains(thumbElement, targetElement)
-        ) {
+        if (contains(cache.thumb[0], e.target)) {
             return;
         }
 
-        setValueByPx(
-            slider,
-            eventOffset(e)[ cache.axis ]
+        slider.setValue(
+            eventOffset(e)[ cache.axis ],
+            {
+                pixel: true,
+                animate: slider.animation.to
+            }
         );
     }
 

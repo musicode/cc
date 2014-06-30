@@ -17,9 +17,12 @@ define (function (require, exports, module) {
      *
      * 一枚 cookie 有 4 个不同的属性
      *
-     *    key value domain path
+     *    key value domain path expires secure
      *
-     * 当 domain 和 path 不同时会产生不同的 cookie
+     *    domain: 浏览器只向指定域的服务器发送 cookie，默认是产生 Set-Cookie 响应的服务器的主机名
+     *    path: 为特定页面指定 cookie，默认是产生 Set-Cookie 响应的 URL 的路径
+     *    expires: 日期格式为（Weekday, DD-MON-YY HH:MM:SS GMT）唯一合法的时区是 GMT，默认是会话结束时过期
+     *    secure: 使用 ssl 安全连接时才会发送 cookie
      *
      * 有点类似命名空间的意思
      *

@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     /**
      * @description
      *
-     * 通过隐藏原生滚动条，控制元素的 scrollTop 来滚动
+     * 通过隐藏原生滚动条，控制元素的 scrollTop/scrollLeft 实现滚动
      *
      * 核心逻辑分两块
      *
@@ -29,12 +29,13 @@ define(function (require, exports, module) {
      * @property {Object} options
      *
      * @property {jQuery} options.element 滚动条元素
-     * @property {jQuery} options.target 滚动目标
+     * @property {string=} options.template 滚动条的模板，如果 element 结构完整，可不传模板
+     * @property {jQuery} options.panel 滚动面板
      *
-     * @property {number=} options.pos 面板当前滚动的位置
+     * @property {number=} options.value 面板当前滚动的位置
      * @property {number=} options.step 滑动滚轮产生的单位距离
      * @property {boolean=} options.scrollByBar 是否由滚动条带动滚动元素，默认为 true
-     * @property {boolean=} options.autoHide 是否开启自动隐藏
+     * @property {boolean=} options.autoHide 是否开启自动隐藏，鼠标离开时隐藏
      *
      * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
      * @property {number=} options.minWidth 滚动条的最小宽度，当 direction 为 horizontal 时生效
@@ -50,11 +51,11 @@ define(function (require, exports, module) {
      * @property {Object=} options.animation 动画
      * @property {Function=} options.animation.show 显示滚动条的方式，可自定义显示动画
      * @property {Function=} options.animation.hide 隐藏滚动条的方式，可自定义隐藏动画
-     *
-     * @property {string=} options.template 滚动条的模板
+     * @property {Function=} options.animation.dragging 通过拖拽改变位置的动画
+     * @property {Function=} options.animation.to 通过点击直接设置位置的动画
      *
      * @property {Function=} options.onScroll
-     * @argument {number} options.onScroll.pos
+     * @argument {number} options.onScroll.value
      */
     function ScrollBar(options) {
         $.extend(this, ScrollBar.defaultOptions, options);
@@ -73,7 +74,7 @@ define(function (require, exports, module) {
             var me = this;
 
             var element = me.element;
-            var target = me.target;
+            var panel = me.panel;
 
             var slider = createSlider(me);
 
@@ -82,10 +83,10 @@ define(function (require, exports, module) {
                             {
                                 slider: slider,
                                 wheel: new Wheel({
-                                    element: target,
+                                    element: panel,
                                     onScroll: function (data) {
                                         return !slider.setValue(
-                                                me.pos + data.delta * cache.step
+                                                me.value + data.delta * cache.step
                                             );
                                     }
                                 })
@@ -95,18 +96,18 @@ define(function (require, exports, module) {
 
             if (me.autoHide) {
                 element.on('mouseleave' + namespace, me, leaveViewport);
-                target.on('mouseenter' + namespace, me, enterViewport)
-                      .on('mouseleave' + namespace, me, leaveViewport);
+                panel.on('mouseenter' + namespace, me, enterViewport)
+                     .on('mouseleave' + namespace, me, leaveViewport);
             }
 
-            me.refresh({ pos: me.pos });
+            me.refresh({ value: me.value });
         },
 
         /**
          * 刷新滚动条
          *
          * @param {Object=} data
-         * @property {number=} data.pos
+         * @property {number=} data.value
          */
         refresh: function (data) {
 
@@ -116,12 +117,12 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
-            var target = me.target;
+            var panel = me.panel;
             var cache = me.cache;
 
             // 计算视窗和滚动面板的比例
-            var viewportSize = cache.getViewportSize(target);
-            var contentSize = cache.getContentSize(target) || 1;
+            var viewportSize = cache.getViewportSize(panel);
+            var contentSize = cache.getContentSize(panel) || 1;
             var ratio = cache.ratio
                       = viewportSize / contentSize;
 
@@ -146,11 +147,11 @@ define(function (require, exports, module) {
                          ? me.step
                          : me.step / factor;
 
-                // 如果没有传入 pos
-                // 需要从 target 读取 scrollTop/Left 值
-                var value = data && data.pos;
+                // 如果没有传入 value
+                // 需要从 panel 读取 scrollTop/Left 值
+                var value = data && data.value;
                 if (!$.isNumeric(value)) {
-                    value = target.prop(cache.scroll) / factor;
+                    value = panel.prop(cache.scroll) / factor;
                 }
 
                 slider.refresh({
@@ -169,47 +170,29 @@ define(function (require, exports, module) {
          * 显示滚动条
          */
         show: function () {
-
-            var me = this;
-            var animation = me.animation;
-
-            if (animation && $.isFunction(animation.show)) {
-                animation.show.call(me);
-            }
-            else {
-                me.element.show();
-            }
+            this.cache.slider.show();
         },
 
         /**
          * 隐藏滚动条
          */
         hide: function () {
-
-            var me = this;
-            var animation = me.animation;
-
-            if (animation && $.isFunction(animation.hide)) {
-                animation.hide.call(me);
-            }
-            else {
-                me.element.hide();
-            }
+            this.cache.slider.hide();
         },
 
         /**
          * 设置滚动条的位置
          *
-         * @param {number} pos
+         * @param {number} value
          * @return {boolean} 是否滚动成功
          */
-        scrollTo: function (pos) {
+        scrollTo: function (value) {
 
             var me = this;
             var cache = me.cache;
 
             var slider = cache.slider;
-            if (slider.setValue(pos)) {
+            if (slider.setValue(value)) {
 
                 scrollTarget(me, slider.getValue());
 
@@ -229,14 +212,14 @@ define(function (require, exports, module) {
 
             if (me.autoHide) {
                 me.element.off(namespace);
-                me.target.off(namespace);
+                me.panel.off(namespace);
             }
 
             cache.slider.dispose();
             cache.wheel.dispose();
 
             me.element =
-            me.target =
+            me.panel =
             me.cache = null;
         }
 
@@ -332,7 +315,7 @@ define(function (require, exports, module) {
         var relatedTarget = e.relatedTarget;
 
         if (!contains(scrollBar.element[0], relatedTarget)
-            && !contains(scrollBar.target[0], relatedTarget)
+            && !contains(scrollBar.panel[0], relatedTarget)
         ) {
 
             var cache = scrollBar.cache;
@@ -350,19 +333,19 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {ScrollBar} scrollBar
-     * @param {number} pos
+     * @param {number} value
      */
-    function scrollTarget(scrollBar, pos) {
+    function scrollTarget(scrollBar, value) {
 
         var cache = scrollBar.cache;
 
         // 滚动目标元素
-        scrollBar.target.prop(cache.scroll, pos * cache.factor);
+        scrollBar.panel.prop(cache.scroll, value * cache.factor);
 
-        scrollBar.pos = pos;
+        scrollBar.value = value;
 
         if ($.isFunction(scrollBar.onScroll)) {
-            scrollBar.onScroll(pos);
+            scrollBar.onScroll(value);
         }
     }
 
@@ -384,7 +367,7 @@ define(function (require, exports, module) {
 
             className: scrollBar.className,
             selector: scrollBar.selector,
-
+            animation: scrollBar.animation,
             template: scrollBar.template,
 
             onBeforeDrag: function () {
@@ -404,6 +387,7 @@ define(function (require, exports, module) {
             }
         });
     }
+
 
     return ScrollBar;
 

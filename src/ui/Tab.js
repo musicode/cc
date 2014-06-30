@@ -7,10 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
-     * 满意度：★★★★☆
-     */
-
-    /**
      * 标签页
      *
      * @constructor
@@ -71,9 +67,10 @@ define(function (require, exports, module) {
          * 激活 tab
          *
          * @param {number} index
-         * @param {boolean=} silence 是否不触发 onChange 事件，默认为 false
+         * @param {Object=} options
+         * @property {boolean=} options.silence 是否不触发 onChange 事件，默认为 false
          */
-        to: function (index, silence) {
+        to: function (index, options) {
 
             var me = this;
             var element = me.element;
@@ -131,7 +128,8 @@ define(function (require, exports, module) {
 
             me.index = index;
 
-            if (!silence && $.isFunction(me.onChange)) {
+            options = options || { };
+            if (!options.silence && $.isFunction(me.onChange)) {
                 me.onChange({ index: index });
             }
         },

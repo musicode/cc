@@ -34,9 +34,14 @@
                 var select = new Select({
                     button: $('.btn'),
                     menu: $('.dropdown-menu'),
-                    itemSelector: 'a',
                     value: 2,
-                    itemActiveClass: 'active',
+                    selector: {
+                        item: 'a'
+                    },
+                    className: {
+                        itemActive: 'active',
+                        open: 'open'
+                    },
                     animation: {
                         open: function () {
                             this.menu.slideDown();

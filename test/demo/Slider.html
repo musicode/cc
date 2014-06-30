@@ -71,9 +71,16 @@
 
                 var horizontalSlider = new Slider({
                     element: $('#horizontal-slider'),
+                    scrollable: true,
+                    step: 1,
                     className: {
                         dragging: 'slider-active',
                         hover: 'slider-active'
+                    },
+                    animation: {
+                        to: function (style, element) {
+                            element.animate(style, 100);
+                        }
                     },
                     onChange: function (value) {
                         console.log(this.value);
@@ -90,6 +97,11 @@
                 var verticalSlider = new Slider({
                     element: $('#vertical-slider'),
                     direction: 'vertical',
+                    animation: {
+                        dragging: function (style, element) {
+                            element.animate(style, 10);
+                        }
+                    },
                     onChange: function (value) {
                         console.log(this.value);
                     }

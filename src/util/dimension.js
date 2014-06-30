@@ -14,18 +14,6 @@ define(function (require, exports, module) {
     var viewportHeight = require('../function/viewportHeight');
 
     /**
-     * @description
-     *
-     * 不同浏览器之间取 dimension 的方式不同
-     *
-     * 比如 scrollTop：
-     * IE 和 FF  用 document.documentElement.scrollTop
-     *   Chrome  用 document.body.scrollTop
-     *
-     * 还有类似的取视窗大小等
-     */
-
-    /**
      * 获取网页垂直滚动距离
      *
      * @return {number}
