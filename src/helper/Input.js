@@ -73,7 +73,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onLongPressEnd 长按结束
      * @argument {Event} options.onLongPressStart.event 松开的键码
      *
-     * @property {Object=} options.keyEvents 按下某键，发出某事件
+     * @property {Object=} options.action 按下某键，发出某事件
      *                                       组合键只支持 shift/ctrl/alt/meta + 字母/数字
      *                                       举个例子：
      *                                       {
@@ -104,7 +104,7 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var events = me.keyEvents || { };
+            var events = me.action || { };
 
             $.each(
                 getOnEvents(me),
@@ -130,8 +130,11 @@ define(function (require, exports, module) {
                 }
             );
 
-            // 处理 input 事件
-            element.on(inputConf.type, me, inputConf.handler);
+            element.on(
+                support + namespace,
+                me,
+                support === 'input' ? onInput : onPropertyChange
+            );
 
             me.cache = {
 
@@ -209,13 +212,11 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            // 解绑事件
-            me.element.off(inputConf.type, inputConf.handler);
+            me.element.off(namespace);
 
             me.cache.keyboard.dispose();
 
-            // 垃圾回收
-            me.keyEvents =
+            me.action =
             me.cache =
             me.element = null;
         }
@@ -231,29 +232,25 @@ define(function (require, exports, module) {
         longPress: false
     };
 
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_input';
+
     var input = $('<input type="text" />')[0];
 
     /**
-     * 特性检测是否支持 input 事件
+     * 特性检测支持的 input 事件名称
      *
      * @inner
-     * @type {boolean}
+     * @type {string}
      */
-    var supportInputEvent = 'oninput' in input;
+    var support = 'oninput' in input ? 'input' : 'propertychange';
 
-    /**
-     * 配置 input 事件名 和 事件处理函数
-     *
-     * @inner
-     * @type {Object}
-     */
-    var inputConf = {
-        type: supportInputEvent ? 'input' : 'propertychange',
-        handler: supportInputEvent ? onInput : onPropertyChange
-    };
-
-    // 用完就删掉
-    input = supportInputEvent = null;
+    input = null;
 
     /**
      * 获得所有的 onXXX 函数

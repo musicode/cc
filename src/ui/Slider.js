@@ -143,7 +143,6 @@ define(function (require, exports, module) {
 
             if (!$.isNumeric(value)) {
                 value = position(cache.thumb)[ cache.position ];
-                value = parseInt(value, 10);
                 options.pixel = true;
             }
 

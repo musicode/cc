@@ -42,8 +42,8 @@ define(function (require, exports, module) {
 
         return {
             position: position,
-            left: x,
-            top: y
+            left: typeof x === 'number' ? x : parseInt(x, 10),
+            top: typeof y === 'number' ? y : parseInt(y, 10)
         };
     };
 

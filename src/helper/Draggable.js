@@ -225,8 +225,8 @@ define(function (require, exports, module) {
             var data = position(element);
             point = cache.point
                   = {
-                        left: parseInt(data.left, 10),
-                        top: parseInt(data.top, 10)
+                        left: data.left,
+                        top: data.top
                     };
         }
 

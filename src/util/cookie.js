@@ -15,7 +15,7 @@ define (function (require, exports, module) {
      *
      * 使用 cookie 必须了解的知识：
      *
-     * 一枚 cookie 有 4 个不同的属性
+     * 一枚 cookie 有如下属性：
      *
      *    key value domain path expires secure
      *

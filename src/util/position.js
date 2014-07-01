@@ -15,7 +15,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery} options.attachmentElement
+     * @property {jQuery} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -25,7 +25,7 @@ define(function (require, exports, module) {
             x: 'right',
             y: 'bottom',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'left',
                 y: 'top'
             },
@@ -41,7 +41,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -51,7 +51,7 @@ define(function (require, exports, module) {
             x: 'center',
             y: 'bottom',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'center',
                 y: 'top'
             },
@@ -67,7 +67,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -77,7 +77,7 @@ define(function (require, exports, module) {
             x: 'left',
             y: 'bottom',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'right',
                 y: 'top'
             },
@@ -93,7 +93,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -103,7 +103,7 @@ define(function (require, exports, module) {
             x: 'right',
             y: 'middle',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'left',
                 y: 'middle'
             },
@@ -119,7 +119,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -129,7 +129,7 @@ define(function (require, exports, module) {
             x: 'center',
             y: 'middle',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'center',
                 y: 'middle'
             },
@@ -145,7 +145,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -155,7 +155,7 @@ define(function (require, exports, module) {
             x: 'left',
             y: 'middle',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'right',
                 y: 'middle'
             },
@@ -171,7 +171,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -181,7 +181,7 @@ define(function (require, exports, module) {
             x: 'right',
             y: 'top',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'left',
                 y: 'bottom'
             },
@@ -197,7 +197,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -207,7 +207,7 @@ define(function (require, exports, module) {
             x: 'center',
             y: 'top',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'center',
                 y: 'bottom'
             },
@@ -223,7 +223,7 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {jQuery=} options.attachmentElement
+     * @property {jQuery=} options.attachment
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
@@ -233,7 +233,7 @@ define(function (require, exports, module) {
             x: 'left',
             y: 'top',
             attachment: {
-                element: options.attachmentElement,
+                element: options.attachment,
                 x: 'right',
                 y: 'bottom'
             },

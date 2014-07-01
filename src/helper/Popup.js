@@ -63,6 +63,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var split = require('../function/split');
     var contains = require('../function/contains');
     var instance = require('../util/instance');
 
@@ -116,12 +117,15 @@ define(function (require, exports, module) {
             }
 
             var hidden = me.element.css('display') === 'none';
-            var action = hidden ? showEvent : hideEvent;
+            var trigger = me.trigger;
 
             me.cache = {
-                hidden: hidden
+                hidden: hidden,
+                showTrigger: trigger.show ? split(trigger.show, ',') : [ ],
+                hideTrigger: trigger.hide ? split(trigger.hide, ',') : [ ]
             };
 
+            var action = hidden ? showEvent : hideEvent;
             action(me, 'add');
         },
 
@@ -327,21 +331,16 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function showEvent(popup, action) {
-
         var showTrigger = Popup.trigger.show;
-        var trigger = popup.trigger;
-
-        if (trigger && trigger.show) {
-            each(
-                trigger.show,
-                function (name) {
-                    var target = showTrigger[name];
-                    if (target) {
-                        target[action + 'Trigger'](popup);
-                    }
+        $.each(
+            popup.cache.showTrigger,
+            function (index, name) {
+                var target = showTrigger[name];
+                if (target) {
+                    target[action + 'Trigger'](popup);
                 }
-            );
-        }
+            }
+        );
     }
 
     /**
@@ -352,34 +351,14 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function hideEvent(popup, action) {
-
         var hideTrigger = Popup.trigger.hide;
-        var trigger = popup.trigger;
-
-        if (trigger && trigger.hide) {
-            each(
-                trigger.hide,
-                function (name) {
-                    var target = hideTrigger[name];
-                    if (target) {
-                        target[action + 'Trigger'](popup);
-                    }
-                }
-            );
-        }
-    }
-
-    /**
-     * 遍历 out,blur 这样以逗号分隔的字符串
-     *
-     * @param {string} str
-     * @return {function(string)) callback
-     */
-    function each(str, callback) {
         $.each(
-            str.split(','),
-            function (index, item) {
-                callback($.trim(item));
+            popup.cache.hideTrigger,
+            function (index, name) {
+                var target = hideTrigger[name];
+                if (target) {
+                    target[action + 'Trigger'](popup);
+                }
             }
         );
     }

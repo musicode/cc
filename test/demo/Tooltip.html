@@ -34,9 +34,9 @@
 </head>
 <body>
 
-    <i id="icon1" class="icon" title="提示内容">?</i>
+    <i id="icon1" class="icon" title="提示内容" data-dir="bottom">?</i>
 
-    <i id="icon2" class="icon" title="提示内容111111111111">?</i>
+    <i id="icon2" class="icon" title="提示内容111111111111" data-dir="right">?</i>
 
     <div class="tooltip fade left in">
         <div class="tooltip-inner">
@@ -58,21 +58,31 @@
 
                 var config = Tooltip.defaultOptions;
 
-                config.placementPrefix = '';
                 config.template = '<div class="tooltip fade in">'
                                 +    '<div class="tooltip-inner"></div>'
                                 +    '<div class="tooltip-arrow"></div>'
                                 + '</div>';
 
+                config.trigger = {
+                    show: 'click',
+                    hide: 'blur'
+                };
+                config.attribute = {
+                    title: 'title',
+                    placement: 'data-dir'
+                };
+                config.className = {
+                    placement: ''
+                };
                 config.gap = {
                     x: 8,
-                    y: 8
+                    y: 0
                 };
                 config.delay = {
                     hide: 500
                 };
                 config.offset.bottom = {
-                    x: 0,
+                    x: 50,
                     y: 0
                 };
                 config.animation = {
@@ -82,13 +92,11 @@
                     hide: function () {
                         this.element.fadeOut(100);
                     }
-                }
-
-                config.update = function () {
-                    this.element.find('.tooltip-inner').html(this.title);
                 };
+
+
                 config.onBeforeShow = function () {
-                    //console.log(this);
+                    this.element.find('.tooltip-inner').html(this.title);
                     console.log('====================================');
                 };
                 config.onAfterHide = function () {
@@ -97,7 +105,7 @@
                 };
 
 
-                Tooltip.init();
+                console.log(Tooltip.init());
 
             }
         );

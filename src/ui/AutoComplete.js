@@ -159,7 +159,7 @@ define(function (require, exports, module) {
         template: { },
         className: { },
         selector: {
-            item: 'li'        // 比较常用
+            item: 'li'
         },
 
         parseItem: function (item) {

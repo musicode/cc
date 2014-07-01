@@ -30,12 +30,12 @@ define(function (require, exports, module) {
      *
      * @property {jQuery} options.element 滚动条元素
      * @property {string=} options.template 滚动条的模板，如果 element 结构完整，可不传模板
+     *
      * @property {jQuery} options.panel 滚动面板
      *
      * @property {number=} options.value 面板当前滚动的位置
      * @property {number=} options.step 滑动滚轮产生的单位距离
-     * @property {boolean=} options.scrollByBar 是否由滚动条带动滚动元素，默认为 true
-     * @property {boolean=} options.autoHide 是否开启自动隐藏，鼠标离开时隐藏
+     * @property {boolean=} options.step4Panel step 是否是 panel 的滚动距离，默认为 false
      *
      * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
      * @property {number=} options.minWidth 滚动条的最小宽度，当 direction 为 horizontal 时生效
@@ -94,12 +94,6 @@ define(function (require, exports, module) {
                             directionConf[ me.direction ]
                         );
 
-            if (me.autoHide) {
-                element.on('mouseleave' + namespace, me, leaveViewport);
-                panel.on('mouseenter' + namespace, me, enterViewport)
-                     .on('mouseleave' + namespace, me, leaveViewport);
-            }
-
             me.refresh({ value: me.value });
         },
 
@@ -130,8 +124,6 @@ define(function (require, exports, module) {
             if (ratio < 1) {
 
                 var slider = cache.slider;
-
-                // 计算滑块大小
                 var trackSize = slider.getSize().track;
 
                 slider.setSize({
@@ -143,9 +135,9 @@ define(function (require, exports, module) {
 
                 // 实际滚动的单位距离
                 var step = cache.step
-                         = me.scrollByBar
-                         ? me.step
-                         : me.step / factor;
+                         = me.step4Panel
+                         ? me.step / factor
+                         : me.step;
 
                 // 如果没有传入 value
                 // 需要从 panel 读取 scrollTop/Left 值
@@ -184,17 +176,26 @@ define(function (require, exports, module) {
          * 设置滚动条的位置
          *
          * @param {number} value
+         * @param {Object=} options
+         * @param {number=} options.panel 是否只滚动 panel
          * @return {boolean} 是否滚动成功
          */
-        scrollTo: function (value) {
+        to: function (value, options) {
 
             var me = this;
             var cache = me.cache;
-
             var slider = cache.slider;
-            if (slider.setValue(value)) {
 
-                scrollTarget(me, slider.getValue());
+            if ((options && options.panel)
+                || slider.setValue(value)
+            ) {
+
+                me.panel.prop(cache.scroll, value * cache.factor);
+                me.value = value;
+
+                if ($.isFunction(me.onScroll)) {
+                    me.onScroll(value);
+                }
 
                 return true;
             }
@@ -209,11 +210,6 @@ define(function (require, exports, module) {
 
             var me = this;
             var cache = me.cache;
-
-            if (me.autoHide) {
-                me.element.off(namespace);
-                me.panel.off(namespace);
-            }
 
             cache.slider.dispose();
             cache.wheel.dispose();
@@ -233,8 +229,7 @@ define(function (require, exports, module) {
      */
     ScrollBar.defaultOptions = {
         step: 10,
-        autoHide: false,
-        scrollByBar: true,
+        step4Panel: false,
         direction: 'vertical',
         template: '<i class="scroll-thumb"></i>',
 
@@ -282,73 +277,6 @@ define(function (require, exports, module) {
         }
     };
 
-
-    /**
-     * 鼠标进入视窗显示滚动条
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function enterViewport(e) {
-
-        var scrollBar = e.data;
-        var cache = scrollBar.cache;
-
-        cache.leave = false;
-
-        if (scrollBar.element.css('display') === 'none'
-            && cache.ratio < 1
-        ) {
-            scrollBar.show();
-        }
-    }
-
-    /**
-     * 鼠标离开视窗隐藏滚动条
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function leaveViewport(e) {
-
-        var scrollBar = e.data;
-        var relatedTarget = e.relatedTarget;
-
-        if (!contains(scrollBar.element[0], relatedTarget)
-            && !contains(scrollBar.panel[0], relatedTarget)
-        ) {
-
-            var cache = scrollBar.cache;
-            cache.leave = true;
-
-            // 如果正在拖拽，忽略
-            if (!cache.dragging) {
-                scrollBar.hide();
-            }
-        }
-    }
-
-    /**
-     * 滚动内容元素
-     *
-     * @inner
-     * @param {ScrollBar} scrollBar
-     * @param {number} value
-     */
-    function scrollTarget(scrollBar, value) {
-
-        var cache = scrollBar.cache;
-
-        // 滚动目标元素
-        scrollBar.panel.prop(cache.scroll, value * cache.factor);
-
-        scrollBar.value = value;
-
-        if ($.isFunction(scrollBar.onScroll)) {
-            scrollBar.onScroll(value);
-        }
-    }
-
     /**
      * 创建 Slider 对象
      *
@@ -364,25 +292,15 @@ define(function (require, exports, module) {
             direction: scrollBar.direction,
             step: scrollBar.step,
             scrollable: true,
-
+            value: scrollBar.value,
             className: scrollBar.className,
             selector: scrollBar.selector,
             animation: scrollBar.animation,
             template: scrollBar.template,
 
-            onBeforeDrag: function () {
-                scrollBar.cache.dragging = true;
-            },
-            onAfterDrag: function () {
-                var cache = scrollBar.cache;
-                cache.dragging = false;
-                if (cache.leave) {
-                    scrollBar.hide();
-                }
-            },
             onChange: function () {
                 if (scrollBar.cache) {
-                    scrollTarget(scrollBar, this.value);
+                    scrollBar.to(this.value, { panel: true });
                 }
             }
         });
