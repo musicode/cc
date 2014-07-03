@@ -15,7 +15,7 @@ define(function (require, exports, module) {
      */
     return function (fn, wait) {
 
-        wait = typeof wait === 'number' ? wait : 50;
+        wait = $.type(wait) === 'number' ? wait : 50;
 
         var timer;
 
@@ -27,10 +27,13 @@ define(function (require, exports, module) {
 
             var args = arguments;
 
-            timer = setTimeout(function () {
-                timer = null;
-                fn.apply(null, $.makeArray(args));
-            }, wait);
+            timer = setTimeout(
+                        function () {
+                            timer = null;
+                            fn.apply(null, $.makeArray(args));
+                        },
+                        wait
+                    );
 
         };
     };

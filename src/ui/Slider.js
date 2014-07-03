@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var restrain = require('../function/restrain');
     var contains = require('../function/contains');
     var position = require('../function/position');
     var eventOffset = require('../function/eventOffset');
@@ -13,7 +14,7 @@ define(function (require, exports, module) {
     var Wheel = require('../helper/Wheel');
 
     /**
-     * 可滑动组件，类似 html5 的 <input type="number" />
+     * 可滑动组件，类似 html5 的 <input type="range" />
      *
      * @constructor
      * @param {Object} options
@@ -399,25 +400,6 @@ define(function (require, exports, module) {
      */
     function pixel2Value(pixel, min, step, stepPixel) {
         return min + Math.floor(pixel / stepPixel) * step;
-    }
-
-    /**
-     * 约束范围
-     *
-     * @inner
-     * @param {value} value
-     * @param {number} min
-     * @param {number} max
-     * @return {number}
-     */
-    function restrain(value, min, max) {
-        if (value < min) {
-            value = min;
-        }
-        else if (value > max) {
-            value = max;
-        }
-        return value;
     }
 
     /**

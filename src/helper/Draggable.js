@@ -22,12 +22,14 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var offsetParent = require('../function/offsetParent');
+    var page = require('../function/page');
+    var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
+    var offsetParent = require('../function/offsetParent');
     var enableSelection = require('../function/enableSelection');
     var disableSelection = require('../function/disableSelection');
-    var page = require('../function/page');
+
     var instance = require('../util/instance');
 
     /**
@@ -41,8 +43,8 @@ define(function (require, exports, module) {
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
      *
      * @property {Object} options.selector 选择器
-     * @property {string|Array.<string>)=} options.selector.handle 触发拖拽的区域
-     * @property {string|Array.<string>)=} options.selector.cancel 不触发拖拽的区域
+     * @property {string=} options.selector.handle 触发拖拽的区域
+     * @property {string=} options.selector.cancel 不触发拖拽的区域
      *
      * @property {function(Object)=} options.onDragStart 开始拖拽
      * @property {function(Object)=} options.onDrag 正在拖拽
@@ -70,18 +72,31 @@ define(function (require, exports, module) {
             var realContainer = isChild ? container : instance.body;
 
             if (offsetParent(element)[0] !== realContainer[0]) {
-                throw new Error('[Draggable] options.element\'s closest unstatic parent element is wrong.');
+                throw new Error('[Draggable] options.element\'s closest offset element is wrong.');
             }
 
             var style = position(element);
 
-            me.cache = {
-                isChild: isChild,
-                position: style.position === 'fixed' ? 'client' : 'page'
-            };
+            var cache = me.cache
+                      = {
+                            isChild: isChild
+                        };
 
-            element.css(style)
-                   .on('mousedown', me, onDragStart);
+            var fixed = style.position === 'fixed';
+            cache.xName = fixed ? 'clientX' : 'pageX';
+            cache.yName = fixed ? 'clientY' : 'pageY';
+
+            var args = [ 'mousedown' + namespace, me, onDragStart ];
+
+            // 用选择器实现 handle
+            // 不知道为啥 :not() 选择器不能实现 cancel
+            var handle = me.selector.handle;
+            if (handle) {
+                args.splice(1, 0, handle);
+            }
+
+            element.css(style);
+            element.on.apply(element, args);
         },
 
         /**
@@ -127,13 +142,8 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
 
-            if (cache.onDragEnd) {
-                cache.onDragEnd();
-            }
-
-            me.element.off('mousedown', onDragStart);
+            me.element.off(namespace);
 
             me.cache =
             me.element =
@@ -158,22 +168,34 @@ define(function (require, exports, module) {
             var me = this;
             var container = me.container;
 
-            var containerOffset = container.offset();
-
-            var isChild = me.cache.isChild;
-            var borderLeftWidth = parseInt(container.css('border-left-width'), 10) || 0;
-            var borderTopWidth = parseInt(container.css('border-top-width'), 10) || 0;
-
-            return {
-
-                x: isChild ? 0 : (containerOffset.left + borderLeftWidth),
-                y: isChild ? 0 : (containerOffset.top + borderTopWidth),
-
+            var result = {
+                x: 0,
+                y: 0,
                 width: container.innerWidth(),
                 height: container.innerHeight()
             };
+
+            if (!me.cache.isChild) {
+
+                var containerOffset = container.offset();
+                var borderLeftWidth = parseInt(container.css('border-left-width'), 10) || 0;
+                var borderTopWidth = parseInt(container.css('border-top-width'), 10) || 0;
+
+                result.x = containerOffset.left + borderLeftWidth;
+                result.y = containerOffset.top + borderTopWidth;
+            }
+
+            return result;
         }
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_draggable';
 
     /**
      * mousedown 触发拖拽
@@ -185,215 +207,136 @@ define(function (require, exports, module) {
 
         var draggable = e.data;
         var target = e.target;
-
-        var cache = draggable.cache;
         var element = draggable.element;
 
-        var selector = draggable.selector;
-
-        // 点击在 cancel 区域需要过滤掉
-        var cancel = selector.cancel;
-        if (cancel && inRegion(target, element, cancel)) {
-            return;
+        var cancel = draggable.selector.cancel;
+        if (cancel) {
+            element.find(cancel).each(
+                function () {
+                    cancel = contains(this, target);
+                    if (cancel) {
+                        return false;
+                    }
+                }
+            );
+            if (cancel) {
+                return;
+            }
         }
 
-        // 点击在 handle 区域之外需要过滤掉
-        var handle = selector.handle;
-        if (handle && !inRegion(target, element, handle)) {
-            return;
-        }
+        var cache = draggable.cache;
 
-        // 计算位置
-        var containerOffset = draggable.container.offset();
-        var targetOffset = draggable.element.offset();
+        // 开始点坐标
+        var point = position(element);
+        delete point.position;
 
-        var pageX = e.pageX;
-        var pageY = e.pageY;
+        cache.point = point;
 
-        // 偏移量坐标
-        var offsetX = pageX - targetOffset.left;
-        var offsetY = pageY - targetOffset.top;
+        // 计算偏移量坐标
+        var offset = element.offset();
+
+        // offset() 是基于页面大小来计算的
+        // 所以这里要用 pageX/Y
+        var offsetX = e.pageX - offset.left;
+        var offsetY = e.pageY - offset.top;
 
         if (cache.isChild) {
+            var containerOffset = draggable.container.offset();
             offsetX += containerOffset.left;
             offsetY += containerOffset.top;
         }
 
-        // 开始点坐标
-        var point = cache.point;
-        if (!point) {
-            var data = position(element);
-            point = cache.point
-                  = {
-                        left: data.left,
-                        top: data.top
-                    };
-        }
+        cache.offsetX = offsetX + parseInt(element.css('margin-left'), 10) || 0;
+        cache.offsetY = offsetY + parseInt(element.css('margin-top'), 10) || 0;
 
-        cache.originX = point.left;
-        cache.originY = point.top;
-        cache.offsetX = offsetX;
-        cache.offsetY = offsetY;
-        cache.marginX = parseInt(element.css('margin-left'), 10) || 0;
-        cache.marginY = parseInt(element.css('margin-top'), 10) || 0;
-        cache.dragging = false;
-
+        // 可移动的矩形范围
         var rect = draggable.getRectange(true);
-        cache.movableRect = {
-            left: rect.x,
-            top: rect.y,
-            right: rect.x + rect.width,
-            bottom: rect.y + rect.height
-        };
+        cache.minX = rect.x;
+        cache.minY = rect.y;
+        cache.maxX = rect.x + rect.width;
+        cache.maxY = rect.y + rect.height;
 
-        // 避免出现选区
+        cache.counter = 0;
+
         disableSelection();
 
-        var doc = instance.document;
-        doc.on('mousemove', cache.onDrag = onDrag(draggable));
-        doc.on('mouseup', cache.onDragEnd = onDragEnd(draggable));
+        instance.document
+                .on('mousemove' + namespace, draggable, onDrag)
+                .on('mouseup' + namespace, draggable, onDragEnd);
 
-        if ($.isFunction(draggable.onDragStart)) {
-            draggable.onDragStart(point);
-        }
     }
-
 
     /**
      * 正在拖拽
      *
      * @inner
-     * @param {Draggable} draggable
+     * @param {Event} e
      */
-    function onDrag(draggable) {
+    function onDrag(e) {
 
-        return function (e) {
-            var cache = draggable.cache;
-            var axis = draggable.axis;
+        var draggable = e.data;
+        var cache = draggable.cache;
+        var point = cache.point;
+        var axis = draggable.axis;
 
-            // 转为相对于父容器的坐标
-            var point = {
-                left: axis === 'y' ? cache.originX : (e[ cache.position + 'X' ] - cache.marginX - cache.offsetX),
-                top: axis === 'x' ? cache.originY : (e[ cache.position + 'Y' ] - cache.marginY - cache.offsetY)
-            };
+        var x = axis === 'y'
+              ? point.left
+              : e[ cache.xName ] - cache.offsetX;
 
-            // 纠正范围
-            restrainPoint(point, cache.movableRect);
+        var y = axis === 'x'
+              ? point.top
+              : e[ cache.yName ] - cache.offsetY;
 
-            // 如果和上次相同就算了
-            var oldPoint = cache.point;
-            if (oldPoint.left === point.left && oldPoint.top === point.top) {
-                return;
-            }
-            cache.point = point;
+        // 纠正范围
+        x = restrain(x, cache.minX, cache.maxX);
+        y = restrain(y, cache.minY, cache.maxY);
 
-            // 标识拖拽过，而不是 mousedown mouseup 完事
-            cache.dragging = true;
+        if (point.left === x
+            && point.top === y
+        ) {
+            return;
+        }
 
-            // 如果是静默的，则什么也不做
-            if (!draggable.silence) {
-                draggable.element.css(point);
-            }
+        point.left = x;
+        point.top = y;
 
-            if ($.isFunction(draggable.onDrag)) {
-                draggable.onDrag(point);
-            }
-        };
+        if (++cache.counter === 1
+            && $.isFunction(draggable.onDragStart)
+        ) {
+            draggable.onDragStart(point);
+        }
+
+        if (!draggable.silence) {
+            draggable.element.css(point);
+        }
+
+        if ($.isFunction(draggable.onDrag)) {
+            draggable.onDrag(point);
+        }
     }
 
     /**
      * 停止拖拽
      *
      * @inner
-     * @param {Draggable} draggable
+     * @param {Event} e
      */
-    function onDragEnd(draggable) {
+    function onDragEnd(e) {
 
-        return function () {
+        enableSelection();
 
-            var cache = draggable.cache;
+        instance.document
+                .off('mousemove' + namespace)
+                .off('mouseup' + namespace);
 
-            var doc = instance.document;
-            doc.off('mousemove', cache.onDrag)
-               .off('mouseup', cache.onDragEnd);
+        var draggable = e.data;
+        var cache = draggable.cache;
 
-            cache.onDrag =
-            cache.onDragEnd = null;
-
-            enableSelection();
-
-            if (cache.dragging) {
-                if ($.isFunction(draggable.onDragEnd)) {
-                    draggable.onDragEnd(cache.point);
-                }
+        if (cache.counter > 0) {
+            if ($.isFunction(draggable.onDragEnd)) {
+                draggable.onDragEnd(cache.point);
             }
-        };
-    }
-
-    /**
-     * 把坐标约束在 rect 范围内
-     *
-     * @inner
-     * @param {Object} point 坐标点
-     * @param {number} point.left
-     * @param {number} point.top
-     * @param {Object} rect 约束矩形范围
-     * @param {number} rect.left
-     * @param {number} rect.top
-     * @param {number} rect.right
-     * @param {number} rect.bottom
-     */
-    function restrainPoint(point, rect) {
-
-        if (point.left < rect.left) {
-            point.left = rect.left;
         }
-        else if (point.left > rect.right) {
-            point.left = rect.right;
-        }
-
-        if (point.top < rect.top) {
-            point.top = rect.top;
-        }
-        else if (point.top > rect.bottom) {
-            point.top = rect.bottom;
-        }
-    }
-
-    /**
-     * target 是否落在 container.find(selector) 区域内
-     *
-     * @inner
-     * @param {HTMLElement} target
-     * @param {jQuery} container
-     * @param {string|Array.<string>} selector
-     * @return {boolean}
-     */
-    function inRegion(target, container, selector) {
-
-        var result = false;
-
-        if ($.type(selector) === 'string') {
-            selector = [ selector ];
-        }
-
-        $.each(
-            selector,
-            function (index, item) {
-                if (item) {
-                    container.find(item).each(
-                        function () {
-                            if (contains(this, target)) {
-                                result = true;
-                                return false;
-                            }
-                        }
-                    );
-                }
-            }
-        );
-
-        return result;
     }
 
 

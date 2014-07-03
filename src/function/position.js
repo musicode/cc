@@ -13,37 +13,48 @@ define(function (require, exports, module) {
      *
      * @param {jQuery} element
      * @return {Object}
+     * @property {string} $return.position
+     * @property {number} $return.top
+     * @property {number} $return.left
      */
     return function (element) {
 
-        var x = element.css('left');
-        var y = element.css('top');
+        var position = element.css('position');
+        var x = parseInt(element.css('left'), 10);
+        var y = parseInt(element.css('top'), 10);
 
-        var isAutoX = x === 'auto';
-        var isAutoY = y === 'auto';
+        var isAutoX = isNaN(x);
+        var isAutoY = isNaN(y);
 
         if (isAutoX || isAutoY) {
 
-            var targetOffset = element.offset();
-            var containerOffset = offsetParent(element).offset();
+            var parentElement = offsetParent(element);
 
-            if (isAutoX) {
-                x = targetOffset.left - containerOffset.left;
+            if (parentElement.length === 1) {
+
+                var targetOffset = element.offset();
+                var containerOffset = parentElement.offset();
+
+                if (isAutoX) {
+                    x = targetOffset.left - containerOffset.left;
+                }
+                if (isAutoY) {
+                    y = targetOffset.top - containerOffset.top;
+                }
             }
-            if (isAutoY) {
-                y = targetOffset.top - containerOffset.top;
+            else {
+                x = y = 0;
             }
         }
 
-        var position = element.css('position');
-        if (position === 'static') {
+        if (!position || position === 'static') {
             position = 'absolute';
         }
 
         return {
             position: position,
-            left: typeof x === 'number' ? x : parseInt(x, 10),
-            top: typeof y === 'number' ? y : parseInt(y, 10)
+            left: x,
+            top: y
         };
     };
 

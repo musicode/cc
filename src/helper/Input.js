@@ -104,13 +104,13 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var events = me.action || { };
+            var action = me.action || { };
 
             $.each(
                 getOnEvents(me),
                 function (index, item) {
                     advice.before(
-                        events,
+                        action,
                         item.type,
                         item.handler
                     );
@@ -143,7 +143,7 @@ define(function (require, exports, module) {
                 keyboard: new Keyboard({
 
                     element: element,
-                    events: events,
+                    action: action,
                     onKeyDown: onKeyDown,
                     onKeyUp: onKeyUp,
                     onLongPressStart: me.onLongPressStart,

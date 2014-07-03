@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      */
     return function (target, name, before, after) {
 
-        var isMethod = typeof name === 'string';
+        var isMethod = $.type(name) === 'string';
         var origin = isMethod ? target[name] : target;
 
         // 调整参数顺序
@@ -29,21 +29,22 @@ define(function (require, exports, module) {
         var wrapper = function () {
 
             var result;
+            var args = arguments;
 
-            if (typeof before === 'function') {
-                result = before.apply(this, arguments);
+            if ($.isFunction(before)) {
+                result = before.apply(this, args);
             }
 
             if (result !== false) {
 
-                if (typeof origin === 'function') {
-                    result = origin.apply(this, arguments);
+                if ($.isFunction(origin)) {
+                    result = origin.apply(this, args);
                 }
 
-                if (typeof after === 'function') {
-                    var temp = after.apply(this, arguments);
+                if ($.isFunction(after)) {
+                    var temp = after.apply(this, args);
                     // 覆盖返回值
-                    if (typeof temp !== 'undefined') {
+                    if ($.type(temp) !== 'undefined') {
                         result = temp;
                     }
                 }

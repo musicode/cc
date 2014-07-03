@@ -23,19 +23,31 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var split = require('../function/split');
+
     /**
      * 处理键盘相关的操作
      *
      * @constructor
      * @param {Object} options
-     * @param {jQuery} options.element 需要监听键盘事件的元素
-     * @param {Object} options.events 配置键盘事件
+     * @property {jQuery} options.element 需要监听键盘事件的元素
+     * @property {Object} options.action 配置键盘事件
+     *                                   组合键使用 + 连接，如 'ctrl+c',
+     *                                   支持键可看 Keyboard.map
+     *
+     *                                   注意：因为使用 + 连接按键，如果要支持 + 键，请写 plus
      *
      * @property {Function=} options.onKeyDown 按下键位触发
+     * @argument {Event} options.onKeyDown.event
+     *
      * @property {Function=} options.onKeyUp 松开键位触发
+     * @argument {Event} options.onKeyDown.event
      *
      * @property {Function=} options.onLongPressStart 长按开始
+     * @argument {Event} options.onKeyDown.event
+     *
      * @property {Function=} options.onLongPressEnd 长按结束
+     * @argument {Event} options.onKeyDown.event
      *
      * @property {Object=} options.scope 以上配置的函数的 this 指向，默认是 Keyboard 实例
      *
@@ -43,7 +55,7 @@ define(function (require, exports, module) {
      *
      * new Keyboard({
      *    element: $('textarea'),
-     *    events: {
+     *    action: {
      *        'ctrl+enter': function () {
      *            // send message
      *        },
@@ -75,23 +87,10 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            /**
-             * 是否正在长按
-             *
-             * @type {boolean}
-             */
-            me.isLongPressing = false;
-
-            if (!me.scope) {
-                me.scope = me;
-            }
-
-            me.cache = { };
-
-            // 转换成内部比较好处理的事件格式
-            if (me.events) {
-                me.cache.events = parseEvents(me.events);
-            }
+            me.scope = me.scope || me;
+            me.cache = {
+                action: parseAction(me.action || [ ])
+            };
 
             me.element.on('keydown' + namespace, me, onKeyDown)
                       .on('keyup' + namespace, me, onKeyUp);
@@ -109,7 +108,9 @@ define(function (require, exports, module) {
 
             me.element =
             me.scope =
-            me.cache = null;
+            me.cache =
+            me.onKeyDown =
+            me.onKeyUp = null;
         }
     };
 
@@ -119,9 +120,7 @@ define(function (require, exports, module) {
      * @static
      * @type {Object}
      */
-    Keyboard.defaultOptions = {
-
-    };
+    Keyboard.defaultOptions = { };
 
     /**
      * jquery 事件命名空间
@@ -178,26 +177,66 @@ define(function (require, exports, module) {
         '8': 56,
         '9': 57,
 
-        // 小键盘数字键
-        '00': 96,
-        '01': 97,
-        '02': 98,
-        '03': 99,
-        '04': 100,
-        '05': 101,
-        '06': 102,
-        '07': 103,
-        '08': 104,
-        '09': 105,
+        // 主键盘几个特殊字符
+        '~': 192,
+        '-': 173,
+        '=': 61,
+        '[': 219,
+        ']': 221,
+        ';': 59,
+        "'": 222,
+        ',': 188,
+        '.': 190,
+        '/': 191,
+
+        // 小键盘（统一加前缀 ~）
+        '~0': 96,
+        '~1': 97,
+        '~2': 98,
+        '~3': 99,
+        '~4': 100,
+        '~5': 101,
+        '~6': 102,
+        '~7': 103,
+        '~8': 104,
+        '~9': 105,
+        '~.': 110,
+
+        // 因为 + 被连字符占用了
+        // 所以 加减乘除索性都用单词表示好了
+        plus: 107,
+        minus: 109,
+        multiply: 106,
+        divide: 111,
+
+        // F1 -> F12
+        'f1': 112,
+        'f2': 113,
+        'f3': 114,
+        'f4': 115,
+        'f5': 116,
+        'f6': 117,
+        'f7': 118,
+        'f8': 119,
+        'f9': 120,
+        'f10': 121,
+        'f11': 122,
+        'f12': 123,
 
         // 常用的控制键
         enter: 13,
         space: 32,
         backspace: 8,
         esc: 27,
+        tab: 9,
+        capslock: 20,
 
+        insert: 45,
+        'delete': 46,
         home: 36,
         end: 35,
+        pageup: 33,
+        pagedown: 34,
 
         // 方向键
         left: 37,
@@ -222,57 +261,83 @@ define(function (require, exports, module) {
     $.extend(name2Code, combinationKeys);
 
     /**
+     * 键值映射表
+     *
+     * @static
+     * @type {Object}
+     */
+    Keyboard.map = name2Code;
+
+
+    /**
      * 解析出按键组合
      *
      * @inner
-     * @param {Array} events
+     * @param {Array} action
      * @return {Array}
      */
-    function parseEvents(events) {
+    function parseAction(action) {
 
         var result = [ ];
 
-        for (var key in events) {
+        $.each(
+            action,
+            function (key, handler) {
 
-            // 收集判断表达式
-            var expressions = [ ];
-            // 包含的组合键
-            var keys = { };
+                // 收集判断表达式
+                var expressions = [ ];
 
-            $.each(
+                // ctrl+enter
+                // enter
+                // 如上两种按键，如果按下 ctrl+enter 两个事件都会触发
+                // 为了避免这种情况，这里格式化为
+                // ctrl+enter
+                // !ctrl+enter
 
-                key.toLowerCase()
-                   .replace(/\s/g, '')
-                   .split('+'),
+                var keys = split(key, '+');
 
-                function (index, name) {
-                    if (combinationKeys[name]) {
-                        keys[name] = true;
+                $.each(
+                    combinationKeys,
+                    function (name) {
+                        if ($.inArray(name, keys) < 0) {
+                            keys.push('!' + name);
+                        }
                     }
-                    else if (name2Code[name]) {
-                        expressions.push('e.keyCode===' + name2Code[name]);
+                );
+
+                $.each(
+                    keys,
+                    function (index, name) {
+
+                        var negative = name.indexOf('!') === 0;
+                        if (negative) {
+                            name = name.substr(1);
+                        }
+
+                        if (combinationKeys[name]) {
+                            expressions.push(
+                                (negative ? '!' : '')
+                             + 'e.' + name + 'Key'
+                            );
+                        }
+                        else if (name2Code[name]) {
+                            expressions.push('e.keyCode===' + name2Code[name]);
+                        }
+                        else {
+                            expressions.length = 0;
+                            return false;
+                        }
                     }
-                    else {
-                        // 命中了不存在的 name
-                        expressions = null;
-                        return false;
-                    }
+                );
+
+                if (expressions.length > 0) {
+                    result.push({
+                        test: new Function('e', 'return ' + expressions.join('&')),
+                        handler: handler
+                    });
                 }
-            );
-
-            if (expressions) {
-                for (var name in combinationKeys) {
-                    expressions.push(
-                        (keys[name] ? '' : '!') + 'e.' + name + 'Key'
-                    );
-                }
-
-                result.push({
-                    test: new Function('e', 'return ' + expressions.join('&')),
-                    handler: events[key]
-                });
             }
-        }
+        );
 
         return result;
     }
@@ -290,39 +355,35 @@ define(function (require, exports, module) {
         var keyCode = e.keyCode;
         var scope = keyboard.scope;
 
-        if (keyboard.activeKeyCode === keyCode
-            && cache.longPressCouter > 0
+        if (cache.keyCode === keyCode
+            && cache.counter > 0
         ) {
 
-            if (cache.longPressCouter === 1) {
-
-                keyboard.isLongPressing = true;
-
+            if (cache.counter === 1) {
                 var onLongPressStart = keyboard.onLongPressStart;
-                if (typeof onLongPressStart === 'function') {
+                if ($.isFunction(onLongPressStart)) {
                     onLongPressStart.call(scope, e);
                 }
             }
 
-            cache.longPressCouter++;
+            cache.counter++;
         }
         else {
-            keyboard.activeKeyCode = keyCode;
-            cache.longPressCouter = 1;
+            cache.keyCode = keyCode;
+            cache.counter = 1;
 
-            // 调用按键接口
-            var events = cache.events;
-            if (events) {
-                $.each(events, function (index, item) {
+            $.each(
+                cache.action,
+                function (index, item) {
                     if (item.test(e)) {
                         item.handler.call(scope, e);
                     }
-                });
-            }
+                }
+            );
         }
 
         var onKeyDown = keyboard.onKeyDown;
-        if (typeof onKeyDown === 'function') {
+        if ($.isFunction(onKeyDown)) {
             return onKeyDown.call(scope, e);
         }
     }
@@ -339,29 +400,18 @@ define(function (require, exports, module) {
         var cache = keyboard.cache;
         var scope = keyboard.scope;
 
-        if (cache.longPressCouter > 1) {
+        cache.keyCode = null;
 
-            keyboard.isLongPressing = false;
-
+        if (cache.counter > 1) {
             var onLongPressEnd = keyboard.onLongPressEnd;
-            if (typeof onLongPressEnd === 'function') {
+            if ($.isFunction(onLongPressEnd)) {
                 onLongPressEnd.call(scope, e);
             }
-
-            delete cache.longPressCouter;
-        }
-
-        // 组合键可能连续两次触发 keyup
-        // 如果已经 delete，再次 delete 会报错
-        if (keyboard.activeKeyCode != null) {
-            delete keyboard.activeKeyCode;
+            cache.counter = 0;
         }
 
         var onKeyUp = keyboard.onKeyUp;
-
-        // 如果 events 某个 handler 调用了 dispose
-        // 会导致 cache 变为 null，因此这里需要判断一下
-        if (keyboard.cache && typeof onKeyUp === 'function') {
+        if ($.isFunction(onKeyUp)) {
             return onKeyUp.call(scope, e);
         }
     }

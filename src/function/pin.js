@@ -94,13 +94,18 @@ define(function (require, exports, module) {
      * 把 a 定位到 b 的右下角
      * pin({
      *     element: $('a'),
-     *     attachment: $('b'),
      *     x: 'left',
      *     y: 'top',
-     *     attachmentX: 'right',
-     *     attachmentY: 'bottom',
-     *     offsetX: 10,
-     *     offsetY: 10
+     *     attachment: {
+     *         element: $('b'),
+     *         x: 'right',
+     *         y: 'bottom'
+     *
+     *     },
+     *     offset: {
+     *         x: 10,
+     *         y:  10
+     *     }
      * });
      *
      * @param {Object} options
@@ -109,12 +114,12 @@ define(function (require, exports, module) {
      * @property {string|number} options.x 目标元素的横坐标定位点，值可以是 'left' 'center' 'right' 'xx%' 10(纯数字)
      * @property {string|number} options.y 目标元素的纵坐标定位点，值可以是 'top' 'middle' 'bottom' 'yy%' 10(纯数字)
      *
-     * @property {jQuery} options.attachment 参照对象
+     * @property {Object} options.attachment 参照对象
      * @property {jQuery} options.attachment.element 参照元素，默认是 body
-     * @property {jQuery} options.attachment.x 参照物元素的横坐标定位点，取值同 options.x
-     * @property {jQuery} options.attachment.y 参照物元素的纵坐标定位点，取值同 options.y
-     * @property {jQuery=} options.attachment.width 参照物元素的宽度，默认取 attachment.outerWidth(true)
-     * @property {jQuery=} options.attachment.height 参照物元素的高度，默认取 attachment.outerHeight(true)
+     * @property {string|number} options.attachment.x 参照物元素的横坐标定位点，取值同 options.x
+     * @property {string|number} options.attachment.y 参照物元素的纵坐标定位点，取值同 options.y
+     * @property {number=} options.attachment.width 参照物元素的宽度，默认取 attachment.outerWidth(true)
+     * @property {number=} options.attachment.height 参照物元素的高度，默认取 attachment.outerHeight(true)
      *
      * @property {Object=} options.offset 偏移量
      * @property {number=} options.offset.x 水平方向偏移量，单位是 px
@@ -122,7 +127,7 @@ define(function (require, exports, module) {
      *
      * @property {boolean=} options.silence 是否不设置样式，而是返回样式
      *
-     * @return {?Object}
+     * @return {?Object} 如果 options.silence 为 true 返回定位坐标
      */
     return function (options) {
 

@@ -279,7 +279,7 @@ define(function (require, exports, module) {
                 }
             },
 
-            keyEvents: {
+            action: {
                 up: function () {
                     if (cache.elementItems) {
                         (action = previousItem)(autoComplete);

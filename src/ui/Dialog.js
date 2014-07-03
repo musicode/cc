@@ -343,13 +343,21 @@ define(function (require, exports, module) {
 
         var element = dialog.element;
         var selector = dialog.selector;
+        var cancel = [ ];
+
+        if (selector.title) {
+            cancel.push(selector.title);
+        }
+        if (selector.close) {
+            cancel.push(selector.close);
+        }
 
         var instance = new Draggable({
                             element: element,
                             container: offsetParent(element),
                             selector: {
                                 handle: selector.header,
-                                cancel: [ selector.title, selector.close ]
+                                cancel: cancel.join(',')
                             }
                         });
 

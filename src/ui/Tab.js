@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    // tab 和 Carousel 很像
+
     /**
      * 标签页
      *
