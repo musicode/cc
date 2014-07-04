@@ -26,20 +26,23 @@
                 var input1 = new Input({
                     element: $('input'),
                     longPress: false,
+                    smart: true,
 
-                    onEnter: function () {
-                        console.log('onEnter', this);
+                    action: {
+                        enter: function () {
+                            console.log('onEnter', this);
+                        },
+                        left: function () {
+                            console.log('onLeft', this);
+                        }
                     },
-                    onLeft: function () {
-                        console.log('onLeft', this);
-                    },
+
                     onKeyDown: function (e) {
                         console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e);
                     },
                     onKeyUp: function (e) {
                         console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e);
                     },
-
                     onChange: function () {
                         console.log('change', this);
                     }
@@ -47,21 +50,24 @@
 
                 var input2 = new Input({
                     element: $('textarea'),
-                    longPress: false,
+                    longPress: true,
+                    smart: false,
 
-                    onEnter: function () {
-                        console.log('onEnter', this);
+                    action: {
+                        enter: function () {
+                            console.log('onEnter', this);
+                        },
+                        left: function () {
+                            console.log('onLeft', this);
+                        }
                     },
-                    onLeft: function () {
-                        console.log('onLeft', this);
-                    },
+
                     onKeyDown: function (e) {
                         console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e);
                     },
                     onKeyUp: function (e) {
                         console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e);
                     },
-
                     onChange: function () {
                         console.log('change', this);
                     }

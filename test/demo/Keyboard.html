@@ -33,7 +33,7 @@
                     onKeyUp: function () {
                         console.log('keyUp', this);
                     },
-                    events: {
+                    action: {
                         'ctrl+c': function () {
                             console.log('ctrl + c');
                         },
@@ -60,6 +60,9 @@
                         },
                         'enter': function () {
                             console.log('keyEvents -> enter', this);
+                        },
+                        '$+': function () {
+                            console.log('+');
                         }
                     }
                 });

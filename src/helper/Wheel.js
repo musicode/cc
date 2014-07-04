@@ -53,7 +53,11 @@ define(function (require, exports, module) {
                 pageHeight: element.height()
             };
 
-            element.on(support, me, handler);
+            element.on(
+                support + namespace,
+                me,
+                support === 'wheel'? onWheel : onMouseWheel
+            );
         },
 
         /**
@@ -63,7 +67,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.element.off(support, handler);
+            me.element.off(namespace);
 
             me.element =
             me.cache = null;
@@ -80,6 +84,13 @@ define(function (require, exports, module) {
         element: instance.document
     };
 
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_wheel';
 
     var element = $('<div></div>')[0];
 
@@ -95,15 +106,6 @@ define(function (require, exports, module) {
                   ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
                   : 'DOMMouseScroll';          // 火狐的老版本
 
-    /**
-     * 对应的事件处理器
-     *
-     * @inner
-     * @type {Function}
-     */
-    var handler = support === 'wheel'
-                ? onWheel
-                : onMouseWheel;
 
     element = null;
 
@@ -141,9 +143,7 @@ define(function (require, exports, module) {
 
             return wheel.onScroll({
                 delta: Math.round(
-                            (event.deltaY || event.deltaX)
-                            /
-                            (3 * factor)
+                            (event.deltaY || event.deltaX) / (3 * factor)
                         )
             });
         }

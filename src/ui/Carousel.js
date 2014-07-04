@@ -16,7 +16,7 @@ define(function (require, exports, module) {
      * @property {number=} options.index 从第几个开始播放，默认是 0
      * @property {number=} options.wait 每次等待时间，默认 5000
      * @property {boolean=} options.auto 是否自动播放
-     * @property {boolean=} options.cycle 是否循环，即在最后一个调用 next() 是否回到第一个
+     * @property {boolean=} options.loop 是否循环，即在最后一个调用 next() 是否回到第一个
      * @property {boolean=} options.pauseable 是否鼠标停留在 slide 时暂停播放，默认为 true
      *
      * @property {Object=} options.trigger 触发条件
@@ -133,7 +133,7 @@ define(function (require, exports, module) {
 
             var index = me.index - 1;
             if (index < 0) {
-                if (me.cycle) {
+                if (me.loop) {
                     index = me.cache.total - 1;
                 }
                 else {
@@ -154,7 +154,7 @@ define(function (require, exports, module) {
 
             var index = me.index + 1;
             if (index >= me.cache.total) {
-                if (me.cycle) {
+                if (me.loop) {
                     index = 0;
                 }
                 else {
@@ -296,7 +296,7 @@ define(function (require, exports, module) {
         index: 0,
         wait: 5000,
         auto: true,
-        cycle: true,
+        loop: true,
         pauseable: true,
         trigger: {
             indicator: 'over'

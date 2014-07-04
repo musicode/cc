@@ -63,6 +63,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var call = require('../function/call');
     var split = require('../function/split');
     var contains = require('../function/contains');
     var instance = require('../util/instance');
@@ -116,13 +117,20 @@ define(function (require, exports, module) {
                 me.scope = me;
             }
 
-            var hidden = me.element.css('display') === 'none';
+            var hidden = me.hidden
+                       = me.element.css('display') === 'none';
+
             var trigger = me.trigger;
 
             me.cache = {
-                hidden: hidden,
-                showTrigger: trigger.show ? split(trigger.show, ',') : [ ],
-                hideTrigger: trigger.hide ? split(trigger.hide, ',') : [ ]
+
+                showTrigger: trigger.show
+                           ? split(trigger.show, ',')
+                           : [ ],
+
+                hideTrigger: trigger.hide
+                           ? split(trigger.hide, ',')
+                           : [ ]
             };
 
             var action = hidden ? showEvent : hideEvent;
@@ -150,7 +158,7 @@ define(function (require, exports, module) {
                 me.element.show();
             }
 
-            me.cache.hidden = false;
+            me.hidden = false;
 
             onAfterShow.call(me, event);
         },
@@ -161,9 +169,8 @@ define(function (require, exports, module) {
         hide: function () {
 
             var me = this;
-            var cache = me.cache;
 
-            if (cache.hidden) {
+            if (me.hidden) {
                 return;
             }
 
@@ -182,7 +189,7 @@ define(function (require, exports, module) {
                 me.element.hide();
             }
 
-            cache.hidden = true;
+            me.hidden = true;
 
             onAfterHide.call(me, event);
         },
@@ -268,20 +275,29 @@ define(function (require, exports, module) {
 
             blur: {
                 addTrigger: function (popup) {
-                    var cache = popup.cache;
-                    cache.blurTimer = setTimeout(
-                        function () {
-                            if (popup) {
-                                instance.document
-                                        .click(
-                                            'click',
-                                            cache.blurHandler = hideByBlur(popup)
-                                        );
-                            }
-                        },
-                        150
-                    );
 
+                    var cache = popup.cache;
+                    var bind = function () {
+                        instance.document
+                                .click(
+                                    'click',
+                                    cache.blurHandler = hideByBlur(popup)
+                                );
+                    };
+
+                    if (cache.showByClick) {
+                        cache.blurTimer = setTimeout(
+                                            function () {
+                                                if (popup.cache) {
+                                                    bind();
+                                                }
+                                            },
+                                            150
+                                        );
+                    }
+                    else {
+                        bind();
+                    }
                 },
                 removeTrigger: function (popup) {
 
@@ -331,11 +347,10 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function showEvent(popup, action) {
-        var showTrigger = Popup.trigger.show;
         $.each(
             popup.cache.showTrigger,
             function (index, name) {
-                var target = showTrigger[name];
+                var target = Popup.trigger.show[name];
                 if (target) {
                     target[action + 'Trigger'](popup);
                 }
@@ -351,11 +366,10 @@ define(function (require, exports, module) {
      * @param {string} action 可选值有 add remove
      */
     function hideEvent(popup, action) {
-        var hideTrigger = Popup.trigger.hide;
         $.each(
             popup.cache.hideTrigger,
             function (index, name) {
-                var target = hideTrigger[name];
+                var target = Popup.trigger.hide[name];
                 if (target) {
                     target[action + 'Trigger'](popup);
                 }
@@ -401,10 +415,7 @@ define(function (require, exports, module) {
             currentSource.hide();
         }
 
-        var onBeforeShow = me.onBeforeShow;
-        if ($.isFunction(onBeforeShow)) {
-            return onBeforeShow.call(me.scope, event);
-        }
+        return call(me, 'onBeforeShow', me.scope, event);
     }
 
     /**
@@ -431,10 +442,7 @@ define(function (require, exports, module) {
             );
         }
 
-        var onAfterShow = me.onAfterShow;
-        if ($.isFunction(onAfterShow)) {
-            onAfterShow.call(me.scope, event);
-        }
+        return call(me, 'onAfterShow', me.scope, event);
     }
 
     /**
@@ -444,13 +452,8 @@ define(function (require, exports, module) {
      * @param {Event=} event
      */
     function onBeforeHide(event) {
-
         var me = this;
-        var onBeforeHide = me.onBeforeHide;
-
-        if ($.isFunction(onBeforeHide)) {
-            return onBeforeHide.call(me.scope, event);
-        }
+        return call(me, 'onBeforeHide', me.scope, event);
     }
 
     /**
@@ -467,10 +470,7 @@ define(function (require, exports, module) {
         hideEvent(me, 'remove');
         showEvent(me, 'add');
 
-        var onAfterHide = me.onAfterHide;
-        if ($.isFunction(onAfterHide)) {
-            onAfterHide.call(me.scope, event);
-        }
+        return call(me, 'onAfterHide', me.scope, event);
     }
 
     /**
@@ -571,6 +571,7 @@ define(function (require, exports, module) {
             popup.delay.show,
             Popup.trigger.show.click,
             function () {
+                popup.cache.showByClick = true;
                 popup.show(e);
             }
         );

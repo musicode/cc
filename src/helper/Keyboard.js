@@ -24,6 +24,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var split = require('../function/split');
+    var call = require('../function/call');
 
     /**
      * 处理键盘相关的操作
@@ -31,11 +32,14 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 需要监听键盘事件的元素
-     * @property {Object} options.action 配置键盘事件
+     *
+     * @property {boolean=} options.longPress 配置的 action 事件是否支持长按，默认为 false
+     *                                        如配置了 enter，当用户长按回车时，是否连续触发
+     *
+     * @property {Object} options.action 配置键盘事件，action 事件会在 onKeyDown 之前触发
      *                                   组合键使用 + 连接，如 'ctrl+c',
      *                                   支持键可看 Keyboard.map
-     *
-     *                                   注意：因为使用 + 连接按键，如果要支持 + 键，请写 plus
+     *                                   小键盘键统一加 $ 前缀，如 $+ 表示加号按键
      *
      * @property {Function=} options.onKeyDown 按下键位触发
      * @argument {Event} options.onKeyDown.event
@@ -89,7 +93,8 @@ define(function (require, exports, module) {
 
             me.scope = me.scope || me;
             me.cache = {
-                action: parseAction(me.action || [ ])
+                counter: 0,
+                action: parseAction(me.action || { })
             };
 
             me.element.on('keydown' + namespace, me, onKeyDown)
@@ -120,7 +125,9 @@ define(function (require, exports, module) {
      * @static
      * @type {Object}
      */
-    Keyboard.defaultOptions = { };
+    Keyboard.defaultOptions = {
+        longPress: false
+    };
 
     /**
      * jquery 事件命名空间
@@ -178,36 +185,34 @@ define(function (require, exports, module) {
         '9': 57,
 
         // 主键盘几个特殊字符
-        '~': 192,
+        '`': 192,
         '-': 173,
         '=': 61,
         '[': 219,
         ']': 221,
+        '\\': 220,
         ';': 59,
         "'": 222,
         ',': 188,
         '.': 190,
         '/': 191,
 
-        // 小键盘（统一加前缀 ~）
-        '~0': 96,
-        '~1': 97,
-        '~2': 98,
-        '~3': 99,
-        '~4': 100,
-        '~5': 101,
-        '~6': 102,
-        '~7': 103,
-        '~8': 104,
-        '~9': 105,
-        '~.': 110,
-
-        // 因为 + 被连字符占用了
-        // 所以 加减乘除索性都用单词表示好了
-        plus: 107,
-        minus: 109,
-        multiply: 106,
-        divide: 111,
+        // 小键盘（统一加前缀 $）
+        '$0': 96,
+        '$1': 97,
+        '$2': 98,
+        '$3': 99,
+        '$4': 100,
+        '$5': 101,
+        '$6': 102,
+        '$7': 103,
+        '$8': 104,
+        '$9': 105,
+        '$.': 110,
+        '$+': 107,
+        '$-': 109,
+        '$*': 106,
+        '$/': 111,
 
         // F1 -> F12
         'f1': 112,
@@ -273,7 +278,7 @@ define(function (require, exports, module) {
      * 解析出按键组合
      *
      * @inner
-     * @param {Array} action
+     * @param {Object} action
      * @return {Array}
      */
     function parseAction(action) {
@@ -294,7 +299,12 @@ define(function (require, exports, module) {
                 // ctrl+enter
                 // !ctrl+enter
 
-                var keys = split(key, '+');
+                // 加号需要特殊处理
+                var plus = 'plus';
+                var keys = split(
+                                key.replace(/\$\+/g, plus),
+                                '+'
+                            );
 
                 $.each(
                     combinationKeys,
@@ -312,6 +322,10 @@ define(function (require, exports, module) {
                         var negative = name.indexOf('!') === 0;
                         if (negative) {
                             name = name.substr(1);
+                        }
+
+                        if (name === plus) {
+                            name = '$+';
                         }
 
                         if (combinationKeys[name]) {
@@ -351,41 +365,37 @@ define(function (require, exports, module) {
     function onKeyDown(e) {
 
         var keyboard = e.data;
-        var cache = keyboard.cache;
         var keyCode = e.keyCode;
+        var cache = keyboard.cache;
         var scope = keyboard.scope;
 
-        if (cache.keyCode === keyCode
-            && cache.counter > 0
-        ) {
+        var counter = cache.counter;
 
-            if (cache.counter === 1) {
-                var onLongPressStart = keyboard.onLongPressStart;
-                if ($.isFunction(onLongPressStart)) {
-                    onLongPressStart.call(scope, e);
-                }
+        if (cache.keyCode === keyCode && counter > 0) {
+            if (counter === 1) {
+                call(keyboard, 'onLongPressStart', scope, e);
             }
-
-            cache.counter++;
+            counter++;
         }
         else {
             cache.keyCode = keyCode;
-            cache.counter = 1;
+            counter = 1;
+        }
 
+        cache.counter = counter;
+
+        if (keyboard.longPress || counter === 1) {
             $.each(
                 cache.action,
                 function (index, item) {
                     if (item.test(e)) {
-                        item.handler.call(scope, e);
+                        call(item, 'handler', scope, e);
                     }
                 }
             );
         }
 
-        var onKeyDown = keyboard.onKeyDown;
-        if ($.isFunction(onKeyDown)) {
-            return onKeyDown.call(scope, e);
-        }
+        call(keyboard, 'onKeyDown', scope, e);
     }
 
     /**
@@ -403,17 +413,11 @@ define(function (require, exports, module) {
         cache.keyCode = null;
 
         if (cache.counter > 1) {
-            var onLongPressEnd = keyboard.onLongPressEnd;
-            if ($.isFunction(onLongPressEnd)) {
-                onLongPressEnd.call(scope, e);
-            }
+            call(keyboard, 'onLongPressEnd', scope, e);
             cache.counter = 0;
         }
 
-        var onKeyUp = keyboard.onKeyUp;
-        if ($.isFunction(onKeyUp)) {
-            return onKeyUp.call(scope, e);
-        }
+        call(keyboard, 'onKeyUp', scope, e);
     }
 
 

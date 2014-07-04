@@ -8,11 +8,13 @@ define(function (require, exports, module) {
      * 1. 兼容 input 事件
      *
      * IE9+ 和 其他标准浏览器都支持 input 事件
-     * IE8- 支持 propertychange 事件，需判断 event.propertyName 是否为 'value'
+     * IE9- 支持 propertychange 事件，需判断 event.propertyName 是否为 'value'
      *
-     * input 标准触发方式包括：输入、backspace、delete、ctrl+c、ctrl+v、右键剪切和粘贴
+     * input 标准触发方式包括：输入、backspace、delete、剪切、粘贴、拖拽
      *
-     * IE9 的 input 事件  不支持 backspace、delete、ctrl+c、右键剪切 触发
+     * IE9 不支持 backspace、delete、剪切、拖拽 触发，不论 input 或 propertychange 事件（未解决，使用定时器太恶心了）
+     * addEventListener 绑定的 propertychange 事件永远不会触发，所以用 jq 的话 IE9 必须绑定 input 事件
+     *
      * IE8-的 propertychange 事件触发方式和 input 标准方式相同
      * IE8-改写 value 会触发 propertychange
      *
@@ -25,68 +27,60 @@ define(function (require, exports, module) {
      *
      * 3. chrome 下 <input type="text" /> 按方向键上会使光标跑到最左侧
      *
-     * 4. 处理中文输入
-     *
-     * 中文输入状态下，输入框不应触发 change 事件
-     *
-     * keyCode 在中文输入下比较特殊，如下：
-     *
-     * keydown: 0   [火狐]
-     * keydown: 229 [其他]
-     *
-     * 需要注意的是，空格和回车这些键会触发输入法文字写入输入框
-     *
-     * 5. 组合键，如 ctrl+a 的触发顺序如下：
-     *
-     *    按下 ctrl
-     *    按下 a
-     *    松开 ctrl
-     *    松开 a
-     *
-     *    因为不是对称的 按下-松开 顺序，所以本模块不处理组合键
      */
 
     'use strict';
 
-    var advice = require('../util/advice');
+    var call = require('../function/call');
+    var around = require('../function/around');
+
     var Keyboard = require('./Keyboard');
 
     /**
-     * 使输入框元素具有 input 事件
+     * 封装一些输入功能，包括兼容最常用的 input 事件
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 输入框元素
-     * @property {boolean=} options.longPress 长按是否触发 change 事件，默认为 false
-     *                                        因为长按产生的一般是无效输入
+     *
+     * @property {boolean=} options.smart 是否能够聪明的在长按时不触发 change 事件，默认为 true
+     *                                    因为长按产生的一般是无效输入
+     *
+     * @property {boolean=} options.longPress 配置的 action 事件是否支持长按连续触发，默认为 false
      *
      * @property {Function=} options.onKeyDown 按下键位触发
-     * @property {Function=} options.onKeyUp 松开键位触发
-     * @property {Function=} options.onChange 内容变化触发
-     * @argument {string} options.onChange.value 变化的值
+     * @argument {Event} options.onLongPressStart.event
      *
-     * @property {Funciton=} options.onEnter 按下回车触发，类似的还支持以下事件
-     *                                       onUp, onDown, onLeft, onRight, onSpace, onEsc
+     * @property {Function=} options.onKeyUp 松开键位触发
+     * @argument {Event} options.onLongPressStart.event
+     *
+     * @property {Function=} options.onChange 内容变化触发
      *
      * @property {Function=} options.onLongPressStart 长按开始
-     * @argument {Event} options.onLongPressStart.event 按下的键码
+     * @argument {Event} options.onLongPressStart.event
+     *
      * @property {Function=} options.onLongPressEnd 长按结束
-     * @argument {Event} options.onLongPressStart.event 松开的键码
+     * @argument {Event} options.onLongPressStart.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
-     *                                       组合键只支持 shift/ctrl/alt/meta + 字母/数字
-     *                                       举个例子：
-     *                                       {
-     *                                           'up': function () {
-     *                                               // up
-     *                                           },
-     *                                           'ctrl+c': function () {
-     *                                               // copy
-     *                                           },
-     *                                           'ctrl+alt+a': function () {
-     *                                               // 截图
-     *                                           }
-     *                                       }
+     *                                    组合键只支持 shift/ctrl/alt/meta + 字母/数字
+     *                                    举个例子：
+     *                                    {
+     *                                        'enter': function () {
+     *                                            // submit
+     *                                        },
+     *                                        'up': function () {
+     *                                            // up
+     *                                        },
+     *                                        'ctrl+c': function () {
+     *                                            // copy
+     *                                        },
+     *                                        'ctrl+alt+a': function () {
+     *                                            // 截图
+     *                                        }
+     *                                    }
+     *
+     * @property {*} options.scope 为以上函数设置 this 对象
      *
      */
     function Input(options) {
@@ -104,55 +98,55 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var action = me.action || { };
 
-            $.each(
-                getOnEvents(me),
-                function (index, item) {
-                    advice.before(
-                        action,
-                        item.type,
-                        item.handler
-                    );
-                }
-            );
+            var scope = me.scope;
+            if (!scope) {
+                scope = me.scope = me;
+            }
+
+            var initEvent = support === 'input'
+                          ? initInput
+                          : initPropertyChange;
+
+            initEvent(me);
 
             var element = me.element;
+            var cache = me.cache = { };
 
-            // IE8- 改值会触发 propertychange
-            advice.before(
-                element,
-                'val',
-                function (value) {
-                    if (typeof value !== 'undefined') {
-                        me.cache.changeByCall = true;
+            var onKeyDown = me.onKeyDown;
+            if (element.prop('tagName') === 'INPUT') {
+                onKeyDown = function (e) {
+                    if (e.keyCode === Keyboard.map.up) {
+                        e.preventDefault();
                     }
-                }
-            );
+                    call(me, 'onKeyDown', scope, e);
+                };
+            }
 
-            element.on(
-                support + namespace,
-                me,
-                support === 'input' ? onInput : onPropertyChange
-            );
+            var value;
 
-            me.cache = {
+            cache.keyboard = new Keyboard({
+                element: element,
+                action: me.action,
+                longPress: me.longPress,
+                onKeyDown: onKeyDown,
+                onKeyUp: me.onKeyUp,
+                onLongPressStart: function (e) {
+                    cache.longPressing = true;
+                    call(me, 'onLongPressStart', scope, e);
 
-                mode: element.prop('tagName').toLowerCase(),
+                    value = element.val();
+                },
+                onLongPressEnd: function (e) {
+                    cache.longPressing = false;
+                    call(me, 'onLongPressEnd', scope, e);
 
-                keyboard: new Keyboard({
-
-                    element: element,
-                    action: action,
-                    onKeyDown: onKeyDown,
-                    onKeyUp: onKeyUp,
-                    onLongPressStart: me.onLongPressStart,
-                    onLongPressEnd: me.onLongPressEnd,
-
-                    // 把作用域改为 Input 实例
-                    scope: me
-                })
-            };
+                    if (value !== element.val()) {
+                        triggerChange(me);
+                    }
+                },
+                scope: scope
+            });
 
         },
 
@@ -169,11 +163,6 @@ define(function (require, exports, module) {
                 element.css('overflow-y', 'hidden');
             }
 
-            // 要自动高度必须响应长按
-            if (!me.longPress) {
-                me.longPress = true;
-            }
-
             var originHeight = element.height();
 
             var oldHeight = originHeight;
@@ -182,27 +171,22 @@ define(function (require, exports, module) {
             var lineHeight = parseInt(element.css('font-size'), 10);
             var padding = element.innerHeight() - originHeight;
 
-            advice.after(
-                me,
-                'onChange',
-                function () {
+            me.cache.onChange = function () {
 
-                    // 把高度重置为原始值才能取到正确的 newHeight
-                    if (oldHeight !== originHeight) {
-                        oldHeight = originHeight;
-                        element.height(originHeight);
-                    }
-
-                    // scrollHeight 包含上下 padding 和 height
-                    newHeight = element.prop('scrollHeight') - padding;
-
-                    if (Math.abs(newHeight - oldHeight) > lineHeight) {
-                        element.height(newHeight);
-                        oldHeight = newHeight;
-                    }
-
+                // 把高度重置为原始值才能取到正确的 newHeight
+                if (oldHeight !== originHeight) {
+                    oldHeight = originHeight;
+                    element.height(originHeight);
                 }
-            );
+
+                // scrollHeight 包含上下 padding 和 height
+                newHeight = element.prop('scrollHeight') - padding;
+
+                if (Math.abs(newHeight - oldHeight) > lineHeight) {
+                    element.height(newHeight);
+                    oldHeight = newHeight;
+                }
+            };
         },
 
         /**
@@ -229,6 +213,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Input.defaultOptions = {
+        smart: true,
         longPress: false
     };
 
@@ -248,250 +233,94 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var support = 'oninput' in input ? 'input' : 'propertychange';
+    var support = 'oninput' in input
+                ? 'input'
+                : 'propertychange';
 
     input = null;
 
     /**
-     * 获得所有的 onXXX 函数
+     * 初始化标准浏览器的 input 事件监听
      *
      * @inner
      * @param {Input} input
-     * @return {Array}
      */
-    function getOnEvents(input) {
-
-        var result = [ ];
-
-        for (var name in input) {
-            if (input.hasOwnProperty(name)
-                && name.indexOf('on') === 0
-                && typeof input[name] === 'function'
-            ) {
-                result.push({
-                    type: name.toLowerCase().substr(2),
-                    handler: input[name]
-                });
+    function initInput(input) {
+        input.element.on(
+            support + namespace,
+            function () {
+                triggerChange(input);
             }
-        }
-
-        return result;
+        );
     }
 
     /**
-     * keyup 事件中，触发中文输入法写入到输入框的 keyCode
+     * 初始化 IE8- 的 propertychange 事件监听
      *
      * @inner
-     * @param {?number} keyCode
-     * @return {boolean}
+     * @param {Input} input
      */
-    function isImsKey(keyCode) {
-        return (keyCode >= 49 && keyCode <= 54)         // 主键盘数字键 1-6
-                || (keyCode >= 186 && keyCode <= 192)   // 中文标点符号
-                || (keyCode >= 219 && keyCode <= 222)   // 中文标点符号
-                || keyCode === 32                       // 空格
-                || keyCode === 13;                      // 回车
-    }
+    function initPropertyChange(input) {
 
-    /**
-     * keyCode 是否是会引起文本内容发生变化的键
-     *
-     * @inner
-     * @param {number} keyCode
-     * @return {boolean}
-     */
-    function isCharKey(keyCode) {
-        return (keyCode >= 65 && keyCode <= 90)        // A-Z
-                || (keyCode >= 48 && keyCode <= 57)    // 主键盘的数字键
-                || (keyCode >= 96 && keyCode <= 107)   // 小键盘的数字键 * +
-                || (keyCode >= 186 && keyCode <= 192)  // ;=,-./`
-                || (keyCode >= 219 && keyCode <= 222)  // [\]'
-                || keyCode === 109                     // 小键盘 -
-                || keyCode === 111                     // 小键盘 /
-                || keyCode === 32                      // 空格键
-                || keyCode === 8                       // 退格键
-                || keyCode === 46                      // delete 键
-                || keyCode === 13;                     // 回车
-    }
+        var element = input.element;
 
+        // propertychange 事件在 IE67 下可能出现死循环，原因不明
+        // 简单的判断 propertyName 是否为 value 不够
+        // 必须跟上次的值比较一下
+        var oldValue = element.val();
+
+        // element.val('xxx') 在 IE 下会触发 propertychange
+        // 这和标准浏览器的行为不一致
+        // 这个并不能完美解决问题
+        // 比如使用 element[0].value = 'xx' 无法检测到
+        var changeByVal = false;
+
+        element.on(
+            support + namespace,
+            function (e) {
+                if (changeByVal) {
+                    changeByVal = false;
+                    return;
+                }
+                if (e.originalEvent.propertyName === 'value') {
+                    var newValue = element.val();
+                    if (newValue !== oldValue) {
+                        triggerChange(input);
+                        oldValue = newValue;
+                    }
+                }
+            }
+        );
+
+        around(
+            element,
+            'val',
+            function () {
+                if (arguments.length === 0) {
+                    changeByVal = true;
+                }
+            }
+        );
+    }
 
     /**
      * 触发 change 事件
      *
      * @inner
      * @param {Input} input
-     * @param {number=} keyUpCode
      */
-    function triggerChangeEvent(input, keyUpCode) {
+    function triggerChange(input) {
 
         var cache = input.cache;
-        var keyDownCode = cache.keyDownCode;
 
-        if (keyDownCode || keyUpCode) {
-
-            if (keyDownCode) {
-
-                // 中文输入法开启时，keydown 的 keyCode 只可能是这两个值
-                if (keyDownCode === 0 || keyDownCode === 229) {
-
-                    // 以 chrome 举例
-                    // 触发中文输入法开启的 keyDownCode 是 229
-                    // 按下空格之类的键，keyDownCode 是真实键码，它会把内容写入文本框
-
-                    if (!isImsKey(keyUpCode)) { // 是否正在输入
-                        return;
-                    }
-                }
-
-                // 过滤长按
-                if (!input.longPress && cache.keyboard.isLongPressing) {
-                    return;
-                }
-            }
-
-            // 如果按下 ctrl+a，最后一次触发 keyup 事件是松开 ctrl 键
-            // 这时 keyDownCode 已被清除，所以两个变量都要判断一下
-
-            if (!isCharKey(keyUpCode || keyDownCode)) {
-                return;
-            }
+        if (!input.smart
+            || !cache.longPressing
+        ) {
+            call(input, 'onChange', input.scope);
         }
 
-        var value = input.element.val();
-        cache.value = value;
-
-        if (typeof input.onChange === 'function') {
-            input.onChange(value);
-        }
-    }
-
-    /**
-     * 处理标准浏览器 input 事件
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onInput(e) {
-        var input = e.data;
-        // 过滤输入触发，这里只负责粘贴等方式触发
-        // 不然会触发两次 onChange
-        if (input.cache.keyDownCode == null) {
-            triggerChangeEvent(input);
-        }
-    }
-
-    /**
-     * 处理 IE8- 的 propertychange 事件
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onPropertyChange(e) {
-
-        var input = e.data;
-        var cache = input.cache;
-
-        // 不是通过改值触发的才响应
-        if (cache.changeByCall) {
-            cache.changeByCall = false;
-            return;
-        }
-
-        // propertychange 事件在 IE67 下可能出现死循环，原因不明
-        // 简单的判断 propertyName 是否为 value 不够
-        // 必须跟上次的值比较一下
-        var name = e.originalEvent.propertyName;
-        var value = input.element.val();
-
-        if (name === 'value' && cache.value !== value) {
-            onInput(e);
-        }
-    }
-
-    /**
-     * 某些按键不会触发 keyup 事件
-     * 为了保证 onChange 的准确性，以回车代替
-     *
-     * @inner
-     * @param {Input} input
-     * @param {Event} e
-     */
-    function createKeyUpTimer(input, e) {
-        input.cache.keyUpTimer = setTimeout(
-            function () {
-                if (input.cache) {
-                    e.keyCode = 13;
-                    onKeyUp.call(input, e);
-                }
-            },
-            500
-        );
-    }
-
-    /**
-     * 移除 keyup 定时器
-     *
-     * @inner
-     * @param {Input} input
-     */
-    function removeKeyUpTimer(input) {
-        var cache = input.cache;
-        if (cache.keyUpTimer) {
-            clearTimeout(cache.keyUpTimer);
-            cache.keyUpTimer = null;
-        }
-    }
-
-
-    /**
-     * 处理各种兼容问题
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onKeyDown(e) {
-
-        var input = this;
-        var cache = input.cache;
-        var keyCode = e.keyCode;
-
-        if (cache.keyboard.isLongPressing) {
-            triggerChangeEvent(input, null);
-            removeKeyUpTimer(input);
-        }
-        else {
-            cache.keyDownCode = keyCode;
-            createKeyUpTimer(input, e);
-        }
-
-        // chrome 按上键会跳到最左侧
-        if (keyCode === 38 && cache.mode === 'input') {
-            e.preventDefault();
-        }
-
-        if (typeof input.onKeyDown === 'function') {
-            return input.onKeyDown(e);
-        }
-    }
-
-    /**
-     * keyup 事件处理器
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onKeyUp(e) {
-
-        var input = this;
-
-        removeKeyUpTimer(input);
-
-        triggerChangeEvent(input, e.keyCode);
-        input.cache.keyDownCode = null;
-
-        if (typeof input.onKeyUp === 'function') {
-            return input.onKeyUp(e);
-        }
+        // 在最后执行内部的 onChange，以防上面的 onChange 改值了
+        call(cache, 'onChange');
     }
 
 

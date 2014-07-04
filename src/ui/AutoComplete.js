@@ -10,16 +10,12 @@ define(function (require, exports, module) {
     var Popup = require('../helper/Popup');
 
     /**
-     * [TODO] Input 支持 scope
-     */
-
-    /**
      * 自动补全
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.input 输入框元素
-     * @property {jQuery} options.menu 补全菜单
+     * @property {jQuery} options.menu 补全菜单，菜单最好使用相对定位，这样直接 show 出来，无需涉及定位逻辑
      *
      * @property {number=} options.wait 长按上下键遍历的等待间隔时间
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
@@ -40,14 +36,12 @@ define(function (require, exports, module) {
      * @property {string=} options.className.itemHover 菜单项 hover 时的 className
      * @property {string=} options.className.itemActive 菜单项 active 时的 className
      *
-     * @property {Function=} options.parseItem 获得菜单项数据，返回格式为 { text: '' }
-     *
      * @property {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @property {Function=} options.onItemActive 菜单项 active 时的事件处理函数
-     * @argument {Object} options.onItemActive.data 用 options.parseItem 解析 active 菜单项获得的数据
+     * @property {Function} options.parse 解析每个菜单项元素上的数据
+     *                                    必须返回的字段是 text
      *
      * @property {Function} options.onSelect 用户点击选中某个菜单项触发
      * @property {Function} options.onEnter 用户按下回车触发
@@ -68,45 +62,74 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var cache =
-            me.cache = {
-
-                data: { },
-
-                // 遍历起始索引
-                startIndex: me.includeInput ? 0 : -1,
-
-                resetIndex: function () {
-
-                    var elementItems = cache.elementItems;
-                    var className = me.className;
-
-                    if (elementItems) {
-                        if (cache.hoverIndex > cache.startIndex) {
-                            elementItems.eq(cache.hoverIndex).removeClass(className.itemHover);
-                        }
-                        if (cache.activeIndex > cache.startIndex) {
-                            elementItems.eq(cache.activeIndex).removeClass(className.itemActive);
-                        }
-                    }
-
-                    cache.activeData = null;
-
-                    cache.hoverIndex =
-                    cache.activeIndex = cache.startIndex;
-                }
-
-            };
+            var cache = me.cache
+                      = {
+                            // 按上下键遍历的最小索引
+                            min: me.includeInput ? 0 : 1,
+                            // 起始索引
+                            start: 0,
+                            // 缓存结果
+                            data: { }
+                        };
 
             cache.input = createInput(me);
             cache.popup = createPopup(me);
 
-            var itemSelector = me.selector.item;
+            me.menu.on(
+                'click' + namespace,
+                me.selector.item,
+                me,
+                clickItem
+            );
+        },
 
-            me.menu.on('click' + namespace, itemSelector, me, clickItem)
-                   .on('mouseenter' + namespace, itemSelector, me, enterItem)
-                   .on('mouseleave' + namespace, itemSelector, me, leaveItem);
+        /**
+         * 渲染数据
+         *
+         * @param {Array} data
+         */
+        render: function (data) {
 
+            var me = this;
+
+            if ($.isArray(data) && data.length > 0) {
+
+                var cache = me.cache;
+                if (cache.items) {
+                    cache.items.off(namespace);
+                }
+
+                var menu = me.menu;
+                menu.html(
+                    renderMenu(me.template, data)
+                );
+
+                var items = cache.items
+                          = menu.find(me.selector.item);
+
+                var values = cache.values
+                           = items.map(
+                                 function (index, item) {
+                                     return item.innerHTML;
+                                 }
+                             );
+
+                // 这两个事件不支持事件代理，只能这么搞了
+                items.on('mouseenter' + namespace, me, enterItem);
+                items.on('mouseleave' + namespace, me, leaveItem);
+
+                var input = me.input;
+                items.splice(0, 0, input[0]);
+                values.splice(0, 0, input.val());
+
+                cache.index = cache.start;
+                cache.max = items.length - 1;
+
+                me.open();
+            }
+            else {
+                me.close();
+            }
         },
 
         /**
@@ -131,13 +154,15 @@ define(function (require, exports, module) {
             var me = this;
             var cache = me.cache;
 
+            if (cache.items) {
+                cache.items.off(namespace);
+                cache.items = null;
+            }
+
             me.menu.off(namespace);
 
-            cache.popup.dispose();
-
-            // 可能还在长按中，必须结束掉
-            cache.input.onLongPressEnd();
             cache.input.dispose();
+            cache.popup.dispose();
 
             me.input =
             me.menu =
@@ -152,24 +177,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     AutoComplete.defaultOptions = {
-
         wait: 60,
         includeInput: true,
         animation: { },
         template: { },
         className: { },
-        selector: {
-            item: 'li'
-        },
-
-        parseItem: function (item) {
-            return {
-                text: item.innerHTML
-            };
-        },
-        onItemActive: function (data) {
-            this.input.val(data.text);
-        }
+        selector: { }
     };
 
     /**
@@ -181,6 +194,62 @@ define(function (require, exports, module) {
     var namespace = '.cobble-ui-autocomplete';
 
     /**
+     * 用 Input 处理按键
+     *
+     * @inner
+     * @param {AutoComplete} autoComplete
+     * @return {Input}
+     */
+    function createInput(autoComplete) {
+
+        var longPressing = false;
+        var action;
+        var timer;
+
+        return new Input({
+
+            element: autoComplete.input,
+            smart: true,
+            longPress: false,
+            action: {
+                up: function () {
+                    action = previousItem;
+                    action(autoComplete);
+                },
+                down: function () {
+                    action = nextItem;
+                    action(autoComplete);
+                },
+                enter: function () {
+                    autoComplete.close();
+                    trigger(autoComplete, 'onEnter');
+                }
+            },
+            onLongPressStart: function () {
+                if (action) {
+                    timer = setInterval(
+                                function () {
+                                    action(autoComplete);
+                                },
+                                autoComplete.wait
+                            );
+                }
+            },
+            onLongPressEnd: function () {
+                if (action) {
+                    clearInterval(timer);
+                }
+            },
+            onKeyUp: function () {
+                action = null;
+            },
+            onChange: function () {
+                suggest(autoComplete);
+            }
+        });
+    }
+
+    /**
      * 用 Popup 处理提示层的显示隐藏逻辑
      *
      * @inner
@@ -190,14 +259,11 @@ define(function (require, exports, module) {
     function createPopup(autoComplete) {
 
         var input = autoComplete.input;
-        var menu = autoComplete.menu;
-        var cache = autoComplete.cache;
         var animation = autoComplete.animation;
-        var selector = autoComplete.selector;
 
         return new Popup({
             source: input,
-            element: menu,
+            element: autoComplete.menu,
             scope: autoComplete,
             trigger: {
                 show: 'focus',
@@ -208,101 +274,20 @@ define(function (require, exports, module) {
                 hide: animation.close
             },
             onBeforeShow: function (event) {
-                // 由 focus 事件触发的要调一下 suggest
                 if (event) {
                     suggest(autoComplete);
                     return false;
                 }
-            },
-            onAfterShow: function () {
-
-                cache.resetIndex();
-
-                var elementItems = menu.find(selector.item);
-                var dataItems = elementItems.map(
-                                    function (index, item) {
-                                        return autoComplete.parseItem(item);
-                                    }
-                                );
-
-                if (autoComplete.includeInput) {
-                    elementItems.splice(0, 0, input);
-                    dataItems.splice(0, 0, { text: input.val() });
+                else {
+                    var cache = autoComplete.cache;
+                    cache.index = cache.start;
                 }
-
-                cache.elementItems = elementItems;
-                cache.dataItems = dataItems;
-
             },
             onBeforeHide: function (event) {
                 // 点击 input 不触发失焦隐藏
-                if (event && event.target === input[0]) {
-                    return false;
+                if (event) {
+                    return event.target !== input[0];
                 }
-            },
-            onAfterHide: cache.resetIndex
-        });
-    }
-
-    /**
-     * 用 Input 处理按键
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     * @return {Input}
-     */
-    function createInput(autoComplete) {
-
-        var cache = autoComplete.cache;
-        var action;
-
-        return new Input({
-
-            element: autoComplete.input,
-
-            // 长按不触发 onChange
-            longPress: false,
-            onLongPressStart: function () {
-                if (action) {
-                    cache.timer = setInterval(
-                        function () {
-                            action(autoComplete);
-                        },
-                        autoComplete.wait
-                    );
-                }
-            },
-            onLongPressEnd: function () {
-                if (cache.timer) {
-                    clearInterval(cache.timer);
-                    cache.timer = null;
-                }
-            },
-
-            action: {
-                up: function () {
-                    if (cache.elementItems) {
-                        (action = previousItem)(autoComplete);
-                    }
-                },
-                down: function () {
-                    if (cache.elementItems) {
-                        (action = nextItem)(autoComplete);
-                    }
-                },
-                enter: function () {
-                    var data = cache.activeData;
-                    autoComplete.close();
-                    if ($.isFunction(autoComplete.onEnter)) {
-                        autoComplete.onEnter(data);
-                    }
-                }
-            },
-            onKeyUp: function () {
-                action = null;
-            },
-            onChange: function () {
-                suggest(autoComplete);
             }
         });
     }
@@ -316,50 +301,20 @@ define(function (require, exports, module) {
     function suggest(autoComplete) {
 
         var cache = autoComplete.cache;
-
-        var update = function (data, fromCache) {
-            if (data && data.length > 0) {
-
-                if (!fromCache) {
-                    cache.data[query] = data;
-                }
-
-                var menu = autoComplete.menu;
-                var template = autoComplete.template;
-                var render = template.render;
-
-                var itemTemplate = template.item;
-                if (itemTemplate) {
-                    menu.html(
-                        $.map(
-                            data,
-                            function (item) {
-                                return render(itemTemplate, item);
-                            }
-                        ).join('')
-                    );
-                }
-                else {
-                    menu.html(
-                        render(template.menu, data)
-                    );
-                }
-
-                autoComplete.open();
-            }
-            else {
-                autoComplete.close();
-            }
-        };
-
         var query = $.trim(autoComplete.input.val());
         var data = cache.data[query];
 
         if (data) {
-            update(data, true);
+            autoComplete.render(data);
         }
         else {
-            autoComplete.load(query, update);
+            autoComplete.load(
+                query,
+                function (data) {
+                    cache.data[query] = data;
+                    autoComplete.render(data);
+                }
+            );
         }
     }
 
@@ -372,17 +327,14 @@ define(function (require, exports, module) {
     function clickItem(e) {
 
         var autoComplete = e.data;
-        var cache = autoComplete.cache;
 
-        var index = cache.elementItems.index(e.currentTarget);
-        var data = cache.dataItems[index];
+        activeItem(
+            autoComplete,
+            autoComplete.cache.items.index(e.currentTarget)
+        );
 
-        activeItem(autoComplete, index);
         autoComplete.close();
-
-        if ($.isFunction(autoComplete.onSelect)) {
-            autoComplete.onSelect(data);
-        }
+        trigger(autoComplete, 'onSelect');
     }
 
     /**
@@ -395,9 +347,9 @@ define(function (require, exports, module) {
 
         var cache = autoComplete.cache;
 
-        var index = cache.activeIndex - 1;
-        if (index < 0) {
-            index = cache.elementItems.length - 1;
+        var index = cache.index - 1;
+        if (index < cache.min) {
+            index = cache.max;
         }
 
         activeItem(autoComplete, index);
@@ -413,9 +365,9 @@ define(function (require, exports, module) {
 
         var cache = autoComplete.cache;
 
-        var index = cache.activeIndex + 1;
-        if (index >= cache.elementItems.length) {
-            index = 0;
+        var index = cache.index + 1;
+        if (index > cache.max) {
+            index = cache.min;
         }
 
         activeItem(autoComplete, index);
@@ -430,21 +382,21 @@ define(function (require, exports, module) {
      */
     function activeItem(autoComplete, index) {
 
-        var cache = autoComplete.cache;
-        cache.resetIndex();
+        var className;
 
-        cache.elementItems
-             .eq(index)
-             .addClass(autoComplete.className.itemActive);
-
-        cache.activeIndex = index;
-
-        var data = cache.dataItems[index];
-        cache.activeData = data;
-
-        if ($.isFunction(autoComplete.onItemActive)) {
-            autoComplete.onItemActive(data);
+        if (index > 0) {
+            className = autoComplete.className.itemActive;
         }
+
+        switchClass(
+            autoComplete,
+            index,
+            className
+        );
+
+        autoComplete.input.val(
+            autoComplete.cache.values[index]
+        );
     }
 
     /**
@@ -456,15 +408,12 @@ define(function (require, exports, module) {
     function enterItem(e) {
 
         var autoComplete = e.data;
-        var cache = autoComplete.cache;
 
-        cache.resetIndex();
-
-        var target = $(e.currentTarget);
-        target.addClass(autoComplete.className.itemHover);
-
-        cache.hoverIndex =
-        cache.activeIndex = cache.elementItems.index(target);
+        switchClass(
+            autoComplete,
+            autoComplete.cache.items.index(e.currentTarget),
+            autoComplete.className.itemHover
+        );
     }
 
     /**
@@ -474,7 +423,85 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function leaveItem(e) {
-        e.data.cache.resetIndex();
+        var autoComplete = e.data;
+        var cache = autoComplete.cache;
+        if (cache.className === autoComplete.className.itemHover) {
+            switchClass(
+                autoComplete,
+                cache.start
+            );
+        }
+    }
+
+    /**
+     * 切换 className
+     *
+     * @inner
+     * @param {AutoComplete} autoComplete
+     * @param {number} newIndex
+     * @param {string=} newClass
+     */
+    function switchClass(autoComplete, newIndex, newClass) {
+
+        var cache = autoComplete.cache;
+        var items = cache.items;
+
+        var className = cache.className;
+        if (className) {
+            items.eq(cache.index)
+                 .removeClass(className);
+        }
+
+        if (newClass) {
+            items.eq(newIndex)
+                 .addClass(newClass);
+        }
+
+        cache.index = newIndex;
+        cache.className = newClass;
+    }
+
+    /**
+     * 触发对外接口
+     * 因为参数相同，所以提供一个方法
+     *
+     * @inner
+     * @param {AutoComplete} autoComplete
+     * @param {string} name
+     */
+    function trigger(autoComplete, name) {
+        if ($.isFunction(autoComplete[name])) {
+            var cache = autoComplete.cache;
+            autoComplete[name]({
+                target: cache.items.eq(cache.index)
+            });
+        }
+    }
+
+    /**
+     * 渲染菜单
+     *
+     * @inner
+     * @param {Object} template
+     * @property {string} template.item
+     * @property {string} template.menu
+     * @property {Function} template.render
+     * @param {Array} data
+     * @return {string}
+     */
+    function renderMenu(template, data) {
+        var render = template.render;
+        if (template.item) {
+            return $.map(
+                       data,
+                       function (item) {
+                           return render(template.item, item);
+                       }
+                   ).join('');
+        }
+        else {
+            return render(template.menu, data);
+        }
     }
 
 
