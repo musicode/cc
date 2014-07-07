@@ -23,14 +23,14 @@ define(function (require, exports, module) {
             instance.dispose();
         });
 
-        it('showByClick, hideByBlur', function () {
+        it('showByClick, hideByClick', function () {
 
             instance = new Popup({
                 element: element,
                 source: source,
                 trigger: {
                     show: 'click',
-                    hide: 'blur'
+                    hide: 'click'
                 }
             });
 
@@ -80,7 +80,7 @@ define(function (require, exports, module) {
             source.focus();
             expect(instance.hidden).toBe(false);
 
-            doc.click();
+            source.blur();
             expect(instance.hidden).toBe(true);
 
         });
@@ -94,7 +94,7 @@ define(function (require, exports, module) {
                 source: source,
                 trigger: {
                     show: 'click,over',
-                    hide: 'blur,out'
+                    hide: 'click,out'
                 }
             });
 
@@ -107,12 +107,8 @@ define(function (require, exports, module) {
             source.click();
             expect(instance.hidden).toBe(false);
 
-            setTimeout(
-                function () {
-                    element.mouseleave();
-                    expect(instance.hidden).toBe(true);
-                }
-            )
+            element.mouseleave();
+            expect(instance.hidden).toBe(true);
 
         });
 
@@ -186,7 +182,7 @@ define(function (require, exports, module) {
 
         });
 
-        it('delay - click/blur', function (done) {
+        it('delay - click/click', function (done) {
 
             var showDelay = 50;
             var hideDelay = 100;
@@ -198,7 +194,7 @@ define(function (require, exports, module) {
                 source: source,
                 trigger: {
                     show: 'click',
-                    hide: 'blur'
+                    hide: 'click'
                 },
                 delay: {
                     show: showDelay,
@@ -213,22 +209,16 @@ define(function (require, exports, module) {
                 function () {
                     expect(instance.hidden).toBe(false);
 
+                    doc.click();
+                    expect(instance.hidden).toBe(false);
+
                     setTimeout(
                         function () {
-                            doc.click();
-                            expect(instance.hidden).toBe(false);
-
-                            setTimeout(
-                                function () {
-                                    expect(instance.hidden).toBe(true);
-                                    done();
-                                },
-                                hideDelay + 10
-                            )
+                            expect(instance.hidden).toBe(true);
+                            done();
                         },
-                        200
+                        hideDelay + 10
                     )
-
                 },
                 showDelay + 10
             );

@@ -29,7 +29,9 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.element 需要监听鼠标滚轮事件的元素，默认是 document
-     * @property {function(Object)=} options.onScroll 滚动事件对外接口，如果返回 false 可阻止默认行为
+     * @property {Function=} options.onScroll 滚动事件对外接口，如果返回 false 可阻止默认行为
+     * @argument {Object} options.onScroll.data
+     * @property {number} options.onScroll.data.delta
      */
     function Wheel(options) {
         $.extend(this, Wheel.defaultOptions, options);
@@ -149,29 +151,9 @@ define(function (require, exports, module) {
         }
     }
 
-    /**
-     * 获得元素的行高
-     * 根据 wheel 事件规范描述，行高要取自 font-size ...
-     *
-     * @inner
-     * @param {jQuery} element
-     * @return {number}
-     */
-    function getLineHeight(element) {
-        var parent = offsetParent(element);
-        if (!parent.length) {
-            parent = instance.body;
-        }
-        return parseInt(parent.css('font-size'), 10);
-    }
-
 
     /**
-     * 处理浏览器的兼容问题
-     *
-     * 向下滚动统一为正数
-     * 向上滚动统一为负数
-     * 滚动幅度取自 delta 属性
+     * 兼容以前的滚动事件，封装成标准的 wheel 事件
      *
      * @inner
      * @param {Event} e
@@ -181,7 +163,7 @@ define(function (require, exports, module) {
         var originalEvent;
 
         if (e.type === 'wheel') {
-            originalEvent = event;
+            originalEvent = e;
         }
         else {
 
@@ -217,6 +199,22 @@ define(function (require, exports, module) {
             data: e.data,
             originalEvent: originalEvent
         });
+    }
+
+    /**
+     * 获得元素的行高
+     * 根据 wheel 事件规范描述，行高要取自 font-size ...
+     *
+     * @inner
+     * @param {jQuery} element
+     * @return {number}
+     */
+    function getLineHeight(element) {
+        var parent = offsetParent(element);
+        if (!parent.length) {
+            parent = instance.body;
+        }
+        return parseInt(parent.css('font-size'), 10);
     }
 
 

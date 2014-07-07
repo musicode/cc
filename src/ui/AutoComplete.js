@@ -267,7 +267,7 @@ define(function (require, exports, module) {
             scope: autoComplete,
             trigger: {
                 show: 'focus',
-                hide: 'blur'
+                hide: 'click'
             },
             animation: {
                 show: animation.open,

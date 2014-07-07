@@ -80,7 +80,7 @@ define(function (require, exports, module) {
      *
      * @property {Object} options.trigger 触发方式
      * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
-     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 blur out，可组合使用，以逗号分隔
+     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 click out blur，可组合使用，以逗号分隔
      *
      * @property {Object=} options.delay 延时
      * @property {number=} options.delay.show 显示延时

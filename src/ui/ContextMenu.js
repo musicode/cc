@@ -218,7 +218,7 @@ define(function (require, exports, module) {
                             animation: contextMenu.animation,
                             scope: contextMenu,
                             trigger: {
-                                hide: 'blur'
+                                hide: 'click,context'
                             }
                         });
     }

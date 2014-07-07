@@ -21,7 +21,7 @@ define(function (require, exports, module) {
      *
      *    常见的触发方式包括：
      *
-     *    blur ( 非输入框元素没有这个原生事件，因为类似输入框失焦，所以取同名 )
+     *    click （点击元素之外的地方触发隐藏）
      *    out ( mouseout 简写 )
      *
      * #延时#
@@ -30,9 +30,9 @@ define(function (require, exports, module) {
      *
      * #多种触发方式#
      *
-     *    比较常用的组合是 'out,blur'，即 鼠标移出 和 元素失焦 都会触发隐藏
+     *    比较常用的组合是 'out,click'，即 鼠标移出 和 元素失焦 都会触发隐藏
      *
-     *    如果没有隐藏延时，这个组合是不可能实现的，因为一旦移出，肯定是 out 率先生效，blur 等于没写
+     *    如果没有隐藏延时，这个组合是不可能实现的，因为一旦移出，肯定是 out 率先生效，click 等于没写
      *    如果设置隐藏延时，为了避免问题复杂化，需要把隐藏延时的方式写在首位（后面会说理由）
      *
      * #可配置的触发方式#
@@ -44,9 +44,9 @@ define(function (require, exports, module) {
      *    它们的结构都是
      *
      *    {
-     *        addTrigger: function (popup),             // 传入 popup 实例，绑定触发事件
-     *        removeTrigger: function (popup),          // 传入 popup 实例，解绑触发事件
-     *
+     *        on: function (popup),             // 传入 popup 实例，绑定触发事件
+     *        off: function (popup),            // 传入 popup 实例，解绑触发事件
+     *        handler: function (e) { },
      *        addBreaker: function (popup, breaker),    // 因为 delay 会产生异步，所以要提供中断异步的方式
      *                                                  // 如 鼠标移出触发延时，鼠标再次移入就需要中断它
      *                                                  // breaker 参数不用关心实现，只需知道执行它能中断异步就行
@@ -79,8 +79,8 @@ define(function (require, exports, module) {
      * @property {jQuery=} options.source 触发弹出的元素，如果是调用方法触发显示，可不传
      *
      * @property {Object} options.trigger 触发方式
-     * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
-     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 blur out，可组合使用，以逗号分隔
+     * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus context，可组合使用，以逗号分隔
+     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 click out blur context，可组合使用，以逗号分隔
      *
      * @property {Object=} options.delay 延时
      * @property {number=} options.delay.show 显示延时
@@ -134,7 +134,7 @@ define(function (require, exports, module) {
             };
 
             var action = hidden ? showEvent : hideEvent;
-            action(me, 'add');
+            action(me, 'on');
         },
 
         /**
@@ -203,7 +203,7 @@ define(function (require, exports, module) {
 
             me.hide();
 
-            showEvent(me, 'remove');
+            showEvent(me, 'off');
 
             me.source =
             me.element =
@@ -226,115 +226,187 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * 提供 显示/隐藏 触发方式扩展
-     *
-     * @inner
-     * @type {Object}
-     */
-    Popup.trigger = {
 
-        show: {
+    function showFactory(trigger, before) {
+        return function (e) {
 
-            focus: {
-                addTrigger: function (popup) {
-                    popup.source.on('focus', popup, showByFocus);
-                },
-                removeTrigger: function (popup) {
-                    popup.source.off('focus', showByFocus);
-                }
+            var popup = e.data;
+            var cache = popup.cache;
+
+            if (!$.isFunction(before) || before(popup, e)) {
+                setDelay(
+                    popup,
+                    popup.delay.show,
+                    showTrigger[trigger],
+                    function () {
+                        cache.timeStamp = e.timeStamp || +new Date();
+                        cache.showBy = trigger;
+                        popup.show(e);
+                    }
+                );
+            }
+        };
+    }
+
+    function hideFactory(trigger, before) {
+        return function (e) {
+
+            var popup = e.data;
+            var cache = popup.cache;
+            var timeStamp = e.timeStamp || +new Date();
+
+            if (cache.showBy === trigger
+                && timeStamp - cache.timeStamp < 50
+            ) {
+                return;
+            }
+
+            if (!$.isFunction(before) || before(popup, e)) {
+                setDelay(
+                    popup,
+                    popup.delay.hide,
+                    hideTrigger[trigger],
+                    function () {
+                        cache.timeStamp = timeStamp;
+                        cache.hideBy = trigger;
+                        popup.hide(e);
+                    }
+                );
+            }
+        };
+    }
+
+    var showTrigger = {
+        focus: {
+            on: function (popup) {
+                popup.source.on('focus', popup, showTrigger.focus.handler);
             },
-
-            click: {
-                addTrigger: function (popup) {
-                    popup.source.on('click', popup, showByClick);
-                },
-                removeTrigger: function (popup) {
-                    popup.source.off('click', showByClick);
-                }
+            off: function (popup) {
+                popup.source.off('focus', showTrigger.focus.handler);
             },
+            handler: showFactory('focus')
+        },
 
-            over: {
-                addTrigger: function (popup) {
-                    popup.source.on('mouseenter', popup, showByOver);
-                },
-                removeTrigger: function (popup) {
-                    popup.source.off('mouseenter', showByOver);
-                },
+        click: {
+            on: function (popup) {
+                popup.source.on('click', popup, showTrigger.click.handler);
+            },
+            off: function (popup) {
+                popup.source.off('click', showTrigger.click.handler);
+            },
+            handler: showFactory('click')
+        },
 
-                addBreaker: function (popup, breaker) {
-                    popup.source.on('mouseleave', breaker);
-                },
-                removeBreaker: function (popup, breaker) {
-                    popup.source.off('mouseleave', breaker);
-                }
+        over: {
+            on: function (popup) {
+                popup.source.on('mouseenter', popup, showTrigger.over.handler);
+            },
+            off: function (popup) {
+                popup.source.off('mouseenter', showTrigger.over.handler);
+            },
+            handler: showFactory('over'),
+
+            addBreaker: function (popup, breaker) {
+                popup.source.on('mouseleave', breaker);
+            },
+            removeBreaker: function (popup, breaker) {
+                popup.source.off('mouseleave', breaker);
+            }
+        },
+        context: {
+            on: function (popup) {
+                popup.source.on('contextmenu', popup, showTrigger.context.handler);
+            },
+            off: function (popup) {
+                popup.source.off('contextmenu', showTrigger.context.handler);
+            },
+            handler: showFactory('context')
+        }
+    };
+
+    var hideTrigger = {
+        blur: {
+            on: function (popup) {
+                popup.source.on('blur', popup, hideTrigger.blur.handler);
+            },
+            off: function (popup) {
+                popup.source.off('blur', hideTrigger.blur.handler);
+            },
+            handler: hideFactory('blur')
+        },
+
+        click: {
+            on: function (popup) {
+                instance.document.on(
+                    'click',
+                    popup,
+                    popup.cache.clickHandler = hideTrigger.click.handler()
+                );
+            },
+            off: function (popup) {
+                var cache = popup.cache;
+                instance.document.off('click', cache.clickHandler);
+                cache.clickHandler = null;
+            },
+            handler: function () {
+                return hideFactory(
+                    'click',
+                    function (popup, e) {
+                        return !contains(popup.element[0], e.target);
+                    }
+                );
             }
         },
 
-        hide: {
-
-            blur: {
-                addTrigger: function (popup) {
-
-                    var cache = popup.cache;
-                    var bind = function () {
-                        instance.document
-                                .click(
-                                    'click',
-                                    cache.blurHandler = hideByBlur(popup)
-                                );
-                    };
-
-                    if (cache.showByClick) {
-                        cache.blurTimer = setTimeout(
-                                            function () {
-                                                if (popup.cache) {
-                                                    bind();
-                                                }
-                                            },
-                                            150
-                                        );
-                    }
-                    else {
-                        bind();
-                    }
-                },
-                removeTrigger: function (popup) {
-
-                    var cache = popup.cache;
-                    var blurTimer = cache.blurTimer;
-                    var blurHandler = cache.blurHandler;
-
-                    if (blurTimer) {
-                        clearTimeout(blurTimer);
-                        cache.blurTimer = null;
-                    }
-
-                    if (blurHandler) {
-                        instance.document.off('click', blurHandler);
-                        cache.blurHandler = null;
-                    }
-                }
+        out: {
+            on: function (popup) {
+                var handler = hideTrigger.out.handler;
+                popup.source.on('mouseleave', popup, handler);
+                popup.element.on('mouseleave', popup, handler);
             },
-
-            out: {
-                addTrigger: function (popup) {
-                    popup.source.on('mouseleave', popup, hideByOut);
-                    popup.element.on('mouseleave', popup, hideByOut);
-                },
-                removeTrigger: function (popup) {
-                    popup.source.off('mouseleave', hideByOut);
-                    popup.element.off('mouseleave', hideByOut);
-                },
-
-                addBreaker: function (popup, breaker) {
-                    popup.source.on('mouseenter', breaker);
-                    popup.element.on('mouseenter', breaker);
-                },
-                removeBreaker: function (popup, breaker) {
-                    popup.source.off('mouseenter', breaker);
-                    popup.element.off('mouseenter', breaker);
+            off: function (popup) {
+                var handler = hideTrigger.out.handler;
+                popup.source.off('mouseleave', handler);
+                popup.element.off('mouseleave', handler);
+            },
+            handler: hideFactory(
+                'out',
+                function (popup, e) {
+                    var target = e.relatedTarget;
+                    return !contains(popup.source[0], target)
+                        && !contains(popup.element[0], target);
                 }
+            ),
+
+            addBreaker: function (popup, breaker) {
+                popup.source.on('mouseenter', breaker);
+                popup.element.on('mouseenter', breaker);
+            },
+            removeBreaker: function (popup, breaker) {
+                popup.source.off('mouseenter', breaker);
+                popup.element.off('mouseenter', breaker);
+            }
+        },
+        context: {
+            on: function (popup) {
+                instance.document.on(
+                    'contextmenu',
+                    popup,
+                    popup.cache.contextHandler = hideTrigger.context.handler()
+                );
+            },
+            off: function (popup) {
+                var cache = popup.cache;
+                instance.document.off('contextmenu', cache.contextHandler);
+                cache.contextHandler = null;
+            },
+            handler: function () {
+                return hideFactory(
+                    'context',
+                    function (popup, e) {
+                        return !contains(popup.element[0], e.target);
+                    }
+                );
             }
         }
     };
@@ -344,16 +416,13 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Popup} popup
-     * @param {string} action 可选值有 add remove
+     * @param {string} action 可选值有 on off
      */
     function showEvent(popup, action) {
         $.each(
             popup.cache.showTrigger,
             function (index, name) {
-                var target = Popup.trigger.show[name];
-                if (target) {
-                    target[action + 'Trigger'](popup);
-                }
+                showTrigger[name][action](popup);
             }
         );
     }
@@ -363,16 +432,13 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Popup} popup
-     * @param {string} action 可选值有 add remove
+     * @param {string} action 可选值有 on off
      */
     function hideEvent(popup, action) {
         $.each(
             popup.cache.hideTrigger,
             function (index, name) {
-                var target = Popup.trigger.hide[name];
-                if (target) {
-                    target[action + 'Trigger'](popup);
-                }
+                hideTrigger[name][action](popup);
             }
         );
     }
@@ -415,7 +481,7 @@ define(function (require, exports, module) {
             currentSource.hide();
         }
 
-        return call(me, 'onBeforeShow', me.scope, event);
+        return call(me.onBeforeShow, me.scope, event);
     }
 
     /**
@@ -428,8 +494,8 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        showEvent(me, 'remove');
-        hideEvent(me, 'add');
+        showEvent(me, 'off');
+        hideEvent(me, 'on');
 
         var target = me.cache.target;
         if (target) {
@@ -442,7 +508,7 @@ define(function (require, exports, module) {
             );
         }
 
-        return call(me, 'onAfterShow', me.scope, event);
+        return call(me.onAfterShow, me.scope, event);
     }
 
     /**
@@ -453,7 +519,7 @@ define(function (require, exports, module) {
      */
     function onBeforeHide(event) {
         var me = this;
-        return call(me, 'onBeforeHide', me.scope, event);
+        return call(me.onBeforeHide, me.scope, event);
     }
 
     /**
@@ -467,10 +533,10 @@ define(function (require, exports, module) {
         var me = this;
 
         me.element.removeData(currentSourceKey);
-        hideEvent(me, 'remove');
-        showEvent(me, 'add');
+        hideEvent(me, 'off');
+        showEvent(me, 'on');
 
-        return call(me, 'onAfterHide', me.scope, event);
+        return call(me.onAfterHide, me.scope, event);
     }
 
     /**
@@ -533,114 +599,6 @@ define(function (require, exports, module) {
             clearTimeout(cache.delayTimer);
             cache.delayTimer = null;
             return true;
-        }
-    }
-
-    /**
-     * 输入框 facus 事件触发显示
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function showByFocus(e) {
-
-        var popup = e.data;
-
-        setDelay(
-            popup,
-            popup.delay.show,
-            Popup.trigger.show.focus,
-            function () {
-                popup.show(e);
-            }
-        );
-    }
-
-    /**
-     * click 事件触发显示
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function showByClick(e) {
-
-        var popup = e.data;
-
-        setDelay(
-            popup,
-            popup.delay.show,
-            Popup.trigger.show.click,
-            function () {
-                popup.cache.showByClick = true;
-                popup.show(e);
-            }
-        );
-    }
-
-    /**
-     * mouseenter 事件触发显示
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function showByOver(e) {
-
-        var popup = e.data;
-
-        setDelay(
-            popup,
-            popup.delay.show,
-            Popup.trigger.show.over,
-            function () {
-                popup.show(e);
-            }
-        );
-    }
-
-    /**
-     * 监听 document 点击，必须创建新的函数，不然解绑会影响其他实例
-     *
-     * @inner
-     * @param {Popup} popup
-     * @return {Function}
-     */
-    function hideByBlur(popup) {
-        return function (e) {
-            if (!contains(popup.element[0], e.target)) {
-                setDelay(
-                    popup,
-                    popup.delay.hide,
-                    Popup.trigger.hide.blur,
-                    function () {
-                        popup.hide(e);
-                    }
-                );
-            }
-        };
-    }
-
-    /**
-     * mouseleave 触发隐藏任务
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function hideByOut(e) {
-
-        var popup = e.data;
-        var target = e.relatedTarget;
-
-        if (!contains(popup.source[0], target)
-            && !contains(popup.element[0], target)
-        ) {
-            setDelay(
-                popup,
-                popup.delay.hide,
-                Popup.trigger.hide.out,
-                function () {
-                    popup.hide(e);
-                }
-            );
         }
     }
 

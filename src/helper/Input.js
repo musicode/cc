@@ -119,7 +119,7 @@ define(function (require, exports, module) {
                     if (e.keyCode === Keyboard.map.up) {
                         e.preventDefault();
                     }
-                    call(me, 'onKeyDown', scope, e);
+                    call(me.onKeyDown, scope, e);
                 };
             }
 
@@ -133,13 +133,13 @@ define(function (require, exports, module) {
                 onKeyUp: me.onKeyUp,
                 onLongPressStart: function (e) {
                     cache.longPressing = true;
-                    call(me, 'onLongPressStart', scope, e);
+                    call(me.onLongPressStart, scope, e);
 
                     value = element.val();
                 },
                 onLongPressEnd: function (e) {
                     cache.longPressing = false;
-                    call(me, 'onLongPressEnd', scope, e);
+                    call(me.onLongPressEnd, scope, e);
 
                     if (value !== element.val()) {
                         triggerChange(me);
@@ -316,11 +316,11 @@ define(function (require, exports, module) {
         if (!input.smart
             || !cache.longPressing
         ) {
-            call(input, 'onChange', input.scope);
+            call(input.onChange, input.scope);
         }
 
         // 在最后执行内部的 onChange，以防上面的 onChange 改值了
-        call(cache, 'onChange');
+        call(cache.onChange, cache);
     }
 
 

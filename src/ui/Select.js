@@ -227,7 +227,7 @@ define(function (require, exports, module) {
             scope: select,
             trigger: {
                 show: 'click',
-                hide: 'blur'
+                hide: 'click'
             },
             animation: {
                 show: animation.open,

@@ -373,7 +373,7 @@ define(function (require, exports, module) {
 
         if (cache.keyCode === keyCode && counter > 0) {
             if (counter === 1) {
-                call(keyboard, 'onLongPressStart', scope, e);
+                call(keyboard.onLongPressStart, scope, e);
             }
             counter++;
         }
@@ -389,13 +389,13 @@ define(function (require, exports, module) {
                 cache.action,
                 function (index, item) {
                     if (item.test(e)) {
-                        call(item, 'handler', scope, e);
+                        call(item.handler, scope, e);
                     }
                 }
             );
         }
 
-        call(keyboard, 'onKeyDown', scope, e);
+        call(keyboard.onKeyDown, scope, e);
     }
 
     /**
@@ -413,11 +413,11 @@ define(function (require, exports, module) {
         cache.keyCode = null;
 
         if (cache.counter > 1) {
-            call(keyboard, 'onLongPressEnd', scope, e);
+            call(keyboard.onLongPressEnd, scope, e);
             cache.counter = 0;
         }
 
-        call(keyboard, 'onKeyUp', scope, e);
+        call(keyboard.onKeyUp, scope, e);
     }
 
 
