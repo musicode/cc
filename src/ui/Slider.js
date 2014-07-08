@@ -431,7 +431,7 @@ define(function (require, exports, module) {
             }
         };
 
-        options.onDragEnd = function (point) {
+        options.onDragEnd = function () {
 
             cache.dragging = false;
 
@@ -471,7 +471,7 @@ define(function (require, exports, module) {
         var slider = e.data;
         var cache = slider.cache;
 
-        if (contains(cache.thumb[0], e.target)) {
+        if (contains(cache.thumb, e.target)) {
             return;
         }
 

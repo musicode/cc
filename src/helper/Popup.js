@@ -237,7 +237,7 @@ define(function (require, exports, module) {
                 setDelay(
                     popup,
                     popup.delay.show,
-                    showTrigger[trigger],
+                    showDelay[trigger],
                     function () {
                         cache.timeStamp = e.timeStamp || +new Date();
                         cache.showBy = trigger;
@@ -265,7 +265,7 @@ define(function (require, exports, module) {
                 setDelay(
                     popup,
                     popup.delay.hide,
-                    hideTrigger[trigger],
+                    hideDelay[trigger],
                     function () {
                         cache.timeStamp = timeStamp;
                         cache.hideBy = trigger;
@@ -304,14 +304,7 @@ define(function (require, exports, module) {
             off: function (popup) {
                 popup.source.off('mouseenter', showTrigger.over.handler);
             },
-            handler: showFactory('over'),
-
-            addBreaker: function (popup, breaker) {
-                popup.source.on('mouseleave', breaker);
-            },
-            removeBreaker: function (popup, breaker) {
-                popup.source.off('mouseleave', breaker);
-            }
+            handler: showFactory('over')
         },
         context: {
             on: function (popup) {
@@ -352,7 +345,7 @@ define(function (require, exports, module) {
                 return hideFactory(
                     'click',
                     function (popup, e) {
-                        return !contains(popup.element[0], e.target);
+                        return !contains(popup.element, e.target);
                     }
                 );
             }
@@ -373,19 +366,10 @@ define(function (require, exports, module) {
                 'out',
                 function (popup, e) {
                     var target = e.relatedTarget;
-                    return !contains(popup.source[0], target)
-                        && !contains(popup.element[0], target);
+                    return !contains(popup.source, target)
+                        && !contains(popup.element, target);
                 }
-            ),
-
-            addBreaker: function (popup, breaker) {
-                popup.source.on('mouseenter', breaker);
-                popup.element.on('mouseenter', breaker);
-            },
-            removeBreaker: function (popup, breaker) {
-                popup.source.off('mouseenter', breaker);
-                popup.element.off('mouseenter', breaker);
-            }
+            )
         },
         context: {
             on: function (popup) {
@@ -404,9 +388,33 @@ define(function (require, exports, module) {
                 return hideFactory(
                     'context',
                     function (popup, e) {
-                        return !contains(popup.element[0], e.target);
+                        return !contains(popup.element, e.target);
                     }
                 );
+            }
+        }
+    };
+
+    var showDelay = {
+        over: {
+            on: function (popup, fn) {
+                popup.source.on('mouseleave', fn);
+            },
+            off: function (popup, fn) {
+                popup.source.off('mouseleave', fn);
+            }
+        }
+    };
+
+    var hideDelay = {
+        out: {
+            on: function (popup, fn) {
+                popup.source.on('mouseenter', fn);
+                popup.element.on('mouseenter', fn);
+            },
+            off: function (popup, fn) {
+                popup.source.off('mouseenter', fn);
+                popup.element.off('mouseenter', fn);
             }
         }
     };
@@ -558,26 +566,30 @@ define(function (require, exports, module) {
                 return;
             }
 
-            var addBreaker = condition.addBreaker || $.noop;
-            var removeBreaker = condition.removeBreaker || $.noop;
+            var on = condition.on;
+            var off = condition.off;
 
-            var breaker = function () {
+            var fn = function () {
                 if (clearDelay(popup)) {
-                    removeBreaker(popup, breaker);
+                    if ($.isFunction(off)) {
+                        off(popup, fn);
+                    }
                     return true;
                 }
             };
 
             cache.delayTimer = setTimeout(
                                     function () {
-                                        if (breaker()) {
+                                        if (fn()) {
                                             handler();
                                         }
                                     },
                                     time
                                 );
 
-            addBreaker(popup, breaker);
+            if ($.isFunction(on)) {
+                on(popup, fn);
+            }
         }
         else {
             handler();

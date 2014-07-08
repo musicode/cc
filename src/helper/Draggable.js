@@ -15,18 +15,20 @@ define(function (require, exports, module) {
      * 拖拽的过程就是不断计算相对于父元素的绝对定位坐标
      *
      *     mousedown 记录鼠标点击位置和元素左上角的偏移坐标，记录拖拽范围
-     *     mousemove 获取 (pageX, pageY) 并转换到相对父元素的坐标
+     *     mousemove 获取当前鼠标位置并转换到相对父元素的坐标
      *
-     *
+     * 元素在容器内拖拽，可拖拽盒模型范围不包括 margin 和 border
      */
 
     'use strict';
 
     var page = require('../function/page');
+    var parseInt = require('../function/parseInt');
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
-    var offsetParent = require('../function/offsetParent');
+    var pageScrollLeft = require('../function/pageScrollLeft');
+    var pageScrollTop = require('../function/pageScrollTop');
     var enableSelection = require('../function/enableSelection');
     var disableSelection = require('../function/disableSelection');
 
@@ -39,16 +41,22 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 需要拖拽的元素
      * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
-     * @property {string=} options.axis 限制方向，可选值包括 'x' 'y'
+     *
+     * @property {string=} options.axis 限制方向，可选值包括 x y
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
      *
      * @property {Object} options.selector 选择器
      * @property {string=} options.selector.handle 触发拖拽的区域
      * @property {string=} options.selector.cancel 不触发拖拽的区域
      *
-     * @property {function(Object)=} options.onDragStart 开始拖拽
-     * @property {function(Object)=} options.onDrag 正在拖拽
-     * @property {function(Object)=} options.onDragEnd 结束拖拽
+     * @property {Function} options.onDragStart 开始拖拽
+     * @argument {Object} options.onDragStart.point 坐标点
+     *
+     * @property {Function} options.onDrag 正在拖拽
+     * @argument {Object} options.onDragStart.point 坐标点
+     *
+     * @property {Function} options.onDragEnd 结束拖拽
+     * @argument {Object} options.onDragStart.point 坐标点
      */
     function Draggable(options) {
         $.extend(this, Draggable.defaultOptions, options);
@@ -65,38 +73,15 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-
             var element = me.element;
-            var container = me.container;
-            var isChild = contains(container[0], element[0]);
-            var realContainer = isChild ? container : instance.body;
 
-            if (offsetParent(element)[0] !== realContainer[0]) {
-                throw new Error('[Draggable] options.element\'s closest offset element is wrong.');
-            }
+            // 这里本想使用 not 选择器 来实现 cancal
+            // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
+            // 因为有这个问题，索性整个判断都放在 onDragStart 中处理
 
-            var style = position(element);
-
-            var cache = me.cache
-                      = {
-                            isChild: isChild
-                        };
-
-            var fixed = style.position === 'fixed';
-            cache.xName = fixed ? 'clientX' : 'pageX';
-            cache.yName = fixed ? 'clientY' : 'pageY';
-
-            var args = [ 'mousedown' + namespace, me, onDragStart ];
-
-            // 用选择器实现 handle
-            // 不知道为啥 :not() 选择器不能实现 cancel
-            var handle = me.selector.handle;
-            if (handle) {
-                args.splice(1, 0, handle);
-            }
-
-            element.css(style);
-            element.on.apply(element, args);
+            element
+              .css(position(element))
+              .on('mousedown' + namespace, me, onDragStart);
         },
 
         /**
@@ -175,14 +160,11 @@ define(function (require, exports, module) {
                 height: container.innerHeight()
             };
 
-            if (!me.cache.isChild) {
-
-                var containerOffset = container.offset();
-                var borderLeftWidth = parseInt(container.css('border-left-width'), 10) || 0;
-                var borderTopWidth = parseInt(container.css('border-top-width'), 10) || 0;
-
-                result.x = containerOffset.left + borderLeftWidth;
-                result.y = containerOffset.top + borderTopWidth;
+            // 如果不是父子元素关系，需要把容器的外围信息加上
+            if (!$.contains(container[0], me.element[0])) {
+                var containerOffset = offset(container);
+                result.x = containerOffset.left;
+                result.y = containerOffset.top;
             }
 
             return result;
@@ -197,8 +179,110 @@ define(function (require, exports, module) {
      */
     var namespace = '.cobble_helper_draggable';
 
+    //
+    // =================================================
+    // 因为同一时间只能拖拽一个对象
+    // 所以公用下面这些局部变量是安全的
+    // =================================================
+    //
+
+    /**
+     * 当前坐标
+     *
+     * @inner
+     * @type {Object}
+     */
+    var point = { };
+
+    /**
+     * 计算 x 坐标的函数
+     *
+     * @inner
+     * @type {Function}
+     */
+    var xCalculator;
+
+    /**
+     * 计算 y 坐标的函数
+     *
+     * @inner
+     * @type {Function}
+     */
+    var yCalculator;
+
+    /**
+     * 一次拖拽行为的次数计数器
+     *
+     * @inner
+     * @type {number}
+     */
+    var counter;
+
+    /**
+     * 坐标计算器
+     *
+     * @inner
+     * @type {Object}
+     */
+    var calculator = {
+
+        /**
+         * 返回常量
+         *
+         * @inner
+         * @param {number} value
+         * @return {Function}
+         */
+        constant: function (value) {
+            return function () {
+                return value;
+            };
+        },
+
+        /**
+         * 需要计算
+         *
+         * @inner
+         * @param {Function} fn
+         * @param {number} offset 偏移量
+         * @param {number} min 最小值
+         * @param {number} max 最大值
+         * @return {Function}
+         */
+        change: function (fn, offset, min, max) {
+            return function (e) {
+                return restrain(fn(e) - offset, min, max);
+            };
+        }
+
+    };
+
+    /**
+     * 计算全局坐标
+     *
+     * @inner
+     * @type {Object}
+     */
+    var global = {
+        absoluteX: function (e) {
+            return e.clientX + pageScrollLeft();
+        },
+        absoluteY: function (e) {
+            return e.clientY + pageScrollTop();
+        },
+        fixedX: function (e) {
+            return e.clientX;
+        },
+        fixedY: function (e) {
+            return e.clientY;
+        }
+    };
+
     /**
      * mousedown 触发拖拽
+     *
+     * 这里把 onDrag 需要的数据都准备好了
+     * 原则是尽量减少 onDrag 的计算次数
      *
      * @inner
      * @param {Event} e
@@ -209,54 +293,73 @@ define(function (require, exports, module) {
         var target = e.target;
         var element = draggable.element;
 
-        var cancel = draggable.selector.cancel;
-        if (cancel) {
-            element.find(cancel).each(
-                function () {
-                    cancel = contains(this, target);
-                    if (cancel) {
-                        return false;
-                    }
-                }
-            );
-            if (cancel) {
-                return;
-            }
+        var selector = draggable.selector;
+        var handle = selector.handle;
+        var cancel = selector.cancel;
+
+        if (handle && !contains(element.find(handle), target)
+            || cancel && contains(element.find(cancel), target)
+        ) {
+            return;
         }
 
-        var cache = draggable.cache;
+        // =====================================================
+        // 计算偏移量
+        // 这样方便 onDrag 时作为当前全局坐标( client 坐标或 page 坐标)的减数，减少计算量
+        // =====================================================
 
-        // 开始点坐标
-        var point = position(element);
-        delete point.position;
+        var elementOffset = element.offset();
 
-        cache.point = point;
+        // 因为 offset() 包含 margin
+        // 所以减去 margin 才是真正的坐标值
+        var offsetX = global.absoluteX(e)
+                    - (elementOffset.left
+                        - parseInt(element.css('margin-left'))
+                      );
+        var offsetY = global.absoluteY(e)
+                    - (elementOffset.top
+                        - parseInt(element.css('margin-top'))
+                      );
 
-        // 计算偏移量坐标
-        var offset = element.offset();
-
-        // offset() 是基于页面大小来计算的
-        // 所以这里要用 pageX/Y
-        var offsetX = e.pageX - offset.left;
-        var offsetY = e.pageY - offset.top;
-
-        if (cache.isChild) {
-            var containerOffset = draggable.container.offset();
+        // 因为 onDrag 是用`全局坐标`减去偏移量
+        // 所以偏移量应该是全局坐标的偏移量
+        var container = draggable.container;
+        if ($.contains(container[0], element[0])) {
+            var containerOffset = offset(container);
             offsetX += containerOffset.left;
             offsetY += containerOffset.top;
         }
 
-        cache.offsetX = offsetX + parseInt(element.css('margin-left'), 10) || 0;
-        cache.offsetY = offsetY + parseInt(element.css('margin-top'), 10) || 0;
+        // ====================================================
+        // 取最新的坐标值比较靠谱
+        // ====================================================
+        var style = position(element);
+        var pos = style.position;
+        point.left = style.left;
+        point.top = style.top;
 
-        // 可移动的矩形范围
+        var axis = draggable.axis;
         var rect = draggable.getRectange(true);
-        cache.minX = rect.x;
-        cache.minY = rect.y;
-        cache.maxX = rect.x + rect.width;
-        cache.maxY = rect.y + rect.height;
 
-        cache.counter = 0;
+        xCalculator = axis === 'y'
+                    ? calculator.constant(point.left)
+                    : calculator.change(
+                        global[ pos + 'X' ],
+                        offsetX,
+                        rect.x,
+                        rect.x + rect.width
+                    );
+
+        yCalculator = axis === 'x'
+                    ? calculator.constant(point.top)
+                    : calculator.change(
+                        global[ pos + 'Y' ],
+                        offsetY,
+                        rect.y,
+                        rect.y + rect.height
+                    );
+
+        counter = 0;
 
         disableSelection();
 
@@ -274,36 +377,24 @@ define(function (require, exports, module) {
      */
     function onDrag(e) {
 
-        var draggable = e.data;
-        var cache = draggable.cache;
-        var point = cache.point;
-        var axis = draggable.axis;
+        var x = xCalculator(e);
+        var y = yCalculator(e);
 
-        var x = axis === 'y'
-              ? point.left
-              : e[ cache.xName ] - cache.offsetX;
-
-        var y = axis === 'x'
-              ? point.top
-              : e[ cache.yName ] - cache.offsetY;
-
-        // 纠正范围
-        x = restrain(x, cache.minX, cache.maxX);
-        y = restrain(y, cache.minY, cache.maxY);
-
-        if (point.left === x
-            && point.top === y
-        ) {
+        if (point.left === x && point.top === y) {
             return;
         }
 
         point.left = x;
         point.top = y;
 
-        if (++cache.counter === 1
+        var draggable = e.data;
+
+        // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
+        // 只有坐标发生变动才算
+        if (++counter === 1
             && $.isFunction(draggable.onDragStart)
         ) {
-            draggable.onDragStart(point);
+            draggable.onDragStart();
         }
 
         if (!draggable.silence) {
@@ -330,15 +421,32 @@ define(function (require, exports, module) {
                 .off('mouseup' + namespace);
 
         var draggable = e.data;
-        var cache = draggable.cache;
 
-        if (cache.counter > 0) {
-            if ($.isFunction(draggable.onDragEnd)) {
-                draggable.onDragEnd(cache.point);
-            }
+        if (counter > 0
+            && $.isFunction(draggable.onDragEnd)
+        ) {
+            draggable.onDragEnd();
         }
+
+        counter =
+        xCalculator =
+        yCalculator = null;
     }
 
+    /**
+     * 封装 jq 的 offset 方法，使其包含 border 的宽度
+     *
+     * @inner
+     * @param {jQuery} element
+     * @return {Object}
+     */
+    function offset(element) {
+        var offsetData = element.offset();
+        return {
+            left: offsetData.left + parseInt(element.css('border-left-width')),
+            top: offsetData.top + parseInt(element.css('border-top-width'))
+        };
+    }
 
     return Draggable;
 

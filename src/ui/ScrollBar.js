@@ -20,7 +20,6 @@ define(function (require, exports, module) {
 
     var Slider = require('./Slider');
     var Wheel = require('../helper/Wheel');
-    var contains = require('../function/contains');
 
     /**
      * 自定义滚动条

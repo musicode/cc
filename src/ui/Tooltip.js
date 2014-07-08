@@ -165,10 +165,11 @@ define(function (require, exports, module) {
                     element = $(template);
                 }
 
-                me.element = element.hide();
+                me.element = element;
             }
 
             if (!offsetParent(element).is('body')) {
+                element.hide();
                 instance.body.append(element);
             }
 

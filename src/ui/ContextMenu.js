@@ -12,8 +12,6 @@ define(function (require, exports, module) {
     var offsetParent = require('../function/offsetParent');
     var pin = require('../function/pin');
 
-    // [TODO] 右键失焦隐藏
-
     /**
      * 鼠标右键菜单
      *
