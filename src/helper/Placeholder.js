@@ -20,11 +20,9 @@ define(function (require, exports, module) {
      *
      * 不支持批量初始化，如果非要一次初始化整个页面的输入框，可使用 Placeholder.init();
      *
-     * # 更新
-     *
      * 为了满足简单需求，加入 简单模式 和 复杂模式
      *
-     * 1. 简单模式：通过 simpleClass 和 value 来实现（取值需要判断 input.hasClass(simpleClass)）
+     * 1. 简单模式：通过 className.simple 和 value 来实现（取值需要判断 input.hasClass(className.simple)）
      * 2. 复杂模式：通过包装输入框元素，用新的元素飘在输入框元素上来实现（取值不受影响）
      */
 
@@ -36,12 +34,19 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options 配置对象
      * @property {jQuery} options.element 输入框元素，如文本框、密码框、文本域
-     * @property {string=} options.attr 元素上的 placeholder 属性，默认是 placeholder
-     * @property {string=} options.value 如果文字不写在元素 options.attr 上，也可以直接传值
+     * @property {string=} options.value 如果文字不写在元素属性上，也可以直接传值
      * @property {boolean=} options.simple 是否使用简单模式
-     * @property {string=} options.simpleClass 简单模式使用的 class
+     *
+     * @property {Object=} options.attribute
+     * @property {string=} options.attribute.placeholder 元素上的 placeholder 属性，默认是 placeholder
+     *
+     * @property {Object=} options.className
+     * @property {string=} options.className.simple 简单模式使用的 class
+     *
+     * @property {Object=} options.selector
+     * @property {string=} options.selector.placeholder 模式模式查找占位符元素的选择器
+     *
      * @property {string=} options.template 复杂模式使用的包装模版
-     * @property {string=} options.placeholderSelector 从 template 里查找 placeholder 元素的选择器
      */
     function Placeholder(options) {
         $.extend(this, Placeholder.defaultOptions, options);
@@ -60,8 +65,9 @@ define(function (require, exports, module) {
             var me = this;
             var element = this.element;
 
+            // 在 removeAttr 之前取值
             var value = me.value
-                     || element.attr(me.attr)
+                     || element.attr(me.attribute.placeholder)
                      || '';
 
             // 避免原生 placeholder 影响效果
@@ -69,22 +75,25 @@ define(function (require, exports, module) {
                 element.removeAttr('placeholder');
             }
 
+            var cache = me.cache
+                      = { };
+
             $.extend(
-                me,
+                cache,
                 modeConf[ me.simple ? 'simple' : 'complex' ]
             );
 
-            me.init();
+            if (cache.init) {
+                cache.init(me);
+            }
+
             me.set(value);
 
             // 必须放最后，jquery 某些 DOM 操作会解绑事件
-            element.on(
-                {
-                    focus: onRefresh,
-                    blur: onRefresh
-                },
-                me
-            );
+            var handler = $.proxy(me.refresh, me);
+            element
+                .on('focus' + namespace, me, handler)
+                .on('blur' + namespace, me, handler);
         },
 
         /**
@@ -93,7 +102,9 @@ define(function (require, exports, module) {
          * @return {string}
          */
         get: function () {
-            return this.value;
+            return this.cache.hidden
+                 ? ''
+                 : this.value;
         },
 
         /**
@@ -112,16 +123,38 @@ define(function (require, exports, module) {
         refresh: function () {
 
             var me = this;
-            var result = me.test();
+            var result = me.cache.test(me);
 
-            if (typeof result === 'boolean') {
-                if (result) {
-                    me.show();
-                }
-                else {
-                    me.hide();
-                }
+            if (result === true) {
+                me.show();
             }
+            else if (result === false) {
+                me.hide();
+            }
+        },
+
+        /**
+         * 显示 placeholder
+         */
+        show: function () {
+
+            var me = this;
+            var cache = me.cache;
+
+            cache.show(this);
+            cache.hidden = false;
+        },
+
+        /**
+         * 隐藏 placeholder
+         */
+        hide: function () {
+
+            var me = this;
+            var cache = me.cache;
+
+            cache.hide(this);
+            cache.hidden = true;
         },
 
         /**
@@ -130,14 +163,16 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
+            var cache = me.cache;
 
-            me.element
-              .off({
-                  focus: onRefresh,
-                  blur: onRefresh
-              });
+            if (cache.dispose) {
+                cache.dispose(me);
+            }
 
-            me.element = null;
+            me.element.off(namespace);
+
+            me.element =
+            me.cache = null;
         }
     };
 
@@ -148,10 +183,16 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Placeholder.defaultOptions = {
-        attr: 'placeholder',
         simple: true,
-        simpleClass: 'placeholder-active',
-        placeholderSelector: 'div',
+        attribute: {
+            placeholder: 'placeholder'
+        },
+        className: {
+            simple: 'placeholder-active'
+        },
+        selector: {
+            placeholder: 'div'
+        },
         template: '<div class="placeholder-wrapper">'
                 +    '<div></div>'
                 + '</div>'
@@ -167,20 +208,30 @@ define(function (require, exports, module) {
     Placeholder.init = function (elements) {
 
         elements = elements
-                || $('[' + Placeholder.defaultOptions.attr + ']');
+                || $('[' + Placeholder.defaultOptions.attribute.placeholder + ']');
 
         var result = [ ];
 
-        elements.each(function () {
-            result.push(
-                new Placeholder({
-                    element: $(this)
-                })
-            );
-        });
+        elements.each(
+            function () {
+                result.push(
+                    new Placeholder({
+                        element: $(this)
+                    })
+                );
+            }
+        );
 
         return result;
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_placeholder';
 
     // 创建测试元素
     var input = $('<input type="text" />')[0];
@@ -198,97 +249,72 @@ define(function (require, exports, module) {
 
     var modeConf = {
         simple: {
-            init: $.noop,
-            show: function () {
-                this.element
-                    .addClass(this.simpleClass)
-                    .val(this.value);
+            show: function (placeholder) {
+                placeholder
+                    .element
+                    .addClass(placeholder.className.simple)
+                    .val(placeholder.value);
             },
-            hide: function () {
-                this.element
-                    .removeClass(this.simpleClass)
+            hide: function (placeholder) {
+                placeholder
+                    .element
+                    .removeClass(placeholder.className.simple)
                     .val('');
             },
-            test: function () {
-
-                var element = this.element;
-
-                // before focus 的状态如果正在显示 placeholder，隐藏 placeholder
+            test: function (placeholder) {
+                var element = placeholder.element;
                 if (document.activeElement === element[0]) {
-                    if (element.hasClass(this.simpleClass)) {
+                    if (element.hasClass(placeholder.className.simple)) {
                         return false;
                     }
                 }
-
-                // before blur 的状态如果输入框没值，显示 placeholder
                 else if (!element.val()) {
                     return true;
                 }
             }
         },
         complex: {
-            init: function () {
+            init: function (placeholder) {
 
-                var element = this.element;
-                var wrapperElement = $(this.template);
+                var element = placeholder.element;
+                var wrapper = $(placeholder.template);
 
-                element.replaceWith(wrapperElement);
-                wrapperElement.append(element);
+                element.replaceWith(wrapper);
+                wrapper.append(element);
 
-                var placeholderElement = wrapperElement.find(this.placeholderSelector);
-                placeholderElement.on('click', this, focusByClick);
+                var fake = wrapper.find(placeholder.selector.placeholder);
+                fake.on(
+                    'click' + namespace,
+                    function () {
+                        element.focus();
+                    }
+                );
 
-                this.placeholderElement = placeholderElement;
-
+                placeholder.cache.element = fake;
             },
-            show: function () {
-                this.placeholderElement
-                    .html(this.value)
+            show: function (placeholder) {
+                placeholder.cache
+                    .element
+                    .html(placeholder.value)
                     .show();
             },
-            hide: function () {
-                this.placeholderElement
+            hide: function (placeholder) {
+                placeholder.cache
+                    .element
                     .hide();
             },
-            test: function () {
-                var element = this.element;
-                return document.activeElement !== element[0]
-                     && !element.val();
+            test: function (placeholder) {
+                var element = placeholder.element[0];
+                return !element.value
+                    && document.activeElement !== element;
             },
-            dispose: function () {
-
-                this.placeholderElement.off('click', focusByClick);
-                this.placeholderElement = null;
-
-                delete this.dispose;
-
-                // 调用原型方法
-                this.dispose();
+            dispose: function (placeholder) {
+                var cache = placeholder.cache;
+                cache.element.off(namespace);
+                cache.element = null;
             }
         }
     };
-
-    /**
-     * 手动触发输入框的 focus 事件
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function focusByClick(e) {
-        var placeholder = e.data;
-        placeholder.element.focus();
-        placeholder.refresh();
-    }
-
-    /**
-     * focus / blur 切换时触发刷新
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onRefresh(e) {
-        e.data.refresh();
-    }
 
 
     return Placeholder;

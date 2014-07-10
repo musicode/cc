@@ -104,11 +104,11 @@ define(function (require, exports, module) {
                 scope = me.scope = me;
             }
 
-            var initEvent = support === 'input'
-                          ? initInput
-                          : initPropertyChange;
+            var bindEvent = support === 'input'
+                          ? bindInput
+                          : bindPropertyChange;
 
-            initEvent(me);
+            bindEvent(me);
 
             var element = me.element;
             var cache = me.cache = { };
@@ -245,7 +245,7 @@ define(function (require, exports, module) {
      * @inner
      * @param {Input} input
      */
-    function initInput(input) {
+    function bindInput(input) {
         input.element.on(
             support + namespace,
             function () {
@@ -260,7 +260,7 @@ define(function (require, exports, module) {
      * @inner
      * @param {Input} input
      */
-    function initPropertyChange(input) {
+    function bindPropertyChange(input) {
 
         var element = input.element;
 

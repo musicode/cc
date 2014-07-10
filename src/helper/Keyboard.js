@@ -335,7 +335,9 @@ define(function (require, exports, module) {
                             );
                         }
                         else if (name2Code[name]) {
-                            expressions.push('e.keyCode===' + name2Code[name]);
+                            expressions.push(
+                                'e.keyCode===' + name2Code[name]
+                            );
                         }
                         else {
                             expressions.length = 0;

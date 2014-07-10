@@ -140,10 +140,12 @@ define(function (require, exports, module) {
                 fileItem.nativeFile
             );
 
-            data = $.extend({ }, me.data, data);
-            for (var key in data) {
-                formData.append(key, data[key]);
-            }
+            $.each(
+                $.extend({ }, me.data, data),
+                function (key, value) {
+                    formData.append(key, value);
+                }
+            );
 
             var xhr = new XMLHttpRequest();
             me.cache.xhr = xhr;

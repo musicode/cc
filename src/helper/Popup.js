@@ -44,13 +44,9 @@ define(function (require, exports, module) {
      *    它们的结构都是
      *
      *    {
-     *        on: function (popup),             // 传入 popup 实例，绑定触发事件
-     *        off: function (popup),            // 传入 popup 实例，解绑触发事件
-     *        handler: function (e) { },
-     *        addBreaker: function (popup, breaker),    // 因为 delay 会产生异步，所以要提供中断异步的方式
-     *                                                  // 如 鼠标移出触发延时，鼠标再次移入就需要中断它
-     *                                                  // breaker 参数不用关心实现，只需知道执行它能中断异步就行
-     *        removeBreaker: function (popup, breaker)  // 解绑中断事件
+     *        on: function (popup) { },             // 传入 popup 实例，绑定触发事件
+     *        off: function (popup) { },            // 传入 popup 实例，解绑触发事件
+     *        handler: function (e) { }
      *    }
      *
      *    构造函数的 trigger.show 可选的值取决于 Popup.trigger.show 的键值
@@ -67,6 +63,8 @@ define(function (require, exports, module) {
     var split = require('../function/split');
     var contains = require('../function/contains');
     var instance = require('../util/instance');
+
+    // [TODO] element 可变为 object
 
     /**
      * 简单的弹出式交互
@@ -237,7 +235,7 @@ define(function (require, exports, module) {
                 setDelay(
                     popup,
                     popup.delay.show,
-                    showDelay[trigger],
+                    showDelay[trigger] || { },
                     function () {
                         cache.timeStamp = e.timeStamp || +new Date();
                         cache.showBy = trigger;
@@ -265,7 +263,7 @@ define(function (require, exports, module) {
                 setDelay(
                     popup,
                     popup.delay.hide,
-                    hideDelay[trigger],
+                    hideDelay[trigger] || { },
                     function () {
                         cache.timeStamp = timeStamp;
                         cache.hideBy = trigger;

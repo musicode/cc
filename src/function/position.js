@@ -19,6 +19,8 @@ define(function (require, exports, module) {
      */
     return function (element) {
 
+        var parentElement = offsetParent(element);
+
         var position = element.css('position');
         var x = parseInt(element.css('left'), 10);
         var y = parseInt(element.css('top'), 10);
@@ -28,18 +30,20 @@ define(function (require, exports, module) {
 
         if (isAutoX || isAutoY) {
 
-            var parentElement = offsetParent(element);
-
             if (parentElement.length === 1) {
 
                 var targetOffset = element.offset();
                 var containerOffset = parentElement.offset();
 
                 if (isAutoX) {
-                    x = targetOffset.left - containerOffset.left;
+                    x = targetOffset.left
+                      - containerOffset.left
+                      - (parseInt(parentElement.css('border-left-width'), 10) || 0);
                 }
                 if (isAutoY) {
-                    y = targetOffset.top - containerOffset.top;
+                    y = targetOffset.top
+                      - containerOffset.top
+                      - (parseInt(parentElement.css('border-top-width'), 10) || 0);
                 }
             }
             else {

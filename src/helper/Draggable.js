@@ -23,7 +23,6 @@ define(function (require, exports, module) {
     'use strict';
 
     var page = require('../function/page');
-    var parseInt = require('../function/parseInt');
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
@@ -101,8 +100,12 @@ define(function (require, exports, module) {
 
             if (forDrag) {
                 var element = me.element;
-                rect.width -= element.outerWidth(true);
-                rect.height -= element.outerHeight(true);
+                var width = rect.width - element.outerWidth(true);
+                var height = rect.height - element.outerHeight(true);
+
+                // width/height 有可能比 outerWidth/outerHeight 小
+                rect.width = Math.max(0, width);
+                rect.height = Math.max(0, height);
             }
 
             return rect;
@@ -314,11 +317,11 @@ define(function (require, exports, module) {
         // 所以减去 margin 才是真正的坐标值
         var offsetX = global.absoluteX(e)
                     - (elementOffset.left
-                        - parseInt(element.css('margin-left'))
+                        - (parseInt(element.css('margin-left'), 10) || 0)
                       );
         var offsetY = global.absoluteY(e)
                     - (elementOffset.top
-                        - parseInt(element.css('margin-top'))
+                        - (parseInt(element.css('margin-top'), 10) || 0)
                       );
 
         // 因为 onDrag 是用`全局坐标`减去偏移量
@@ -443,8 +446,8 @@ define(function (require, exports, module) {
     function offset(element) {
         var offsetData = element.offset();
         return {
-            left: offsetData.left + parseInt(element.css('border-left-width')),
-            top: offsetData.top + parseInt(element.css('border-top-width'))
+            left: offsetData.left + (parseInt(element.css('border-left-width'), 10) || 0),
+            top: offsetData.top + (parseInt(element.css('border-top-width'), 10) || 0)
         };
     }
 

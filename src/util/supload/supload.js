@@ -55,13 +55,15 @@ define(function (require, exports, module) {
             }
 
             var data = this.data || (this.data = { });
-            var cookieData = cookie.get();
 
-            for (var key in cookieData) {
-                if (typeof data[key] === 'undefined') {
-                    data[key] = cookieData[key];
+            $.each(
+                cookie.get(),
+                function (key, value) {
+                    if ($.type(data[key]) === 'undefined') {
+                        data[key] = value;
+                    }
                 }
-            }
+            );
 
             var swf = Supload.createSWF(instanceId, this.flashUrl, this.getFlashVars());
             element.parentNode.replaceChild(swf, element);
