@@ -33,19 +33,38 @@
 
         require(
 
-            [ 'cobble/ui/Pager' ],
+            [
+                'cobble/ui/Pager',
+                'cobble/util/etpl'
+            ],
 
-            function (Pager) {
+            function (Pager, etpl) {
 
                 var pager = new Pager({
                     element: $('#pager'),
-                    page: 0,
-                    first: 0,
-                    total: 10,
+                    page: 4,
+                    total: 20,
 
-                    count: 4,
+                    showCount: 5,
                     startCount: 2,
-                    endCount: 2,
+                    endCount: 3,
+
+                    autoHide: true,
+
+                    template: {
+                        // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
+                        // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
+                        page: '<a href="#" data-page="${page}" onclick="return false;">${page}</a>',
+
+                        prev: '<a class="pager-prev" href="#" data-page="${page}" onclick="return false;">上一页</a>',
+                        next: '<a class="pager-next" href="#" data-page="${page}" onclick="return false;">下一页</a>',
+                        ellipsis: '<a class="pager-ellipsis">...</a>',
+                        active: '<a class="pager-selected" href="#" onclick="return false;">${page}</a>',
+
+                        render: function (tpl, data) {
+                            return etpl.compile(tpl)(data);
+                        }
+                    },
 
                     onChange: function (page) {
                         console.log(page);

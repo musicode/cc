@@ -16,9 +16,6 @@ define(function (require, exports, module) {
             // 默认的动画
             def: 'swing',
 
-            swing: function (x, t, b, c, d) {
-                return jQuery.easing[jQuery.easing.def](x, t, b, c, d);
-            },
             easeInQuad: function (x, t, b, c, d) {
                 return c*(t/=d)*t + b;
             },

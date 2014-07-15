@@ -110,15 +110,18 @@
                             callback(data);
                         };
 
-                        return $.get(
+                        return $.ajax(
                             'http://hui.baidu.com/api/suggestion.php',
                             {
-                                trade: 'edu',
-                                query: value
-                            },
-                            null,
-                            'jsonp'
+                                data: {
+                                    trade: 'edu',
+                                    query: value
+                                },
+                                dataType: 'jsonp'
+                            }
                         );
+
+
                     }
 
                 });

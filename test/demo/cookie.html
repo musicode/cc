@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cookie</title>
+</head>
+<body>
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/util/cookie' ],
+
+            function (cookie) {
+
+                cookie.set('project', 'cobble');
+                console.log(cookie.get('project'));
+
+                cookie.remove('project');
+                console.log(cookie.get('project'));
+            }
+        );
+    </script>
+</body>
+</html>

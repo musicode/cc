@@ -24,8 +24,7 @@ define(function (require, exports, module) {
      * @property {string} options.className.navActive 导航项选中状态的 class
      * @property {string=} options.className.contentActive 内容区选中状态的 class，如果未设置，直接 show/hide
      *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.switchContent 切换内容的动画，如果 contentActive 不能满足需求，可自行实现
+     * @property {Function=} options.animation 切换内容的动画，如果 contentActive 不能满足需求，可自行实现
      *
      * @property {Function=} options.onChange 切换 tab 触发
      */
@@ -100,13 +99,13 @@ define(function (require, exports, module) {
             navs.eq(index).addClass(activeClass);
 
             // 切换 content，优先使用动画
-            var switchContent = me.animation.switchContent;
-            if ($.isFunction(switchContent)) {
-                switchContent.call(
+            var animation = me.animation;
+            if ($.isFunction(animation)) {
+                animation.call(
                     me,
                     {
-                        oldIndex: oldIndex,
-                        newIndex: index
+                        fromIndex: oldIndex,
+                        toIndex: index
                     }
                 );
             }
@@ -154,7 +153,6 @@ define(function (require, exports, module) {
      */
     Tab.defaultOptions = {
         selector: { },
-        animation: { },
         className: {
             navActive: 'tab-active'
         }

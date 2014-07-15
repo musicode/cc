@@ -7,6 +7,29 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
+     * 名称映射百分比
+     *
+     * @inner
+     * @type {Object}
+     */
+    var name2Value = {
+        left: 0,
+        top: 0,
+        center: '50%',
+        middle: '50%',
+        right: '100%',
+        bottom: '100%'
+    };
+
+    /**
+     * 提取百分比的正则
+     *
+     * @inner
+     * @type {RegExp}
+     */
+    var percentExpr = /(-?\d+(\.\d+)?)%/;
+
+    /**
      * 解析配置中的横坐标值，可选值有以下几种：
      *
      * left   (等价于 0%)
@@ -24,16 +47,10 @@ define(function (require, exports, module) {
      */
     function parseX(options) {
 
-        var x = options.x;
+        var x = name2Value[options.x];
 
-        if (x === 'left') {
-            return 0;
-        }
-        else if (x === 'center') {
-            x = '50%';
-        }
-        else if (x === 'right') {
-            x = '100%';
+        if (x == null) {
+            x = options.x;
         }
 
         if ($.type(x) === 'string' && percentExpr.test(x)) {
@@ -61,16 +78,10 @@ define(function (require, exports, module) {
      */
     function parseY(options) {
 
-        var y = options.y;
+        var y = name2Value[options.y];
 
-        if (y === 'top') {
-            return 0;
-        }
-        else if (y === 'middle') {
-            y = '50%';
-        }
-        else if (y === 'bottom') {
-            y = '100%';
+        if (y == null) {
+            y = options.y;
         }
 
         if ($.type(y) === 'string' && percentExpr.test(y)) {
@@ -79,14 +90,6 @@ define(function (require, exports, module) {
 
         return y;
     }
-
-    /**
-     * 提取百分比的正则
-     *
-     * @inner
-     * @type {RegExp}
-     */
-    var percentExpr = /(-?\d+(\.\d+)?)%/;
 
     /**
      * 定位一个元素

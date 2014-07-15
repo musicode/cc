@@ -307,7 +307,7 @@ define(function (require, exports, module) {
             header: '.dialog-header',
             title: '.dialog-title',
             close: '.dialog-close',
-            body: '.dialog-body',
+            body: '.dialog-body'
         },
 
         mask: {

@@ -24,7 +24,7 @@ define(function (require, exports, module) {
      * @property {number=} options.max 允许的最大值
      * @property {number=} options.step value 变化的最小间隔，默认是 10
      * @property {boolean=} options.scrollable 是否可以滚动触发，如果设为 true，需要设置 step
-     * @property {string=} options.direction 方向，可选值有 horizontal 和 vertical，默认是 horizontal
+     * @property {string=} options.orientation 方向，可选值有 horizontal 和 vertical，默认是 horizontal
      * @property {string=} options.template 模板，如果 element 结构已完整，可不传模板
      *
      * @property {Object=} options.selector 选择器
@@ -79,7 +79,7 @@ define(function (require, exports, module) {
                                 thumb: thumbElement,
                                 track: trackElement
                             },
-                            directionConf[ me.direction ]
+                            orientationConf[ me.orientation ]
                         );
 
             cache.draggable = createDraggable(
@@ -333,7 +333,7 @@ define(function (require, exports, module) {
 
         step: 10,
         scrollable: false,
-        direction: 'horizontal',
+        orientation: 'horizontal',
         template: '<i class="slider-thumb"></i>',
 
         className: { },
@@ -357,7 +357,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {Object}
      */
-    var directionConf = {
+    var orientationConf = {
         horizontal: {
             axis: 'x',
             position: 'left',

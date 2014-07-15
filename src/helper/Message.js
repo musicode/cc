@@ -51,7 +51,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {string} options.agentUrl 代理页面，必须和最终产品页域名保持一致
-     * @property {number=} options.wait 间隔时间，默认 100 ms 发送一次信息
+     * @property {number=} options.delay 间隔时间，默认 100 ms 发送一次信息
      * @property {function():Object} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
@@ -75,7 +75,7 @@ define(function (require, exports, module) {
 
             function poll() {
                 me.send(me.reader() || { });
-                me.timer = setTimeout(poll, me.wait);
+                me.timer = setTimeout(poll, me.delay);
             }
 
             poll();
@@ -131,7 +131,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Message.defaultOptions = {
-        wait: 100
+        delay: 100
     };
 
     /**

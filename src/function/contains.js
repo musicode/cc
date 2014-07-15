@@ -8,37 +8,26 @@ define(function (require, exports, module) {
 
     /**
      * container 是否包含 element
-     * @param {HTMLElement} container
-     * @param {HTMLElement} element
-     * @return {boolean}
-     */
-    function contains(container, element) {
-        if (container === element) {
-            return true;
-        }
-        return $.contains(container, element);
-    }
-
-    /**
-     * container 是否包含 element
      *
-     * 可测试多个容器（container.length > 1）是否包含 element
-     *
-     * @param {jQuery} container
-     * @param {HTMLElement} element
+     * @param {jQuery|HTMLElement} container
+     * @param {jQuery|HTMLElement} element
      * @return {boolean}
      */
     return function (container, element) {
 
-        var result = false;
+        container = container.jquery
+                  ? container[0]
+                  : container;
 
-        container.each(
-            function () {
-                return result = contains(this, element);
-            }
-        );
+        element = element.jquery
+                ? element[0]
+                : element;
 
-        return result;
+        if (container === element) {
+            return true;
+        }
+
+        return $.contains(container, element);
 
     };
 

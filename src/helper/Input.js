@@ -60,6 +60,8 @@ define(function (require, exports, module) {
      * @argument {Event} options.onLongPressStart.event
      *
      * @property {Function=} options.onLongPressEnd 长按结束
+     *                                              如果返回 false，可不触发 change 事件
+     *                                              如果返回不是 false，值变化了才会触发 change 事件
      * @argument {Event} options.onLongPressStart.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
@@ -139,9 +141,9 @@ define(function (require, exports, module) {
                 },
                 onLongPressEnd: function (e) {
                     cache.longPressing = false;
-                    call(me.onLongPressEnd, scope, e);
-
-                    if (value !== element.val()) {
+                    if (call(me.onLongPressEnd, scope, e) !== false
+                        && value !== element.val()
+                    ) {
                         triggerChange(me);
                     }
                 },

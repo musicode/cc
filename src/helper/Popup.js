@@ -64,8 +64,6 @@ define(function (require, exports, module) {
     var contains = require('../function/contains');
     var instance = require('../util/instance');
 
-    // [TODO] element 可变为 object
-
     /**
      * 简单的弹出式交互
      *

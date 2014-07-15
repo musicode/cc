@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.input 输入框元素
      * @property {jQuery} options.menu 补全菜单，菜单最好使用相对定位，这样直接 show 出来，无需涉及定位逻辑
      *
-     * @property {number=} options.wait 长按上下键遍历的等待间隔时间
+     * @property {number=} options.delay 长按上下键遍历的等待间隔时间
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      *
      * @property {Object=} options.animation
@@ -36,12 +36,12 @@ define(function (require, exports, module) {
      * @property {string=} options.className.itemHover 菜单项 hover 时的 className
      * @property {string=} options.className.itemActive 菜单项 active 时的 className
      *
+     * @property {Function=} options.parse 解析菜单项元素数据，返回值必须包含 text 属性
+     * @argument {jQuery} options.parse.item 菜单项元素
+     *
      * @property {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
-     *
-     * @property {Function} options.parse 解析每个菜单项元素上的数据
-     *                                    必须返回的字段是 text
      *
      * @property {Function} options.onSelect 用户点击选中某个菜单项触发
      * @property {Function} options.onEnter 用户按下回车触发
@@ -69,7 +69,7 @@ define(function (require, exports, module) {
                             // 起始索引
                             start: 0,
                             // 缓存结果
-                            data: { }
+                            result: { }
                         };
 
             cache.input = createInput(me);
@@ -107,10 +107,10 @@ define(function (require, exports, module) {
                 var items = cache.items
                           = menu.find(me.selector.item);
 
-                var values = cache.values
+                var data = cache.data
                            = items.map(
                                  function (index, item) {
-                                     return item.innerHTML;
+                                     return me.parse($(item));
                                  }
                              );
 
@@ -120,7 +120,7 @@ define(function (require, exports, module) {
 
                 var input = me.input;
                 items.splice(0, 0, input[0]);
-                values.splice(0, 0, input.val());
+                data.splice(0, 0, input.val());
 
                 cache.index = cache.start;
                 cache.max = items.length - 1;
@@ -177,12 +177,17 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     AutoComplete.defaultOptions = {
-        wait: 60,
+        delay: 60,
         includeInput: true,
         animation: { },
         template: { },
         className: { },
-        selector: { }
+        selector: { },
+        parse: function (element) {
+            return {
+                text: element.html()
+            };
+        }
     };
 
     /**
@@ -202,7 +207,6 @@ define(function (require, exports, module) {
      */
     function createInput(autoComplete) {
 
-        var longPressing = false;
         var action;
         var timer;
 
@@ -221,8 +225,8 @@ define(function (require, exports, module) {
                     action(autoComplete);
                 },
                 enter: function () {
-                    autoComplete.close();
                     trigger(autoComplete, 'onEnter');
+                    autoComplete.close();
                 }
             },
             onLongPressStart: function () {
@@ -231,13 +235,15 @@ define(function (require, exports, module) {
                                 function () {
                                     action(autoComplete);
                                 },
-                                autoComplete.wait
+                                autoComplete.delay
                             );
                 }
             },
             onLongPressEnd: function () {
                 if (action) {
                     clearInterval(timer);
+                    // 不要触发 change 事件
+                    return false;
                 }
             },
             onKeyUp: function () {
@@ -302,7 +308,7 @@ define(function (require, exports, module) {
 
         var cache = autoComplete.cache;
         var query = $.trim(autoComplete.input.val());
-        var data = cache.data[query];
+        var data = cache.result[query];
 
         if (data) {
             autoComplete.render(data);
@@ -311,7 +317,7 @@ define(function (require, exports, module) {
             autoComplete.load(
                 query,
                 function (data) {
-                    cache.data[query] = data;
+                    cache.result[query] = data;
                     autoComplete.render(data);
                 }
             );
@@ -394,9 +400,11 @@ define(function (require, exports, module) {
             className
         );
 
-        autoComplete.input.val(
-            autoComplete.cache.values[index]
-        );
+        autoComplete
+            .input
+            .val(
+                autoComplete.cache.data[index].text
+            );
     }
 
     /**
@@ -470,11 +478,18 @@ define(function (require, exports, module) {
      * @param {string} name
      */
     function trigger(autoComplete, name) {
+
         if ($.isFunction(autoComplete[name])) {
+
             var cache = autoComplete.cache;
-            autoComplete[name]({
-                target: cache.items.eq(cache.index)
-            });
+            var data = { };
+
+            if (!cache.popup.hidden) {
+                data.item = cache.items.eq(cache.index);
+                data.data = cache.data.eq(cache.index);
+            }
+
+            autoComplete[name](data);
         }
     }
 

@@ -75,20 +75,15 @@
                         slide: '.carousel-inner .item'
                     },
 
-                    attribute: {
-                        index: 'data-slide-to'
-                    },
-
                     className: {
                         indicatorActive: 'active',
                         slideActive: 'active'
                     },
 
-                    animation: {
-                        transition:  function (data) {
-                            var from = data.fromIndex;
-                            var to = data.toIndex;
-                        }
+                    animation: function (data) {
+                        var from = data.fromIndex;
+                        var to = data.toIndex;
+
                     },
 
                     onChange: function (data) {

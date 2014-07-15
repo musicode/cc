@@ -164,7 +164,7 @@ define(function (require, exports, module) {
             };
 
             // 如果不是父子元素关系，需要把容器的外围信息加上
-            if (!$.contains(container[0], me.element[0])) {
+            if (!contains(container, me.element)) {
                 var containerOffset = offset(container);
                 result.x = containerOffset.left;
                 result.y = containerOffset.top;
@@ -300,8 +300,8 @@ define(function (require, exports, module) {
         var handle = selector.handle;
         var cancel = selector.cancel;
 
-        if (handle && !contains(element.find(handle), target)
-            || cancel && contains(element.find(cancel), target)
+        if (handle && !hitTarget(element.find(handle), target)
+            || cancel && hitTarget(element.find(cancel), target)
         ) {
             return;
         }
@@ -327,7 +327,7 @@ define(function (require, exports, module) {
         // 因为 onDrag 是用`全局坐标`减去偏移量
         // 所以偏移量应该是全局坐标的偏移量
         var container = draggable.container;
-        if ($.contains(container[0], element[0])) {
+        if (contains(container, element)) {
             var containerOffset = offset(container);
             offsetX += containerOffset.left;
             offsetY += containerOffset.top;
@@ -437,6 +437,31 @@ define(function (require, exports, module) {
     }
 
     /**
+     * 是否命中目标
+     *
+     * container 只要有一个命中就返回 true
+     *
+     * @inner
+     * @param {jQuery} container
+     * @param {jQuery|HTMLElement} target
+     * @return {boolean}
+     */
+    function hitTarget(container, target) {
+
+        var result = false;
+
+        container.each(
+            function () {
+                if (result = contains(this, target)) {
+                    return false;
+                }
+            }
+        );
+
+        return result;
+    }
+
+    /**
      * 封装 jq 的 offset 方法，使其包含 border 的宽度
      *
      * @inner
@@ -450,6 +475,7 @@ define(function (require, exports, module) {
             top: offsetData.top + (parseInt(element.css('border-top-width'), 10) || 0)
         };
     }
+
 
     return Draggable;
 

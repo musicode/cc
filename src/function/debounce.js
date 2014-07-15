@@ -10,12 +10,12 @@ define(function (require, exports, module) {
      * 节流调用
      *
      * @param {Function} fn 需要节制调用的函数
-     * @param {number=} wait 调用的时间间隔，默认 50ms
+     * @param {number=} delay 调用的时间间隔，默认 50ms
      * @return {Function}
      */
-    return function (fn, wait) {
+    return function (fn, delay) {
 
-        wait = $.type(wait) === 'number' ? wait : 50;
+        delay = $.type(delay) === 'number' ? delay : 50;
 
         var timer;
 
@@ -32,7 +32,7 @@ define(function (require, exports, module) {
                             timer = null;
                             fn.apply(null, $.makeArray(args));
                         },
-                        wait
+                        delay
                     );
 
         };

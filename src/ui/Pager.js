@@ -7,6 +7,16 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
+     * 约定翻页开始页码为 1，好处如下：
+     *
+     * 1. 节省代码
+     * 2. 代码清晰易懂（不用加 1 减 1 什么的，这个巨恶心）
+     * 3. 符合人类直觉
+     *
+     * 如果非要翻页为 0，那初始化和刷新时，+ 1 处理吧
+     */
+
+    /**
      * 分页
      *
      * @constructor
@@ -14,14 +24,14 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element
      * @property {number} options.page 当前页码
      * @property {number} options.total 总页数
-     * @property {number=} options.first 起始页码，默认是 1
      *
-     * @property {number} options.count 中间显示的数量
+     * @property {number} options.showCount 中间显示的数量
      * @property {number=} options.startCount 省略号前面的数量，默认是 0
      * @property {number=} options.endCount 省略号后面的数量，默认是 0
      *
-     * @property {string=} options.pageAttr 存放页码的属性
-     *                                      点击可翻页的元素都要加上 pageAttr，包括 上一页/下一页
+     * @property {Object} options.attribute
+     * @property {string=} options.attribute.page 存放页码的属性
+     *                                            点击可翻页的元素都要加上 page 属性，包括 上一页/下一页
      *
      * @property {Object=} options.template 各种模板
      * @property {string=} options.template.page 页码模板
@@ -29,6 +39,7 @@ define(function (require, exports, module) {
      * @property {string=} options.template.next 下一页模板
      * @property {string=} options.template.ellipsis 省略号模板
      * @property {string=} options.template.active 页码选中状态的模板
+     * @property {Function=} options.template.render 渲染方法
      *
      * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
      *
@@ -57,7 +68,7 @@ define(function (require, exports, module) {
             me.element
               .on(
                 'click' + namespace,
-                '[' + me.pageAttr + ']',
+                '[' + me.attribute.page + ']',
                 me,
                 clickPage
             );
@@ -78,10 +89,6 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
-            // 原则上只能传 0 和 1
-            // 如果不是，这里通过与运算纠正
-            me.first &= 1;
-
             var total = me.total;
             var element = me.element;
 
@@ -90,63 +97,111 @@ define(function (require, exports, module) {
             }
             else {
 
-                var html = '';
+                var page = me.page;
 
-                // 这里统一以 first 为 1 进行计算
-                // 不然感觉逻辑好乱，最后再根据配置转换一下
-                var offset = me.first === 1 ? 0 : 1;
-                var page = me.page + offset;
-
-                var count = me.count;
+                var showCount = me.showCount;
                 var startCount = me.startCount;
                 var endCount = me.endCount;
+                var template = me.template;
 
-                var start = Math.max(1, page - Math.ceil(count / 2));
-                var end = Math.min(total, start + count - 1);
-
-                if (startCount > 0 && start < startCount + 2) {
-                    start = 1;
-                }
-                if (endCount > 0 && total - end < endCount + 2) {
-                    end = total;
-                }
-
-                var pageTemplate = me.pageTemplate;
-                var ellipsisTemplate = me.ellipsisTemplate;
+                var datasource = [ ];
 
                 // 上一页
                 if (page > 1) {
-                    html += renderPages(me.prevTemplate, page - 1, offset);
+                    datasource.push({
+                        page: [ page - 1, page - 1 ],
+                        tpl: template.prev
+                    });
                 }
 
-                // 开始部分的页码，方便跳到第一页
-                if (startCount > 0 && start > 1) {
-                    html += renderPages(pageTemplate, [ 1, startCount ], offset)
-                          + ellipsisTemplate;
+                var start = Math.max(1, page - Math.ceil(showCount / 2));
+                var end = Math.min(total, start + showCount - 1);
+
+                if (startCount > 0 && start < startCount + 2) {
+                    start = 1;
+                    startCount = 0;
+                }
+                if (endCount > 0 && total - end < endCount + 2) {
+                    end = total;
+                    endCount = 0;
                 }
 
-                // 中间的页码部分，需要用 selectedPage 进行分割
+                // 纠正一下，保证最多显示 showCount 个
+                end = start + showCount - 1;
+
+                if (startCount > 0) {
+                    datasource.push(
+                        {
+                            page: [ 1, startCount ],
+                            tpl: template.page
+                        },
+                        {
+                            tpl: template.ellipsis
+                        }
+                    );
+                }
+
+                // 中间的页码部分，需要用 activePage 进行分割
                 if (start < page) {
-                    html += renderPages(pageTemplate, [ start, page - 1 ], offset);
+                    datasource.push({
+                        page: [ start, page - 1 ],
+                        tpl: template.page
+                    });
                 }
 
                 // 选中页码
-                html += renderPages(me.active, page);
+                datasource.push({
+                    page: [ page, page ],
+                    tpl: template.active
+                });
 
                 if (end > page) {
-                    html += renderPages(pageTemplate, [ page + 1, end ], offset);
+                    datasource.push({
+                        page: [ page + 1, end ],
+                        tpl: template.page
+                    });
                 }
 
                 // 结束部分的页码，方便跳到最后一页
-                if (endCount > 0 && end < total) {
-                    html += ellipsisTemplate
-                          + renderPages(pageTemplate, [ total - endCount + 1, total ], offset);
+                if (endCount > 0) {
+                    datasource.push(
+                        {
+                            tpl: template.ellipsis
+                        },
+                        {
+                            page: [ total - endCount + 1, total ],
+                            tpl: template.page
+                        }
+                    );
                 }
 
                 // 下一页
                 if (page < total) {
-                    html += renderPages(me.nextTemplate, page + 1, offset);
+                    datasource.push({
+                        page: [ page + 1, page + 1 ],
+                        tpl: template.next
+                    });
                 }
+
+                var html = $.map(
+                    datasource,
+                    function (item, index) {
+                        if (item.page == null) {
+                            return item.tpl;
+                        }
+                        else {
+
+                            var html = '';
+                            var page = item.page;
+
+                            for (var i = page[0], end = page[1]; i <= end; i++) {
+                                html += template.render(item.tpl, { page: i });
+                            }
+
+                            return html;
+                        }
+                    }
+                ).join('');
 
                 element.show().html(html);
             }
@@ -157,7 +212,7 @@ define(function (require, exports, module) {
             var me = this;
             var page = me.page;
 
-            if (page > me.first) {
+            if (page > 1) {
                 me.to(page - 1);
             }
 
@@ -167,13 +222,8 @@ define(function (require, exports, module) {
 
             var me = this;
             var page = me.page;
-            var total = me.total;
 
-            if (me.first === 0) {
-                total -= 1;
-            }
-
-            if (page < total) {
+            if (page < me.total) {
                 me.to(page + 1);
             }
         },
@@ -186,14 +236,12 @@ define(function (require, exports, module) {
         to: function (page) {
 
             var me = this;
-            var data = {
-                page: page
-            };
-
             me.page = page;
 
             if ($.isFunction(me.onChange)) {
-                me.onChange(data);
+                me.onChange({
+                    page: page
+                });
             }
         },
 
@@ -215,24 +263,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Pager.defaultOptions = {
-
-        first: 1,
         autoHide: true,
-        pageAttr: 'data-page',
         startCount: 0,
         endCount: 0,
-
-        template: {
-            // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
-            // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
-            page: '<a href="#" data-page="${value}" onclick="return false;">${text}</a>',
-
-            prev: '<a class="pager-prev" href="#" data-page="${value}" onclick="return false;">上一页</a>',
-            next: '<a class="pager-next" href="#" data-page="${value}" onclick="return false;">下一页</a>',
-            ellipsis: '<a class="pager-ellipsis">...</a>',
-            active: '<a class="pager-selected" href="#" onclick="return false;">${text}</a>'
+        attribute: {
+            page: 'data-page'
         }
-
     };
 
     /**
@@ -251,60 +287,11 @@ define(function (require, exports, module) {
      */
     function clickPage(e) {
         var pager = e.data;
-        var page = Number($(e.currentTarget).attr(pager.pageAttr));
+        var page = Number($(e.currentTarget).attr(pager.attribute.page));
         if (!isNaN(page)) {
             pager.to(page);
         }
     }
-
-    /**
-     * 渲染一段翻页，页码范围是 range
-     *
-     * @inner
-     * @param {string} tpl
-     * @param {Array.<Object>} data 页码范围
-     * @return {string}
-     */
-    function renderPages(tpl, range, offset) {
-
-        var html = '';
-
-        $.each(
-            getDatasource(range, offset),
-            function (index, item) {
-                html += template(tpl, item);
-            }
-        );
-
-        return html;
-    }
-
-    /**
-     * 获得渲染模板的数据源
-     *
-     * @inner
-     * @param {number|Array.<number>} range
-     * @param {number} offset
-     * @return {Array.<Object>}
-     */
-    function getDatasource(range, offset) {
-
-        var result = [ ];
-
-        if ($.type(range) === 'number') {
-            range = [ range, range ];
-        }
-
-        for (var i = range[0], end = range[1]; i <= end; i++) {
-            result.push({
-                text: i,
-                value: i - offset
-            });
-        }
-
-        return result;
-    }
-
 
     return Pager;
 

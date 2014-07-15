@@ -31,22 +31,13 @@ define (function (require, exports, module) {
     'use strict';
 
     /**
-     * 一天的毫秒数
+     * 一小时的毫秒数
      *
      * @inner
      * @const
      * @type {number}
      */
-    var DAY_TIME = 24 * 60 * 60 * 1000;
-
-    /**
-     * cookie 的默认属性
-     *
-     * @type {Object}
-     */
-    var defaultOptions = {
-        path: '/'
-    };
+    var HOUR_TIME = 60 * 60 * 1000;
 
     /**
      * 把 cookie 字符串解析成对象
@@ -99,16 +90,17 @@ define (function (require, exports, module) {
      */
     function setCookie(key, value, options) {
 
-        // 把相对天数转成日期的绝对值
-        if (typeof options.expires === 'number') {
-            var days = options.expires;
-            var date = options.expires = new Date();
-            date.setTime(date.getTime() + days * DAY_TIME);
+        var expires = options.expires;
+
+        if ($.isNumeric(expires)) {
+            var hours = expires;
+            expires = new Date();
+            expires.setTime(expires.getTime() + hours * HOUR_TIME);
         }
 
         document.cookie = [
             encodeURIComponent(key), '=', value,
-            options.expires ? ';expires=' + options.expires.toUTCString() : '',
+            expires ? ';expires=' + expires.toUTCString() : '',
             options.path ? ';path=' + options.path : '',
             options.domain ? ';domain=' + options.domain : '',
             options.secure ? ';secure' : ''
@@ -124,8 +116,8 @@ define (function (require, exports, module) {
      * @return {string|Object|undefined}
      */
     exports.get = function (key) {
-        var obj = parse(document.cookie);
-        return typeof key === 'string' ? obj[key] : obj;
+        var result = parse(document.cookie);
+        return $.type(key) === 'string' ? result[key] : result;
     };
 
     /**
@@ -135,23 +127,27 @@ define (function (require, exports, module) {
      *                            如果 key 是 Object，可批量写入
      * @param {*=} value
      * @param {Object=} options
-     * @param {number=} options.expires 过期天数，如 1 表示 1 天后过期
-     * @param {string=} options.path cookie 的路径
-     * @param {string=} options.domain 域名
-     * @param {boolean=} options.secure 是否加密传输
+     * @property {number=} options.expires 过期小时数，如 1 表示 1 小时后过期
+     * @property {string=} options.path 路径，默认是 /
+     * @property {string=} options.domain 域名
+     * @property {boolean=} options.secure 是否加密传输
      */
     exports.set = function (key, value, options) {
 
-        var isMulti = $.isPlainObject(key);
+        if ($.isPlainObject(key)) {
+            options = value;
+            value = null;
+        }
 
-        options = $.extend({ }, defaultOptions, isMulti ? value : options);
+        options = $.extend({ }, exports.defaultOptions, options);
 
-        if (isMulti) {
-            for (var k in key) {
-                if (key.hasOwnProperty(k)) {
-                    setCookie(k, key[k], options);
+        if (value === null) {
+            $.each(
+                key,
+                function (key, value) {
+                    setCookie(key, value, options);
                 }
-            }
+            )
         }
         else {
             setCookie(key, value, options);
@@ -163,10 +159,9 @@ define (function (require, exports, module) {
      *
      * @param {string} key
      * @param {Object=} options
-     * @param {number=} options.expires 过期天数，如 1 表示 1 天后过期
-     * @param {string=} options.path cookie 的路径
-     * @param {string=} options.domain 域名
-     * @param {boolean=} options.secure 是否加密传输
+     * @property {string=} options.path cookie 的路径
+     * @property {string=} options.domain 域名
+     * @property {boolean=} options.secure 是否加密传输
      */
     exports.remove = function (key, options) {
 
@@ -174,8 +169,14 @@ define (function (require, exports, module) {
             return;
         }
 
-        options = $.extend({ }, options, { expires: -1 });
-        setCookie(key, '', options);
+        options = options || { };
+        options.expires = -1;
+
+        setCookie(
+            key,
+            '',
+            $.extend({ }, exports.defaultOptions, options)
+        );
     };
 
     /**
@@ -183,6 +184,8 @@ define (function (require, exports, module) {
      *
      * @type {Object}
      */
-    exports.defaultOptions = defaultOptions;
+    exports.defaultOptions = {
+        path: '/'
+    };
 
 });

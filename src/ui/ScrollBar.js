@@ -36,9 +36,9 @@ define(function (require, exports, module) {
      * @property {number=} options.step 滑动滚轮产生的单位距离
      * @property {boolean=} options.step4Panel step 是否是 panel 的滚动距离，默认为 false
      *
-     * @property {string=} options.direction 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
-     * @property {number=} options.minWidth 滚动条的最小宽度，当 direction 为 horizontal 时生效
-     * @property {number=} options.minHeight 滚动条的最小高度，当 direction 为 vertical 时生效
+     * @property {string=} options.orientation  滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
+     * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation  为 horizontal 时生效
+     * @property {number=} options.minHeight 滚动条的最小高度，当 orientation  为 vertical 时生效
      *
      * @property {Object=} options.selector 选择器
      * @property {string=} options.selector.thumb 从 template 选中滑块的选择器
@@ -90,7 +90,7 @@ define(function (require, exports, module) {
                                     }
                                 })
                             },
-                            directionConf[ me.direction ]
+                            orientationConf[ me.orientation  ]
                         );
 
             me.refresh({ value: me.value });
@@ -229,7 +229,7 @@ define(function (require, exports, module) {
     ScrollBar.defaultOptions = {
         step: 10,
         step4Panel: false,
-        direction: 'vertical',
+        orientation : 'vertical',
         template: '<i class="scroll-thumb"></i>',
 
         selector: {
@@ -253,7 +253,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {Object}
      */
-    var directionConf = {
+    var orientationConf = {
         horizontal: {
             min: 'minWidth',
             scroll: 'scrollLeft',
@@ -288,7 +288,7 @@ define(function (require, exports, module) {
         return new Slider({
 
             element: scrollBar.element,
-            direction: scrollBar.direction,
+            orientation: scrollBar.orientation,
             step: scrollBar.step,
             scrollable: true,
             value: scrollBar.value,

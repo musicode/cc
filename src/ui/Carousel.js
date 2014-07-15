@@ -14,13 +14,14 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element 主元素
      *
      * @property {number=} options.index 从第几个开始播放，默认是 0
-     * @property {number=} options.wait 每次等待时间，默认 5000
-     * @property {boolean=} options.auto 是否自动播放
+     * @property {number=} options.step 每次滚动几个，默认是 1
+     * @property {number=} options.showCount 显示个数，默认是 1
+     * @property {number=} options.delay 每次切换的等待时间，默认 5000
+     * @property {boolean=} options.auto 是否自动播放，默认 true
      * @property {boolean=} options.loop 是否循环，即在最后一个调用 next() 是否回到第一个
-     * @property {boolean=} options.pauseable 是否鼠标停留在 slide 时暂停播放，默认为 true
+     * @property {boolean=} options.pauseOnHover 是否鼠标停留在 slide 时暂停播放，默认为 true
      *
-     * @property {Object=} options.trigger 触发条件
-     * @property {string=} options.trigger.indicator 触发改变的方式，可选值有 over click， 默认是 over
+     * @property {string=} options.trigger 触发改变的方式，可选值有 over click， 默认是 over
      *
      * @property {Object} options.selector 选择器
      * @property {string=} options.selector.prev
@@ -32,14 +33,10 @@ define(function (require, exports, module) {
      * @property {string=} options.className.indicatorActive 转场时会为 indicator 切换这个 class
      * @property {string=} options.className.slideActive 转场时会为 slide 切换这个 class
      *
-     * @property {Object} options.attribute 属性名称
-     * @property {string} options.attribute.index indicator 元素存储索引的属性名称
-     *
-     * @property {Object} options.animation 动画
-     * @property {Function} options.animation.transition 转场动画函数
-     * @argument {Object} options.animation.transition.data
-     * @property {number} options.animation.transition.data.toIndex
-     * @property {number} options.animation.transition.data.fromIndex
+     * @property {Function=} options.animation 动画
+     * @argument {Object} options.animation.data
+     * @property {number} options.animation.data.toIndex
+     * @property {number} options.animation.data.fromIndex
      *
      * @property {Function=} options.onChange 索引发生变化时触发
      * @argument {Object} options.onChange.data
@@ -65,62 +62,50 @@ define(function (require, exports, module) {
 
             var selector = me.selector;
 
+            var click = 'click';
+            var mouseenter = 'mouseenter';
+            var mouseleave = 'mouseleave';
+
             var prevSelector = selector.prev;
             if (prevSelector) {
-                element.on('click' + namespace, prevSelector, $.proxy(me.prev, me));
+                element.on(click + namespace, prevSelector, $.proxy(me.prev, me));
             }
 
             var nextSelector = selector.next;
             if (nextSelector) {
-                element.on('click' + namespace, nextSelector, $.proxy(me.next, me));
+                element.on(click + namespace, nextSelector, $.proxy(me.next, me));
             }
 
             var indicatorSelector = selector.indicator;
             if (indicatorSelector) {
-                if (me.trigger.indicator === 'click') {
-                    element.on('click' + namespace, indicatorSelector, me, toSlide);
+                if (me.trigger === click) {
+                    element.on(click + namespace, indicatorSelector, me, toSlide);
                 }
                 else {
-                    element.on('mouseenter' + namespace, indicatorSelector, me, enterIndicator);
-                    element.on('mouseleave' + namespace, indicatorSelector, me, leaveIndicator);
+                    element.on(mouseenter + namespace, indicatorSelector, me, enterIndicator);
+                    element.on(mouseleave + namespace, indicatorSelector, me, leaveIndicator);
                 }
             }
 
             var auto = me.auto;
             var slides = element.find(selector.slide);
 
-            if (auto && me.pauseable) {
-                slides.on('mouseenter' + namespace, $.proxy(me.pause, me));
-                slides.on('mouseleave' + namespace, $.proxy(me.play, me));
+            if (auto && me.pauseOnHover) {
+                slides.on(mouseenter + namespace, $.proxy(me.pause, me));
+                slides.on(mouseleave + namespace, $.proxy(me.play, me));
             }
 
             me.cache = {
                 slides: slides,
-                total: slides.length
+                min: 0,
+                max: slides.length - 1 - (me.showCount - 1)
             };
 
             var index = me.index;
-            var indicatorActiveClass = me.className.indicatorActive;
-
-            // 如果没有设置 index
-            // 需要从 indicator 是否有 activeClass 来获取 index
-            // 不用 slide 是否有 activeClass 的原因是：
-            // 1. 配置项没有 slideActiveClass，因为转场完全交给 transition 处理
-            // 2. 从实际运用情况来看，大部分轮播都有 indicator
-            if (!$.isNumeric(index)
-                && indicatorSelector
-                && indicatorActiveClass
-            ) {
-                var indicators = element.find(indicatorSelector);
-                var target = indicators.filter('.' + indicatorActiveClass);
-
-                if (target.length === 1) {
-                    index = me.index = indicators.index(target);
-                }
-            }
 
             if (auto && $.isNumeric(index)) {
-                me.play();
+                me.index = null;
+                me.play(index);
             }
         },
 
@@ -130,11 +115,12 @@ define(function (require, exports, module) {
         prev: function () {
 
             var me = this;
+            var cache = me.cache;
 
-            var index = me.index - 1;
-            if (index < 0) {
+            var index = me.index - me.step;
+            if (index < cache.min) {
                 if (me.loop) {
-                    index = me.cache.total - 1;
+                    index = me.max;
                 }
                 else {
                     return;
@@ -151,11 +137,12 @@ define(function (require, exports, module) {
         next: function () {
 
             var me = this;
+            var cache = me.cache;
 
-            var index = me.index + 1;
-            if (index >= me.cache.total) {
+            var index = me.index + me.step;
+            if (index > cache.max) {
                 if (me.loop) {
-                    index = 0;
+                    index = cache.min;
                 }
                 else {
                     return;
@@ -188,11 +175,12 @@ define(function (require, exports, module) {
                                         me.next();
                                     }
                                 },
-                                me.wait
+                                me.delay
                             );
             }
 
             var fromIndex = me.index;
+
             if (fromIndex !== index) {
 
                 me.index = index;
@@ -202,9 +190,9 @@ define(function (require, exports, module) {
                     toIndex: index
                 };
 
-                var transition = me.animation.transition;
-                if ($.isFunction(transition)) {
-                    transition.call(me, data);
+                var animation = me.animation;
+                if ($.isFunction(animation)) {
+                    animation.call(me, data);
                 }
 
                 var element = me.element;
@@ -234,8 +222,10 @@ define(function (require, exports, module) {
 
         /**
          * 开始自动播放
+         *
+         * @param {number} index
          */
-        play: function () {
+        play: function (index) {
 
             var me = this;
             var cache = me.cache;
@@ -246,7 +236,10 @@ define(function (require, exports, module) {
 
             cache.playing = true;
 
-            me.to(me.index);
+            if (!$.isNumeric(index)) {
+                index = me.index;
+            }
+            me.to(index);
         },
 
         /**
@@ -294,16 +287,15 @@ define(function (require, exports, module) {
      */
     Carousel.defaultOptions = {
         index: 0,
-        wait: 5000,
+        step: 1,
+        showCount: 1,
+        delay: 5000,
         auto: true,
         loop: true,
-        pauseable: true,
-        trigger: {
-            indicator: 'over'
-        },
+        pauseOnHover: true,
+        trigger: 'over',
         selector: { },
         animation: { },
-        attribute: { },
         className: { }
     };
 
@@ -323,8 +315,11 @@ define(function (require, exports, module) {
      */
     function toSlide(e) {
         var carousel = e.data;
-        var index = $(e.currentTarget).attr(carousel.attribute.index);
-        carousel.to(Number(index));
+        var index = carousel.element
+                            .find(carousel.selector.indicator)
+                            .index(e.currentTarget);
+
+        carousel.to(index);
         return false;
     }
 
@@ -338,7 +333,9 @@ define(function (require, exports, module) {
     function enterIndicator(e) {
 
         var carousel = e.data;
-        var index = $(e.currentTarget).attr(carousel.attribute.index);
+        var index = carousel.element
+                            .find(carousel.selector.indicator)
+                            .index(e.currentTarget);
 
         carousel.cache.changeTimer
         = setTimeout(
@@ -347,7 +344,6 @@ define(function (require, exports, module) {
                     carousel.to(Number(index));
                 }
             },
-            // 这里给 50 够了，不需要提供配置项
             50
         );
     }
