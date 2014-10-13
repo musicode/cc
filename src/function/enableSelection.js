@@ -7,21 +7,24 @@ define(function (require, exports, module) {
     'use strict';
 
     var element = $('<i></i>')[0];
+    var supportSelectStart = 'onselectstart' in element;
+    var supportFirefoxUserSelect = 'MozUserSelect' in element.style;
+    element = null;
 
-    if ('onselectstart' in element) {
+    if (supportSelectStart) {
         return function (target) {
             target = target || document;
             target.onselectstart = null;
         };
     }
 
-    if ('MozUserSelect' in element.style) {
+    if (supportFirefoxUserSelect) {
         return function (target) {
             target = target || document.body;
             target.style.MozUserSelect = '';
         };
     }
 
-    element = null;
+    return $.noop;
 
 });

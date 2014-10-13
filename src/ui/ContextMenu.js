@@ -6,11 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Popup = require('../helper/Popup');
-    var instance = require('../util/instance');
+    var Popup = require('cobble/helper/Popup');
+    var instance = require('cobble/util/instance');
 
-    var offsetParent = require('../function/offsetParent');
-    var pin = require('../function/pin');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var offsetParent = require('cobble/function/offsetParent');
+    var pin = require('cobble/function/pin');
 
     /**
      * 鼠标右键菜单
@@ -22,9 +23,13 @@ define(function (require, exports, module) {
      *
      * @property {jQuery=} options.container 在 container 内部右键弹出菜单，默认是 body
      *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.show 显示动画
-     * @property {Function=} options.animation.hide 隐藏动画
+     * @property {Object} options.show
+     * @property {number=} options.show.delay 显示延时
+     * @property {Function=} options.show.animation 显示动画
+     *
+     * @property {Object} options.hide
+     * @property {number=} options.hide.delay 隐藏延时
+     * @property {Function=} options.hide.animation 隐藏动画
      *
      * @property {Object=} options.action 可选，配置点击事件处理器
      *                     {
@@ -34,13 +39,14 @@ define(function (require, exports, module) {
      *                     key 是选择器，value 是 handler
      */
     function ContextMenu(options) {
-        $.extend(this, ContextMenu.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     ContextMenu.prototype = {
 
         constructor: ContextMenu,
+
+        type: 'ContextMenu',
 
         /**
          * 初始化
@@ -49,27 +55,27 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.cache = { };
-
             if (me.element) {
                 initMenu(me);
             }
 
-            me.container.on('contextmenu' + namespace, me, popupMenu);
+            me
+            .container
+            .on('contextmenu' + namespace, me, popupMenu);
         },
 
         /**
          * 显示菜单
          */
-        show: function () {
-            this.cache.popup.show();
+        open: function () {
+            this.popup.open();
         },
 
         /**
          * 隐藏菜单
          */
-        hide: function () {
-            this.cache.popup.hide();
+        close: function () {
+            this.popup.close();
         },
 
         /**
@@ -79,24 +85,25 @@ define(function (require, exports, module) {
 
             var me = this;
 
+            lifeCycle.dispose(me);
+
             if (currentMenu === me) {
                 currentMenu = null;
             }
 
-            var popup = me.cache.popup;
+            var popup = me.popup;
             if (popup) {
                 popup.dispose();
+                me.popup = null;
             }
 
             var element = me.element;
             if (element) {
                 element.remove();
+                me.element = null;
             }
 
             me.container.off(namespace);
-
-            me.cache =
-            me.element =
             me.container = null;
         }
     };
@@ -109,7 +116,7 @@ define(function (require, exports, module) {
      */
     ContextMenu.defaultOptions = {
         container: instance.body,
-        animation: { }
+        hide: { }
     };
 
     /**
@@ -147,14 +154,14 @@ define(function (require, exports, module) {
         }
 
         if (currentMenu && currentMenu !== contextMenu) {
-            currentMenu.hide();
+            currentMenu.close();
         }
 
         // 记录当前事件
-        contextMenu.cache.event = e;
+        contextMenu.contextEvent = e;
 
         currentMenu = contextMenu;
-        currentMenu.show();
+        currentMenu.open();
 
         pin({
             element: element,
@@ -194,31 +201,37 @@ define(function (require, exports, module) {
         }
 
         // 绑定点击事件
-        var cache = contextMenu.cache;
-        var events = contextMenu.action;
-
-        if (events) {
-            for (var selector in events) {
-                element.on(
-                    'click',
-                    selector,
-                    (function (handler) {
-                        return function () {
-                            handler.call(contextMenu, cache.event);
-                        };
-                    })(events[selector])
-                );
-            }
+        var action = contextMenu.action;
+        if (action) {
+            $.each(
+                action,
+                function (selector, handler) {
+                    element.on(
+                        'click',
+                        selector,
+                        function () {
+                            handler.call(
+                                contextMenu,
+                                contextMenu.contextEvent
+                            );
+                        }
+                    );
+                }
+            );
         }
 
-        cache.popup = new Popup({
-                            element: element,
-                            animation: contextMenu.animation,
-                            scope: contextMenu,
-                            trigger: {
-                                hide: 'click,context'
-                            }
-                        });
+        var hide = contextMenu.hide;
+        if (!hide.trigger) {
+            hide.trigger = 'click,context';
+        }
+
+        contextMenu.popup =
+        new Popup({
+            layer: element,
+            show: contextMenu.show,
+            hide: hide,
+            scope: contextMenu
+        });
     }
 
 

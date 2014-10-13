@@ -31,10 +31,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('../function/call');
-    var around = require('../function/around');
+    var call = require('cobble/function/call');
+    var around = require('cobble/function/around');
+    var lifeCycle = require('cobble/function/lifeCycle');
 
-    var Keyboard = require('./Keyboard');
+    var Keyboard = require('cobble/helper/Keyboard');
 
     /**
      * 封装一些输入功能，包括兼容最常用的 input 事件
@@ -49,10 +50,10 @@ define(function (require, exports, module) {
      * @property {boolean=} options.longPress 配置的 action 事件是否支持长按连续触发，默认为 false
      *
      * @property {Function=} options.onKeyDown 按下键位触发
-     * @argument {Event} options.onLongPressStart.event
+     * @argument {Event} options.onKeyDown.event
      *
      * @property {Function=} options.onKeyUp 松开键位触发
-     * @argument {Event} options.onLongPressStart.event
+     * @argument {Event} options.onKeyUp.event
      *
      * @property {Function=} options.onChange 内容变化触发
      *
@@ -62,7 +63,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onLongPressEnd 长按结束
      *                                              如果返回 false，可不触发 change 事件
      *                                              如果返回不是 false，值变化了才会触发 change 事件
-     * @argument {Event} options.onLongPressStart.event
+     * @argument {Event} options.onLongPressEnd.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
      *                                    组合键只支持 shift/ctrl/alt/meta + 字母/数字
@@ -86,13 +87,14 @@ define(function (require, exports, module) {
      *
      */
     function Input(options) {
-        $.extend(this, Input.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Input.prototype = {
 
         constructor: Input,
+
+        type: 'Input',
 
         /**
          * 初始化
@@ -126,6 +128,7 @@ define(function (require, exports, module) {
             }
 
             var value;
+            var isCharKey;
 
             cache.keyboard = new Keyboard({
                 element: element,
@@ -134,16 +137,18 @@ define(function (require, exports, module) {
                 onKeyDown: onKeyDown,
                 onKeyUp: me.onKeyUp,
                 onLongPressStart: function (e) {
+
                     cache.longPressing = true;
                     call(me.onLongPressStart, scope, e);
 
                     value = element.val();
+                    isCharKey = e.isCharKey;
                 },
                 onLongPressEnd: function (e) {
+
                     cache.longPressing = false;
-                    if (call(me.onLongPressEnd, scope, e) !== false
-                        && value !== element.val()
-                    ) {
+
+                    if (isCharKey && value !== element.val()) {
                         triggerChange(me);
                     }
                 },
@@ -197,6 +202,8 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
+
+            lifeCycle.dispose(me);
 
             me.element.off(namespace);
 
@@ -298,7 +305,7 @@ define(function (require, exports, module) {
             element,
             'val',
             function () {
-                if (arguments.length === 0) {
+                if (arguments.length !== 0) {
                     changeByVal = true;
                 }
             }

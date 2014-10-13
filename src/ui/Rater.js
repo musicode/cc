@@ -6,8 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var debounce = require('../function/debounce');
-    var eventOffset = require('../function/eventOffset');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var debounce = require('cobble/function/debounce');
+    var eventOffset = require('cobble/function/eventOffset');
 
     /**
      * 星级评分
@@ -16,16 +17,15 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 主元素
      * @property {number} options.value 当前星级
-     * @property {number=} options.total 星星总数
+     * @property {number=} options.count 星星总数
      * @property {number=} options.min 可选最小值，默认为 1
-     * @property {number=} options.max 可选最大值，默认和 total 相同
+     * @property {number=} options.max 可选最大值，默认和 count 相同
      * @property {boolean=} options.half 是否允许半选中
-     * @property {boolean=} options.readOnly 是否只读
+     * @property {boolean=} options.readOnly 是否只读，不可改变星星的选中状态
      *
-     * @property {Object=} options.className
-     * @property {string=} options.className.on 星星选中状态的图标 class
-     * @property {string=} options.className.off 星星未选中状态的图标 class
-     * @property {string=} options.className.half 星星半选中状态的图标 class
+     * @property {string=} options.onClass 星星选中状态的图标 class
+     * @property {string=} options.offClass 星星未选中状态的图标 class
+     * @property {string=} options.halfClass 星星半选中状态的图标 class
      *
      * @property {Object=} options.hint key 是星星对应的值，value 是提示文本，如下：
      *                                   {
@@ -37,29 +37,34 @@ define(function (require, exports, module) {
      *                                   }
      *                                   如果允许半选中，不可用此配置
      *
+     * @property {string} options.itemSelector
+     * @property {string} options.itemTemplate
+     *
      * @property {Function=} options.onChange 选中星星触发
+     * @argument {Object} options.onChange.data
+     * @property {number} options.onChange.data.value
+     *
      * @example
      * var rater = new Rater({
      *     element: $('.rater'),
      *     value: 2,                        // 当前选中 2 颗星
-     *     total: 5,                        // 总共有 5 颗星
-     *     className: {
-     *         on: 'icon on',
-     *         off: 'icon off'
-     *     },
-     *     onChange: function (value) {
-     *         console.log('select ' + value);
+     *     count: 5,                        // 总共有 5 颗星
+     *     onClass: 'icon on',
+     *     offClass: 'icon off',
+     *     onChange: function (data) {
+     *         console.log('select ' + data.value);
      *     }
      * });
      */
     function Rater(options) {
-        $.extend(this, Rater.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Rater.prototype = {
 
         constructor: Rater,
+
+        type: 'Rater',
 
         /**
          * 初始化
@@ -67,33 +72,30 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            me.cache = { };
+            var count = me.count;
 
-            var total = me.total;
-
-            var max = me.max;
-            if (!$.isNumeric(max)) {
-                me.max = total;
+            if ($.type(me.max) !== 'number') {
+                me.max = count;
             }
 
             var html = '';
-            var hint = me.hint;
-            var className = me.className;
+            var hint = me.hint || { };
 
             traverse(
                 me.value,
-                total,
-                function (index, klass) {
+                count,
+                function (index, className) {
 
                     index++;
 
-                    html += '<i class="'+ className[klass] + '" data-value="' + index + '"';
-
-                    if (hint && hint[index]) {
-                        html += ' title="' + hint[index] + '"';
-                    }
-
-                    html += '></i>';
+                    html += me.renderTemplate(
+                                me.itemTemplate,
+                                {
+                                    'class': me[className],
+                                    'value': index,
+                                    'hint': hint[index]
+                                }
+                            );
                 }
             );
 
@@ -101,13 +103,16 @@ define(function (require, exports, module) {
             element.html(html);
 
             if (!me.readOnly) {
-                element.on('mouseenter' + namespace, 'i', me, previewValue)
-                       .on('mouseleave' + namespace, 'i', me, restoreValue)
-                       .on('click' + namespace, 'i', me, changeValue);
+                var itemSelector = me.itemSelector;
+                element.on('mouseenter' + namespace, itemSelector, me, previewValue)
+                       .on('mouseleave' + namespace, itemSelector, me, restoreValue)
+                       .on('click' + namespace, itemSelector, me, changeValue);
             }
 
             if ($.isFunction(me.onChange)) {
-                me.onChange(me.value);
+                me.onChange({
+                    value: me.value
+                });
             }
         },
 
@@ -124,10 +129,8 @@ define(function (require, exports, module) {
          * 设置当前星级
          *
          * @param {number} value
-         * @param {Object=} options
-         * @property {boolean=} options.silence 是否不出发 onChange 事件，默认为 false
          */
-        setValue: function (value, options) {
+        setValue: function (value) {
 
             var me = this;
 
@@ -138,11 +141,10 @@ define(function (require, exports, module) {
             refresh(me, value);
             me.value = value;
 
-            options = options || { };
-            if (!options.silence
-                && $.isFunction(me.onChange)
-            ) {
-                me.onChange(value);
+            if ($.isFunction(me.onChange)) {
+                me.onChange({
+                    value: value
+                });
             }
         },
 
@@ -153,12 +155,13 @@ define(function (require, exports, module) {
 
             var me = this;
 
+            lifeCycle.dispose(me);
+
             if (!me.readOnly) {
                 me.element.off(namespace);
             }
 
-            me.element =
-            me.cache = null;
+            me.element = null;
         }
     };
 
@@ -171,7 +174,14 @@ define(function (require, exports, module) {
     Rater.defaultOptions = {
         min: 1,
         half: false,
-        readOnly: false
+        readOnly: false,
+        itemSelector: 'i',
+        itemTemplate: '<i class="${class}" data-value="${value}" title="${hint}"></i>',
+        renderTemplate: function (tpl, data) {
+            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
+                return data[$1] != null ? data[$1] : '';
+            });
+        }
     };
 
     /**
@@ -191,14 +201,14 @@ define(function (require, exports, module) {
     function previewValue(e) {
 
         var rater = e.data;
-        var cache = rater.cache;
 
         var isMouseEnter = e.type === 'mouseenter';
         if (isMouseEnter) {
-            cache.leave = false;
+            rater.leave = false;
         }
         // 防止 debounce 在 mouseleave 之后执行最后一次
-        else if (cache.leave) {
+        else if (rater.leave) {
+            rater.leave = null;
             return;
         }
 
@@ -222,7 +232,7 @@ define(function (require, exports, module) {
             value = max;
         }
 
-        if (value === cache.value) {
+        if (value === rater.previewValue) {
             return;
         }
 
@@ -234,7 +244,7 @@ define(function (require, exports, module) {
             );
         }
 
-        cache.value = value;
+        rater.previewValue = value;
 
         refresh(rater, value);
     }
@@ -246,12 +256,12 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function restoreValue(e) {
+
         var rater = e.data;
-        var cache = rater.cache;
-        cache.value = null;
+        rater.previewValue = null;
 
         if (rater.half) {
-            cache.leave = true;
+            rater.leave = true;
             $(e.target).off(namespace);
         }
 
@@ -266,7 +276,7 @@ define(function (require, exports, module) {
      */
     function changeValue(e) {
         var rater = e.data;
-        rater.setValue(rater.cache.value);
+        rater.setValue(rater.previewValue);
     }
 
     /**
@@ -278,14 +288,13 @@ define(function (require, exports, module) {
      */
     function refresh(rater, value) {
 
-        var items = rater.element.find('i');
-        var className = rater.className;
+        var items = rater.element.find(rater.itemSelector);
 
         traverse(
             value,
-            rater.total,
-            function (index, klass) {
-                items[index].className = className[klass];
+            rater.count,
+            function (index, className) {
+                items[index].className = rater[className];
             }
         );
     }
@@ -295,28 +304,29 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {number} value
-     * @param {number} total
+     * @param {number} count
      * @param {Function} callback
      */
-    function traverse(value, total, callback) {
+    function traverse(value, count, callback) {
 
-        for (var i = 0, result, className; i < total; i++) {
+        for (var i = 0, result, className; i < count; i++) {
 
             result = value - (i + 1);
 
             if (result >= 0) {
-                className = 'on';
+                className = 'onClass';
             }
             else if (result <= -1) {
-                className = 'off';
+                className = 'offClass';
             }
             else {
-                className = 'half';
+                className = 'halfClass';
             }
 
             callback(i, className);
         }
     }
+
 
     return Rater;
 

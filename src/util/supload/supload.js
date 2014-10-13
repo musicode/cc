@@ -69,6 +69,10 @@ define(function (require, exports, module) {
             element.parentNode.replaceChild(swf, element);
             this.element = swf;
 
+            this.onLog = function (data) {
+                console.log(data.text);
+            };
+
             Supload.instances[instanceId] = this;
         },
 
@@ -113,12 +117,35 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 上传
+         * 设置上传地址
          *
-         * @param {Object=} data 需要上传的数据
+         * @param {string} action
          */
-        upload: function (data) {
-            this.element.upload && this.element.upload(data);
+        setAction: function (action) {
+            this.element.setAction && this.element.setAction(action);
+        },
+
+        /**
+         * 设置上传数据
+         *
+         * @param {Object} data 需要一起上传的数据
+         */
+        setData: function (data) {
+            this.element.setData && this.element.setData(data);
+        },
+
+        /**
+         * 重置
+         */
+        reset: function () {
+            this.element.reset && this.element.reset();
+        },
+
+        /**
+         * 上传
+         */
+        upload: function () {
+            this.element.upload && this.element.upload();
         },
 
         /**
@@ -148,6 +175,8 @@ define(function (require, exports, module) {
         dispose: function () {
             this.element.dispose && this.element.dispose();
             Supload.instances[this.movieName] = null;
+            // 清除 IE 引用
+            window[this.movieName] = null;
         }
     };
 

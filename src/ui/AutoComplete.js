@@ -6,35 +6,38 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Input = require('../helper/Input');
-    var Popup = require('../helper/Popup');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var timer = require('cobble/function/timer');
+    var Input = require('cobble/helper/Input');
+    var Popup = require('cobble/helper/Popup');
 
     /**
      * 自动补全
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.input 输入框元素
+     * @property {jQuery} options.element 输入框元素
      * @property {jQuery} options.menu 补全菜单，菜单最好使用相对定位，这样直接 show 出来，无需涉及定位逻辑
+     *
+     * @property {string} options.itemSelector 菜单项选择器，默认是 li
      *
      * @property {number=} options.delay 长按上下键遍历的等待间隔时间
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      *
-     * @property {Object=} options.animation
-     * @property {Function=} options.animation.open 展开动画
-     * @property {Function=} options.animation.close 关闭动画
+     * @property {string=} options.hoverClass 菜单项 hover 时的 className
+     * @property {string=} options.activeClass 菜单项 active 时的 className
      *
-     * @property {Object=} options.template
-     * @property {string=} options.template.item 菜单项模板，简单列表用这个够了
-     * @property {string=} options.template.menu 菜单模板，如果不是简单的列表，需配置此项
-     * @property {Function=} options.template.render 配置模板引擎的 render 方法，方法签名是 (tpl, data): string
+     * @property {Object} options.show
+     * @property {number=} options.show.delay 显示延时
+     * @property {Function=} options.show.animation 显示动画
      *
-     * @property {Object=} options.selector
-     * @property {string} options.selector.item 可上下键遍历的菜单项元素选择器
+     * @property {Object} options.hide
+     * @property {number=} options.hide.delay 隐藏延时
+     * @property {Function=} options.hide.animation 隐藏动画
      *
-     * @property {Object=} options.className
-     * @property {string=} options.className.itemHover 菜单项 hover 时的 className
-     * @property {string=} options.className.itemActive 菜单项 active 时的 className
+     * @property {string=} options.itemTemplate 菜单项模板，简单列表用这个够了
+     * @property {string=} options.menuTemplate 菜单模板，如果不是简单的列表，需配置此项
+     * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (tpl, data): string
      *
      * @property {Function=} options.parse 解析菜单项元素数据，返回值必须包含 text 属性
      * @argument {jQuery} options.parse.item 菜单项元素
@@ -47,13 +50,14 @@ define(function (require, exports, module) {
      * @property {Function} options.onEnter 用户按下回车触发
      */
     function AutoComplete(options) {
-        $.extend(this, AutoComplete.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     AutoComplete.prototype = {
 
         constructor: AutoComplete,
+
+        type: 'AutoComplete',
 
         /**
          * 初始化
@@ -75,12 +79,12 @@ define(function (require, exports, module) {
             cache.input = createInput(me);
             cache.popup = createPopup(me);
 
-            me.menu.on(
-                'click' + namespace,
-                me.selector.item,
-                me,
-                clickItem
-            );
+            var itemSelector = me.itemSelector;
+
+            me.menu
+                .on('mouseenter' + namespace, itemSelector, me, enterItem)
+                .on('mouseleave' + namespace, itemSelector, me, leaveItem)
+                .on('click' + namespace, me.itemSelector, me, clickItem);
         },
 
         /**
@@ -99,13 +103,26 @@ define(function (require, exports, module) {
                     cache.items.off(namespace);
                 }
 
+                var render = me.renderTemplate;
+                var html;
+                if (me.itemTemplate) {
+                    html = $.map(
+                               data,
+                               function (item) {
+                                   return render(me.itemTemplate, item);
+                               }
+                           ).join('');
+                }
+                else {
+                    html = render(me.menuTemplate, data);
+                }
+
+
                 var menu = me.menu;
-                menu.html(
-                    renderMenu(me.template, data)
-                );
+                menu.html(html);
 
                 var items = cache.items
-                          = menu.find(me.selector.item);
+                          = menu.find(me.itemSelector);
 
                 var data = cache.data
                            = items.map(
@@ -114,11 +131,7 @@ define(function (require, exports, module) {
                                  }
                              );
 
-                // 这两个事件不支持事件代理，只能这么搞了
-                items.on('mouseenter' + namespace, me, enterItem);
-                items.on('mouseleave' + namespace, me, leaveItem);
-
-                var input = me.input;
+                var input = me.element;
                 items.splice(0, 0, input[0]);
                 data.splice(0, 0, input.val());
 
@@ -136,14 +149,14 @@ define(function (require, exports, module) {
          * 显示下拉菜单
          */
         open: function () {
-            this.cache.popup.show();
+            this.cache.popup.open();
         },
 
         /**
          * 隐藏下拉菜单
          */
         close: function () {
-            this.cache.popup.hide();
+            this.cache.popup.close();
         },
 
         /**
@@ -152,10 +165,11 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
 
+            lifeCycle.dispose(me);
+
+            var cache = me.cache;
             if (cache.items) {
-                cache.items.off(namespace);
                 cache.items = null;
             }
 
@@ -164,7 +178,7 @@ define(function (require, exports, module) {
             cache.input.dispose();
             cache.popup.dispose();
 
-            me.input =
+            me.element =
             me.menu =
             me.cache = null;
         }
@@ -179,10 +193,9 @@ define(function (require, exports, module) {
     AutoComplete.defaultOptions = {
         delay: 60,
         includeInput: true,
-        animation: { },
-        template: { },
-        className: { },
-        selector: { },
+        itemSelector: 'li',
+        show: { },
+        hide: { },
         parse: function (element) {
             return {
                 text: element.html()
@@ -207,47 +220,38 @@ define(function (require, exports, module) {
      */
     function createInput(autoComplete) {
 
-        var action;
-        var timer;
+        var upTimer = timer(
+            function () {
+                previousItem(autoComplete);
+            },
+            autoComplete.delay,
+            400
+        );
+
+        var downTimer = timer(
+            function () {
+                nextItem(autoComplete);
+            },
+            autoComplete.delay,
+            400
+        );
 
         return new Input({
 
-            element: autoComplete.input,
+            element: autoComplete.element,
             smart: true,
             longPress: false,
             action: {
-                up: function () {
-                    action = previousItem;
-                    action(autoComplete);
-                },
-                down: function () {
-                    action = nextItem;
-                    action(autoComplete);
-                },
+                up: upTimer.start,
+                down: downTimer.start,
                 enter: function () {
                     trigger(autoComplete, 'onEnter');
                     autoComplete.close();
                 }
             },
-            onLongPressStart: function () {
-                if (action) {
-                    timer = setInterval(
-                                function () {
-                                    action(autoComplete);
-                                },
-                                autoComplete.delay
-                            );
-                }
-            },
-            onLongPressEnd: function () {
-                if (action) {
-                    clearInterval(timer);
-                    // 不要触发 change 事件
-                    return false;
-                }
-            },
             onKeyUp: function () {
-                action = null;
+                upTimer.stop();
+                downTimer.stop();
             },
             onChange: function () {
                 suggest(autoComplete);
@@ -264,21 +268,24 @@ define(function (require, exports, module) {
      */
     function createPopup(autoComplete) {
 
-        var input = autoComplete.input;
-        var animation = autoComplete.animation;
+        var input = autoComplete.element;
+
+        var show = autoComplete.show;
+        var hide = autoComplete.hide;
+
+        if (!show.trigger) {
+            show.trigger = 'focus';
+        }
+        if (!hide.trigger) {
+            hide.trigger = 'click';
+        }
 
         return new Popup({
-            source: input,
-            element: autoComplete.menu,
+            element: input,
+            layer: autoComplete.menu,
             scope: autoComplete,
-            trigger: {
-                show: 'focus',
-                hide: 'click'
-            },
-            animation: {
-                show: animation.open,
-                hide: animation.close
-            },
+            show: show,
+            hide: hide,
             onBeforeShow: function (event) {
                 if (event) {
                     suggest(autoComplete);
@@ -307,7 +314,7 @@ define(function (require, exports, module) {
     function suggest(autoComplete) {
 
         var cache = autoComplete.cache;
-        var query = $.trim(autoComplete.input.val());
+        var query = $.trim(autoComplete.element.val());
         var data = cache.result[query];
 
         if (data) {
@@ -391,7 +398,7 @@ define(function (require, exports, module) {
         var className;
 
         if (index > 0) {
-            className = autoComplete.className.itemActive;
+            className = autoComplete.activeClass;
         }
 
         switchClass(
@@ -401,7 +408,7 @@ define(function (require, exports, module) {
         );
 
         autoComplete
-            .input
+            .element
             .val(
                 autoComplete.cache.data[index].text
             );
@@ -420,7 +427,7 @@ define(function (require, exports, module) {
         switchClass(
             autoComplete,
             autoComplete.cache.items.index(e.currentTarget),
-            autoComplete.className.itemHover
+            autoComplete.hoverClass
         );
     }
 
@@ -433,7 +440,7 @@ define(function (require, exports, module) {
     function leaveItem(e) {
         var autoComplete = e.data;
         var cache = autoComplete.cache;
-        if (cache.className === autoComplete.className.itemHover) {
+        if (cache.className === autoComplete.hoverClass) {
             switchClass(
                 autoComplete,
                 cache.start
@@ -490,32 +497,6 @@ define(function (require, exports, module) {
             }
 
             autoComplete[name](data);
-        }
-    }
-
-    /**
-     * 渲染菜单
-     *
-     * @inner
-     * @param {Object} template
-     * @property {string} template.item
-     * @property {string} template.menu
-     * @property {Function} template.render
-     * @param {Array} data
-     * @return {string}
-     */
-    function renderMenu(template, data) {
-        var render = template.render;
-        if (template.item) {
-            return $.map(
-                       data,
-                       function (item) {
-                           return render(template.item, item);
-                       }
-                   ).join('');
-        }
-        else {
-            return render(template.menu, data);
         }
     }
 

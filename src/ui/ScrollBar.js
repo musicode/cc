@@ -18,8 +18,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Slider = require('./Slider');
-    var Wheel = require('../helper/Wheel');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var Slider = require('cobble/ui/Slider');
+    var Wheel = require('cobble/helper/Wheel');
 
     /**
      * 自定义滚动条
@@ -40,30 +41,28 @@ define(function (require, exports, module) {
      * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation  为 horizontal 时生效
      * @property {number=} options.minHeight 滚动条的最小高度，当 orientation  为 vertical 时生效
      *
-     * @property {Object=} options.selector 选择器
-     * @property {string=} options.selector.thumb 从 template 选中滑块的选择器
+     * @property {string=} options.thumbSelector 从 template 选中滑块的选择器
      *
-     * @property {Object=} options.className 样式
-     * @property {string=} options.className.dragging 拖拽滑块时的 class
-     * @property {string=} options.className.hover 鼠标悬浮于滚动条时的 class
+     * @property {string=} options.draggingClass 拖拽滑块时的 class
+     * @property {string=} options.hoverClass 鼠标悬浮于滚动条时的 class
      *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.show 显示滚动条的方式，可自定义显示动画
-     * @property {Function=} options.animation.hide 隐藏滚动条的方式，可自定义隐藏动画
-     * @property {Function=} options.animation.dragging 通过拖拽改变位置的动画
-     * @property {Function=} options.animation.to 通过点击直接设置位置的动画
+     * @property {Function=} options.showAnimation 显示滚动条的方式，可自定义显示动画
+     * @property {Function=} options.hideAnimation 隐藏滚动条的方式，可自定义隐藏动画
+     * @property {Function=} options.dragAnimation 通过拖拽改变位置的动画
+     * @property {Function=} options.toAnimation 通过点击直接设置位置的动画
      *
      * @property {Function=} options.onScroll
      * @argument {number} options.onScroll.value
      */
     function ScrollBar(options) {
-        $.extend(this, ScrollBar.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     ScrollBar.prototype = {
 
         constructor: ScrollBar,
+
+        type: 'ScrollBar',
 
         /**
          * 初始化
@@ -72,17 +71,35 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var element = me.element;
-            var panel = me.panel;
+            var slider = new Slider({
 
-            var slider = createSlider(me);
+                element: me.element,
+                orientation: me.orientation,
+                step: me.step,
+                value: me.value,
+                scrollable: true,
+                draggingClass: me.draggingClass,
+                hoverClass: me.hoverClass,
+                thumbSelector: me.thumbSelector,
+                showAnimation: me.showAnimation,
+                hideAnimation: me.hideAnimation,
+                dragAnimation: me.dragAnimation,
+                toAnimation: me.toAnimation,
+                template: me.template,
+
+                onChange: function () {
+                    if (me.cache) {
+                        me.to(this.value, { panel: true });
+                    }
+                }
+            });
 
             var cache = me.cache
                       = $.extend(
                             {
                                 slider: slider,
                                 wheel: new Wheel({
-                                    element: panel,
+                                    element: me.panel,
                                     onScroll: function (data) {
                                         return !slider.setValue(
                                                 me.value + data.delta * cache.step
@@ -208,8 +225,10 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
 
+            lifeCycle.dispose(me);
+
+            var cache = me.cache;
             cache.slider.dispose();
             cache.wheel.dispose();
 
@@ -231,21 +250,8 @@ define(function (require, exports, module) {
         step4Panel: false,
         orientation : 'vertical',
         template: '<i class="scroll-thumb"></i>',
-
-        selector: {
-            thumb: '.scroll-thumb'
-        },
-        animation: { },
-        className: { }
+        thumbSelector: '.scroll-thumb'
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_scrollbar';
 
     /**
      * 配置方向属性
@@ -275,35 +281,6 @@ define(function (require, exports, module) {
             }
         }
     };
-
-    /**
-     * 创建 Slider 对象
-     *
-     * @inner
-     * @param {ScrollBar} scrollBar
-     * @return {Slider}
-     */
-    function createSlider(scrollBar) {
-
-        return new Slider({
-
-            element: scrollBar.element,
-            orientation: scrollBar.orientation,
-            step: scrollBar.step,
-            scrollable: true,
-            value: scrollBar.value,
-            className: scrollBar.className,
-            selector: scrollBar.selector,
-            animation: scrollBar.animation,
-            template: scrollBar.template,
-
-            onChange: function () {
-                if (scrollBar.cache) {
-                    scrollBar.to(this.value, { panel: true });
-                }
-            }
-        });
-    }
 
 
     return ScrollBar;

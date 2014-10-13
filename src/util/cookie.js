@@ -2,7 +2,7 @@
  * @file cookie
  * @author zhujl
  */
-define (function (require, exports, module) {
+define(function (require, exports, module) {
 
     /**
      * 操作 cookie
@@ -147,7 +147,7 @@ define (function (require, exports, module) {
                 function (key, value) {
                     setCookie(key, value, options);
                 }
-            )
+            );
         }
         else {
             setCookie(key, value, options);

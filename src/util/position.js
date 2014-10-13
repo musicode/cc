@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var pin = require('../function/pin');
+    var pin = require('cobble/function/pin');
 
     exports.pin = pin;
 

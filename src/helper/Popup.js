@@ -49,7 +49,7 @@ define(function (require, exports, module) {
      *        handler: function (e) { }
      *    }
      *
-     *    构造函数的 trigger.show 可选的值取决于 Popup.trigger.show 的键值
+     *    构造函数的 show.trigger 可选的值取决于 Popup.trigger.show 的键值
      *
      *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
      *
@@ -59,10 +59,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('../function/call');
-    var split = require('../function/split');
-    var contains = require('../function/contains');
-    var instance = require('../util/instance');
+    var call = require('cobble/function/call');
+    var split = require('cobble/function/split');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var contains = require('cobble/function/contains');
+    var instance = require('cobble/util/instance');
 
     /**
      * 简单的弹出式交互
@@ -71,20 +72,18 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 弹出的元素
-     * @property {jQuery=} options.source 触发弹出的元素，如果是调用方法触发显示，可不传
+     * @property {jQuery} options.layer 弹出的元素
+     * @property {jQuery=} options.element 触发弹出的元素，如果是调用方法触发显示，可不传
      *
-     * @property {Object} options.trigger 触发方式
-     * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus context，可组合使用，以逗号分隔
-     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 click out blur context，可组合使用，以逗号分隔
+     * @property {Object} options.show
+     * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus context，可组合使用，以逗号分隔
+     * @property {number=} options.show.delay 显示延时
+     * @property {Function=} options.show.animation 显示动画，如果未设置，默认是 layer.show()
      *
-     * @property {Object=} options.delay 延时
-     * @property {number=} options.delay.show 显示延时
-     * @property {number=} options.delay.hide 隐藏延时
-     *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.show 显示动画，如果未设置，默认是 element.show()
-     * @property {Function=} options.animation.hide 隐藏动画，如果未设置，默认是 element.hide()
+     * @property {Object} options.hide
+     * @property {string=} options.hide.trigger 隐藏的触发方式，可选值有 click out blur context，可组合使用，以逗号分隔
+     * @property {number=} options.hide.delay 隐藏延时
+     * @property {Function=} options.hide.animation 隐藏动画，如果未设置，默认是 layer.hide()
      *
      * @property {Function=} options.onBeforeShow 返回 false 可阻止显示
      * @property {Function=} options.onAfterShow
@@ -94,13 +93,14 @@ define(function (require, exports, module) {
      * @property {*} options.scope 指定以上这些函数的 this
      */
     function Popup(options) {
-        $.extend(this, Popup.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Popup.prototype = {
 
         constructor: Popup,
+
+        type: 'Popup',
 
         /**
          * 初始化
@@ -113,21 +113,22 @@ define(function (require, exports, module) {
                 me.scope = me;
             }
 
-            var hidden = me.hidden
-                       = me.element.css('display') === 'none';
-
-            var trigger = me.trigger;
+            var show = me.show;
+            var hide = me.hide;
 
             me.cache = {
 
-                showTrigger: trigger.show
-                           ? split(trigger.show, ',')
+                showTrigger: show.trigger
+                           ? split(show.trigger, ',')
                            : [ ],
 
-                hideTrigger: trigger.hide
-                           ? split(trigger.hide, ',')
+                hideTrigger: hide.trigger
+                           ? split(hide.trigger, ',')
                            : [ ]
             };
+
+            var hidden = me.hidden
+                       = me.layer.css('display') === 'none';
 
             var action = hidden ? showEvent : hideEvent;
             action(me, 'on');
@@ -136,7 +137,7 @@ define(function (require, exports, module) {
         /**
          * 显示
          */
-        show: function () {
+        open: function () {
 
             var me = this;
             var event = arguments[0];
@@ -145,13 +146,12 @@ define(function (require, exports, module) {
                 return;
             }
 
-            var show = me.animation.show;
-
-            if ($.isFunction(show)) {
-                show.call(me.scope);
+            var animation = me.show.animation;
+            if ($.isFunction(animation)) {
+                animation.call(me.scope);
             }
             else {
-                me.element.show();
+                me.layer.show();
             }
 
             me.hidden = false;
@@ -162,7 +162,7 @@ define(function (require, exports, module) {
         /**
          * 隐藏
          */
-        hide: function () {
+        close: function () {
 
             var me = this;
 
@@ -176,13 +176,12 @@ define(function (require, exports, module) {
                 return;
             }
 
-            var hide = me.animation.hide;
-
-            if ($.isFunction(hide)) {
-                hide.call(me.scope);
+            var animation = me.hide.animation;
+            if ($.isFunction(animation)) {
+                animation.call(me.scope);
             }
             else {
-                me.element.hide();
+                me.layer.hide();
             }
 
             me.hidden = true;
@@ -197,12 +196,14 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.hide();
+            lifeCycle.dispose(me);
+
+            me.close();
 
             showEvent(me, 'off');
 
-            me.source =
             me.element =
+            me.layer =
             me.cache = null;
         }
     };
@@ -214,12 +215,8 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Popup.defaultOptions = {
-        trigger: { },
-        animation: { },
-        delay: {
-            show: 0,
-            hide: 0
-        }
+        show: { },
+        hide: { }
     };
 
 
@@ -232,12 +229,12 @@ define(function (require, exports, module) {
             if (!$.isFunction(before) || before(popup, e)) {
                 setDelay(
                     popup,
-                    popup.delay.show,
+                    popup.show.delay,
                     showDelay[trigger] || { },
                     function () {
                         cache.timeStamp = e.timeStamp || +new Date();
                         cache.showBy = trigger;
-                        popup.show(e);
+                        popup.open(e);
                     }
                 );
             }
@@ -260,12 +257,12 @@ define(function (require, exports, module) {
             if (!$.isFunction(before) || before(popup, e)) {
                 setDelay(
                     popup,
-                    popup.delay.hide,
+                    popup.hide.delay,
                     hideDelay[trigger] || { },
                     function () {
                         cache.timeStamp = timeStamp;
                         cache.hideBy = trigger;
-                        popup.hide(e);
+                        popup.close(e);
                     }
                 );
             }
@@ -275,39 +272,39 @@ define(function (require, exports, module) {
     var showTrigger = {
         focus: {
             on: function (popup) {
-                popup.source.on('focus', popup, showTrigger.focus.handler);
+                popup.element.on('focus', popup, showTrigger.focus.handler);
             },
             off: function (popup) {
-                popup.source.off('focus', showTrigger.focus.handler);
+                popup.element.off('focus', showTrigger.focus.handler);
             },
             handler: showFactory('focus')
         },
 
         click: {
             on: function (popup) {
-                popup.source.on('click', popup, showTrigger.click.handler);
+                popup.element.on('click', popup, showTrigger.click.handler);
             },
             off: function (popup) {
-                popup.source.off('click', showTrigger.click.handler);
+                popup.element.off('click', showTrigger.click.handler);
             },
             handler: showFactory('click')
         },
 
         over: {
             on: function (popup) {
-                popup.source.on('mouseenter', popup, showTrigger.over.handler);
+                popup.element.on('mouseenter', popup, showTrigger.over.handler);
             },
             off: function (popup) {
-                popup.source.off('mouseenter', showTrigger.over.handler);
+                popup.element.off('mouseenter', showTrigger.over.handler);
             },
             handler: showFactory('over')
         },
         context: {
             on: function (popup) {
-                popup.source.on('contextmenu', popup, showTrigger.context.handler);
+                popup.element.on('contextmenu', popup, showTrigger.context.handler);
             },
             off: function (popup) {
-                popup.source.off('contextmenu', showTrigger.context.handler);
+                popup.element.off('contextmenu', showTrigger.context.handler);
             },
             handler: showFactory('context')
         }
@@ -316,10 +313,10 @@ define(function (require, exports, module) {
     var hideTrigger = {
         blur: {
             on: function (popup) {
-                popup.source.on('blur', popup, hideTrigger.blur.handler);
+                popup.element.on('blur', popup, hideTrigger.blur.handler);
             },
             off: function (popup) {
-                popup.source.off('blur', hideTrigger.blur.handler);
+                popup.element.off('blur', hideTrigger.blur.handler);
             },
             handler: hideFactory('blur')
         },
@@ -341,7 +338,7 @@ define(function (require, exports, module) {
                 return hideFactory(
                     'click',
                     function (popup, e) {
-                        return !contains(popup.element, e.target);
+                        return !contains(popup.layer, e.target);
                     }
                 );
             }
@@ -350,20 +347,23 @@ define(function (require, exports, module) {
         out: {
             on: function (popup) {
                 var handler = hideTrigger.out.handler;
-                popup.source.on('mouseleave', popup, handler);
                 popup.element.on('mouseleave', popup, handler);
+                popup.layer.on('mouseleave', popup, handler);
             },
             off: function (popup) {
                 var handler = hideTrigger.out.handler;
-                popup.source.off('mouseleave', handler);
                 popup.element.off('mouseleave', handler);
+                popup.layer.off('mouseleave', handler);
             },
             handler: hideFactory(
                 'out',
                 function (popup, e) {
                     var target = e.relatedTarget;
-                    return !contains(popup.source, target)
-                        && !contains(popup.element, target);
+                    // 用 jasmine 测试时，target 可能为 null
+                    return target == null
+                         ? true
+                         : !contains(popup.element, target)
+                         && !contains(popup.layer, target);
                 }
             )
         },
@@ -384,7 +384,7 @@ define(function (require, exports, module) {
                 return hideFactory(
                     'context',
                     function (popup, e) {
-                        return !contains(popup.element, e.target);
+                        return !contains(popup.layer, e.target);
                     }
                 );
             }
@@ -394,10 +394,10 @@ define(function (require, exports, module) {
     var showDelay = {
         over: {
             on: function (popup, fn) {
-                popup.source.on('mouseleave', fn);
+                popup.element.on('mouseleave', fn);
             },
             off: function (popup, fn) {
-                popup.source.off('mouseleave', fn);
+                popup.element.off('mouseleave', fn);
             }
         }
     };
@@ -405,12 +405,12 @@ define(function (require, exports, module) {
     var hideDelay = {
         out: {
             on: function (popup, fn) {
-                popup.source.on('mouseenter', fn);
                 popup.element.on('mouseenter', fn);
+                popup.layer.on('mouseenter', fn);
             },
             off: function (popup, fn) {
-                popup.source.off('mouseenter', fn);
                 popup.element.off('mouseenter', fn);
+                popup.layer.off('mouseenter', fn);
             }
         }
     };
@@ -464,25 +464,25 @@ define(function (require, exports, module) {
     function onBeforeShow(event) {
 
         var me = this;
-        var element = me.element;
+        var layer = me.layer;
 
         // 触发元素（mousenter 和 mouseleave 都有 target 元素，试了几次还比较可靠）
         var target = me.cache.target
                    = event && event.target;
 
-        // 可能出现多个 source 共用一个弹出层的情况
-        var currentSource = element.data(currentSourceKey);
+        // 可能出现多个 element 共用一个弹出层的情况
+        var currentSource = layer.data(currentSourceKey);
 
         // 如果弹出元素当前处于显示状态
         if (currentSource) {
 
             // 无视重复触发显示
-            if (currentSource.element === target) {
+            if (currentSource.layer === target) {
                 return false;
             }
 
             // 如果是新的 source 则需隐藏旧的
-            currentSource.hide();
+            currentSource.close();
         }
 
         return call(me.onBeforeShow, me.scope, event);
@@ -503,11 +503,11 @@ define(function (require, exports, module) {
 
         var target = me.cache.target;
         if (target) {
-            me.element.data(
+            me.layer.data(
                 currentSourceKey,
                 {
                     element: target,
-                    hide: $.proxy(me.hide, me)
+                    close: $.proxy(me.close, me)
                 }
             );
         }
@@ -536,7 +536,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.element.removeData(currentSourceKey);
+        me.layer.removeData(currentSourceKey);
         hideEvent(me, 'off');
         showEvent(me, 'on');
 

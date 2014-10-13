@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var lifeCycle = require('cobble/function/lifeCycle');
+
     /**
      * 约定翻页开始页码为 1，好处如下：
      *
@@ -22,39 +24,36 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element
-     * @property {number} options.page 当前页码
-     * @property {number} options.total 总页数
-     *
+     * @property {number} options.page 当前页码，从 1 开始
+     * @property {number} options.count 总页数
      * @property {number} options.showCount 中间显示的数量
-     * @property {number=} options.startCount 省略号前面的数量，默认是 0
-     * @property {number=} options.endCount 省略号后面的数量，默认是 0
-     *
-     * @property {Object} options.attribute
-     * @property {string=} options.attribute.page 存放页码的属性
-     *                                            点击可翻页的元素都要加上 page 属性，包括 上一页/下一页
-     *
-     * @property {Object=} options.template 各种模板
-     * @property {string=} options.template.page 页码模板
-     * @property {string=} options.template.prev 上一页模板
-     * @property {string=} options.template.next 下一页模板
-     * @property {string=} options.template.ellipsis 省略号模板
-     * @property {string=} options.template.active 页码选中状态的模板
-     * @property {Function=} options.template.render 渲染方法
+     * @property {number=} options.startCount 省略号前面的数量，默认是 1
+     * @property {number=} options.endCount 省略号后面的数量，默认是 2
      *
      * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
+     * @property {string=} options.pageAttr 存放页码的属性
+     *                                      点击可翻页的元素都要加上 page 属性，包括 上一页/下一页
+     *
+     * @property {string=} options.pageTemplate 页码模板 pageAni
+     * @property {string=} options.prevTemplate 上一页模板
+     * @property {string=} options.nextTemplate 下一页模板
+     * @property {string=} options.ellipsisTemplate 省略号模板
+     * @property {string=} options.activeTemplate 页码选中状态的模板
+     * @property {Function=} options.renderTemplate 渲染方法
      *
      * @property {Function} options.onChange
      * @argument {Object} options.onChange.data
      * @property {number} options.onChange.page
      */
     function Pager(options) {
-        $.extend(this, Pager.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Pager.prototype = {
 
         constructor: Pager,
+
+        type: 'Pager',
 
         /**
          * 初始化
@@ -65,10 +64,11 @@ define(function (require, exports, module) {
 
             me.render();
 
-            me.element
-              .on(
+            me
+            .element
+            .on(
                 'click' + namespace,
-                '[' + me.attribute.page + ']',
+                '[' + me.pageAttr + ']',
                 me,
                 clickPage
             );
@@ -79,7 +79,7 @@ define(function (require, exports, module) {
          *
          * @param {Object=} data 翻页数据
          * @property {number} data.page 当前页
-         * @property {number} data.total 总页数
+         * @property {number} data.count 总页数
          */
         render: function (data) {
 
@@ -89,20 +89,19 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
-            var total = me.total;
+            var count = me.count;
             var element = me.element;
 
-            if (total < 2 && me.autoHide) {
+            if (count < 2 && me.autoHide) {
                 element.hide().html('');
             }
             else {
 
-                var page = me.page;
+                var page = Math.min(me.page, count);
 
                 var showCount = me.showCount;
                 var startCount = me.startCount;
                 var endCount = me.endCount;
-                var template = me.template;
 
                 var datasource = [ ];
 
@@ -110,33 +109,28 @@ define(function (require, exports, module) {
                 if (page > 1) {
                     datasource.push({
                         page: [ page - 1, page - 1 ],
-                        tpl: template.prev
+                        tpl: me.prevTemplate
                     });
                 }
 
                 var start = Math.max(1, page - Math.ceil(showCount / 2));
-                var end = Math.min(total, start + showCount - 1);
-
                 if (startCount > 0 && start < startCount + 2) {
-                    start = 1;
                     startCount = 0;
                 }
-                if (endCount > 0 && total - end < endCount + 2) {
-                    end = total;
+
+                var end = Math.min(count, start + showCount - 1);
+                if (endCount > 0 && count - end < endCount + 2) {
                     endCount = 0;
                 }
-
-                // 纠正一下，保证最多显示 showCount 个
-                end = start + showCount - 1;
 
                 if (startCount > 0) {
                     datasource.push(
                         {
                             page: [ 1, startCount ],
-                            tpl: template.page
+                            tpl: me.pageTemplate
                         },
                         {
-                            tpl: template.ellipsis
+                            tpl: me.ellipsisTemplate
                         }
                     );
                 }
@@ -145,20 +139,20 @@ define(function (require, exports, module) {
                 if (start < page) {
                     datasource.push({
                         page: [ start, page - 1 ],
-                        tpl: template.page
+                        tpl: me.pageTemplate
                     });
                 }
 
                 // 选中页码
                 datasource.push({
                     page: [ page, page ],
-                    tpl: template.active
+                    tpl: me.activeTemplate
                 });
 
                 if (end > page) {
                     datasource.push({
                         page: [ page + 1, end ],
-                        tpl: template.page
+                        tpl: me.pageTemplate
                     });
                 }
 
@@ -166,28 +160,34 @@ define(function (require, exports, module) {
                 if (endCount > 0) {
                     datasource.push(
                         {
-                            tpl: template.ellipsis
+                            tpl: me.ellipsisTemplate
                         },
                         {
-                            page: [ total - endCount + 1, total ],
-                            tpl: template.page
+                            page: [ count - endCount + 1, count ],
+                            tpl: me.pageTemplate
                         }
                     );
                 }
 
                 // 下一页
-                if (page < total) {
+                if (page < count) {
                     datasource.push({
                         page: [ page + 1, page + 1 ],
-                        tpl: template.next
+                        tpl: me.nextTemplate
                     });
                 }
 
                 var html = $.map(
                     datasource,
                     function (item, index) {
+
+                        var tpl = item.tpl;
+                        if (!tpl) {
+                            return;
+                        }
+
                         if (item.page == null) {
-                            return item.tpl;
+                            return tpl;
                         }
                         else {
 
@@ -195,7 +195,7 @@ define(function (require, exports, module) {
                             var page = item.page;
 
                             for (var i = page[0], end = page[1]; i <= end; i++) {
-                                html += template.render(item.tpl, { page: i });
+                                html += me.renderTemplate(tpl, { page: i });
                             }
 
                             return html;
@@ -207,6 +207,9 @@ define(function (require, exports, module) {
             }
         },
 
+        /**
+         * 上一页
+         */
         prev: function () {
 
             var me = this;
@@ -218,12 +221,15 @@ define(function (require, exports, module) {
 
         },
 
+        /**
+         * 下一页
+         */
         next: function () {
 
             var me = this;
             var page = me.page;
 
-            if (page < me.total) {
+            if (page < me.count) {
                 me.to(page + 1);
             }
         },
@@ -236,9 +242,11 @@ define(function (require, exports, module) {
         to: function (page) {
 
             var me = this;
+            var isChange = page !== me.page;
+
             me.page = page;
 
-            if ($.isFunction(me.onChange)) {
+            if (isChange && $.isFunction(me.onChange)) {
                 me.onChange({
                     page: page
                 });
@@ -249,7 +257,11 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
+
+            lifeCycle.dispose(me);
+
             me.element.off(namespace);
             me.element = null;
         }
@@ -263,11 +275,25 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Pager.defaultOptions = {
+
         autoHide: true,
-        startCount: 0,
-        endCount: 0,
-        attribute: {
-            page: 'data-page'
+
+        showCount: 6,
+        startCount: 1,
+        endCount: 2,
+
+        pageAttr: 'data-page',
+
+        pageTemplate: '<button class="btn" data-page="${page}">${page}</button>',
+        prevTemplate: '<button class="btn" data-page="${page}">上一页</button>',
+        nextTemplate: '<button class="btn" data-page="${page}">下一页</button>',
+        ellipsisTemplate: '<button class="btn ellipsis">...</button>',
+        activeTemplate: '<button class="btn btn-primary" data-page="${page}">${page}</button>',
+
+        renderTemplate: function (tpl, data) {
+            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
+                return data[$1] != null ? data[$1] : '';
+            });
         }
     };
 
@@ -286,10 +312,12 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function clickPage(e) {
+
         var pager = e.data;
-        var page = Number($(e.currentTarget).attr(pager.attribute.page));
-        if (!isNaN(page)) {
-            pager.to(page);
+        var value = $(e.currentTarget).attr(pager.pageAttr);
+
+        if ($.isNumeric(value)) {
+            pager.to(Number(value));
         }
     }
 

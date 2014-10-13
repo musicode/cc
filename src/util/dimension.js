@@ -6,12 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var pageScrollTop = require('../function/pageScrollTop');
-    var pageScrollLeft = require('../function/pageScrollTop');
-    var pageWidth = require('../function/pageWidth');
-    var pageHeight = require('../function/pageHeight');
-    var viewportWidth = require('../function/viewportWidth');
-    var viewportHeight = require('../function/viewportHeight');
+    var pageScrollTop = require('cobble/function/pageScrollTop');
+    var pageScrollLeft = require('cobble/function/pageScrollLeft');
+    var pageWidth = require('cobble/function/pageWidth');
+    var pageHeight = require('cobble/function/pageHeight');
+    var viewportWidth = require('cobble/function/viewportWidth');
+    var viewportHeight = require('cobble/function/viewportHeight');
 
     /**
      * 获取网页垂直滚动距离

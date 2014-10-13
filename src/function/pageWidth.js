@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var page = require('./page');
+    var page = require('cobble/function/page');
 
     /**
      * 获得网页可滚动宽度
@@ -14,7 +14,8 @@ define(function (require, exports, module) {
      * @return {number}
      */
     return function () {
-        return page()[0].scrollWidth;
+        var element = page()[0];
+        return Math.max(element.scrollWidth, element.clientWidth);
     };
 
 });

@@ -20,8 +20,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var offsetParent = require('../function/offsetParent');
-    var instance = require('../util/instance');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var offsetParent = require('cobble/function/offsetParent');
+
+    var instance = require('cobble/util/instance');
 
     /**
      * 处理鼠标滚轮事件
@@ -34,13 +36,14 @@ define(function (require, exports, module) {
      * @property {number} options.onScroll.data.delta
      */
     function Wheel(options) {
-        $.extend(this, Wheel.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Wheel.prototype = {
 
         constructor: Wheel,
+
+        type: 'Wheel',
 
         /**
          * 初始化
@@ -58,7 +61,7 @@ define(function (require, exports, module) {
             element.on(
                 support + namespace,
                 me,
-                support === 'wheel'? onWheel : onMouseWheel
+                support === 'wheel' ? onWheel : onMouseWheel
             );
         },
 
@@ -68,6 +71,8 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
+
+            lifeCycle.dispose(me);
 
             me.element.off(namespace);
 
@@ -182,7 +187,8 @@ define(function (require, exports, module) {
                     if (event.wheelDeltaX) {
                         deltaX = - (1 / 40) * event.wheelDeltaX;
                     }
-                } else {
+                }
+                else {
                     deltaY = event.detail;
                 }
 

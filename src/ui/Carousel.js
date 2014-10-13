@@ -6,6 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var Switchable = require('cobble/helper/Switchable');
+
     /**
      * 轮播
      *
@@ -16,24 +19,21 @@ define(function (require, exports, module) {
      * @property {number=} options.index 从第几个开始播放，默认是 0
      * @property {number=} options.step 每次滚动几个，默认是 1
      * @property {number=} options.showCount 显示个数，默认是 1
-     * @property {number=} options.delay 每次切换的等待时间，默认 5000
-     * @property {boolean=} options.auto 是否自动播放，默认 true
-     * @property {boolean=} options.loop 是否循环，即在最后一个调用 next() 是否回到第一个
-     * @property {boolean=} options.pauseOnHover 是否鼠标停留在 slide 时暂停播放，默认为 true
      *
-     * @property {string=} options.trigger 触发改变的方式，可选值有 over click， 默认是 over
+     * @property {boolean=} options.autoPlay 是否自动播放，默认 true
+     * @property {number=} options.delay 自动播放时，切换的等待时间，默认 5000
+     * @property {boolean=} options.loop 是否循环播放，默认为 true
+     * @property {boolean=} options.pauseOnHover 是否鼠标 hover 时暂停播放，默认为 true
      *
-     * @property {Object} options.selector 选择器
-     * @property {string=} options.selector.prev
-     * @property {string=} options.selector.next
-     * @property {string=} options.selector.indicator
-     * @property {string} options.selector.slide
+     * @property {string=} options.trigger 当有图标按钮时，触发改变的方式，可选值有 over click， 默认是 over
+     * @property {string=} options.activeClass 转场时会为 icon 切换这个 class
      *
-     * @property {Object=} options.className 样式
-     * @property {string=} options.className.indicatorActive 转场时会为 indicator 切换这个 class
-     * @property {string=} options.className.slideActive 转场时会为 slide 切换这个 class
+     * @property {string=} options.prevSelector 上一页的选择器
+     * @property {string=} options.nextSelector 下一页的选择器
+     * @property {string=} options.iconSelector 图标按钮选择器（一般会写序号的小按钮）
+     * @property {string} options.itemSelector 幻灯片选择器
      *
-     * @property {Function=} options.animation 动画
+     * @property {Function} options.animation 切换动画，必传，否则不会动
      * @argument {Object} options.animation.data
      * @property {number} options.animation.data.toIndex
      * @property {number} options.animation.data.fromIndex
@@ -44,13 +44,14 @@ define(function (require, exports, module) {
      * @property {number} options.onChnage.data.fromIndex
      */
     function Carousel(options) {
-        $.extend(this, Carousel.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Carousel.prototype = {
 
         constructor: Carousel,
+
+        type: 'Carousel',
 
         /**
          * 初始化
@@ -60,53 +61,55 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            var selector = me.selector;
+            var click = 'click' + namespace;
+            var mouseenter = 'mouseenter' + namespace;
+            var mouseleave = 'mouseleave' + namespace;
 
-            var click = 'click';
-            var mouseenter = 'mouseenter';
-            var mouseleave = 'mouseleave';
-
-            var prevSelector = selector.prev;
+            var prevSelector = me.prevSelector;
             if (prevSelector) {
-                element.on(click + namespace, prevSelector, $.proxy(me.prev, me));
+                element.on(click, prevSelector, $.proxy(me.prev, me));
             }
 
-            var nextSelector = selector.next;
+            var nextSelector = me.nextSelector;
             if (nextSelector) {
-                element.on(click + namespace, nextSelector, $.proxy(me.next, me));
+                element.on(click, nextSelector, $.proxy(me.next, me));
             }
 
-            var indicatorSelector = selector.indicator;
-            if (indicatorSelector) {
-                if (me.trigger === click) {
-                    element.on(click + namespace, indicatorSelector, me, toSlide);
+            var autoPlay = me.autoPlay;
+            var itemSelector = me.itemSelector;
+            if (autoPlay && me.pauseOnHover) {
+                element.on(mouseenter, itemSelector, $.proxy(me.pause, me));
+                element.on(mouseleave, itemSelector, $.proxy(me.play, me));
+            }
+
+            me.min = 0;
+            me.max = element.find(itemSelector).length - 1
+                   - (me.showCount - 1);
+
+            me.switcher = new Switchable({
+                element: element,
+                index: me.index,
+                trigger: me.trigger,
+                selector: me.iconSelector,
+                activeClass: me.activeClass,
+                change: function (data) {
+
+                    var oldIndex = me.index;
+                    var newIndex = this.index;
+
+                    me.animation(data);
+
+                    me.index = newIndex;
+
+                    if (oldIndex !== newIndex
+                        && $.isFunction(me.onChange)
+                    ) {
+                        me.onChange(data);
+                    }
+
                 }
-                else {
-                    element.on(mouseenter + namespace, indicatorSelector, me, enterIndicator);
-                    element.on(mouseleave + namespace, indicatorSelector, me, leaveIndicator);
-                }
-            }
+            });
 
-            var auto = me.auto;
-            var slides = element.find(selector.slide);
-
-            if (auto && me.pauseOnHover) {
-                slides.on(mouseenter + namespace, $.proxy(me.pause, me));
-                slides.on(mouseleave + namespace, $.proxy(me.play, me));
-            }
-
-            me.cache = {
-                slides: slides,
-                min: 0,
-                max: slides.length - 1 - (me.showCount - 1)
-            };
-
-            var index = me.index;
-
-            if (auto && $.isNumeric(index)) {
-                me.index = null;
-                me.play(index);
-            }
         },
 
         /**
@@ -115,10 +118,9 @@ define(function (require, exports, module) {
         prev: function () {
 
             var me = this;
-            var cache = me.cache;
 
             var index = me.index - me.step;
-            if (index < cache.min) {
+            if (index < me.min) {
                 if (me.loop) {
                     index = me.max;
                 }
@@ -137,12 +139,11 @@ define(function (require, exports, module) {
         next: function () {
 
             var me = this;
-            var cache = me.cache;
 
             var index = me.index + me.step;
-            if (index > cache.max) {
+            if (index > me.max) {
                 if (me.loop) {
-                    index = cache.min;
+                    index = me.min;
                 }
                 else {
                     return;
@@ -161,63 +162,14 @@ define(function (require, exports, module) {
         to: function (index) {
 
             var me = this;
-            var cache = me.cache;
 
-            if (cache.playing) {
-
-                if (cache.timer) {
-                    clearTimeout(cache.timer);
-                }
-
-                cache.timer = setTimeout(
-                                function () {
-                                    if (me.cache) {
-                                        me.next();
-                                    }
-                                },
-                                me.delay
-                            );
+            if (me.autoPlay) {
+                me.play(index);
+            }
+            else {
+                me.switcher.to(index);
             }
 
-            var fromIndex = me.index;
-
-            if (fromIndex !== index) {
-
-                me.index = index;
-
-                var data = {
-                    fromIndex: fromIndex,
-                    toIndex: index
-                };
-
-                var animation = me.animation;
-                if ($.isFunction(animation)) {
-                    animation.call(me, data);
-                }
-
-                var element = me.element;
-                var selector = me.selector;
-                var className = me.className;
-
-                var indicatorSelector = selector.indicator;
-                var activeClass = className.indicatorActive;
-                if (indicatorSelector && activeClass) {
-                    var indicators = element.find(indicatorSelector);
-                    indicators.eq(fromIndex).removeClass(activeClass);
-                    indicators.eq(index).addClass(activeClass);
-                }
-
-                activeClass = className.slideActive;
-                if (activeClass) {
-                    var slides = cache.slides;
-                    slides.eq(fromIndex).removeClass(activeClass);
-                    slides.eq(index).addClass(activeClass);
-                }
-
-                if ($.isFunction(me.onChange)) {
-                    me.onChange(data);
-                }
-            }
         },
 
         /**
@@ -228,18 +180,28 @@ define(function (require, exports, module) {
         play: function (index) {
 
             var me = this;
-            var cache = me.cache;
 
-            if (!me.auto || cache.playing) {
+            if (!me.autoPlay) {
                 return;
             }
 
-            cache.playing = true;
-
-            if (!$.isNumeric(index)) {
-                index = me.index;
+            if (me.playing) {
+                me.pause();
             }
-            me.to(index);
+
+            me.playing = true;
+
+            me.playTimer =
+            setTimeout(
+                $.proxy(me.next, me),
+                me.delay
+            );
+
+            if (index !== me.index
+                && $.type(index) === 'number'
+            ) {
+                me.switcher.to(index);
+            }
         },
 
         /**
@@ -248,17 +210,16 @@ define(function (require, exports, module) {
         pause: function () {
 
             var me = this;
-            var cache = me.cache;
 
-            if (!me.auto || !cache.playing) {
+            if (!me.autoPlay) {
                 return;
             }
 
-            cache.playing = false;
+            me.playing = false;
 
-            if (cache.timer) {
-                clearTimeout(cache.timer);
-                cache.timer = null;
+            if (me.playTimer) {
+                clearTimeout(me.playTimer);
+                me.playTimer = null;
             }
         },
 
@@ -269,13 +230,17 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.pause();
+            lifeCycle.dispose(me);
 
-            me.cache.slides.off(namespace);
+            if (me.playing) {
+                me.pause();
+            }
+
             me.element.off(namespace);
+            me.switcher.dispose();
 
             me.element =
-            me.cache = null;
+            me.switcher = null;
         }
     };
 
@@ -288,15 +253,12 @@ define(function (require, exports, module) {
     Carousel.defaultOptions = {
         index: 0,
         step: 1,
-        showCount: 1,
         delay: 5000,
-        auto: true,
-        loop: true,
-        pauseOnHover: true,
+        showCount: 1,
         trigger: 'over',
-        selector: { },
-        animation: { },
-        className: { }
+        loop: true,
+        autoPlay: true,
+        pauseOnHover: true
     };
 
     /**
@@ -306,61 +268,6 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_ui_carousel';
-
-    /**
-     * 直接跳去第 N 个
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function toSlide(e) {
-        var carousel = e.data;
-        var index = carousel.element
-                            .find(carousel.selector.indicator)
-                            .index(e.currentTarget);
-
-        carousel.to(index);
-        return false;
-    }
-
-    /**
-     * 鼠标移入 indicator 需触发 change
-     * 为了避免过于灵敏的触发，需设置延时
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function enterIndicator(e) {
-
-        var carousel = e.data;
-        var index = carousel.element
-                            .find(carousel.selector.indicator)
-                            .index(e.currentTarget);
-
-        carousel.cache.changeTimer
-        = setTimeout(
-            function () {
-                if (carousel.cache) {
-                    carousel.to(Number(index));
-                }
-            },
-            50
-        );
-    }
-
-    /**
-     * 鼠标移出 indicator 需触发 change
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function leaveIndicator(e) {
-        var cache = e.data.cache;
-        if (cache.changeTimer) {
-            clearTimeout(cache.changeTimer);
-            cache.changeTimer = null;
-        }
-    }
 
 
     return Carousel;

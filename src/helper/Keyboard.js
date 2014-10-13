@@ -23,8 +23,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var split = require('../function/split');
-    var call = require('../function/call');
+    var split = require('cobble/function/split');
+    var call = require('cobble/function/call');
+    var lifeCycle = require('cobble/function/lifeCycle');
 
     /**
      * 处理键盘相关的操作
@@ -76,13 +77,14 @@ define(function (require, exports, module) {
      * });
      */
     function Keyboard(options) {
-        $.extend(this, Keyboard.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Keyboard.prototype = {
 
         constructor: Keyboard,
+
+        type: 'Keyboard',
 
         /**
          * 初始化
@@ -97,8 +99,9 @@ define(function (require, exports, module) {
                 action: parseAction(me.action || { })
             };
 
-            me.element.on('keydown' + namespace, me, onKeyDown)
-                      .on('keyup' + namespace, me, onKeyUp);
+            me.element
+            .on('keydown' + namespace, me, onKeyDown)
+            .on('keyup' + namespace, me, onKeyUp);
 
         },
 
@@ -108,6 +111,8 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
+
+            lifeCycle.dispose(me);
 
             me.element.off(namespace);
 
@@ -144,6 +149,47 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     var name2Code = {
+
+        // F1 -> F12
+        'f1': 112,
+        'f2': 113,
+        'f3': 114,
+        'f4': 115,
+        'f5': 116,
+        'f6': 117,
+        'f7': 118,
+        'f8': 119,
+        'f9': 120,
+        'f10': 121,
+        'f11': 122,
+        'f12': 123,
+
+        // 常用的控制键
+        enter: 13,
+        esc: 27,
+        capslock: 20,
+
+        insert: 45,
+        home: 36,
+        end: 35,
+        pageup: 33,
+        pagedown: 34,
+
+        // 方向键
+        left: 37,
+        right: 39,
+        up: 38,
+        down: 40
+    };
+
+    /**
+     * 会触发字符改变的键
+     *
+     * @inner
+     * @type {Object}
+     */
+    var char2Key = {
+
         // 英文字母
         a: 65,
         b: 66,
@@ -192,7 +238,7 @@ define(function (require, exports, module) {
         ']': 221,
         '\\': 220,
         ';': 59,
-        "'": 222,
+        '\'': 222,
         ',': 188,
         '.': 190,
         '/': 191,
@@ -214,40 +260,11 @@ define(function (require, exports, module) {
         '$*': 106,
         '$/': 111,
 
-        // F1 -> F12
-        'f1': 112,
-        'f2': 113,
-        'f3': 114,
-        'f4': 115,
-        'f5': 116,
-        'f6': 117,
-        'f7': 118,
-        'f8': 119,
-        'f9': 120,
-        'f10': 121,
-        'f11': 122,
-        'f12': 123,
-
-        // 常用的控制键
-        enter: 13,
         space: 32,
         backspace: 8,
-        esc: 27,
         tab: 9,
-        capslock: 20,
 
-        insert: 45,
-        'delete': 46,
-        home: 36,
-        end: 35,
-        pageup: 33,
-        pagedown: 34,
-
-        // 方向键
-        left: 37,
-        right: 39,
-        up: 38,
-        down: 40
+        'delete': 46
     };
 
     /**
@@ -263,7 +280,17 @@ define(function (require, exports, module) {
         alt: 18
     };
 
-    $.extend(name2Code, combinationKeys);
+    $.extend(name2Code, char2Key, combinationKeys);
+
+    // 为了快速查找，转换一下 charKeys
+    var key2Char = { };
+
+    $.each(
+        char2Key,
+        function (key, value) {
+            key2Char[value] = key;
+        }
+    );
 
     /**
      * 键值映射表
@@ -375,6 +402,7 @@ define(function (require, exports, module) {
 
         if (cache.keyCode === keyCode && counter > 0) {
             if (counter === 1) {
+                e.isCharKey = key2Char[keyCode] != null;
                 call(keyboard.onLongPressStart, scope, e);
             }
             counter++;

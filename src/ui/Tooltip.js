@@ -9,20 +9,22 @@ define(function (require, exports, module) {
      *
      * 鉴于需求较多，可通过 Tooltip.defaultOptions 进行配置
      *
-     * 默认读取元素的 title 属性进行展现，如有特殊需求，可通过 defaultOptions.attribute.title 配置
+     * 默认读取元素的 title 属性进行展现，如有特殊需求，可通过 defaultOptions.titleAttr 配置
      *
-     * 提示出现的位置可通过 defaultOptions.placement 和 defaultOptions.attribute.placement 统一配置
-     * 如个别元素需特殊处理，可为元素加上 defaultOptions.attribute.placement 配置的属性改写全局配置
+     * 提示出现的位置可通过 defaultOptions.placement 和 defaultOptions.placementAttr 统一配置
+     * 如个别元素需特殊处理，可为元素加上 defaultOptions.placementAttr 配置的属性改写全局配置
      *
      * 如果要实现小箭头效果，可参考如下配置:
      *
      * {
      *    template: '<div class="tooltip"><i class="arrow"></i><div class="content"></div></div>',
-     *    className: {
-     *        placement: 'tooltip-placement-'
+     *    update: function () {
+     *        this.layer.find('.content').html(
+     *            this.element.attr('title')
+     *        );
      *    },
-     *    onBeforeShow: function () {
-     *        this.element.find('.content').html(this.title);
+     *    placementClass: {
+     *        top: 'top'
      *    }
      * }
      *
@@ -38,68 +40,58 @@ define(function (require, exports, module) {
      *     }
      * }
      *
-     * 如果实例化的 template 参数和 defaultOptions.template 不同，会在实例上新建一个 element 属性
+     * 如果实例化的 template 参数和 defaultOptions.template 不同，会在实例上新建一个 layer 属性
+     *
+     * 如果想控制提示浮层的宽度，可以在触发元素上加 data-width="100px"
      *
      */
 
     'use strict';
 
-    var split = require('../function/split');
-    var position = require('../util/position');
-    var debounce = require('../function/debounce');
-    var pageWidth = require('../function/pageWidth');
-    var pageHeight = require('../function/pageHeight');
-    var offsetParent = require('../function/offsetParent');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var split = require('cobble/function/split');
+    var position = require('cobble/util/position');
+    var debounce = require('cobble/function/debounce');
+    var pageWidth = require('cobble/function/pageWidth');
+    var pageHeight = require('cobble/function/pageHeight');
+    var offsetParent = require('cobble/function/offsetParent');
 
-    var Popup = require('../helper/Popup');
-    var instance = require('../util/instance');
+    var Popup = require('cobble/helper/Popup');
+    var instance = require('cobble/util/instance');
 
     /**
      * 工具提示
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.source 需要工具提示的元素
-     * @property {jQuery=} options.element 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
-     *                                     简单场景可用 template 配置搞定
-     * @property {string=} options.template 提示元素的模版，可配合使用 className.placement, onBeforeShow 实现特殊需求
+     * @property {jQuery} options.element 需要工具提示的元素
+     * @property {jQuery=} options.layer 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
+     *                                   简单场景可用 template 配置搞定
+     * @property {string=} options.template 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
      *
      * @property {string=} options.placement 提示元素出现的位置
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      *
-     * @property {Object=} options.tester 方位检测，非特殊需求可使用默认配置
-     * @property {function():boolean=} options.tester.top 检测上侧方位
-     * @property {function():boolean=} options.tester.right 检测右侧方位
-     * @property {function():boolean=} options.tester.bottom 检测下侧方位
-     * @property {function():boolean=} options.tester.left 检测左侧方位
-     * @property {function():boolean=} options.tester.topLeft 检测左上侧方位
-     * @property {function():boolean=} options.tester.topRight 检测右上侧方位
-     * @property {function():boolean=} options.tester.bottomLeft 检测左下侧方位
-     * @property {function():boolean=} options.tester.bottomRight 检测右下侧方位
+     * @property {string=} options.width 提示元素的宽度
      *
-     * @property {Object} options.trigger 触发方式
-     * @property {string=} options.trigger.show 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
-     * @property {string=} options.trigger.hide 隐藏的触发方式，可选值有 click out blur，可组合使用，以逗号分隔
+     * @property {Function} options.update 更新提示浮层的内容
+     * @property {Object=} options.placementClass 方位对应的 className
+     * @property {string=} options.placementAttr 优先级比 placement 更高的位置配置
      *
-     * @property {Object=} options.delay 延时
-     * @property {number=} options.delay.show 显示延时
-     * @property {number=} options.delay.hide 隐藏延时
+     * @property {Object} options.show
+     * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
+     * @property {number=} options.show.delay 显示延时
+     * @property {Function=} options.show.animation 显示动画，如果未设置，默认是 layer.show()
      *
-     * @property {Object=} options.attribute 属性名称
-     * @property {string=} options.attribute.title 元素上标注提示内容的属性
-     * @property {string=} options.attribute.placement 优先级比 placement 更高的位置配置
+     * @property {Object} options.hide
+     * @property {string=} options.hide.trigger 隐藏的触发方式，可选值有 click out blur，可组合使用，以逗号分隔
+     * @property {number=} options.hide.delay 隐藏延时
+     * @property {Function=} options.hide.animation 隐藏动画，如果未设置，默认是 layer.hide()
      *
-     * @property {Object=} options.className 样式
-     * @property {string=} options.className.placement 提示方位的 class 前缀，有助于实现小箭头之类的效果
-     *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.show 显示动画，如果未设置，默认是 element.show()
-     * @property {Function=} options.animation.hide 隐藏动画，如果未设置，默认是 element.hide()
-     *
-     * @property {Object=} options.gap 提示层和触发元素之间的距离
-     * @property {number=} options.gap.x 横向间距，如果为 0，提示会和元素贴在一起
-     * @property {number=} options.gap.y 纵向间距，如果为 0，提示会和元素贴在一起
+     * @property {Object} options.gap
+     * @property {number=} options.gap.x 提示层和触发元素之间的横向间距，如果为 0，提示会和元素贴在一起
+     * @property {number=} options.gap.y 提示层和触发元素之间的纵向间距，如果为 0，提示会和元素贴在一起
      *
      * @property {Object=} options.offset 偏移量
      * @property {Object=} options.offset.top 设置上侧偏移量
@@ -117,13 +109,14 @@ define(function (require, exports, module) {
      * @property {Function=} options.onAfterHide
      */
     function Tooltip(options) {
-        $.extend(this, Tooltip.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Tooltip.prototype = {
 
         constructor: Tooltip,
+
+        type: 'Tooltip',
 
         /**
          * 初始化
@@ -131,63 +124,128 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var cache = me.cache = { };
-
-            var source = me.source;
-            var attr = me.attribute;
-            var titleAttr = attr.title;
-
-            // 初始化 tip 内容
-            me.title = source.attr(titleAttr) || '';
-
-            // 避免出现原生的提示
-            if (titleAttr === 'title') {
-                source.removeAttr(titleAttr);
-            }
-
-            // 优先使用元素属性配置
-            var placement = source.attr(attr.placement) || me.placement;
-            cache.placements = getPlacementList(placement);
-
-            // 初始化 tip 元素
             var element = me.element;
 
-            if (!element) {
+            var placementList = getPlacementList(
+                                    element.attr(me.placementAttr) || me.placement
+                                );
+
+            var layer = me.layer;
+            if (!layer) {
 
                 var template = me.template;
 
                 // 和默认配置的模板相同，可共用一个元素
                 // 比如纯展示文本的 tip，完全可以这样实现
                 if (template === Tooltip.defaultOptions.template) {
-                    element = tipElement || (tipElement = $(template));
+                    layer = layerElement || (layerElement = $(template));
                 }
                 else {
-                    element = $(template);
+                    layer = $(template);
                 }
 
-                me.element = element;
+                me.layer = layer;
             }
 
-            if (!offsetParent(element).is('body')) {
-                element.hide();
-                instance.body.append(element);
+            layer.hide();
+
+            if (!offsetParent(layer).is('body')) {
+                instance.body.append(layer);
             }
 
-            cache.popup = createPopup(me);
+            var show = me.show;
+            var hide = me.hide;
+
+            if (!show.trigger) {
+                show.trigger = 'over';
+            }
+            if (!hide.trigger) {
+                hide.trigger = 'out,click';
+            }
+
+            var width = element.data('width') || me.width || '';
+
+            me.popup = new Popup({
+                element: element,
+                layer: layer,
+                scope: me,
+                show: me.show,
+                hide: me.hide,
+                onAfterShow: me.onAfterShow,
+                onBeforeHide: me.onBeforeHide,
+                onAfterHide: function (e) {
+                    if (me.resizer) {
+                        instance.window.off('resize', me.resizer);
+                        me.resizer = null;
+                    }
+                    if ($.isFunction(me.onAfterHide)) {
+                        return me.onAfterHide(e);
+                    }
+                },
+                onBeforeShow: function (e) {
+
+                    me.update();
+
+                    layer.css('max-width', width);
+
+                    if ($.isFunction(me.onBeforeShow)
+                        && me.onBeforeShow(e) === false
+                    ) {
+                        return false;
+                    }
+
+                    var placement = placementList.length === 1
+                                 && placementList[0];
+
+                    if (!placement) {
+                        $.each(
+                            placementList,
+                            function (index, name) {
+                                var tests = placementMap[name].test;
+                                for (var i = 0, len = tests.length; i < len; i++) {
+                                    if (!tests[i].call(me)) {
+                                        return;
+                                    }
+                                }
+                                placement = name;
+                                return false;
+                            }
+                        );
+
+                        if (!placement) {
+                            return false;
+                        }
+                    }
+
+                    me.pin(placement);
+
+                    instance.window.resize(
+                        me.resizer =
+                        debounce(
+                            function () {
+                                if (me.popup) {
+                                    me.pin(placement);
+                                }
+                            },
+                            50
+                        )
+                    );
+                }
+            });
         },
 
         /**
          * 显示提示浮层
          */
-        show: function () {
-            this.cache.popup.show();
+        open: function () {
+            this.popup.open();
         },
 
         /**
          * 隐藏提示浮层
          */
-        hide: function () {
-            this.cache.popup.hide();
+        close: function () {
+            this.popup.close();
         },
 
         /**
@@ -201,51 +259,51 @@ define(function (require, exports, module) {
         pin: function (placement) {
 
             var me = this;
-            var element = me.element;
+            var layer = me.layer;
 
             // 先设置好样式，再定位
             // 这样才能保证定位计算不会出问题
 
-            var placementClass = element.data(placementClassKey);
+            var placementClass = layer.data(placementClassKey);
             if (placementClass) {
-                element.removeClass(placementClass);
-                element.removeData(placementClassKey);
+                layer.removeClass(placementClass);
+                layer.removeData(placementClassKey);
             }
 
-            var placementPrefix = me.className.placement;
-            if ($.type(placementPrefix) === 'string') {
-                placementClass = placementPrefix + placement.toLowerCase();
-                element.addClass(placementClass);
-                element.data(placementClassKey, placementClass);
+            placementClass = me.placementClass;
+            if (placementClass
+                && (placementClass = placementClass[placement])
+            ) {
+                layer.addClass(placementClass);
+                layer.data(placementClassKey, placementClass);
             }
-
-            var gap = me.gap;
 
             // 定位条件
+            var gap = me.gap;
             var options = {
-                element: me.element,
-                attachment: me.source,
-                offsetX: $.isNumeric(gap.x) ? gap.x : 0,
-                offsetY: $.isNumeric(gap.y) ? gap.y : 0
+                element: me.layer,
+                attachment: me.element,
+                offsetX: $.type(gap.x) === 'number' ? gap.x : 0,
+                offsetY: $.type(gap.y) === 'number' ? gap.y : 0
             };
 
-            var target = placementMap[ placement ];
+            var target = placementMap[placement];
 
             if ($.isFunction(target.gap)) {
                 target.gap(options);
             }
 
-            var offset = me.offset[ placement ];
+            var offset = me.offset[placement];
             if (offset) {
-                if ($.isNumeric(offset.x)) {
+                if ($.type(offset.x) === 'number') {
                     options.offsetX += offset.x;
                 }
-                if ($.isNumeric(offset.y)) {
+                if ($.type(offset.y) === 'number') {
                     options.offsetY += offset.y;
                 }
             }
 
-            position[ target.name ](options);
+            position[target.name](options);
         },
 
         /**
@@ -255,15 +313,17 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.cache.popup.dispose();
+            lifeCycle.dispose(me);
 
-            if (me.element !== tipElement) {
-                me.element.remove();
+            me.popup.dispose();
+
+            if (me.layer !== layerElement) {
+                me.layer.remove();
             }
 
-            me.source =
             me.element =
-            me.cache = null;
+            me.layer =
+            me.popup = null;
         }
     };
 
@@ -274,52 +334,57 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Tooltip.defaultOptions = {
-
         placement: 'auto',
         template: '<div class="tooltip"></div>',
+        placementAttr: 'data-placement',
+        placementClass: {
+            top: 'tooltip-top',
+            right: 'tooltip-right',
+            bottom: 'tooltip-bottom',
+            left: 'tooltip-left',
+            topLeft: 'tooltip-top-left',
+            topRight: 'tooltip-top-right',
+            bottomLeft: 'tooltip-bottom-left',
+            bottomRight: 'tooltip-bottom-right'
+        },
 
-        gap: { },
-        delay: { },
+        show: {
+            trigger: 'over',
+            delay: 100
+        },
+        hide: {
+            trigger: 'out',
+            delay: 100
+        },
+        gap: { x: 10, y: 10 },
         offset: { },
-        tester: { },
-        trigger: {
-            show: 'over',
-            hide: 'out,blur'
-        },
-        attribute: {
-            title: 'title',
-            placement: 'data-placement'
-        },
-        className: {
-            placement: 'tooltip-placement-'
+
+        update: function () {
+            this.layer.html(
+                this.element.data('title')
+            );
         }
+
     };
 
     /**
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} sources 需要提示浮层的元素
+     * @param {jQuery} element 需要提示浮层的元素
      * @param {Object=} options 配置参数
      * @return {Array.<Tooltip>}
      */
-    Tooltip.init = function (sources, options) {
-
-        if (sources && !sources.jquery) {
-            options = sources;
-            sources = null;
-        }
+    Tooltip.init = function (element, options) {
 
         var result = [ ];
-        var titleAttr = Tooltip.defaultOptions.attribute.title;
 
-        sources = sources || $('[' + titleAttr + ']');
-        sources.each(function () {
+        element.each(function () {
             result.push(
                 new Tooltip(
                     $.extend(
                         {
-                            source: $(this)
+                            element: $(this)
                         },
                         options
                     )
@@ -337,7 +402,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testLeft() {
-        return this.source.offset().left > this.element.outerWidth();
+        return this.element.offset().left > this.layer.outerWidth();
     }
 
     /**
@@ -347,11 +412,11 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testRight() {
-        var source = this.source;
+        var element = this.element;
         return pageWidth() >
-               (source.offset().left
-               + source.outerWidth()
-               + this.element.outerWidth());
+               (element.offset().left
+               + element.outerWidth()
+               + this.layer.outerWidth());
     }
 
     /**
@@ -361,7 +426,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testTop() {
-        return this.source.offset().top > this.element.outerHeight();
+        return this.element.offset().top > this.layer.outerHeight();
     }
 
     /**
@@ -371,11 +436,11 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testBottom() {
-        var source = this.source;
+        var element = this.element;
         return pageHeight() >
-               (source.offset().top
-                + source.outerHeight()
-                + this.element.outerHeight());
+               (element.offset().top
+                + element.outerHeight()
+                + this.layer.outerHeight());
     }
 
     /**
@@ -388,7 +453,7 @@ define(function (require, exports, module) {
 
         bottom: {
             name: 'bottomCenter',
-            test: testBottom,
+            test: [testBottom],
             gap: function (options) {
                 options.offsetX = 0;
             }
@@ -396,7 +461,7 @@ define(function (require, exports, module) {
 
         top: {
             name: 'topCenter',
-            test: testTop,
+            test: [testTop],
             gap: function (options) {
                 options.offsetY *= -1;
                 options.offsetX = 0;
@@ -405,7 +470,7 @@ define(function (require, exports, module) {
 
         right: {
             name: 'middleRight',
-            test: testRight,
+            test: [testRight],
             gap: function (options) {
                 options.offsetY = 0;
             }
@@ -413,7 +478,7 @@ define(function (require, exports, module) {
 
         left: {
             name: 'middleLeft',
-            test: testLeft,
+            test: [testLeft],
             gap: function (options) {
                 options.offsetX *= -1;
                 options.offsetY = 0;
@@ -422,10 +487,7 @@ define(function (require, exports, module) {
 
         bottomLeft: {
             name: 'bottomLeft',
-            test: function () {
-                return testBottom.call(this)
-                    && testLeft.call(this);
-            },
+            test: [testBottom, testLeft],
             gap: function (options) {
                 options.offsetX *= -1;
             }
@@ -433,18 +495,12 @@ define(function (require, exports, module) {
 
         bottomRight: {
             name: 'bottomRight',
-            test: function () {
-                return testBottom.call(this)
-                    && testRight.call(this);
-            }
+            test: [testBottom, testRight]
         },
 
         topLeft: {
             name: 'topLeft',
-            test: function () {
-                return testTop.call(this)
-                    && testLeft.call(this);
-            },
+            test: [testTop, testLeft],
             gap: function (options) {
                 options.offsetX *= -1;
                 options.offsetY *= -1;
@@ -453,10 +509,7 @@ define(function (require, exports, module) {
 
         topRight: {
             name: 'topRight',
-            test: function () {
-                return testTop.call(this)
-                    && testRight.call(this);
-            },
+            test: [testTop, testRight],
             gap: function (options) {
                 options.offsetY *= -1;
             }
@@ -465,12 +518,12 @@ define(function (require, exports, module) {
 
 
     /**
-     * 全局唯一的 tip 元素
+     * 全局唯一的浮层元素
      *
      * @inner
      * @type {jQuery}
      */
-    var tipElement;
+    var layerElement;
 
     /**
      * 存储当前方位 className 的 key
@@ -496,95 +549,25 @@ define(function (require, exports, module) {
         $.each(
             split(placement, ','),
             function (index, name) {
-                if (placementMap[ name ]) {
+                if (placementMap[name]) {
                     result.push(name);
                 }
                 else {
-                    for (var name in placementMap) {
-                        if (placementMap.hasOwnProperty(name)
-                            && $.inArray(name, result) < 0
-                        ) {
-                            result.push(name);
+                    // 没匹配到的唯一情况是 auto
+                    $.each(
+                        placementMap,
+                        function (name, value) {
+                            if ($.inArray(name, result) < 0) {
+                                result.push(name);
+                            }
                         }
-                    }
+                    );
                     return false;
                 }
             }
         );
 
         return result;
-
-    }
-
-    /**
-     * 创建 Popup 实例
-     *
-     * @inner
-     * @param {Tooltip} tooltip
-     * @return {Popup}
-     */
-    function createPopup(tooltip) {
-
-        var cache = tooltip.cache;
-
-        return new Popup({
-            source: tooltip.source,
-            element: tooltip.element,
-            scope: tooltip,
-            trigger: tooltip.trigger,
-            delay: tooltip.delay,
-            animation: tooltip.animation,
-            onAfterShow: tooltip.onAfterShow,
-            onBeforeHide: tooltip.onBeforeHide,
-            onAfterHide: function (e) {
-                if (cache.resizer) {
-                    instance.window.off('resize', cache.resizer);
-                    cache.resizer = null;
-                }
-                if ($.isFunction(tooltip.onAfterHide)) {
-                    return tooltip.onAfterHide(e);
-                }
-            },
-            onBeforeShow: function (e) {
-
-                var placements = cache.placements;
-                var placement = placements.length === 1 && placements[0];
-                var result;
-
-                if ($.isFunction(tooltip.onBeforeShow)) {
-                    result = tooltip.onBeforeShow(e);
-                }
-
-                if (result !== false && !placement) {
-                    $.each(
-                        placements,
-                        function (index, name) {
-                            var test = tooltip.tester[ name ] || placementMap[ name ].test;
-                            if (test.call(tooltip)) {
-                                placement = name;
-                                return false;
-                            }
-                        }
-                    );
-                }
-
-                if (result === false || !placement) {
-                    return false;
-                }
-
-                tooltip.pin(placement);
-
-                instance.window.resize(
-                    cache.resizer =
-                    debounce(
-                        function () {
-                            tooltip.pin(placement);
-                        },
-                        50
-                    )
-                );
-            }
-        });
     }
 
 

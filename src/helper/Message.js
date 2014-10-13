@@ -45,6 +45,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var timer = require('cobble/function/timer');
+    var lifeCycle = require('cobble/function/lifeCycle');
+
     /**
      * Message 构造函数
      *
@@ -55,13 +58,14 @@ define(function (require, exports, module) {
      * @property {function():Object} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
-        $.extend(this, Message.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Message.prototype = {
 
         constructor: Message,
+
+        type: 'Message',
 
         /**
          * 初始化
@@ -73,18 +77,21 @@ define(function (require, exports, module) {
             me.id = getGuid();
             me.origin = getOrigin(me.agentUrl);
 
-            function poll() {
-                me.send(me.reader() || { });
-                me.timer = setTimeout(poll, me.delay);
-            }
+            me.timer = timer(
+                function () {
+                    me.send(me.reader() || { });
+                },
+                me.delay,
+                me.delay
+            );
 
-            poll();
+            me.timer.start();
         },
 
         /**
          * 发送信息
          */
-        send: typeof window.postMessage === 'function'
+        send: $.isFunction(window.postMessage)
            && 'onmessage' in window
 
             ? function (data) {
@@ -117,11 +124,13 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
-            if (me.timer) {
-                clearTimeout(me.timer);
-                me.timer = null;
-            }
+
+            lifeCycle.dispose(me);
+
+            me.timer.stop();
+            me.timer = null;
         }
     };
 

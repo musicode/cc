@@ -13,10 +13,17 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    require('../util/supload/supload');
+    require('cobble/util/supload/supload');
+
+    var Supload = window.Supload;
+
+    var lifeCycle = require('cobble/function/lifeCycle');
 
     /**
      * 使用 flash 上传
+     *
+     * 注意：不能 hide() 元素，否则 swf 会自动销毁
+     *      不能 css('visibility', 'hidden') 元素，IE 下 swf 会自动销毁
      *
      * @constructor
      * @param {Object} options
@@ -36,13 +43,14 @@ define(function (require, exports, module) {
      * @property {function(Object)=} options.onUploadComplete
      */
     function FlashUploader(options) {
-        $.extend(this, FlashUploader.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     FlashUploader.prototype = {
 
         constructor: FlashUploader,
+
+        type: 'FlashUploader',
 
         /**
          * 初始化
@@ -65,11 +73,14 @@ define(function (require, exports, module) {
                 }
             };
 
-            for (var type in eventHandler) {
-                // 首字母大写
-                var onType = 'on' + type.charAt(0).toUpperCase() + type.substr(1);
-                swfOptions[onType] = eventHandler[type];
-            }
+            $.each(
+                eventHandler,
+                function (type, handler) {
+                    // 首字母大写
+                    var onType = 'on' + type.charAt(0).toUpperCase() + type.substr(1);
+                    swfOptions[onType] = handler;
+                }
+            );
 
             me.supload = new Supload(swfOptions);
         },
@@ -84,12 +95,35 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 上传文件
+         * 设置上传地址
          *
-         * @param {Object=} data 需要上传的数据
+         * @param {string} action
          */
-        upload: function (data) {
-            this.supload.upload(data);
+        setAction: function (action) {
+            this.supload.setAction(action);
+        },
+
+        /**
+         * 设置上传数据
+         *
+         * @param {Object} data 需要一起上传的数据
+         */
+        setData: function (data) {
+            this.supload.setData(data);
+        },
+
+        /**
+         * 重置
+         */
+        reset: function () {
+            this.supload.reset();
+        },
+
+        /**
+         * 上传文件
+         */
+        upload: function () {
+            this.supload.upload();
         },
 
         /**
@@ -117,9 +151,15 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
-            this.supload.dispose();
-            this.supload =
-            this.element = null;
+
+            var me = this;
+
+            lifeCycle.dispose(me);
+
+            me.supload.dispose();
+
+            me.supload =
+            me.element = null;
         }
     };
 
@@ -240,6 +280,11 @@ define(function (require, exports, module) {
         uploadProgress: function (data) {
             var uploader = this.customSettings.uploader;
             if (typeof uploader.onUploadProgress === 'function') {
+
+                var percent = data.uploaded / (data.total || 1);
+
+                data.percent = parseInt(100 * percent, 10) + '%';
+
                 uploader.onUploadProgress(data);
             }
         },

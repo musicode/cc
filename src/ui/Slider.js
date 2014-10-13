@@ -6,12 +6,13 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var restrain = require('../function/restrain');
-    var contains = require('../function/contains');
-    var position = require('../function/position');
-    var eventOffset = require('../function/eventOffset');
-    var Draggable = require('../helper/Draggable');
-    var Wheel = require('../helper/Wheel');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var restrain = require('cobble/function/restrain');
+    var contains = require('cobble/function/contains');
+    var position = require('cobble/function/position');
+    var eventOffset = require('cobble/function/eventOffset');
+    var Draggable = require('cobble/helper/Draggable');
+    var Wheel = require('cobble/helper/Wheel');
 
     /**
      * 可滑动组件，类似 html5 的 <input type="range" />
@@ -27,32 +28,30 @@ define(function (require, exports, module) {
      * @property {string=} options.orientation 方向，可选值有 horizontal 和 vertical，默认是 horizontal
      * @property {string=} options.template 模板，如果 element 结构已完整，可不传模板
      *
-     * @property {Object=} options.selector 选择器
-     * @property {string=} options.selector.thumb 滑块选择器
-     * @property {string=} options.selector.track 滑道选择器，不传表示 element 是滑道
+     * @property {string=} options.thumbSelector 滑块选择器
+     * @property {string=} options.trackSelector 滑道选择器，不传表示 element 是滑道
      *
-     * @property {Object=} options.className 样式
-     * @property {string=} options.className.dragging 滑块正在拖拽时的 class
-     * @property {string=} options.className.hover 鼠标悬浮滑道时的 class
+     * @property {string=} options.draggingClass 滑块正在拖拽时的 class
+     * @property {string=} options.hoverClass 鼠标悬浮滑道时的 class
      *
-     * @property {Object=} options.animation 动画
-     * @property {Function=} options.animation.to 通过点击直接滑到某个位置的动画
-     * @property {Function=} options.animation.dragging 通过拖拽滑块到某个位置的动画
-     * @property {Function=} options.animation.show 显示动画
-     * @property {Function=} options.animation.hide 隐藏动画
+     * @property {Function=} options.showAnimation 显示动画
+     * @property {Function=} options.hideAnimation 隐藏动画
+     * @property {Function=} options.toAnimation 通过点击直接滑到某个位置的动画
+     * @property {Function=} options.dragAnimation 通过拖拽滑块到某个位置的动画
      *
      * @property {Function=} options.onChange 当 value 变化时触发
      * @property {Function=} options.onBeforeDrag
      * @property {Function=} options.onAfterDrag
      */
     function Slider(options) {
-        $.extend(this, Slider.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Slider.prototype = {
 
         constructor: Slider,
+
+        type: 'Slider',
 
         /**
          * 初始化
@@ -61,16 +60,14 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
-            var template = me.template;
 
-            if (template) {
-                element.html(template);
+            if (me.template) {
+                element.html(me.template);
             }
 
-            var selector = me.selector;
-            var thumbElement = element.find(selector.thumb);
-            var trackElement = selector.track
-                             ? element.find(selector.track)
+            var thumbElement = element.find(me.thumbSelector);
+            var trackElement = me.trackSelector
+                             ? element.find(me.trackSelector)
                              : element;
 
             var cache = me.cache
@@ -94,7 +91,7 @@ define(function (require, exports, module) {
 
             trackElement.on('click' + namespace, me, clickTrack);
 
-            if (me.className.hover) {
+            if (me.hoverClass) {
                 trackElement.on('mouseenter' + namespace, me, enterTrack)
                             .on('mouseleave' + namespace, me, leaveTrack);
             }
@@ -103,7 +100,7 @@ define(function (require, exports, module) {
                 cache.wheel = new Wheel({
                     element: trackElement,
                     onScroll: function (data) {
-                        return !me.setValue( me.value + data.delta * me.step );
+                        return !me.setValue(me.value + data.delta * me.step);
                     }
                 });
             }
@@ -135,14 +132,16 @@ define(function (require, exports, module) {
             cache.min = 0;
             cache.max = total;
 
-            if ($.isNumeric(min) && $.isNumeric(max)) {
+            if ($.type(min) === 'number'
+                && $.type(max) === 'number'
+            ) {
                 cache.stepPixel = total / ((max - min) / me.step);
             }
 
             var value = me.value;
             var options = { force: true };
 
-            if (!$.isNumeric(value)) {
+            if ($.type(value) !== 'number') {
                 value = position(cache.thumb)[ cache.position ];
                 options.pixel = true;
             }
@@ -180,7 +179,7 @@ define(function (require, exports, module) {
             var stepPixel = cache.stepPixel;
             var pixel;
 
-            if ($.isNumeric(stepPixel)) {
+            if ($.type(stepPixel) === 'number') {
                 if (options.pixel) {
                     value = pixel2Value(value, me.min, me.step, stepPixel);
                 }
@@ -249,7 +248,7 @@ define(function (require, exports, module) {
             var dimension = cache.dimension;
             var offset;
 
-            if ($.isNumeric(data.track)) {
+            if ($.type(data.track) === 'number') {
 
                 var track = cache.track;
 
@@ -259,7 +258,7 @@ define(function (require, exports, module) {
                 track[ dimension ](data.track - offset);
             }
 
-            if ($.isNumeric(data.thumb)) {
+            if ($.type(data.thumb) === 'number') {
 
                 var thumb = cache.thumb;
 
@@ -276,10 +275,9 @@ define(function (require, exports, module) {
         show: function () {
 
             var me = this;
-            var show = me.animation.show;
 
-            if ($.isFunction(show)) {
-                show.call(me);
+            if ($.isFunction(me.showAnimation)) {
+                me.showAnimation();
             }
             else {
                 me.element.show();
@@ -292,10 +290,9 @@ define(function (require, exports, module) {
         hide: function () {
 
             var me = this;
-            var hide = me.animation.hide;
 
-            if ($.isFunction(hide)) {
-                hide.call(me);
+            if ($.isFunction(me.hideAnimation)) {
+                me.hideAnimation();
             }
             else {
                 me.element.hide();
@@ -308,8 +305,10 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-            var cache = me.cache;
 
+            lifeCycle.dispose(me);
+
+            var cache = me.cache;
             cache.track.off(namespace);
             cache.draggable.dispose();
 
@@ -330,17 +329,9 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Slider.defaultOptions = {
-
         step: 10,
         scrollable: false,
-        orientation: 'horizontal',
-        template: '<i class="slider-thumb"></i>',
-
-        className: { },
-        animation: { },
-        selector: {
-            thumb: '.slider-thumb'
-        }
+        orientation: 'horizontal'
     };
 
     /**
@@ -413,7 +404,7 @@ define(function (require, exports, module) {
     function createDraggable(slider, options) {
 
         var cache = slider.cache;
-        var draggingClass = slider.className.dragging;
+        var draggingClass = slider.draggingClass;
 
         options.onDragStart = function () {
 
@@ -452,7 +443,7 @@ define(function (require, exports, module) {
                 data[ cache.position ],
                 {
                     pixel: true,
-                    animate: slider.animation.dragging
+                    animate: slider.dragAnimation
                 }
             );
         };
@@ -479,7 +470,7 @@ define(function (require, exports, module) {
             eventOffset(e)[ cache.axis ],
             {
                 pixel: true,
-                animate: slider.animation.to
+                animate: slider.toAnimation
             }
         );
     }
@@ -493,7 +484,7 @@ define(function (require, exports, module) {
     function enterTrack(e) {
         var slider = e.data;
         slider.cache.leave = false;
-        slider.element.addClass(slider.className.hover);
+        slider.element.addClass(slider.hoverClass);
     }
 
     /**
@@ -506,14 +497,13 @@ define(function (require, exports, module) {
 
         var slider = e.data;
         var cache = slider.cache;
-        var className = slider.className;
 
         cache.leave = true;
 
         if (!cache.dragging
-            || className.hover !== className.dragging
+            || slider.hoverClass !== slider.draggingClass
         ) {
-            slider.element.removeClass(className.hover);
+            slider.element.removeClass(slider.hoverClass);
         }
     }
 

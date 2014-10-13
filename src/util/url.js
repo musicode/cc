@@ -63,15 +63,32 @@ define(function (require, exports, module) {
     /**
      * 获取当前网页的 origin（可在现代浏览器控制台输入 location.origin）
      *
+     * @param {?string} url
      * @return {string}
      */
-    exports.getOrigin = function () {
+    exports.getOrigin = function (url) {
 
-        var location = window.location;
+        if (!url) {
+            url = document.URL;
+        }
 
-        return location.origin
-             ? location.origin
-             : location.protocol + '//' + location.host;
+        return exports.parse(url).origin;
+
+    };
+
+    exports.parse = function (url) {
+
+        var link = document.createElement('a');
+        link.href = url;
+
+        var index = url.indexOf('?');
+        var origin = link.protocol + '//' + link.host;
+
+        return {
+            origin: origin,
+            pathname: index !== -1 ? url.substring(origin.length, index) : '',
+            search: link.search
+        };
     };
 
 });

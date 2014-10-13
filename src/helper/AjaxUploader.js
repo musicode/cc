@@ -19,6 +19,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var lifeCycle = require('cobble/function/lifeCycle');
+
     /**
      * 使用 HTML5 ajax 上传
      *
@@ -32,23 +34,27 @@ define(function (require, exports, module) {
      * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                            [ 'jpg', 'png' ]
+     * @property {boolean=} options.useChunk 是否使用分片上传，默认为 false
+     * @property {number=} options.chunkSize 分片大小
      *
      * @property {Function=} options.onFileChange
      * @property {function(Object)=} options.onUploadStart
      * @property {function(Object)=} options.onUploadProgress
      * @property {function(Object)=} options.onUploadSuccess
+     * @property {function(Object)=} options.onChunkUploadSuccess
      * @property {function(Object)=} options.onUploadError
      * @property {function(Object)=} options.onUploadComplete
      */
     function AjaxUploader(options) {
-        $.extend(this, AjaxUploader.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
 
     AjaxUploader.prototype = {
 
         constructor: AjaxUploader,
+
+        type: 'AjaxUploader',
 
         /**
          * 初始化元素和事件
@@ -77,6 +83,11 @@ define(function (require, exports, module) {
                 element = me.element = input;
             }
 
+            // 用一个 form 元素包着，便于重置
+            var form = me.form = $('<form></form>');
+            element.replaceWith(form);
+            form.append(element);
+
             // 完善元素属性
             var properties = { };
 
@@ -85,23 +96,20 @@ define(function (require, exports, module) {
             }
 
             if (me.multiple) {
-                properties.multiple = 'multiple';
+                properties.multiple = true;
             }
 
             element.prop(properties);
 
-            var onChange = function () {
-                setFiles(me, element.prop('files'));
-                if (typeof me.onFileChange === 'function') {
-                    me.onFileChange();
+            element.on(
+                'change' + namespace,
+                function () {
+                    setFiles(me, element.prop('files'));
+                    if ($.isFunction(me.onFileChange)) {
+                        me.onFileChange();
+                    }
                 }
-            };
-
-            me.cache = {
-                onChange: onChange
-            };
-
-            element.change(onChange);
+            );
         },
 
         /**
@@ -121,56 +129,90 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 上传文件
+         * 设置上传地址
          *
-         * @param {Object=} data 需要一起上传的数据
+         * @param {string} action
          */
-        upload: function (data) {
+        setAction: function (action) {
+            this.action = action;
+        },
+
+        /**
+         * 设置上传数据
+         *
+         * @param {Object} data 需要一起上传的数据
+         */
+        setData: function (data) {
+            $.extend(this.data, data);
+        },
+
+        /**
+         * 重置
+         */
+        reset: function () {
+            // 避免出现停止后选择相同文件，不触发 change 事件的问题
+            this.form[0].reset();
+        },
+
+        /**
+         * 上传文件
+         */
+        upload: function (fileItem) {
 
             var me = this;
 
-            var fileItem = getCurrentFileItem(me);
-            if (!fileItem || fileItem.status !== AjaxUploader.STATUS_WAITING) {
+            var validStatus = me.useChunk
+                            ? AjaxUploader.STATUS_UPLOADING
+                            : AjaxUploader.STATUS_WAITING;
+
+            fileItem = fileItem || getCurrentFileItem(me);
+            if (!fileItem || fileItem.status > validStatus) {
                 return;
             }
 
-            var formData = new FormData();
-            formData.append(
-                me.fileName,
-                fileItem.nativeFile
-            );
+            var xhr = new XMLHttpRequest();
+            fileItem.xhr = xhr;
 
             $.each(
-                $.extend({ }, me.data, data),
-                function (key, value) {
-                    formData.append(key, value);
+                xhrEventHandler,
+                function (index, item) {
+                    xhr['on' + item.type] = function (e) {
+                        item.handler(me, e);
+                    };
                 }
             );
 
-            var xhr = new XMLHttpRequest();
-            me.cache.xhr = xhr;
+            $.each(
+                uploadEventHandler,
+                function (index, item) {
+                    xhr.upload['on' + item.type] = function (e) {
+                        item.handler(me, e);
+                    };
+                }
+            );
 
-            $.each(eventHandler, function (index, item) {
-                xhr['on' + item.type] = function (e) {
-                    item.handler(me, e);
-                };
-            });
+            xhr.open('post', me.action, true);
 
-            xhr.open('POST', me.action, true);
-            xhr.send(formData);
+            if (me.useChunk) {
+                uploadChunk(me, fileItem);
+            }
+            else {
+                uploadFile(me, fileItem);
+            }
         },
 
         /**
          * 停止上传
          */
         stop: function () {
-            var fileItem = getCurrentFileItem(this);
+
+            var me = this;
+            var fileItem = getCurrentFileItem(me);
             if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
-                var xhr = this.cache.xhr;
-                if (xhr) {
-                    xhr.abort();
-                }
+                fileItem.xhr.abort();
             }
+
+            me.reset();
         },
 
         /**
@@ -191,14 +233,17 @@ define(function (require, exports, module) {
          * 销毁对象
          */
         dispose: function () {
+
             var me = this;
 
-            me.stop();
-            me.element.off('change', me.cache.onChange);
+            lifeCycle.dispose(me);
 
-            me.cache =
+            me.stop();
+            me.element.off(namespace);
+
             me.element =
             me.fileQueue = null;
+
         }
     };
 
@@ -209,6 +254,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     AjaxUploader.defaultOptions = {
+        data: { },
         multiple: false,
         fileName: 'Filedata',
         ignoreError: false
@@ -253,6 +299,14 @@ define(function (require, exports, module) {
      * @type {number}
      */
     AjaxUploader.ERROR_CANCEL = 0;
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_helper_ajaxuploader';
 
     /**
      * ext -> mimeType
@@ -315,6 +369,8 @@ define(function (require, exports, module) {
         asf     : 'video/x-ms-asf',
         wmv     : 'video/x-ms-wmv',
         avi     : 'video/x-msvideo',
+        rm      : 'video/vnd.rn-realvideo',
+        rmvb    : 'video/vnd.rn-realvideo',
 
         jar     : 'application/java-archive',
         war     : 'application/java-archive',
@@ -371,13 +427,65 @@ define(function (require, exports, module) {
         pptx    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     };
 
+    function uploadFile(uploader, fileItem) {
+
+        var formData = new FormData();
+
+        $.each(
+            uploader.data,
+            function (key, value) {
+                formData.append(key, value);
+            }
+        );
+
+        formData.append(
+            uploader.fileName,
+            fileItem.nativeFile
+        );
+
+        fileItem.xhr.send(formData);
+    }
+
+    function uploadChunk(uploader, fileItem) {
+
+        var file = fileItem.nativeFile;
+
+        var chunkInfo = fileItem.chunk;
+        if (!chunkInfo) {
+            chunkInfo =
+            fileItem.chunk = { index: 0, uploaded: 0 };
+        }
+
+        var chunkIndex = chunkInfo.index;
+
+        var chunkSize = uploader.chunkSize;
+        var start = chunkSize * chunkIndex;
+        var end = chunkSize * (chunkIndex + 1);
+        if (end > file.size) {
+            end = file.size;
+        }
+
+        // 正在上传分片的大小
+        chunkInfo.uploading = end - start;
+
+        var range = 'bytes ' + (start + 1) + '-' + end + '/' + file.size;
+
+        var xhr = fileItem.xhr;
+
+        xhr.setRequestHeader('Content-Type', '');
+        xhr.setRequestHeader('X_FILENAME', encodeURIComponent(file.name));
+        xhr.setRequestHeader('Content-Range', range);
+
+        xhr.send(file.slice(start, end));
+    }
+
     /**
      * 事件处理函数
      *
      * @inner
      * @type {Object}
      */
-    var eventHandler = {
+    var xhrEventHandler = {
 
         uploadStart: {
             type: 'loadstart',
@@ -386,22 +494,9 @@ define(function (require, exports, module) {
                 var fileItem = getCurrentFileItem(uploader);
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
 
-                if (typeof uploader.onUploadStart === 'function') {
+                if ($.isFunction(uploader.onUploadStart)) {
                     uploader.onUploadStart({
                         fileItem: fileItem
-                    });
-                }
-            }
-        },
-
-        uploadProgress: {
-            type: 'progress',
-            handler: function (uploader, e) {
-                if (typeof uploader.onUploadProgress === 'function') {
-                    uploader.onUploadProgress({
-                        fileItem: getCurrentFileItem(uploader),
-                        uploaded: e.loaded,
-                        total: e.total
                     });
                 }
             }
@@ -412,16 +507,37 @@ define(function (require, exports, module) {
             handler: function (uploader, e) {
 
                 var fileItem = getCurrentFileItem(uploader);
+                var data = {
+                    fileItem: fileItem,
+                    responseText: fileItem.xhr.responseText
+                };
+
+                var chunkInfo = fileItem.chunk;
+                if (chunkInfo) {
+
+                    chunkInfo.uploaded += chunkInfo.uploading;
+
+                    if (chunkInfo.uploaded < fileItem.file.size) {
+                        // 分片上传成功
+                        if ($.isFunction(uploader.onChunkUploadSuccess)) {
+                            uploader.onChunkUploadSuccess(data);
+                        }
+
+                        chunkInfo.index++;
+                        uploader.upload();
+
+                        return;
+                    }
+                }
+
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
 
-                if (typeof uploader.onUploadSuccess === 'function') {
-                    uploader.onUploadSuccess({
-                        fileItem: fileItem,
-                        responseText: e.target.responseText
-                    });
+                if ($.isFunction(uploader.onUploadSuccess)) {
+                    uploader.onUploadSuccess(data);
                 }
 
                 uploadComplete(uploader, fileItem);
+
             }
         },
 
@@ -432,7 +548,7 @@ define(function (require, exports, module) {
                 var fileItem = getCurrentFileItem(uploader);
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
-                if (typeof uploader.onUploadError === 'function') {
+                if ($.isFunction(uploader.onUploadError)) {
                     uploader.onUploadError({
                         fileItem: fileItem,
                         errorCode: errorCode
@@ -446,10 +562,44 @@ define(function (require, exports, module) {
         uploadStop: {
             type: 'abort',
             handler: function (uploader, e) {
-                eventHandler.uploadError
-                            .handler(uploader, e, AjaxUploader.ERROR_CANCEL);
+                xhrEventHandler
+                .uploadError
+                .handler(uploader, e, AjaxUploader.ERROR_CANCEL);
             }
         }
+    };
+
+    var uploadEventHandler = {
+
+        uploadProgress: {
+            type: 'progress',
+            handler: function (uploader, e) {
+                if ($.isFunction(uploader.onUploadProgress)) {
+
+                    var fileItem = getCurrentFileItem(uploader);
+
+                    var total = fileItem.file.size;
+                    var uploaded = e.loaded;
+
+                    var chunkInfo = fileItem.chunk;
+                    if (chunkInfo) {
+                        uploaded += chunkInfo.uploaded;
+                    }
+
+                    var percent = uploaded / (total || 1);
+                    percent = parseInt(100 * percent, 10) + '%';
+
+                    uploader.onUploadProgress({
+                        fileItem: fileItem,
+                        uploaded: uploaded,
+                        total: total,
+                        percent: percent
+                    });
+                }
+            }
+        }
+
+
     };
 
     /**
@@ -461,17 +611,27 @@ define(function (require, exports, module) {
      */
     function uploadComplete(uploader, fileItem) {
 
-        var cache = uploader.cache;
-        var xhr = cache.xhr;
-
+        var xhr = fileItem.xhr;
         if (xhr) {
-            $.each(eventHandler, function (index, item) {
-                xhr['on' + item.type] = null;
-            });
-            cache.xhr = null;
+
+            $.each(
+                xhrEventHandler,
+                function (index, item) {
+                    xhr['on' + item.type] = null;
+                }
+            );
+
+            $.each(
+                uploadEventHandler,
+                function (index, item) {
+                    xhr.upload['on' + item.type] = null;
+                }
+            );
+
+            delete fileItem.xhr;
         }
 
-        if (typeof uploader.onUploadComplete === 'function') {
+        if ($.isFunction(uploader.onUploadComplete)) {
             uploader.onUploadComplete({
                 fileItem: fileItem
             });
@@ -526,7 +686,7 @@ define(function (require, exports, module) {
     function getCurrentFileItem(uploader) {
         var fileQueue = uploader.fileQueue;
         var index = fileQueue.index;
-        if (fileQueue.files && typeof index === 'number') {
+        if (fileQueue.files && $.type(index) === 'number') {
             return fileQueue.files[index];
         }
     }
@@ -540,12 +700,20 @@ define(function (require, exports, module) {
      * @return {string}
      */
     function formatAccept(accept) {
+
         var result = [ ];
-        $.each(accept, function (index, name) {
-            if (ext2MimeType[name]) {
-                result.push(ext2MimeType[name]);
+
+        $.each(
+            accept,
+            function (index, name) {
+                if (ext2MimeType[name]) {
+                    result.push(
+                        ext2MimeType[name]
+                    );
+                }
             }
-        });
+        );
+
         return result.join(',');
     }
 
@@ -557,10 +725,11 @@ define(function (require, exports, module) {
      * @return {Object}
      */
     function formatFile(file) {
+
         var name = file.name;
-        var segments = name.split('.');
-        var type = segments.length > 0
-                 ? segments.pop().toLowerCase()
+        var parts = name.split('.');
+        var type = parts.length > 0
+                 ? parts.pop().toLowerCase()
                  : '';
 
         return {

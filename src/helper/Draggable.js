@@ -22,16 +22,17 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var page = require('../function/page');
-    var restrain = require('../function/restrain');
-    var position = require('../function/position');
-    var contains = require('../function/contains');
-    var pageScrollLeft = require('../function/pageScrollLeft');
-    var pageScrollTop = require('../function/pageScrollTop');
-    var enableSelection = require('../function/enableSelection');
-    var disableSelection = require('../function/disableSelection');
+    var lifeCycle = require('cobble/function/lifeCycle');
+    var page = require('cobble/function/page');
+    var restrain = require('cobble/function/restrain');
+    var position = require('cobble/function/position');
+    var contains = require('cobble/function/contains');
+    var pageScrollLeft = require('cobble/function/pageScrollLeft');
+    var pageScrollTop = require('cobble/function/pageScrollTop');
+    var enableSelection = require('cobble/function/enableSelection');
+    var disableSelection = require('cobble/function/disableSelection');
 
-    var instance = require('../util/instance');
+    var instance = require('cobble/util/instance');
 
     /**
      * 拖拽
@@ -44,9 +45,8 @@ define(function (require, exports, module) {
      * @property {string=} options.axis 限制方向，可选值包括 x y
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
      *
-     * @property {Object} options.selector 选择器
-     * @property {string=} options.selector.handle 触发拖拽的区域
-     * @property {string=} options.selector.cancel 不触发拖拽的区域
+     * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
+     * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
      * @property {Function} options.onDragStart 开始拖拽
      * @argument {Object} options.onDragStart.point 坐标点
@@ -58,13 +58,14 @@ define(function (require, exports, module) {
      * @argument {Object} options.onDragStart.point 坐标点
      */
     function Draggable(options) {
-        $.extend(this, Draggable.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Draggable.prototype = {
 
         constructor: Draggable,
+
+        type: 'Draggable',
 
         /**
          * 初始化
@@ -131,6 +132,8 @@ define(function (require, exports, module) {
 
             var me = this;
 
+            lifeCycle.dispose(me);
+
             me.element.off(namespace);
 
             me.cache =
@@ -148,8 +151,6 @@ define(function (require, exports, module) {
     Draggable.defaultOptions = {
 
         container: page(),
-
-        selector: { },
 
         rect: function () {
 
@@ -296,12 +297,11 @@ define(function (require, exports, module) {
         var target = e.target;
         var element = draggable.element;
 
-        var selector = draggable.selector;
-        var handle = selector.handle;
-        var cancel = selector.cancel;
+        var handle = draggable.handleSelector;
+        var cancel = draggable.cancelSelector;
 
-        if (handle && !hitTarget(element.find(handle), target)
-            || cancel && hitTarget(element.find(cancel), target)
+        if (handle && !hitTarget(element, handle, target)
+            || cancel && hitTarget(element, cancel, target)
         ) {
             return;
         }
@@ -442,15 +442,22 @@ define(function (require, exports, module) {
      * container 只要有一个命中就返回 true
      *
      * @inner
-     * @param {jQuery} container
+     * @param {jQuery} element
+     * @param {string|Array.<string>} selector
      * @param {jQuery|HTMLElement} target
      * @return {boolean}
      */
-    function hitTarget(container, target) {
+    function hitTarget(element, selector, target) {
 
         var result = false;
 
-        container.each(
+        if ($.isArray(selector)) {
+            selector = selector.join(',');
+        }
+
+        element
+            .find(selector)
+            .each(
             function () {
                 if (result = contains(this, target)) {
                     return false;

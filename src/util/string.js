@@ -54,7 +54,7 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 计算字符串的 UTF-8 长度
+     * 计算字符串的 UTF-8 长度，如 ”哈哈” 长度为 4
      *
      * 英文算 1 个字符
      * 中文算 2 个字符

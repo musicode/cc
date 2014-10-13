@@ -32,7 +32,7 @@ define(function (require, exports, module) {
 
 
     exports.onend = event
-                  ? function (element, hanlder) {
+                  ? function (element, handler) {
                         element.one(event, handler);
                     }
                   : function (element, handler) {
