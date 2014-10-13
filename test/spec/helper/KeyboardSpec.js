@@ -47,8 +47,8 @@ define(function (require, exports, module) {
 
             press(13);
 
-            expect(onKeyDown.calls.count()).toBe(2);
-            expect(onKeyUp.calls.count()).toBe(2);
+            expect(onKeyDown.callCount).toBe(2);
+            expect(onKeyUp.callCount).toBe(2);
 
         });
 
@@ -65,17 +65,17 @@ define(function (require, exports, module) {
 
             down(32);
 
-            expect(onLongPressStart.calls.count()).toBe(0);
-            expect(onLongPressEnd.calls.count()).toBe(0);
+            expect(onLongPressStart.callCount).toBe(0);
+            expect(onLongPressEnd.callCount).toBe(0);
 
             down(32);
 
-            expect(onLongPressStart.calls.count()).toBe(1);
-            expect(onLongPressEnd.calls.count()).toBe(0);
+            expect(onLongPressStart.callCount).toBe(1);
+            expect(onLongPressEnd.callCount).toBe(0);
 
             press(32);
 
-            expect(onLongPressEnd.calls.count()).toBe(1);
+            expect(onLongPressEnd.callCount).toBe(1);
         });
 
         it('action', function () {
@@ -95,9 +95,9 @@ define(function (require, exports, module) {
 
             press(13);
 
-            expect(onEnter.calls.count()).toBe(1);
-            expect(onCtrlEnter.calls.count()).toBe(0);
-            expect(onShiftCtrlEnter.calls.count()).toBe(0);
+            expect(onEnter.callCount).toBe(1);
+            expect(onCtrlEnter.callCount).toBe(0);
+            expect(onShiftCtrlEnter.callCount).toBe(0);
 
 
             doc.trigger({
@@ -106,9 +106,9 @@ define(function (require, exports, module) {
                 ctrlKey: true
             });
 
-            expect(onEnter.calls.count()).toBe(1);
-            expect(onCtrlEnter.calls.count()).toBe(1);
-            expect(onShiftCtrlEnter.calls.count()).toBe(0);
+            expect(onEnter.callCount).toBe(1);
+            expect(onCtrlEnter.callCount).toBe(1);
+            expect(onShiftCtrlEnter.callCount).toBe(0);
 
             up(13);
 
@@ -119,9 +119,9 @@ define(function (require, exports, module) {
                 shiftKey: true
             });
 
-            expect(onEnter.calls.count()).toBe(1);
-            expect(onCtrlEnter.calls.count()).toBe(1);
-            expect(onShiftCtrlEnter.calls.count()).toBe(1);
+            expect(onEnter.callCount).toBe(1);
+            expect(onCtrlEnter.callCount).toBe(1);
+            expect(onShiftCtrlEnter.callCount).toBe(1);
 
             up(13);
         });

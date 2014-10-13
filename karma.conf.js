@@ -1,7 +1,8 @@
 // Karma configuration
-// Generated on Sun Mar 23 2014 21:51:13 GMT+0800 (中国标准时间)
+// Generated on Mon Oct 13 2014 19:25:14 GMT+0800 (CST)
 
 module.exports = function(config) {
+
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -15,8 +16,8 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
+        'http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js',
         'test/main.js',
-        'http://s1.bdstatic.com/r/www/cache/static/jquery/jquery-1.10.2.min_f2fb5194.js',
         {
             pattern: 'src/*/*.js',
             included: false
@@ -30,14 +31,12 @@ module.exports = function(config) {
 
     // list of files to exclude
     exclude: [
-      'src/*.swf'
     ],
 
 
     // preprocess matching files before serving them to the browser
     // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
     preprocessors: {
-
     },
 
 
@@ -66,7 +65,7 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome'],//, 'Firefox', 'IE', 'Opera'],
+    browsers: ['Chrome'],
 
 
     // Continuous Integration mode

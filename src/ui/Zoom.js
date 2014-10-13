@@ -38,6 +38,10 @@ define(function (require, exports, module) {
 
             // 缩放尺寸
             var scaleImage = me.element;
+            if (scaleImage.is(':hidden')) {
+                throw new Error('Zoom element must be visible!');
+            }
+
             var scaleWidth = scaleImage.width();
             var scaleHeight = scaleImage.height();
 

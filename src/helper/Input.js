@@ -147,6 +147,7 @@ define(function (require, exports, module) {
                 onLongPressEnd: function (e) {
 
                     cache.longPressing = false;
+                    call(me.onLongPressEnd, scope, e);
 
                     if (isCharKey && value !== element.val()) {
                         triggerChange(me);

@@ -8,9 +8,11 @@
     "doc": "doc"
   },
   "devDependencies": {
-    "requirejs": "^2.1.11",
-    "karma": "^0.12.1",
-    "karma-jasmine": "^0.2.2"
+    "jasmine": "^2.0.1",
+    "karma": "^0.12.24",
+    "karma-chrome-launcher": "^0.1.5",
+    "karma-requirejs": "^0.2.2",
+    "requirejs": "^2.1.15"
   },
   "scripts": {
     "test": ""

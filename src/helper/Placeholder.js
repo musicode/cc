@@ -69,8 +69,13 @@ define(function (require, exports, module) {
             // 在 removeAttr 之前取值
             var value = me.value;
             if (value == null) {
+
+                if (customAttr) {
+                    value = element.attr(customAttr);
+                }
+
                 value =
-                me.value = element.attr(customAttr) || '';
+                me.value = value || '';
             }
 
             if (supportPlaceholder) {

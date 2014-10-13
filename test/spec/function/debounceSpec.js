@@ -19,9 +19,9 @@ define(function (require, exports, module) {
                         end = +(new Date());
 
                         // 允许误差小于 5
-                        console.log(end - start - wait)
                         expect(Math.abs(end - start - wait) < 5).toBe(true);
                         expect(counter).toBe(1);
+
                         done();
                     },
                     wait

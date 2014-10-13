@@ -53,8 +53,8 @@ define(function (require, exports, module) {
 
             press(13);
 
-            expect(onKeyDown.calls.count()).toBe(2);
-            expect(onKeyUp.calls.count()).toBe(2);
+            expect(onKeyDown.callCount).toBe(2);
+            expect(onKeyUp.callCount).toBe(2);
 
         });
 
@@ -76,20 +76,20 @@ define(function (require, exports, module) {
 
             down(13);
 
-            expect(onEnter.calls.count()).toBe(1);
-            expect(onLongPressStart.calls.count()).toBe(0);
-            expect(onLongPressEnd.calls.count()).toBe(0);
+            expect(onEnter.callCount).toBe(1);
+            expect(onLongPressStart.callCount).toBe(0);
+            expect(onLongPressEnd.callCount).toBe(0);
 
             down(13);
 
-            expect(onEnter.calls.count()).toBe(2);
-            expect(onLongPressStart.calls.count()).toBe(1);
-            expect(onLongPressEnd.calls.count()).toBe(0);
+            expect(onEnter.callCount).toBe(2);
+            expect(onLongPressStart.callCount).toBe(1);
+            expect(onLongPressEnd.callCount).toBe(0);
 
             press(13);
 
-            expect(onEnter.calls.count()).toBe(3);
-            expect(onLongPressEnd.calls.count()).toBe(1);
+            expect(onEnter.callCount).toBe(3);
+            expect(onLongPressEnd.callCount).toBe(1);
         });
 
 

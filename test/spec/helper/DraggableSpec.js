@@ -43,7 +43,7 @@ define(function (require, exports, module) {
                 clientX: 100,
                 clientY: 200
             });
-            expect(onDragStart.calls.count()).toBe(0);
+            expect(onDragStart.callCount).toBe(0);
 
             doc.trigger({
                 type: 'mousemove',
@@ -51,16 +51,16 @@ define(function (require, exports, module) {
                 clientY: 200
             });
 
-            expect(onDragStart.calls.count()).toBe(0);
-            expect(onDrag.calls.count()).toBe(0);
+            expect(onDragStart.callCount).toBe(0);
+            expect(onDrag.callCount).toBe(0);
 
             doc.trigger({
                 type: 'mousemove',
                 clientX: 300,
                 clientY: 200
             });
-            expect(onDragStart.calls.count()).toBe(1);
-            expect(onDrag.calls.count()).toBe(1);
+            expect(onDragStart.callCount).toBe(1);
+            expect(onDrag.callCount).toBe(1);
 
             doc.trigger({
                 type: 'mousemove',
@@ -72,13 +72,13 @@ define(function (require, exports, module) {
                 clientX: 500,
                 clientY: 400
             });
-            expect(onDragStart.calls.count()).toBe(1);
-            expect(onDrag.calls.count()).toBe(3);
-            expect(onDragEnd.calls.count()).toBe(0);
+            expect(onDragStart.callCount).toBe(1);
+            expect(onDrag.callCount).toBe(3);
+            expect(onDragEnd.callCount).toBe(0);
 
             doc.trigger('mouseup');
-            expect(onDrag.calls.count()).toBe(3);
-            expect(onDragEnd.calls.count()).toBe(1);
+            expect(onDrag.callCount).toBe(3);
+            expect(onDragEnd.callCount).toBe(1);
         });
 
         it('handle', function () {

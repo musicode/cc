@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
         var doc = $(document);
         var instance;
-        var source;
         var element;
+        var layer;
 
         beforeEach(function () {
 
@@ -15,22 +15,20 @@ define(function (require, exports, module) {
             + '<input type="text" />'
             + '<div><span>xxxx</span></div>';
 
-            source = $('input');
-            element = $('div');
-        });
-
-        afterEach(function () {
-            instance.dispose();
+            element = $('input');
+            layer = $('div');
         });
 
         it('showByClick, hideByClick', function () {
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'click',
-                    hide: 'click'
+                show: {
+                    trigger: 'click'
+                },
+                hide: {
+                    trigger: 'click'
                 }
             });
 
@@ -39,77 +37,90 @@ define(function (require, exports, module) {
             doc.click();
             expect(instance.hidden).toBe(true);
 
-            source.click();
+            element.click();
             expect(instance.hidden).toBe(false);
+
+            instance.dispose();
 
         });
 
         it('showByOver, hideByOut', function () {
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'over',
-                    hide: 'out'
+                show: {
+                    trigger: 'over'
+                },
+                hide: {
+                    trigger: 'out'
                 }
             });
 
-            expect(instance.hidden).toBe(false);
-
-            source.mouseleave();
-            expect(instance.hidden).toBe(true);
-
-            source.mouseenter();
-            expect(instance.hidden).toBe(false);
-        });
-
-        it('showByFocus, hideByBlur', function () {
-
-            element.hide();
-
-            instance = new Popup({
-                element: element,
-                source: source,
-                trigger: {
-                    show: 'focus',
-                    hide: 'blur'
-                }
-            });
-
-            source.focus();
-            expect(instance.hidden).toBe(false);
-
-            source.blur();
-            expect(instance.hidden).toBe(true);
-
-        });
-
-        it('multi trigger', function () {
-
-            element.hide();
-
-            instance = new Popup({
-                element: element,
-                source: source,
-                trigger: {
-                    show: 'click,over',
-                    hide: 'click,out'
-                }
-            });
-
-            source.mouseenter();
-            expect(instance.hidden).toBe(false);
-
-            doc.click();
-            expect(instance.hidden).toBe(true);
-
-            source.click();
             expect(instance.hidden).toBe(false);
 
             element.mouseleave();
             expect(instance.hidden).toBe(true);
 
+            element.mouseenter();
+            expect(instance.hidden).toBe(false);
+
+            instance.dispose();
+        });
+
+        it('showByFocus, hideByBlur', function () {
+
+            layer.hide();
+
+            instance = new Popup({
+                layer: layer,
+                element: element,
+                show: {
+                    trigger: 'focus'
+                },
+                hide: {
+                    trigger: 'blur'
+                }
+            });
+
+            element.focus();
+            expect(instance.hidden).toBe(false);
+
+            element.blur();
+            expect(instance.hidden).toBe(true);
+
+            instance.dispose();
+
+        });
+
+        it('multi trigger', function () {
+
+            layer.hide();
+
+            instance = new Popup({
+                layer: layer,
+                element: element,
+                show: {
+                    trigger: 'click,over'
+                },
+                hide: {
+                    trigger: 'click,out'
+                }
+            });
+
+            element.mouseenter();
+            expect(instance.hidden).toBe(false);
+
+            doc.click();
+            expect(instance.hidden).toBe(true);
+
+            element.click();
+            expect(instance.hidden).toBe(false);
+
+            layer.mouseleave();
+            expect(instance.hidden).toBe(true);
+
+            instance.dispose();
         });
 
         it('delay - over/out', function (done) {
@@ -117,30 +128,30 @@ define(function (require, exports, module) {
             var showDelay = 50;
             var hideDelay = 100;
 
-            element.hide();
+            layer.hide();
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'over',
-                    hide: 'out'
+                show: {
+                    trigger: 'over',
+                    delay: showDelay
                 },
-                delay: {
-                    show: showDelay,
-                    hide: hideDelay
+                hide: {
+                    trigger: 'out',
+                    delay: hideDelay
                 }
             });
 
-            source.mouseenter();
+            element.mouseenter();
             expect(instance.hidden).toBe(true);
 
-            source.mouseleave();
+            element.mouseleave();
             setTimeout(
                 function () {
 
                     expect(instance.hidden).toBe(true);
-                    source.mouseenter();
+                    element.mouseenter();
 
                     setTimeout(
                         function () {
@@ -148,19 +159,20 @@ define(function (require, exports, module) {
 
                             expect(instance.hidden).toBe(false);
 
-                            source.mouseleave();
+                            element.mouseleave();
                             expect(instance.hidden).toBe(false);
 
-                            source.mouseenter();
+                            element.mouseenter();
                             setTimeout(
                                 function () {
                                     expect(instance.hidden).toBe(false);
 
-                                    source.mouseleave();
+                                    element.mouseleave();
 
                                     setTimeout(
                                         function () {
                                             expect(instance.hidden).toBe(true);
+                                            instance.dispose();
                                             done();
                                         },
                                         hideDelay + 10
@@ -187,22 +199,22 @@ define(function (require, exports, module) {
             var showDelay = 50;
             var hideDelay = 100;
 
-            element.hide();
+            layer.hide();
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'click',
-                    hide: 'click'
+                show: {
+                    trigger: 'click',
+                    delay: showDelay
                 },
-                delay: {
-                    show: showDelay,
-                    hide: hideDelay
+                hide: {
+                    trigger: 'click',
+                    delay: hideDelay
                 }
             });
 
-            source.click();
+            element.click();
             expect(instance.hidden).toBe(true);
 
             setTimeout(
@@ -215,6 +227,7 @@ define(function (require, exports, module) {
                     setTimeout(
                         function () {
                             expect(instance.hidden).toBe(true);
+                            instance.dispose();
                             done();
                         },
                         hideDelay + 10
@@ -229,14 +242,16 @@ define(function (require, exports, module) {
 
             var i = 0;
 
-            element.hide();
+            layer.hide();
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'over',
-                    hide: 'out'
+                show: {
+                    trigger: 'over'
+                },
+                hide: {
+                    trigger: 'out'
                 },
                 onBeforeShow: function () {
                     expect(i).toBe(0);
@@ -260,75 +275,82 @@ define(function (require, exports, module) {
                 }
             });
 
-            source.mouseenter();
-            source.mouseleave();
+            element.mouseenter();
+            element.mouseleave();
 
             expect(i).toBe(2);
+
+            instance.dispose();
         });
 
         it('prevent', function () {
 
-            element.hide();
+            layer.hide();
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
-                trigger: {
-                    show: 'over',
-                    hide: 'out'
+                show: {
+                    trigger: 'over'
+                },
+                hide: {
+                    trigger: 'out'
                 },
                 onBeforeShow: function () {
                     return false;
                 }
             });
 
-            source.mouseenter();
+            element.mouseenter();
             expect(instance.hidden).toBe(true);
 
             instance.onBeforeShow = null;
 
-            source.mouseleave();
+            element.mouseleave();
             expect(instance.hidden).toBe(true);
 
-            source.mouseenter();
+            element.mouseenter();
             expect(instance.hidden).toBe(false);
 
             instance.onBeforeHide = function () {
                 return false;
             };
 
-            source.mouseleave();
+            element.mouseleave();
             expect(instance.hidden).toBe(false);
 
             instance.onBeforeHide = null;
 
-            source.mouseenter();
-            source.mouseleave();
+            element.mouseenter();
+            element.mouseleave();
             expect(instance.hidden).toBe(true);
+
+            instance.dispose();
         });
 
         it('scope', function () {
 
-            element.hide();
+            layer.hide();
 
             var scope = { };
 
             instance = new Popup({
+                layer: layer,
                 element: element,
-                source: source,
                 scope: scope,
-                trigger: {
-                    show: 'over',
-                    hide: 'out'
-                },
-                animation: {
-                    show: function () {
-                        expect(this).toBe(scope);
-                    },
-                    hide: function () {
+                show: {
+                    trigger: 'over',
+                    animation: function () {
                         expect(this).toBe(scope);
                     }
                 },
+                hide: {
+                    trigger: 'out',
+                    animation: function () {
+                        expect(this).toBe(scope);
+                    }
+                },
+
                 onBeforeShow: function () {
                     expect(this).toBe(scope);
                 },
@@ -343,8 +365,10 @@ define(function (require, exports, module) {
                 }
             });
 
-            source.mouseenter();
-            source.mouseleave();
+            element.mouseenter();
+            element.mouseleave();
+
+            instance.dispose();
 
         });
 

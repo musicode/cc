@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var getDecimalLength = require('./getDecimalLength');
+    var float2Int = require('./float2Int');
 
     /**
      * 加法
@@ -22,11 +23,10 @@ define(function (require, exports, module) {
                         getDecimalLength(b)
                     );
 
-        var factor = length > 0
-                   ? 10 * length
-                   : 1;
+        a = float2Int(a, length);
+        b = float2Int(b, length);
 
-        return (a * factor + b * factor) / factor;
+        return (a + b) / Math.pow(10, length);
 
     };
 

@@ -38,17 +38,16 @@ define(function (require, exports, module) {
      * @property {number=} options.chunkSize 分片大小
      *
      * @property {Function=} options.onFileChange
-     * @property {function(Object)=} options.onUploadStart
-     * @property {function(Object)=} options.onUploadProgress
-     * @property {function(Object)=} options.onUploadSuccess
-     * @property {function(Object)=} options.onChunkUploadSuccess
-     * @property {function(Object)=} options.onUploadError
-     * @property {function(Object)=} options.onUploadComplete
+     * @property {Function(Object)=} options.onUploadStart
+     * @property {Function(Object)=} options.onUploadProgress
+     * @property {Function(Object)=} options.onUploadSuccess
+     * @property {Function(Object)=} options.onChunkUploadSuccess
+     * @property {Function(Object)=} options.onUploadError
+     * @property {Function(Object)=} options.onUploadComplete
      */
     function AjaxUploader(options) {
         return lifeCycle.init(this, options);
     }
-
 
     AjaxUploader.prototype = {
 

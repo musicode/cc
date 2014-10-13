@@ -28,9 +28,6 @@ define(function (require, exports, module) {
             document.body.innerHTML = '<input data-test="' + value + '"/>';
             element = $(':text');
         });
-        afterEach(function () {
-            instance.dispose();
-        });
 
         it('input placeholder', function () {
 
@@ -38,7 +35,7 @@ define(function (require, exports, module) {
                 element: element
             });
 
-            expect(instance.get()).toBe(value);
+            instance.dispose();
         });
 
         it('native', function () {
@@ -48,36 +45,15 @@ define(function (require, exports, module) {
             element = $(':text');
             instance = new Placeholder({
                 element: element,
-                attribute: {
-                    placeholder: 'placeholder'
-                }
+                nativeFirst: false,
+                placeholderAttr: 'placeholder'
             });
 
-            expect(instance.get()).toBe(value);
-            expect(element.attr('placeholder')).toBe(undefined);
+            expect(element.prop('placeholder')).toBe('');
+
+            instance.dispose();
         });
 
-        it('simple mode', function () {
-
-            instance = new Placeholder({
-                element: element,
-                simple: true
-            });
-
-            expect(instance.get()).toBe(value);
-
-            element.focus();
-            expect(instance.get()).toBe('');
-
-            element.blur();
-            expect(instance.get()).toBe(value);
-
-            element.focus();
-            element.val('1');
-            element.blur();
-            expect(instance.get()).toBe('');
-            expect(element.val()).toBe('1');
-        });
 
         it('complex mode', function () {
 
@@ -86,19 +62,8 @@ define(function (require, exports, module) {
                 simple: false
             });
 
-            expect(instance.get()).toBe(value);
+            instance.dispose();
 
-            element.focus();
-            expect(instance.get()).toBe('');
-
-            element.blur();
-            expect(instance.get()).toBe(value);
-
-            element.focus();
-            element.val('1');
-            element.blur();
-            expect(instance.get()).toBe('');
-            expect(element.val()).toBe('1');
         });
 
     });
