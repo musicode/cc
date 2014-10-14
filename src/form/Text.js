@@ -6,10 +6,10 @@ define(function (require, exports) {
 
     'use strict';
 
-    var Input = require('cobble/helper/Input');
-    var Placeholder = require('cobble/helper/Placeholder');
+    var Input = require('../helper/Input');
+    var Placeholder = require('../helper/Placeholder');
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 文本输入框构造函数

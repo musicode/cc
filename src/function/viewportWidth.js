@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var viewport = require('cobble/function/viewport');
+    var viewport = require('./viewport');
 
     /**
      * 获得视窗宽度

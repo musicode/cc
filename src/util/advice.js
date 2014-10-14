@@ -15,7 +15,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var around = require('cobble/function/around');
+    var around = require('../function/around');
 
     /**
      * 在方法执行前进行拦截

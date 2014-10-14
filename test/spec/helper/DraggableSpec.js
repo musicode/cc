@@ -88,9 +88,7 @@ define(function (require, exports, module) {
 
             instance = new Draggable({
                 element: element,
-                selector: {
-                    handle: '.header'
-                },
+                handleSelector: '.header',
                 onDragStart: onDragStart
             });
 
@@ -130,9 +128,7 @@ define(function (require, exports, module) {
 
             instance = new Draggable({
                 element: element,
-                selector: {
-                    cancel: '.body'
-                },
+                cancelSelector: '.body',
                 onDragStart: onDragStart
             });
 

@@ -18,9 +18,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var Slider = require('cobble/ui/Slider');
-    var Wheel = require('cobble/helper/Wheel');
+    var lifeCycle = require('../function/lifeCycle');
+    var Slider = require('./Slider');
+    var Wheel = require('../helper/Wheel');
 
     /**
      * 自定义滚动条

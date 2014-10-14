@@ -6,12 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Popup = require('cobble/helper/Popup');
-    var instance = require('cobble/util/instance');
+    var Popup = require('../helper/Popup');
+    var instance = require('../util/instance');
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var offsetParent = require('cobble/function/offsetParent');
-    var pin = require('cobble/function/pin');
+    var lifeCycle = require('../function/lifeCycle');
+    var offsetParent = require('../function/offsetParent');
+    var pin = require('../function/pin');
 
     /**
      * 鼠标右键菜单

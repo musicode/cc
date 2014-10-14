@@ -19,7 +19,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 使用 HTML5 ajax 上传

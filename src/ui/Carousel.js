@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var Switchable = require('cobble/helper/Switchable');
+    var lifeCycle = require('../function/lifeCycle');
+    var Switchable = require('../helper/Switchable');
 
     /**
      * 轮播

@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 复选框的结构通常如下：

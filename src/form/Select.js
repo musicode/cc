@@ -17,9 +17,9 @@ define(function (require, exports, module) {
      * 菜单项 text:  date-text="xxx" 或 innerHTML，优先使用 data-text
      */
 
-    var ComboBox = require('cobble/ui/ComboBox');
+    var ComboBox = require('../ui/ComboBox');
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 下拉菜单

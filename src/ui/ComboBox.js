@@ -12,8 +12,8 @@ define(function (require, exports, module) {
      * 当 onChange 事件触发时，会把所有 data 通过参数传入
      */
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var Popup = require('cobble/helper/Popup');
+    var lifeCycle = require('../function/lifeCycle');
+    var Popup = require('../helper/Popup');
 
     /**
      * 下拉菜单

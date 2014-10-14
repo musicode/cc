@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 文件上传不好完全模拟

@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var instance = require('cobble/util/instance');
+    var instance = require('../util/instance');
 
     /**
      * 获得视窗元素

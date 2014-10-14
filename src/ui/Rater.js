@@ -6,9 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var debounce = require('cobble/function/debounce');
-    var eventOffset = require('cobble/function/eventOffset');
+    var lifeCycle = require('../function/lifeCycle');
+    var debounce = require('../function/debounce');
+    var eventOffset = require('../function/eventOffset');
 
     /**
      * 星级评分

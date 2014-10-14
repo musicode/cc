@@ -6,10 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var offsetParent = require('cobble/function/offsetParent');
-    var imageDimension = require('cobble/function/imageDimension');
-    var instance = require('cobble/util/instance');
+    var lifeCycle = require('../function/lifeCycle');
+    var offsetParent = require('../function/offsetParent');
+    var imageDimension = require('../function/imageDimension');
+    var instance = require('../util/instance');
 
     /**
      *

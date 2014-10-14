@@ -13,11 +13,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    require('cobble/util/supload/supload');
+    require('../util/supload/supload');
 
     var Supload = window.Supload;
 
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 使用 flash 上传

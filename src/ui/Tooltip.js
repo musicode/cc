@@ -48,16 +48,16 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var split = require('cobble/function/split');
-    var position = require('cobble/util/position');
-    var debounce = require('cobble/function/debounce');
-    var pageWidth = require('cobble/function/pageWidth');
-    var pageHeight = require('cobble/function/pageHeight');
-    var offsetParent = require('cobble/function/offsetParent');
+    var split = require('../function/split');
+    var position = require('../util/position');
+    var debounce = require('../function/debounce');
+    var lifeCycle = require('../function/lifeCycle');
+    var pageWidth = require('../function/pageWidth');
+    var pageHeight = require('../function/pageHeight');
+    var offsetParent = require('../function/offsetParent');
 
-    var Popup = require('cobble/helper/Popup');
-    var instance = require('cobble/util/instance');
+    var Popup = require('../helper/Popup');
+    var instance = require('../util/instance');
 
     /**
      * 工具提示

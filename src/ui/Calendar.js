@@ -6,8 +6,8 @@ define(function (require) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var dateUtil = require('cobble/util/date');
+    var lifeCycle = require('../function/lifeCycle');
+    var dateUtil = require('../util/date');
 
     /**
      *

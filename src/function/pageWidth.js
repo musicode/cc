@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var page = require('cobble/function/page');
+    var page = require('./page');
 
     /**
      * 获得网页可滚动宽度

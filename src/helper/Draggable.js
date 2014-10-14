@@ -22,17 +22,17 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var page = require('cobble/function/page');
-    var restrain = require('cobble/function/restrain');
-    var position = require('cobble/function/position');
-    var contains = require('cobble/function/contains');
-    var pageScrollLeft = require('cobble/function/pageScrollLeft');
-    var pageScrollTop = require('cobble/function/pageScrollTop');
-    var enableSelection = require('cobble/function/enableSelection');
-    var disableSelection = require('cobble/function/disableSelection');
+    var page = require('../function/page');
+    var restrain = require('../function/restrain');
+    var position = require('../function/position');
+    var contains = require('../function/contains');
+    var lifeCycle = require('../function/lifeCycle');
+    var pageScrollLeft = require('../function/pageScrollLeft');
+    var pageScrollTop = require('../function/pageScrollTop');
+    var enableSelection = require('../function/enableSelection');
+    var disableSelection = require('../function/disableSelection');
 
-    var instance = require('cobble/util/instance');
+    var instance = require('../util/instance');
 
     /**
      * 拖拽

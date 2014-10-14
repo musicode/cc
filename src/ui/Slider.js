@@ -6,13 +6,13 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var restrain = require('cobble/function/restrain');
-    var contains = require('cobble/function/contains');
-    var position = require('cobble/function/position');
-    var eventOffset = require('cobble/function/eventOffset');
-    var Draggable = require('cobble/helper/Draggable');
-    var Wheel = require('cobble/helper/Wheel');
+    var lifeCycle = require('../function/lifeCycle');
+    var restrain = require('../function/restrain');
+    var contains = require('../function/contains');
+    var position = require('../function/position');
+    var eventOffset = require('../function/eventOffset');
+    var Draggable = require('../helper/Draggable');
+    var Wheel = require('../helper/Wheel');
 
     /**
      * 可滑动组件，类似 html5 的 <input type="range" />

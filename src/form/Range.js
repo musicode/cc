@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Slider = require('cobble/ui/Slider');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var Slider = require('../ui/Slider');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * range 构造函数

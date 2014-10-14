@@ -6,10 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var timer = require('cobble/function/timer');
-    var Input = require('cobble/helper/Input');
-    var Popup = require('cobble/helper/Popup');
+    var lifeCycle = require('../function/lifeCycle');
+    var timer = require('../function/timer');
+    var Input = require('../helper/Input');
+    var Popup = require('../helper/Popup');
 
     /**
      * 自动补全

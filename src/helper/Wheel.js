@@ -20,10 +20,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var offsetParent = require('cobble/function/offsetParent');
+    var lifeCycle = require('../function/lifeCycle');
+    var offsetParent = require('../function/offsetParent');
 
-    var instance = require('cobble/util/instance');
+    var instance = require('../util/instance');
 
     /**
      * 处理鼠标滚轮事件

@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Radio = require('cobble/form/Radio');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var Radio = require('../form/Radio');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 单选框分组

@@ -59,11 +59,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('cobble/function/call');
-    var split = require('cobble/function/split');
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var contains = require('cobble/function/contains');
-    var instance = require('cobble/util/instance');
+    var call = require('../function/call');
+    var split = require('../function/split');
+    var lifeCycle = require('../function/lifeCycle');
+    var contains = require('../function/contains');
+    var instance = require('../util/instance');
 
     /**
      * 简单的弹出式交互

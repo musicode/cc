@@ -23,9 +23,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var split = require('cobble/function/split');
-    var call = require('cobble/function/call');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var call = require('../function/call');
+    var split = require('../function/split');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 处理键盘相关的操作

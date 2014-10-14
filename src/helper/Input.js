@@ -31,11 +31,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('cobble/function/call');
-    var around = require('cobble/function/around');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var call = require('../function/call');
+    var around = require('../function/around');
+    var lifeCycle = require('../function/lifeCycle');
 
-    var Keyboard = require('cobble/helper/Keyboard');
+    var Keyboard = require('./Keyboard');
 
     /**
      * 封装一些输入功能，包括兼容最常用的 input 事件

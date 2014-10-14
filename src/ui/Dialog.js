@@ -6,15 +6,15 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Draggable = require('cobble/helper/Draggable');
-    var instance = require('cobble/util/instance');
-    var dimension = require('cobble/util/dimension');
+    var Draggable = require('../helper/Draggable');
+    var instance = require('../util/instance');
+    var dimension = require('../util/dimension');
 
-    var pin = require('cobble/function/pin');
-    var lifeCycle = require('cobble/function/lifeCycle');
-    var viewport = require('cobble/function/viewport');
-    var offsetParent = require('cobble/function/offsetParent');
-    var debounce = require('cobble/function/debounce');
+    var pin = require('../function/pin');
+    var lifeCycle = require('../function/lifeCycle');
+    var viewport = require('../function/viewport');
+    var offsetParent = require('../function/offsetParent');
+    var debounce = require('../function/debounce');
 
     /**
      * 对话框

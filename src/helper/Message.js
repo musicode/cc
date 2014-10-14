@@ -45,8 +45,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var timer = require('cobble/function/timer');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var timer = require('../function/timer');
+    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * Message 构造函数

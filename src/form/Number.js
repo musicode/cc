@@ -6,15 +6,15 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var timer = require('cobble/function/timer');
-    var lifeCycle = require('cobble/function/lifeCycle');
+    var timer = require('../function/timer');
+    var lifeCycle = require('../function/lifeCycle');
 
-    var plus = require('cobble/function/plus');
-    var minus = require('cobble/function/minus');
-    var divide = require('cobble/function/divide');
+    var plus = require('../function/plus');
+    var minus = require('../function/minus');
+    var divide = require('../function/divide');
 
-    var Input = require('cobble/helper/Input');
-    var instance = require('cobble/util/instance');
+    var Input = require('../helper/Input');
+    var instance = require('../util/instance');
 
     /**
      * 构造函数
