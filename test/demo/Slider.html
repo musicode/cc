@@ -53,9 +53,15 @@
 </head>
 <body>
 
-    <div id="horizontal-slider" class="slider-track"></div>
-    <div id="vertical-slider" class="slider-track"></div>
-    <div id="step-slider" class="slider-track"></div>
+    <div id="horizontal-slider" class="slider-track">
+        <b class="slider-thumb"></b>
+    </div>
+    <div id="vertical-slider" class="slider-track">
+        <b class="slider-thumb"></b>
+    </div>
+    <div id="step-slider" class="slider-track">
+        <b class="slider-thumb"></b>
+    </div>
 
     <script src="./js/jquery.js"></script>
     <script src="./js/jquery.mousewheel.js"></script>
@@ -73,14 +79,13 @@
                     element: $('#horizontal-slider'),
                     scrollable: true,
                     step: 1,
-                    className: {
-                        dragging: 'slider-active',
-                        hover: 'slider-active'
-                    },
-                    animation: {
-                        to: function (style, element) {
-                            element.animate(style, 100);
-                        }
+
+                    thumbSelector: '.slider-thumb',
+                    draggingClass: 'slider-active',
+                    hoverClass: 'slider-active',
+
+                    toAnimation: function (style, element) {
+                        element.animate(style, 100);
                     },
                     onChange: function (value) {
                         console.log(this.value);
@@ -97,25 +102,27 @@
                 var verticalSlider = new Slider({
                     element: $('#vertical-slider'),
                     orientation: 'vertical',
-                    animation: {
-                        dragging: function (style, element) {
-                            element.animate(style, 10);
-                        }
+                    thumbSelector: '.slider-thumb',
+                    draggingAnimation: function (style, element) {
+                        element.animate(style, 10);
                     },
-                    onChange: function (value) {
-                        console.log(this.value);
+                    onChange: function (event, data) {
+                        console.log(data);
                     }
                 });
 
                 var stepSlider = new Slider({
                     element: $('#step-slider'),
+
+                    thumbSelector: '.slider-thumb',
+
                     value: 2,
                     min: 1,
                     max: 10,
                     step: 1,
                     scrollable: true,
-                    onChange: function (value) {
-                        console.log(this.value);
+                    onChange: function (event, data) {
+                        console.log(data);
                     }
                 });
             }

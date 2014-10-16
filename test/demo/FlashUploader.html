@@ -50,23 +50,24 @@
 
                 var uploader = new FlashUploader({
                     element: $('#file'),
-                    action: 'http://localhost:8808/upload',
+                    action: 'http://localhost:8848/upload',
                     multiple: true,
                     accept: ['jpg', 'png', 'gif', 'bmp'],
                     data: {
                         company: 'baidu'
                     },
                     onReady: function () {
-                        console.log('loaded');
+                        console.log('ready');
                         //uploader.disable();
                     },
                     onFileChange: function () {
                         uploader.disable();
-                        this.upload({
+                        this.setData({
                             name: 'zhujl',
                             age: 25,
                             sex: 'man'
                         });
+                        this.upload();
                     },
                     onUploadStart: function (data) {
                         console.log('upload start:');
@@ -87,6 +88,22 @@
                     onUploadComplete: function (data) {
                         console.log('upload complete');
                     }
+                });
+
+                var handler = function (e, data) {
+                    console.log('===============');
+                    console.log(e.cobble, e.type, data);
+                };
+
+                uploader
+                .on({
+                    ready: handler,
+                    fileChange: handler,
+                    uploadStart: handler,
+                    uploadProgress: handler,
+                    uploadSuccess: handler,
+                    uploadError: handler,
+                    uploadComplete: handler
                 });
 
             }

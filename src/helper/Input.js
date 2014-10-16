@@ -31,8 +31,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('../function/call');
     var around = require('../function/around');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     var Keyboard = require('./Keyboard');
@@ -83,8 +83,6 @@ define(function (require, exports, module) {
      *                                        }
      *                                    }
      *
-     * @property {*} options.scope 为以上函数设置 this 对象
-     *
      */
     function Input(options) {
         return lifeCycle.init(this, options);
@@ -103,11 +101,6 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var scope = me.scope;
-            if (!scope) {
-                scope = me.scope = me;
-            }
-
             var bindEvent = support === 'input'
                           ? bindInput
                           : bindPropertyChange;
@@ -115,45 +108,54 @@ define(function (require, exports, module) {
             bindEvent(me);
 
             var element = me.element;
-            var cache = me.cache = { };
-
-            var onKeyDown = me.onKeyDown;
-            if (element.prop('tagName') === 'INPUT') {
-                onKeyDown = function (e) {
-                    if (e.keyCode === Keyboard.map.up) {
-                        e.preventDefault();
-                    }
-                    call(me.onKeyDown, scope, e);
-                };
-            }
+            var isInput = element.prop('tagName') === 'INPUT';
 
             var value;
             var isCharKey;
 
-            cache.keyboard = new Keyboard({
-                element: element,
-                action: me.action,
-                longPress: me.longPress,
-                onKeyDown: onKeyDown,
-                onKeyUp: me.onKeyUp,
-                onLongPressStart: function (e) {
+            var action = me.action;
+            if (action) {
+                $.each(
+                    action,
+                    function (key, handler) {
+                        action[key] = $.proxy(handler, me);
+                    }
+                );
+            }
 
-                    cache.longPressing = true;
-                    call(me.onLongPressStart, scope, e);
+            me.keyboard = new Keyboard({
+                element: element,
+                action: action,
+                longPress: me.longPress,
+                onKeyDown: function (e) {
+                    if (isInput && e.keyCode === Keyboard.map.up) {
+                        e.preventDefault();
+                    }
+                    return me.emit(e);
+                },
+                onKeyUp: function (e) {
+                    return me.emit(e);
+                },
+                onLongPressStart: function (e, data) {
+
+                    me.longPressing = true;
 
                     value = element.val();
-                    isCharKey = e.isCharKey;
+                    isCharKey = data.isCharKey;
+
+                    me.emit('longPressStart', data);
+
                 },
                 onLongPressEnd: function (e) {
 
-                    cache.longPressing = false;
-                    call(me.onLongPressEnd, scope, e);
+                    me.longPressing = false;
+
+                    me.emit('longPressEnd');
 
                     if (isCharKey && value !== element.val()) {
-                        triggerChange(me);
+                        me.emit('change');
                     }
-                },
-                scope: scope
+                }
             });
 
         },
@@ -179,22 +181,25 @@ define(function (require, exports, module) {
             var lineHeight = parseInt(element.css('font-size'), 10);
             var padding = element.innerHeight() - originHeight;
 
-            me.cache.onChange = function () {
+            me.on(
+                'change',
+                function () {
+                    // 把高度重置为原始值才能取到正确的 newHeight
+                    if (oldHeight !== originHeight) {
+                        oldHeight = originHeight;
+                        element.height(originHeight);
+                    }
 
-                // 把高度重置为原始值才能取到正确的 newHeight
-                if (oldHeight !== originHeight) {
-                    oldHeight = originHeight;
-                    element.height(originHeight);
+                    // scrollHeight 包含上下 padding 和 height
+                    newHeight = element.prop('scrollHeight') - padding;
+
+                    if (Math.abs(newHeight - oldHeight) > lineHeight) {
+                        element.height(newHeight);
+                        oldHeight = newHeight;
+                    }
                 }
+            );
 
-                // scrollHeight 包含上下 padding 和 height
-                newHeight = element.prop('scrollHeight') - padding;
-
-                if (Math.abs(newHeight - oldHeight) > lineHeight) {
-                    element.height(newHeight);
-                    oldHeight = newHeight;
-                }
-            };
         },
 
         /**
@@ -208,13 +213,14 @@ define(function (require, exports, module) {
 
             me.element.off(namespace);
 
-            me.cache.keyboard.dispose();
+            me.keyboard.dispose();
 
-            me.action =
-            me.cache =
-            me.element = null;
+            me.element =
+            me.keyboard = null;
         }
     };
+
+    jquerify(Input.prototype);
 
     /**
      * 默认配置
@@ -259,7 +265,7 @@ define(function (require, exports, module) {
         input.element.on(
             support + namespace,
             function () {
-                triggerChange(input);
+                input.emit('change');
             }
         );
     }
@@ -295,7 +301,7 @@ define(function (require, exports, module) {
                 if (e.originalEvent.propertyName === 'value') {
                     var newValue = element.val();
                     if (newValue !== oldValue) {
-                        triggerChange(input);
+                        input.emit('change');
                         oldValue = newValue;
                     }
                 }
@@ -311,26 +317,6 @@ define(function (require, exports, module) {
                 }
             }
         );
-    }
-
-    /**
-     * 触发 change 事件
-     *
-     * @inner
-     * @param {Input} input
-     */
-    function triggerChange(input) {
-
-        var cache = input.cache;
-
-        if (!input.smart
-            || !cache.longPressing
-        ) {
-            call(input.onChange, input.scope);
-        }
-
-        // 在最后执行内部的 onChange，以防上面的 onChange 改值了
-        call(cache.onChange, cache);
     }
 
 

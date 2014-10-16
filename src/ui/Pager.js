@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -16,6 +17,8 @@ define(function (require, exports, module) {
      * 3. 符合人类直觉
      *
      * 如果非要翻页为 0，那初始化和刷新时，+ 1 处理吧
+     *
+     * 希望点击触发翻页的元素，必须具有 data-page 属性，属性值为希望翻到的页码
      */
 
     /**
@@ -31,8 +34,6 @@ define(function (require, exports, module) {
      * @property {number=} options.endCount 省略号后面的数量，默认是 2
      *
      * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
-     * @property {string=} options.pageAttr 存放页码的属性
-     *                                      点击可翻页的元素都要加上 page 属性，包括 上一页/下一页
      *
      * @property {string=} options.pageTemplate 页码模板 pageAni
      * @property {string=} options.prevTemplate 上一页模板
@@ -68,9 +69,16 @@ define(function (require, exports, module) {
             .element
             .on(
                 'click' + namespace,
-                '[' + me.pageAttr + ']',
+                '[data-page]',
                 me,
-                clickPage
+                function (e) {
+
+                    var page = $(e.currentTarget).data('page');
+
+                    if ($.type(page) === 'number') {
+                        me.to(page);
+                    }
+                }
             );
         },
 
@@ -195,7 +203,7 @@ define(function (require, exports, module) {
                             var page = item.page;
 
                             for (var i = page[0], end = page[1]; i <= end; i++) {
-                                html += me.renderTemplate(tpl, { page: i });
+                                html += me.renderTemplate({ page: i }, tpl);
                             }
 
                             return html;
@@ -203,7 +211,7 @@ define(function (require, exports, module) {
                     }
                 ).join('');
 
-                element.show().html(html);
+                element.html(html).show();
             }
         },
 
@@ -246,11 +254,15 @@ define(function (require, exports, module) {
 
             me.page = page;
 
-            if (isChange && $.isFunction(me.onChange)) {
-                me.onChange({
-                    page: page
-                });
+            if (isChange) {
+                me.emit(
+                    'change',
+                    {
+                        page: page
+                    }
+                );
             }
+
         },
 
         /**
@@ -268,6 +280,8 @@ define(function (require, exports, module) {
 
     };
 
+    jquerify(Pager.prototype);
+
     /**
      * 默认配置
      *
@@ -282,15 +296,13 @@ define(function (require, exports, module) {
         startCount: 1,
         endCount: 2,
 
-        pageAttr: 'data-page',
-
         pageTemplate: '<button class="btn" data-page="${page}">${page}</button>',
         prevTemplate: '<button class="btn" data-page="${page}">上一页</button>',
         nextTemplate: '<button class="btn" data-page="${page}">下一页</button>',
         ellipsisTemplate: '<button class="btn ellipsis">...</button>',
         activeTemplate: '<button class="btn btn-primary" data-page="${page}">${page}</button>',
 
-        renderTemplate: function (tpl, data) {
+        renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] != null ? data[$1] : '';
             });
@@ -305,21 +317,6 @@ define(function (require, exports, module) {
      */
     var namespace = '.cobble_ui_pager';
 
-    /**
-     * 点击翻页的事件处理函数
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function clickPage(e) {
-
-        var pager = e.data;
-        var value = $(e.currentTarget).attr(pager.pageAttr);
-
-        if ($.isNumeric(value)) {
-            pager.to(Number(value));
-        }
-    }
 
     return Pager;
 

@@ -28,6 +28,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -101,23 +102,21 @@ define(function (require, exports, module) {
 
             conf = modeConf[conf];
 
-            if (conf) {
+            $.extend(me, conf);
 
-                $.extend(me, conf);
+            if (conf.init) {
+                me.init();
+            }
 
-                if (conf.init) {
-                    me.init();
-                }
-
-                if (me.refresh) {
-                    me.refresh();
-                }
-
+            if (me.refresh) {
+                me.refresh();
             }
 
         }
 
     };
+
+    jquerify(Placeholder.prototype);
 
     /**
      * 默认配置
@@ -126,7 +125,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Placeholder.defaultOptions = {
-        simple: true,
+        simple: false,
         nativeFirst: true,
         placeholderAttr: 'placeholder',
         simpleClass: 'placeholder-active',
@@ -140,17 +139,14 @@ define(function (require, exports, module) {
      * 批量初始化
      *
      * @static
-     * @param {jQuery=} elements 需要初始化的元素
+     * @param {jQuery} element 需要初始化的元素
      * @return {Array.<Placeholder>}
      */
-    Placeholder.init = function (elements) {
-
-        elements = elements
-                || $('[' + Placeholder.defaultOptions.placeholderAttr + ']');
+    Placeholder.init = function (element) {
 
         var result = [ ];
 
-        elements.each(
+        element.each(
             function () {
                 result.push(
                     new Placeholder({

@@ -68,25 +68,19 @@
 
                     trigger: 'click',
 
-                    selector: {
-                        indicator: '.carousel-indicators li',
-                        prev: '[data-slide="prev"]',
-                        next: '[data-slide="next"]',
-                        slide: '.carousel-inner .item'
-                    },
+                    iconSelector: '.carousel-indicators li',
+                    prevSelector: '[data-slide="prev"]',
+                    nextSelector: '[data-slide="next"]',
+                    itemSelector: '.carousel-inner .item',
 
-                    className: {
-                        indicatorActive: 'active',
-                        slideActive: 'active'
-                    },
+                    activeClass: 'active',
 
                     animation: function (data) {
                         var from = data.fromIndex;
                         var to = data.toIndex;
-
                     },
 
-                    onChange: function (data) {
+                    onChange: function (event, data) {
                         console.log(data);
                     }
                 });

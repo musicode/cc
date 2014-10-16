@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wheel</title>
+    <style>
+
+        body {
+            height: 1000px
+        }
+
+    </style>
+</head>
+<body>
+
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+
+    require(
+
+    [ 'cobble/helper/Wheel' ],
+
+    function (Wheel) {
+
+        var element = $(document.body);
+
+        var wheel = new Wheel({
+            element: element,
+            onScroll: function (event, data) {
+                console.log('onScroll', event.cobble, data);
+
+            }
+        });
+
+        wheel.on('scroll', function (event) {
+
+            console.log(arguments);
+            //event.preventDefault();
+            return false;
+        });
+
+    }
+    );
+</script>
+</body>
+</html>

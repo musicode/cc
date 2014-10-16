@@ -24,7 +24,7 @@
     }
     .scroll-bar-v {
         width: 10px;
-        height: 30px;
+        height: 100px;
         left: 410px;
         top: 8px;
     }
@@ -51,10 +51,12 @@
     }
     .scroll-bar-h .scroll-thumb {
         height: 10px;
+        width: 10px;
         border: 1px solid #fff;
     }
     .scroll-bar-v .scroll-thumb {
         width: 10px;
+        height: 10px;
     }
 
 
@@ -103,9 +105,11 @@
         </div>
 
         <div class="scroll-bar-h">
+            <div class="scroll-thumb"></div>
         </div>
 
         <div class="scroll-bar-v">
+            <div class="scroll-thumb"></div>
         </div>
     </div>
 
@@ -113,6 +117,7 @@
     <div id="textarea">
         <textarea></textarea>
         <div class="scroll-bar-v">
+            <div class="scroll-thumb"></div>
         </div>
     </div>
 
@@ -133,29 +138,27 @@
                 var scrollHBar = new ScrollBar({
                     panel: $('#scroll-panel'),
                     element: $('#scroll-position .scroll-bar-h'),
-                    direction: 'horizontal',
+                    orientation: 'horizontal',
                     value: 20,
                     step: 10,
                     step4Panel: true,
-                    animation: {
-                        show: function () {
-                            this.element.show(300);
-                        }
+                    thumbSelector: '.scroll-thumb',
+                    showAnimation: function () {
+                        this.element.show(300);
                     },
-                    onScroll: function (value) {
-                        console.log(value);
+                    onScroll: function (event, data) {
+                        console.log(data);
                     }
                 });
-
+return
                 var scrollVBar = new ScrollBar({
                     panel: $('#scroll-panel'),
                     element: $('#scroll-position .scroll-bar-v'),
                     value: '20%',
-                    className: {
-                        dragging: 'dragging',
-                        hover: 'hover'
-                    },
-                    direction: 'vertical'
+                    draggingClass: 'dragging',
+                    hoverClass: 'hover',
+                    orientation: 'vertical',
+                    thumbSelector: '.scroll-thumb'
                 });
 
                 var textarea = $('#textarea textarea');
@@ -174,7 +177,8 @@
                 var scrollBar = new ScrollBar({
                     panel: textarea,
                     element: $('#textarea .scroll-bar-v'),
-                    direction: 'vertical'
+                    orientation: 'vertical',
+                    thumbSelector: '.scroll-thumb'
                 });
             }
         );

@@ -27,40 +27,36 @@
 
         require(
 
-            [ 'cobble/ui/Select' ],
+            [ 'cobble/ui/ComboBox' ],
 
-            function (Select) {
+            function (ComboBox) {
 
-                var select = new Select({
+                var select = new ComboBox({
                     button: $('.btn'),
                     menu: $('.dropdown-menu'),
                     value: 2,
-                    selector: {
-                        item: 'a'
-                    },
-                    className: {
-                        itemActive: 'active',
-                        open: 'open'
-                    },
-                    animation: {
-                        open: function () {
+
+                    itemSelector: 'a',
+
+                    activeClass: 'active',
+                    openClass: 'open',
+
+                    show: {
+                        animation: function () {
                             this.menu.slideDown();
-                        },
-                        close: function () {
+                        }
+                    },
+                    hide: {
+                        animation: function () {
                             this.menu.slideUp();
                         }
                     },
                     setText: function (data) {
                         this.button.html(data.text);
                     },
-                    onChange: function (data) {
+                    onChange: function (event, data) {
+                        console.log(data);
                         //this.dispose();
-                    },
-                    onClickItem: function (e) {
-                        this.setText({
-                            text: $(e.currentTarget).html()
-                        });
-
                     }
                 });
 

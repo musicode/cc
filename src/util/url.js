@@ -16,7 +16,7 @@ define(function (require, exports, module) {
 
         var result = { };
 
-        if (typeof queryStr === 'string' && queryStr.length > 1) {
+        if ($.type(queryStr) === 'string' && queryStr.length > 1) {
 
             var startIndex = 0;
 

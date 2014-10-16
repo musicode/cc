@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
@@ -35,13 +36,13 @@ define(function (require, exports, module) {
      *
      * @property {Function} options.animation 切换动画，必传，否则不会动
      * @argument {Object} options.animation.data
-     * @property {number} options.animation.data.toIndex
-     * @property {number} options.animation.data.fromIndex
+     * @property {number} options.animation.data.to
+     * @property {number} options.animation.data.from
      *
      * @property {Function=} options.onChange 索引发生变化时触发
      * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.data.toIndex
-     * @property {number} options.onChnage.data.fromIndex
+     * @property {number} options.onChange.data.to
+     * @property {number} options.onChnage.data.from
      */
     function Carousel(options) {
         return lifeCycle.init(this, options);
@@ -90,7 +91,7 @@ define(function (require, exports, module) {
                 element: element,
                 index: me.index,
                 trigger: me.trigger,
-                selector: me.iconSelector,
+                selector: me.itemSelector,
                 activeClass: me.activeClass,
                 change: function (data) {
 
@@ -101,10 +102,8 @@ define(function (require, exports, module) {
 
                     me.index = newIndex;
 
-                    if (oldIndex !== newIndex
-                        && $.isFunction(me.onChange)
-                    ) {
-                        me.onChange(data);
+                    if (oldIndex !== newIndex) {
+                        me.emit('change', data);
                     }
 
                 }
@@ -198,7 +197,7 @@ define(function (require, exports, module) {
             );
 
             if (index !== me.index
-                && $.type(index) === 'number'
+                && $.isNumeric(index)
             ) {
                 me.switcher.to(index);
             }
@@ -243,6 +242,8 @@ define(function (require, exports, module) {
             me.switcher = null;
         }
     };
+
+    jquerify(Carousel.prototype);
 
     /**
      * 默认配置

@@ -85,23 +85,24 @@
 
             function (Popup) {
 
-                var $layer = $('#select-layer');
+                var layer = $('#select-layer');
 
                 var popup = new Popup({
-                    source: $('#select-trigger'),
-                    element: $layer,
-                    trigger: {
-                        show: 'click',
-                        hide: 'click'
-                    },
-                    animation: {
-                        show: function () {
-                            this.element.slideDown(100);
-                        },
-                        hide: function () {
-                            this.element.slideUp(10);
+                    element: $('#select-trigger'),
+                    layer: layer,
+                    show: {
+                        trigger: 'click',
+                        animation: function () {
+                            this.layer.slideDown(100);
                         }
                     },
+                    hide: {
+                        trigger: 'click',
+                        animation: function () {
+                            this.layer.slideUp(10);
+                        }
+                    },
+
                     onBeforeShow: function () {
                         //console.log('beforeShow');
                     },
@@ -120,8 +121,8 @@
                     }
                 });
 
-                $layer.on('click', 'li', function (e) {
-                    popup.hide();
+                layer.on('click', 'li', function (e) {
+                    popup.close();
                     $('#select-trigger b').html(e.target.innerHTML);
                 });
 

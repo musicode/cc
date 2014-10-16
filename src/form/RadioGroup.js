@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var Radio = require('../form/Radio');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -80,9 +81,7 @@ define(function (require, exports, module) {
                     var index = radios.index(e.currentTarget);
                     me.checkedRadio = group[index];
 
-                    if ($.isFunction(me.onChange)) {
-                        me.onChange();
-                    }
+                    me.emit('change');
                 }
             );
 
@@ -122,6 +121,8 @@ define(function (require, exports, module) {
             me.group = null;
         }
     };
+
+    jquerify(RadioGroup);
 
     /**
      * 默认配置

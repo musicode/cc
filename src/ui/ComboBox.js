@@ -12,6 +12,7 @@ define(function (require, exports, module) {
      * 当 onChange 事件触发时，会把所有 data 通过参数传入
      */
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Popup = require('../helper/Popup');
 
@@ -27,7 +28,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.menu 下拉菜单元素
      *
      * @property {Array=} options.data 下拉菜单的数据
-     * @property {string=} options.itemTemplate 菜单项模板
+     * @property {string=} options.template 菜单项模板
      * @property {Function=} options.renderTemplate 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
@@ -152,7 +153,9 @@ define(function (require, exports, module) {
 
                 var activeClass = me.activeClass;
                 if (activeClass) {
-                    menu.find('.' + activeClass).removeClass(activeClass);
+                    menu
+                    .find('.' + activeClass)
+                    .removeClass(activeClass);
                 }
 
                 if (target.size() === 1) {
@@ -167,9 +170,7 @@ define(function (require, exports, module) {
                     me.value = null;
                 }
 
-                if ($.isFunction(me.onChange)) {
-                    me.onChange(data);
-                }
+                me.emit('change');
 
             }
 
@@ -198,14 +199,11 @@ define(function (require, exports, module) {
                 var data = options.data;
 
                 if (data) {
-                    var html = '';
-                    $.each(
-                        data,
-                        function (index, item) {
-                            html += me.renderTemplate(me.itemTemplate, item);
-                        }
+
+                    me.menu.html(
+                        me.renderTemplate(data, me.template)
                     );
-                    me.menu.html(html);
+
                 }
 
                 // 传了值表示必须强制触发 change 事件
@@ -253,6 +251,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(ComboBox.prototype);
+
     /**
      * 默认配置
      *
@@ -294,29 +294,38 @@ define(function (require, exports, module) {
             hide.trigger = 'click';
         }
 
+        var animation = show.animation
+        if ($.isFunction(animation)) {
+            show.animation = $.proxy(animation, comboBox);
+        }
+
+        animation = hide.animation;
+        if ($.isFunction(animation)) {
+            hide.animation = $.proxy(animation, comboBox);
+        }
+
         return new Popup({
             element: comboBox.button,
             layer: comboBox.menu,
-            scope: comboBox,
             show: show,
             hide: hide,
-            onBeforeShow: comboBox.onBeforeShow,
-            onBeforeHide: comboBox.onBeforeHide,
-            onAfterShow: function () {
+            onBeforeShow: function (e) {
+                return comboBox.emit(e);
+            },
+            onBeforeHide: function (e) {
+                return comboBox.emit(e);
+            },
+            onAfterShow: function (e) {
                 if (openClass) {
                     main.addClass(openClass);
                 }
-                if ($.isFunction(comboBox.onAfterShow)) {
-                    comboBox.onAfterShow();
-                }
+                comboBox.emit(e);
             },
-            onAfterHide: function () {
+            onAfterHide: function (e) {
                 if (openClass) {
                     main.removeClass(openClass);
                 }
-                if ($.isFunction(comboBox.onAfterHide)) {
-                    comboBox.onAfterHide();
-                }
+                comboBox.emit(e);
             }
         });
     }

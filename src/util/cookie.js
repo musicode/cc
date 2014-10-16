@@ -165,7 +165,7 @@ define(function (require, exports, module) {
      */
     exports.remove = function (key, options) {
 
-        if (typeof exports.get(key) === 'undefined') {
+        if (key == null) {
             return;
         }
 

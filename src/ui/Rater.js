@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
     var eventOffset = require('../function/eventOffset');
@@ -89,12 +90,12 @@ define(function (require, exports, module) {
                     index++;
 
                     html += me.renderTemplate(
-                                me.itemTemplate,
                                 {
                                     'class': me[className],
                                     'value': index,
                                     'hint': hint[index]
-                                }
+                                },
+                                me.itemTemplate
                             );
                 }
             );
@@ -104,16 +105,18 @@ define(function (require, exports, module) {
 
             if (!me.readOnly) {
                 var itemSelector = me.itemSelector;
-                element.on('mouseenter' + namespace, itemSelector, me, previewValue)
-                       .on('mouseleave' + namespace, itemSelector, me, restoreValue)
-                       .on('click' + namespace, itemSelector, me, changeValue);
+                element
+                .on('mouseenter' + namespace, itemSelector, me, previewValue)
+                .on('mouseleave' + namespace, itemSelector, me, restoreValue)
+                .on('click' + namespace, itemSelector, me, changeValue);
             }
 
-            if ($.isFunction(me.onChange)) {
-                me.onChange({
+            me.emit(
+                'change',
+                {
                     value: me.value
-                });
-            }
+                }
+            );
         },
 
         /**
@@ -141,11 +144,12 @@ define(function (require, exports, module) {
             refresh(me, value);
             me.value = value;
 
-            if ($.isFunction(me.onChange)) {
-                me.onChange({
+            me.emit(
+                'change',
+                {
                     value: value
-                });
-            }
+                }
+            );
         },
 
         /**
@@ -165,6 +169,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(Rater.prototype);
+
     /**
      * 默认参数
      *
@@ -177,7 +183,7 @@ define(function (require, exports, module) {
         readOnly: false,
         itemSelector: 'i',
         itemTemplate: '<i class="${class}" data-value="${value}" title="${hint}"></i>',
-        renderTemplate: function (tpl, data) {
+        renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] != null ? data[$1] : '';
             });

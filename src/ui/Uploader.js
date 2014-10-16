@@ -6,7 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-
     function supportFileAPI() {
         return 'files' in $('<input type="file" />')[0];
     }
@@ -22,6 +21,6 @@ define(function (require, exports, module) {
     }
 
     return supportFileAPI() && supportAjaxUploadProgressEvents()
-         ? require('cobble/helper/AjaxUploader')
-         : require('cobble/helper/FlashUploader');
+         ? require('../helper/AjaxUploader')
+         : require('../helper/FlashUploader');
 });

@@ -19,6 +19,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -83,9 +84,9 @@ define(function (require, exports, module) {
             }
 
             // 用一个 form 元素包着，便于重置
-            var form = me.form = $('<form></form>');
-            element.replaceWith(form);
-            form.append(element);
+            var faker = me.faker = $('<form></form>');
+            element.replaceWith(faker);
+            faker.append(element);
 
             // 完善元素属性
             var properties = { };
@@ -103,10 +104,11 @@ define(function (require, exports, module) {
             element.on(
                 'change' + namespace,
                 function () {
+
                     setFiles(me, element.prop('files'));
-                    if ($.isFunction(me.onFileChange)) {
-                        me.onFileChange();
-                    }
+
+                    me.emit('fileChange');
+
                 }
             );
         },
@@ -150,7 +152,7 @@ define(function (require, exports, module) {
          */
         reset: function () {
             // 避免出现停止后选择相同文件，不触发 change 事件的问题
-            this.form[0].reset();
+            this.faker[0].reset();
         },
 
         /**
@@ -229,6 +231,24 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 插入到 target 后面
+         *
+         * @param {jQuery} target
+         */
+        appendTo: function (target) {
+            this.form.appendTo(target);
+        },
+
+        /**
+         * 插入到 target 前面
+         *
+         * @param {jQuery} target
+         */
+        prependTo: function (target) {
+            this.form.appendTo(target);
+        },
+
+        /**
          * 销毁对象
          */
         dispose: function () {
@@ -245,6 +265,8 @@ define(function (require, exports, module) {
 
         }
     };
+
+    jquerify(AjaxUploader.prototype);
 
     /**
      * 默认配置
@@ -493,11 +515,13 @@ define(function (require, exports, module) {
                 var fileItem = getCurrentFileItem(uploader);
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
 
-                if ($.isFunction(uploader.onUploadStart)) {
-                    uploader.onUploadStart({
+                uploader.emit(
+                    'uploadStart',
+                    {
                         fileItem: fileItem
-                    });
-                }
+                    }
+                );
+
             }
         },
 
@@ -517,10 +541,9 @@ define(function (require, exports, module) {
                     chunkInfo.uploaded += chunkInfo.uploading;
 
                     if (chunkInfo.uploaded < fileItem.file.size) {
+
                         // 分片上传成功
-                        if ($.isFunction(uploader.onChunkUploadSuccess)) {
-                            uploader.onChunkUploadSuccess(data);
-                        }
+                        uploader.emit('chunkUploadSuccess', data);
 
                         chunkInfo.index++;
                         uploader.upload();
@@ -531,9 +554,7 @@ define(function (require, exports, module) {
 
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
 
-                if ($.isFunction(uploader.onUploadSuccess)) {
-                    uploader.onUploadSuccess(data);
-                }
+                uploader.emit('uploadSuccess', data);
 
                 uploadComplete(uploader, fileItem);
 
@@ -547,12 +568,13 @@ define(function (require, exports, module) {
                 var fileItem = getCurrentFileItem(uploader);
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
-                if ($.isFunction(uploader.onUploadError)) {
-                    uploader.onUploadError({
+                uploader.emit(
+                    'uploadError',
+                    {
                         fileItem: fileItem,
                         errorCode: errorCode
-                    });
-                }
+                    }
+                );
 
                 uploadComplete(uploader, fileItem);
             }
@@ -588,12 +610,15 @@ define(function (require, exports, module) {
                     var percent = uploaded / (total || 1);
                     percent = parseInt(100 * percent, 10) + '%';
 
-                    uploader.onUploadProgress({
+                    var data = {
                         fileItem: fileItem,
                         uploaded: uploaded,
                         total: total,
                         percent: percent
-                    });
+                    };
+
+                    uploader.emit('uploadProgress', data);
+
                 }
             }
         }
@@ -630,11 +655,12 @@ define(function (require, exports, module) {
             delete fileItem.xhr;
         }
 
-        if ($.isFunction(uploader.onUploadComplete)) {
-            uploader.onUploadComplete({
+        uploader.emit(
+            'uploadComplete',
+            {
                 fileItem: fileItem
-            });
-        }
+            }
+        );
 
         if (fileItem.status === AjaxUploader.STATUS_UPLOAD_SUCCESS
             || (fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR && uploader.ignoreError)

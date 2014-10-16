@@ -25,6 +25,7 @@ define(function (require, exports, module) {
 
     var call = require('../function/call');
     var split = require('../function/split');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -53,8 +54,6 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.onLongPressEnd 长按结束
      * @argument {Event} options.onKeyDown.event
-     *
-     * @property {Object=} options.scope 以上配置的函数的 this 指向，默认是 Keyboard 实例
      *
      * @example
      *
@@ -93,7 +92,6 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.scope = me.scope || me;
             me.cache = {
                 counter: 0,
                 action: parseAction(me.action || { })
@@ -117,12 +115,11 @@ define(function (require, exports, module) {
             me.element.off(namespace);
 
             me.element =
-            me.scope =
-            me.cache =
-            me.onKeyDown =
-            me.onKeyUp = null;
+            me.cache = null;
         }
     };
+
+    jquerify(Keyboard.prototype);
 
     /**
      * 默认配置
@@ -357,7 +354,7 @@ define(function (require, exports, module) {
 
                         if (combinationKeys[name]) {
                             expressions.push(
-                                (negative ? '!' : '')
+                               (negative ? '!' : '')
                              + 'e.' + name + 'Key'
                             );
                         }
@@ -396,14 +393,19 @@ define(function (require, exports, module) {
         var keyboard = e.data;
         var keyCode = e.keyCode;
         var cache = keyboard.cache;
-        var scope = keyboard.scope;
 
         var counter = cache.counter;
 
         if (cache.keyCode === keyCode && counter > 0) {
             if (counter === 1) {
-                e.isCharKey = key2Char[keyCode] != null;
-                call(keyboard.onLongPressStart, scope, e);
+
+                keyboard.emit(
+                    'longPressStart',
+                    {
+                        isCharKey: key2Char[keyCode] != null
+                    }
+                );
+
             }
             counter++;
         }
@@ -419,13 +421,15 @@ define(function (require, exports, module) {
                 cache.action,
                 function (index, item) {
                     if (item.test(e)) {
-                        call(item.handler, scope, e);
+                        call(item.handler, keyboard, e);
                     }
                 }
             );
         }
 
-        call(keyboard.onKeyDown, scope, e);
+        e.type = 'keyDown';
+
+        keyboard.emit(e);
     }
 
     /**
@@ -438,16 +442,17 @@ define(function (require, exports, module) {
 
         var keyboard = e.data;
         var cache = keyboard.cache;
-        var scope = keyboard.scope;
 
         cache.keyCode = null;
 
         if (cache.counter > 1) {
-            call(keyboard.onLongPressEnd, scope, e);
+            keyboard.emit('longPressEnd');
             cache.counter = 0;
         }
 
-        call(keyboard.onKeyUp, scope, e);
+        e.type = 'keyUp';
+
+        keyboard.emit(e);
     }
 
 

@@ -6,9 +6,14 @@ define(function (require) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var dateUtil = require('../util/date');
 
+    /**
+     * 只有具有 data-value 属性的元素才支持点击选中
+     *
+     */
     /**
      *
      * @constructor
@@ -21,21 +26,19 @@ define(function (require) {
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否 toggle 选中
      *
-     * @property {string=} options.type 视图类型，可选值包括 month, week
+     * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {string} options.activeClass 日期被选中的 className
-     * @property {string=} options.valueAttr 只有包含 valueAttr 的元素才能通过点击事件选择日期
      *
      * @property {string} options.prevSelector
      * @property {string} options.nextSelector
      *
-     * @property {Function} options.onPrev
-     * @property {Function} options.onNext
-     *
      * @property {string} options.template
      * @property {Function} options.renderTemplate
-     * @property {Function=} options.onBeforeRender
-     * @property {Function=} options.onAfterRender
+     * @property {Function=} options.onBeforeRender 渲染开始前触发，可用于调整数据
+     * @property {Function=} options.onAfterRender 渲染完成后触发，可用于初始化逻辑
      *
+     * @property {Function} options.onPrev
+     * @property {Function} options.onNext
      * @property {Function=} options.onChange
      */
     function Calendar(options) {
@@ -55,7 +58,7 @@ define(function (require) {
 
             var me = this;
 
-            var conf = typeConfig[me.type];
+            var conf = modeConfig[me.mode];
 
             var date = copyDate(me.date);
             var today = copyDate(me.today);
@@ -70,8 +73,6 @@ define(function (require) {
 
             refresh();
 
-            var valueAttr = me.valueAttr;
-
             var clickType = 'click' + namespace;
             var element = me.element;
             var activeClass = me.activeClass;
@@ -82,7 +83,7 @@ define(function (require) {
 
             element.on(
                 clickType,
-                '[' + valueAttr + ']',
+                '[data-value]',
                 function (e) {
 
                     var target = $(e.currentTarget);
@@ -100,7 +101,7 @@ define(function (require) {
                         }
                     }
                     else {
-                        value = target.attr(valueAttr);
+                        value = target.data('value');
                     }
 
                     me.setValue(value);
@@ -114,10 +115,10 @@ define(function (require) {
                     prevSelector,
                     function () {
                         prev();
-                        var data = refresh();
-                        if ($.isFunction(me.onPrev)) {
-                            me.onPrev(data);
-                        }
+                        me.emit(
+                            'prev',
+                            refresh()
+                        );
                     }
                 );
             }
@@ -129,10 +130,10 @@ define(function (require) {
                     nextSelector,
                     function () {
                         next();
-                        var data = refresh();
-                        if ($.isFunction(me.onNext)) {
-                            me.onNext(data);
-                        }
+                        me.emit(
+                            'next',
+                            refresh()
+                        );
                     }
                 );
             }
@@ -142,22 +143,23 @@ define(function (require) {
         /**
          * 设置选中的日期
          *
-         * @param {string|Array.<string>} value
+         * @param {string} value
          */
         setValue: function (value) {
 
             var me = this;
             var multiple = me.multiple;
             var element = me.element;
-            var target = element.find('[' + me.valueAttr + '="' + value + '"]');
+            var target = element.find('[data-value="' + value + '"]');
 
             if (target.length === 1) {
 
                 var activeClass = me.activeClass;
+
                 if (!multiple) {
                     element
-                        .find('.' + activeClass)
-                        .removeClass(activeClass);
+                    .find('.' + activeClass)
+                    .removeClass(activeClass);
                 }
 
                 target.addClass(activeClass);
@@ -169,34 +171,34 @@ define(function (require) {
 
             if (me.value != value) {
                 me.value = value;
-                if ($.isFunction(me.onChange)) {
-                    me.onChange();
-                }
+                me.emit('change');
             }
 
         },
 
+        /**
+         * 渲染日历
+         *
+         * @param {Object} data 渲染需要使用的数据
+         * @return {Object}
+         */
         render: function (data) {
 
             var me = this;
 
-            if ($.isFunction(me.onBeforeRender)) {
-                me.onBeforeRender(data);
-            }
+            me.emit('beforeRender', data);
 
             me.element.html(
-                me.renderTemplate(data)
+                me.renderTemplate(data, me.template)
             );
-
-            if ($.isFunction(me.onAfterRender)) {
-                me.onAfterRender(data);
-            }
 
             var value = me.value;
             if (value) {
                 me.value = null;
                 me.setValue(value);
             }
+
+            me.emit('afterRender', data);
 
             return data;
         },
@@ -216,6 +218,8 @@ define(function (require) {
 
     };
 
+    jquerify(Calendar.prototype);
+
     /**
      * 默认配置
      *
@@ -224,11 +228,10 @@ define(function (require) {
      */
     Calendar.defaultOptions = {
         firstDay: 1,
-        type: 'month',
+        mode: 'month',
         toggle: false,
         multiple: false,
-        activeClass: 'active',
-        valueAttr: 'data-value'
+        activeClass: 'active'
     };
 
     /**
@@ -283,7 +286,7 @@ define(function (require) {
         date.setMilliseconds(0);
     }
 
-    var typeConfig = {
+    var modeConfig = {
         month: {
             prev: function (date) {
                 return function () {
@@ -303,6 +306,7 @@ define(function (require) {
             },
             create: function (date, firstDay, today) {
                 return function () {
+
                     var monthFirstDay = dateUtil.getMonthFirstDay(date);
                     var monthLastDay = dateUtil.getMonthLastDay(date);
 
@@ -339,6 +343,7 @@ define(function (require) {
             },
             create: function (date, firstDay, today) {
                 return function () {
+
                     var list = getDatasource(
                         dateUtil.getWeekFirstDay(date, firstDay),
                         dateUtil.getWeekLastDay(date, firstDay),

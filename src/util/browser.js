@@ -104,7 +104,9 @@ define(function (require, exports, module) {
     }
 
     var result = parseUA(navigator.userAgent.toLowerCase());
-    result[result.name] = true;
+    if (result.name) {
+        result[result.name] = true;
+    }
 
     return result;
 

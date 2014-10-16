@@ -51,6 +51,7 @@ define(function (require, exports, module) {
     var split = require('../function/split');
     var position = require('../util/position');
     var debounce = require('../function/debounce');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
@@ -168,19 +169,22 @@ define(function (require, exports, module) {
             me.popup = new Popup({
                 element: element,
                 layer: layer,
-                scope: me,
                 show: me.show,
                 hide: me.hide,
-                onAfterShow: me.onAfterShow,
-                onBeforeHide: me.onBeforeHide,
+                onAfterShow: function (e) {
+                    return me.emit(e);
+                },
+                onBeforeHide: function (e) {
+                    return me.emit(e);
+                },
                 onAfterHide: function (e) {
+
                     if (me.resizer) {
                         instance.window.off('resize', me.resizer);
                         me.resizer = null;
                     }
-                    if ($.isFunction(me.onAfterHide)) {
-                        return me.onAfterHide(e);
-                    }
+
+                    return me.emit(e);
                 },
                 onBeforeShow: function (e) {
 
@@ -188,9 +192,7 @@ define(function (require, exports, module) {
 
                     layer.css('max-width', width);
 
-                    if ($.isFunction(me.onBeforeShow)
-                        && me.onBeforeShow(e) === false
-                    ) {
+                    if (me.emit('beforeShow') === false) {
                         return false;
                     }
 
@@ -326,6 +328,8 @@ define(function (require, exports, module) {
             me.popup = null;
         }
     };
+
+    jquerify(Tooltip.prototype);
 
     /**
      * 默认配置

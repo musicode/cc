@@ -61,6 +61,7 @@ define(function (require, exports, module) {
 
     var call = require('../function/call');
     var split = require('../function/split');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var contains = require('../function/contains');
     var instance = require('../util/instance');
@@ -73,7 +74,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.layer 弹出的元素
-     * @property {jQuery=} options.element 触发弹出的元素，如果是调用方法触发显示，可不传
+     * @property {jQuery=} options.element 触发的元素，如果是调用方法触发显示，可不传
      *
      * @property {Object} options.show
      * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus context，可组合使用，以逗号分隔
@@ -90,7 +91,6 @@ define(function (require, exports, module) {
      * @property {Function=} options.onBeforeHide 返回 false 可阻止隐藏
      * @property {Function=} options.onAfterHide
      *
-     * @property {*} options.scope 指定以上这些函数的 this
      */
     function Popup(options) {
         return lifeCycle.init(this, options);
@@ -109,10 +109,6 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            if (!me.scope) {
-                me.scope = me;
-            }
-
             var show = me.show;
             var hide = me.hide;
 
@@ -128,7 +124,7 @@ define(function (require, exports, module) {
             };
 
             var hidden = me.hidden
-                       = me.layer.css('display') === 'none';
+                       = me.layer.is(':hidden');
 
             var action = hidden ? showEvent : hideEvent;
             action(me, 'on');
@@ -142,13 +138,13 @@ define(function (require, exports, module) {
             var me = this;
             var event = arguments[0];
 
-            if (onBeforeShow.call(me, event) === false) {
+            if (onBeforeShow(me, event) === false) {
                 return;
             }
 
             var animation = me.show.animation;
             if ($.isFunction(animation)) {
-                animation.call(me.scope);
+                animation.call(me);
             }
             else {
                 me.layer.show();
@@ -156,7 +152,7 @@ define(function (require, exports, module) {
 
             me.hidden = false;
 
-            onAfterShow.call(me, event);
+            onAfterShow(me, event);
         },
 
         /**
@@ -172,13 +168,13 @@ define(function (require, exports, module) {
 
             var event = arguments[0];
 
-            if (onBeforeHide.call(me, event) === false) {
+            if (onBeforeHide(me, event) === false) {
                 return;
             }
 
             var animation = me.hide.animation;
             if ($.isFunction(animation)) {
-                animation.call(me.scope);
+                animation.call(me);
             }
             else {
                 me.layer.hide();
@@ -186,7 +182,7 @@ define(function (require, exports, module) {
 
             me.hidden = true;
 
-            onAfterHide.call(me, event);
+            onAfterHide(me);
         },
 
         /**
@@ -207,6 +203,9 @@ define(function (require, exports, module) {
             me.cache = null;
         }
     };
+
+    jquerify(Popup.prototype);
+
 
     /**
      * 默认配置
@@ -455,19 +454,29 @@ define(function (require, exports, module) {
      */
     var currentSourceKey = '__currentSource__';
 
+    function getEvent(event, type) {
+        if (event) {
+            event.type = type;
+        }
+        else {
+            event = type;
+        }
+        return event;
+    }
+
     /**
      * 显示之前的拦截方法
      *
      * @inner
+     * @param {Popup} popup
      * @param {Event=} event 触发事件
      */
-    function onBeforeShow(event) {
+    function onBeforeShow(popup, event) {
 
-        var me = this;
-        var layer = me.layer;
+        var layer = popup.layer;
 
         // 触发元素（mousenter 和 mouseleave 都有 target 元素，试了几次还比较可靠）
-        var target = me.cache.target
+        var target = popup.cache.target
                    = event && event.target;
 
         // 可能出现多个 element 共用一个弹出层的情况
@@ -485,62 +494,65 @@ define(function (require, exports, module) {
             currentSource.close();
         }
 
-        return call(me.onBeforeShow, me.scope, event);
+        return popup.emit(
+            getEvent(event, 'beforeShow')
+        );
     }
 
     /**
      * 显示完之后需要绑定事件触发隐藏逻辑
      *
      * @inner
-     * @param {Event=} event
+     * @param {Popup} popup
      */
-    function onAfterShow(event) {
+    function onAfterShow(popup) {
 
-        var me = this;
+        showEvent(popup, 'off');
+        hideEvent(popup, 'on');
 
-        showEvent(me, 'off');
-        hideEvent(me, 'on');
-
-        var target = me.cache.target;
+        var target = popup.cache.target;
         if (target) {
-            me.layer.data(
+            popup.layer.data(
                 currentSourceKey,
                 {
                     element: target,
-                    close: $.proxy(me.close, me)
+                    close: $.proxy(popup.close, popup)
                 }
             );
         }
 
-        return call(me.onAfterShow, me.scope, event);
+        return popup.emit('afterShow');
+
     }
 
     /**
      * 隐藏之前要确保元素是显示状态的
      *
      * @inner
+     * @param {Popop} popup
      * @param {Event=} event
      */
-    function onBeforeHide(event) {
-        var me = this;
-        return call(me.onBeforeHide, me.scope, event);
+    function onBeforeHide(popup, event) {
+        return popup.emit(
+            getEvent(event, 'beforeHide')
+        );
     }
 
     /**
      * 隐藏之后需要解绑事件
      *
      * @inner
-     * @param {Event=} event
+     * @param {Popup} popup
      */
-    function onAfterHide(event) {
+    function onAfterHide(popup) {
 
-        var me = this;
+        popup.layer.removeData(currentSourceKey);
 
-        me.layer.removeData(currentSourceKey);
-        hideEvent(me, 'off');
-        showEvent(me, 'on');
+        hideEvent(popup, 'off');
+        showEvent(popup, 'on');
 
-        return call(me.onAfterHide, me.scope, event);
+        return popup.emit('afterHide');
+
     }
 
     /**

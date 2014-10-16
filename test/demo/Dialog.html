@@ -45,27 +45,22 @@
                     hidden: false,
                     modal: true,
                     disposeOnHide: false,
-                    hideByClickMask: true,
+                    hideOnClickMask: true,
                     fixed: true,
                     x: '20%',
 
-                    selector: {
-                        header: '.modal-header',
-                        title: '.modal-title',
-                        body: '.modal-body',
-                        close: '.close'
-                    },
+                    headerSelector: '.modal-header',
+                    titleSelector: '.modal-title',
+                    bodySelector: '.modal-body',
+                    closeSelector: '.close',
 
-                    mask: {
-                        template: '<div class="modal"></div>',
-                        animation: {
-                            show: function () {
-                                this.mask.element.slideDown(1000);
-                            },
-                            hide: function () {
-                                this.mask.element.slideUp(1000);
-                            }
-                        }
+                    maskTemplate: '<div class="modal"></div>',
+
+                    showMaskAnimation: function () {
+                        this.mask.slideDown(1000);
+                    },
+                    hideMaskAnimation: function () {
+                        this.mask.slideUp(1000);
                     },
 
                     template: '<div class="modal-dialog">'
@@ -84,20 +79,30 @@
                             +     '</div>'
                             + '</div>',
 
-                    animation: {
-                        show: function () {
-                            this.element.fadeIn(400);
-                        },
-                        hide: function () {
-                            this.element.fadeOut(400);
-                        },
-                        resize: function (style) {
-                            this.element.animate(style, 100);
-                        }
-                    }
+                    showAnimation: function () {
+                        this.element.fadeIn(400);
+                    },
+                    hideAnimation: function () {
+                        this.element.fadeOut(400);
+                    },
+                    resizeAnimation: function (style) {
+                        this.element.animate(style, 100);
+                    },
+
+                    onBeforeShow: function (event) {
+
+                    },
+                    onAfterShow: function (event) {
+
+                    },
+                    onBeforeHide: function (event) {
+
+                    },
+                    onAfterHide: function (event) {
+
+                    },
                 });
 
-console.log(dialog)
 
             }
         );

@@ -18,8 +18,6 @@ define(function (require, exports, module) {
      */
     return function (element) {
 
-        element = element.parent();
-
         if (element.length > 0) {
 
             while (!element.is('body')

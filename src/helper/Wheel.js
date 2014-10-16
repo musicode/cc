@@ -21,6 +21,8 @@ define(function (require, exports, module) {
     'use strict';
 
     var lifeCycle = require('../function/lifeCycle');
+    var jquerify = require('../function/jquerify');
+    var fireEvent = require('../function/fireEvent');
     var offsetParent = require('../function/offsetParent');
 
     var instance = require('../util/instance');
@@ -53,10 +55,8 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            me.cache = {
-                lineHeight: getLineHeight(element),
-                pageHeight: element.height()
-            };
+            me.lineHeight = getLineHeight(element);
+            me.pageHeight = element.height();
 
             element.on(
                 support + namespace,
@@ -75,11 +75,11 @@ define(function (require, exports, module) {
             lifeCycle.dispose(me);
 
             me.element.off(namespace);
-
-            me.element =
-            me.cache = null;
+            me.element = null;
         }
     };
+
+    jquerify(Wheel.prototype);
 
     /**
      * 默认配置
@@ -127,33 +127,34 @@ define(function (require, exports, module) {
 
         var wheel = e.data;
 
-        if ($.isFunction(wheel.onScroll)) {
+        var event = e.originalEvent;
 
-            var event = e.originalEvent;
+        // deltaMode 0 is by pixels, nothing to do
+        // deltaMode 1 is by lines
+        // deltaMode 2 is by pages
+        // 统一转成行
 
-            // deltaMode 0 is by pixels, nothing to do
-            // deltaMode 1 is by lines
-            // deltaMode 2 is by pages
-            // 统一转成行
+        var factor = 1;
 
-            var cache = wheel.cache;
-            var factor = 1;
-
-            switch (event.deltaMode) {
-                case 0:
-                    factor = cache.lineHeight;
-                    break;
-                case 2:
-                    factor = cache.pageHeight;
-                    break;
-            }
-
-            return wheel.onScroll({
-                delta: Math.round(
-                            (event.deltaY || event.deltaX) / (3 * factor)
-                        )
-            });
+        switch (event.deltaMode) {
+            case 0:
+                factor = wheel.lineHeight;
+                break;
+            case 2:
+                factor = wheel.pageHeight;
+                break;
         }
+
+        var data = {
+            delta: Math.round(
+                        (event.deltaY || event.deltaX) / (3 * factor)
+                    )
+        };
+
+        e.type = 'scroll';
+
+        wheel.emit(e, data);
+
     }
 
 
@@ -165,19 +166,11 @@ define(function (require, exports, module) {
      */
     function onMouseWheel(e) {
 
-        var originalEvent;
-
-        if (e.type === 'wheel') {
-            originalEvent = e;
-        }
-        else {
+        if (e.type !== 'wheel') {
 
             var event = e.originalEvent;
 
-            if (event.type === 'wheel') {
-                originalEvent = event;
-            }
-            else {
+            if (event.type !== 'wheel') {
 
                 var deltaX;
                 var deltaY;
@@ -192,19 +185,21 @@ define(function (require, exports, module) {
                     deltaY = event.detail;
                 }
 
-                originalEvent = {
-                    deltaMode: 1,
-                    deltaX: deltaX,
-                    deltaY: deltaY
-                };
+                $.extend(
+                    e,
+                    {
+                        deltaMode: 1,
+                        deltaX: deltaX,
+                        deltaY: deltaY
+                    }
+                );
             }
         }
 
-        onWheel({
-            type: 'wheel',
-            data: e.data,
-            originalEvent: originalEvent
-        });
+        e.type = 'wheel';
+
+        onWheel(e);
+
     }
 
     /**

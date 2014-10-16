@@ -63,8 +63,7 @@
         require(
 
             [
-                'cobble/ui/Autocomplete',
-                'cobble/util/etpl'
+                'cobble/ui/Autocomplete'
             ],
 
             function (AutoComplete, etpl) {
@@ -73,42 +72,37 @@
                 var menu = $('#menu');
 
                 new AutoComplete({
-                    input: input,
+                    element: input,
                     menu: menu,
-                    template: {
-                        item: '<li data-url="">${word}</li>',
-                        render: function (tpl, data) {
-                            return etpl.compile(tpl)(data);
-                        }
+
+                    renderTemplate: function (data) {
+
+                        var html = [];
+
+                        $.each(
+                            data,
+                            function (index, item) {
+                                html.push(
+                                    '<li>' + item.word + '</li>'
+                                );
+                            }
+                        );
+
+                        return html.join('');
                     },
-                    selector: {
-                        item: 'li'
-                    },
-                    animation: {
-                        close: function () {
-                            this.menu.slideUp();
-                        }
-                    },
-                    className: {
-                        itemHover: 'item-hover',
-                        itemActive: 'item-active'
-                    },
-                    onEnter: function (data) {
+                    itemSelector: 'li',
+
+                    hoverClass: 'item-hover',
+                    activeClass: 'item-active',
+
+                    onEnter: function (event, data) {
                         console.log('enter', data);
                     },
-                    onSelect: function (data) {
+                    onSelect: function (event, data) {
                         this.dispose();
                         console.log('select', data);
                     },
                     load: function (value, callback) {
-
-                        window.suggestion = function (response) {
-                            var data;
-                            if (response.status === 0) {
-                                data = response.data;
-                            }
-                            callback(data);
-                        };
 
                         return $.ajax(
                             'http://hui.baidu.com/api/suggestion.php',
@@ -119,7 +113,14 @@
                                 },
                                 dataType: 'jsonp'
                             }
-                        );
+                        )
+                        .done(function (response) {
+                            var data;
+                            if (response.status === 0) {
+                                data = response.data;
+                            }
+                            callback(data);
+                        });
 
 
                     }

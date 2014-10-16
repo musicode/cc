@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var restrain = require('../function/restrain');
     var contains = require('../function/contains');
@@ -76,7 +77,7 @@ define(function (require, exports, module) {
                                 thumb: thumbElement,
                                 track: trackElement
                             },
-                            orientationConf[ me.orientation ]
+                            orientationConf[me.orientation]
                         );
 
             cache.draggable = createDraggable(
@@ -92,8 +93,9 @@ define(function (require, exports, module) {
             trackElement.on('click' + namespace, me, clickTrack);
 
             if (me.hoverClass) {
-                trackElement.on('mouseenter' + namespace, me, enterTrack)
-                            .on('mouseleave' + namespace, me, leaveTrack);
+                trackElement
+                .on('mouseenter' + namespace, me, enterTrack)
+                .on('mouseleave' + namespace, me, leaveTrack);
             }
 
             if (me.scrollable) {
@@ -199,7 +201,7 @@ define(function (require, exports, module) {
 
             var element = cache.thumb;
             var style = { };
-            style[ cache.position ] = pixel;
+            style[cache.position] = pixel;
 
             var animate = options.animate;
             if ($.isFunction(animate)) {
@@ -209,10 +211,8 @@ define(function (require, exports, module) {
                 element.css(style);
             }
 
-            if (!options.silence
-                && $.isFunction(me.onChange)
-            ) {
-                me.onChange();
+            if (!options.silence) {
+                me.emit('change');
             }
 
             return true;
@@ -230,8 +230,8 @@ define(function (require, exports, module) {
             var cache = this.cache;
 
             return {
-                track: cache.track[ cache.innerDimension ](),
-                thumb: cache.thumb[ cache.outerDimension ]()
+                track: cache.track[cache.innerDimension](),
+                thumb: cache.thumb[cache.outerDimension]()
             };
         },
 
@@ -252,20 +252,20 @@ define(function (require, exports, module) {
 
                 var track = cache.track;
 
-                offset = track[ cache.innerDimension ]()
-                       - track[ dimension ]();
+                offset = track[cache.innerDimension]()
+                       - track[dimension]();
 
-                track[ dimension ](data.track - offset);
+                track[dimension](data.track - offset);
             }
 
             if ($.type(data.thumb) === 'number') {
 
                 var thumb = cache.thumb;
 
-                offset = thumb[ cache.outerDimension ]()
-                       - thumb[ dimension ]();
+                offset = thumb[cache.outerDimension]()
+                       - thumb[dimension ]();
 
-                thumb[ dimension ](data.thumb - offset);
+                thumb[dimension](data.thumb - offset);
             }
         },
 
@@ -321,6 +321,8 @@ define(function (require, exports, module) {
         }
 
     };
+
+    jquerify(Slider.prototype);
 
     /**
      * 默认配置
@@ -415,11 +417,13 @@ define(function (require, exports, module) {
                        .addClass(draggingClass);
             }
 
-            if ($.isFunction(slider.onBeforeDrag)) {
-                slider.onBeforeDrag({
+            slider.emit(
+                'beforeDrag',
+                {
                     leave: cache.leave
-                });
-            }
+                }
+            );
+
         };
 
         options.onDragEnd = function () {
@@ -431,11 +435,13 @@ define(function (require, exports, module) {
                        .removeClass(draggingClass);
             }
 
-            if ($.isFunction(slider.onAfterDrag)) {
-                slider.onAfterDrag({
+            slider.emit(
+                'afterDrag',
+                {
                     leave: cache.leave
-                });
-            }
+                }
+            );
+
         };
 
         options.onDrag = function (data) {

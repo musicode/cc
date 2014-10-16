@@ -19,19 +19,19 @@
 
             function (Keyboard) {
 
-                new Keyboard({
+                var keyboard = new Keyboard({
                     element: $(document.body),
-                    onLongPressStart: function (keyCode) {
-                        console.log('---------------------longPress start: ' + keyCode, this);
+                    onLongPressStart: function (event, data) {
+                        console.log('---------------------longPress start: ', event, data);
                     },
-                    onLongPressEnd: function (keyCode) {
-                        console.log('---------------------longPress end: ' + keyCode, this);
+                    onLongPressEnd: function (event, data) {
+                        console.log('---------------------longPress end: ', event, data);
                     },
-                    onKeyDown: function () {
-                        console.log('keyDown', this);
+                    onKeyDown: function (event, data) {
+                        console.log('keyDown', event, data);
                     },
-                    onKeyUp: function () {
-                        console.log('keyUp', this);
+                    onKeyUp: function (event, data) {
+                        console.log('keyUp', event, data);
                     },
                     action: {
                         'ctrl+c': function () {
@@ -66,6 +66,19 @@
                         }
                     }
                 });
+
+                var handler = function (e, data) {
+                    console.log('===============');
+                    console.log(e.target, e.type, data);
+                };
+
+                keyboard.on({
+                    longPressStart: handler,
+                    longPressEnd: handler,
+                    keyUp: handler,
+                    keyDown: handler
+                });
+
 
             }
         );

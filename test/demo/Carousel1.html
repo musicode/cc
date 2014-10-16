@@ -112,15 +112,13 @@
                     showCount: 3,
                     step: 2,
 
-                    selector: {
-                        prev: '#prev',
-                        next: '#next',
-                        slide: '.item'
-                    },
+                    prevSelector: '#prev',
+                    nextSelector: '#next',
+                    itemSelector: '.item',
 
                     animation: function (data) {
-                        var from = data.fromIndex;
-                        var to = data.toIndex;
+                        var from = data.from;
+                        var to = data.to;
 
                         $('.row').animate(
                             {
@@ -131,7 +129,7 @@
                         );
                     },
 
-                    onChange: function (data) {
+                    onChange: function (event, data) {
                         console.log(data);
                     }
                 });

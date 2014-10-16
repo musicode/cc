@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -185,6 +186,8 @@ define(function (require, exports, module) {
 
     };
 
+    jquerify(Validator.prototype);
+
     /**
      * 默认配置
      *
@@ -198,7 +201,7 @@ define(function (require, exports, module) {
         errorClass: 'has-error',
         errorSelector: '.error',
         errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${text}',
-        renderTemplate: function (tpl, data) {
+        renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] || '';
             });
@@ -429,10 +432,10 @@ define(function (require, exports, module) {
                     var errorTemplate = validator.errorTemplate;
                     if (errorTemplate) {
                         errorText = validator.renderTemplate(
-                                        errorTemplate,
                                         {
                                             text: errorText
-                                        }
+                                        },
+                                        errorTemplate
                                     );
                     }
                     errorElement.html(errorText);

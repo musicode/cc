@@ -65,7 +65,7 @@ define(function (require, exports, module) {
     exports.getLength = function (str) {
         var result = 0;
 
-        if (typeof str === 'string') {
+        if ($.type(str) === 'string') {
             traverse(
                 str,
                 function (length, index) {
@@ -87,7 +87,7 @@ define(function (require, exports, module) {
      */
     exports.truncate = function (str, length, suffix) {
 
-        if (typeof length !== 'number'
+        if ($.type(length) !== 'number'
             || exports.getLength(str) <= length
         ) {
             return str;
@@ -105,7 +105,7 @@ define(function (require, exports, module) {
             }
         );
 
-        suffix = typeof suffix === 'string'
+        suffix = $.type(suffix) === 'string'
                ? suffix
                : '...';
 

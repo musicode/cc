@@ -17,6 +17,7 @@ define(function (require, exports, module) {
 
     var Supload = window.Supload;
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -36,11 +37,11 @@ define(function (require, exports, module) {
      *                                            [ 'jpg', 'png' ]
      *
      * @property {Function=} options.onFileChange
-     * @property {function(Object)=} options.onUploadStart
-     * @property {function(Object)=} options.onUploadProgress
-     * @property {function(Object)=} options.onUploadSuccess
-     * @property {function(Object)=} options.onUploadError
-     * @property {function(Object)=} options.onUploadComplete
+     * @property {Function(Object)=} options.onUploadStart
+     * @property {Function(Object)=} options.onUploadProgress
+     * @property {Function(Object)=} options.onUploadSuccess
+     * @property {Function(Object)=} options.onUploadError
+     * @property {Function(Object)=} options.onUploadComplete
      */
     function FlashUploader(options) {
         return lifeCycle.init(this, options);
@@ -76,9 +77,8 @@ define(function (require, exports, module) {
             $.each(
                 eventHandler,
                 function (type, handler) {
-                    // 首字母大写
-                    var onType = 'on' + type.charAt(0).toUpperCase() + type.substr(1);
-                    swfOptions[onType] = handler;
+                    type = $.camelCase('on-' + type);
+                    swfOptions[type] = handler;
                 }
             );
 
@@ -163,6 +163,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(FlashUploader.prototype);
+
     /**
      * 默认配置
      *
@@ -239,11 +241,9 @@ define(function (require, exports, module) {
         /**
          * flash 加载完成
          */
-        loaded: function () {
+        ready: function () {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onReady === 'function') {
-                uploader.onReady();
-            }
+            uploader.emit('ready');
         },
 
         /**
@@ -251,9 +251,7 @@ define(function (require, exports, module) {
          */
         fileChange: function () {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onFileChange === 'function') {
-                uploader.onFileChange();
-            }
+            uploader.emit('fileChange');
         },
 
         /**
@@ -264,9 +262,7 @@ define(function (require, exports, module) {
          */
         uploadStart: function (data) {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onUploadStart === 'function') {
-                uploader.onUploadStart(data);
-            }
+            uploader.emit('uploadStart', data);
         },
 
         /**
@@ -278,15 +274,14 @@ define(function (require, exports, module) {
          * @property {number} data.total
          */
         uploadProgress: function (data) {
+
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onUploadProgress === 'function') {
 
-                var percent = data.uploaded / (data.total || 1);
+            var percent = data.uploaded / (data.total || 1);
+            data.percent = parseInt(100 * percent, 10) + '%';
 
-                data.percent = parseInt(100 * percent, 10) + '%';
+            uploader.emit('uploadProgress', data);
 
-                uploader.onUploadProgress(data);
-            }
         },
 
         /**
@@ -298,9 +293,7 @@ define(function (require, exports, module) {
          */
         uploadSuccess: function (data) {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onUploadSuccess === 'function') {
-                uploader.onUploadSuccess(data);
-            }
+            uploader.emit('uploadSuccess', data);
         },
 
         /**
@@ -312,9 +305,7 @@ define(function (require, exports, module) {
          */
         uploadError: function (data) {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onUploadError === 'function') {
-                uploader.onUploadError(data);
-            }
+            uploader.emit('uploadError', data);
         },
 
         /**
@@ -325,9 +316,7 @@ define(function (require, exports, module) {
          */
         uploadComplete: function (data) {
             var uploader = this.customSettings.uploader;
-            if (typeof uploader.onUploadComplete === 'function') {
-                uploader.onUploadComplete(data);
-            }
+            uploader.emit('uploadComplete', data);
         }
     };
 

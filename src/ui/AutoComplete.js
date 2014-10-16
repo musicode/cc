@@ -6,8 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
     var timer = require('../function/timer');
+    var jquerify = require('../function/jquerify');
+    var lifeCycle = require('../function/lifeCycle');
+
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
 
@@ -35,12 +37,8 @@ define(function (require, exports, module) {
      * @property {number=} options.hide.delay 隐藏延时
      * @property {Function=} options.hide.animation 隐藏动画
      *
-     * @property {string=} options.itemTemplate 菜单项模板，简单列表用这个够了
-     * @property {string=} options.menuTemplate 菜单模板，如果不是简单的列表，需配置此项
-     * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (tpl, data): string
-     *
-     * @property {Function=} options.parse 解析菜单项元素数据，返回值必须包含 text 属性
-     * @argument {jQuery} options.parse.item 菜单项元素
+     * @property {string=} options.template 菜单项模板，简单列表用这个够了
+     * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
      *
      * @property {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
@@ -76,15 +74,16 @@ define(function (require, exports, module) {
                             result: { }
                         };
 
-            cache.input = createInput(me);
-            cache.popup = createPopup(me);
+            me.input = createInput(me);
+            me.popup = createPopup(me);
 
             var itemSelector = me.itemSelector;
 
-            me.menu
-                .on('mouseenter' + namespace, itemSelector, me, enterItem)
-                .on('mouseleave' + namespace, itemSelector, me, leaveItem)
-                .on('click' + namespace, me.itemSelector, me, clickItem);
+            me
+            .menu
+            .on('mouseenter' + namespace, itemSelector, me, enterItem)
+            .on('mouseleave' + namespace, itemSelector, me, leaveItem)
+            .on('click' + namespace, me.itemSelector, me, clickItem);
         },
 
         /**
@@ -99,41 +98,37 @@ define(function (require, exports, module) {
             if ($.isArray(data) && data.length > 0) {
 
                 var cache = me.cache;
-                if (cache.items) {
-                    cache.items.off(namespace);
-                }
-
-                var render = me.renderTemplate;
-                var html;
-                if (me.itemTemplate) {
-                    html = $.map(
-                               data,
-                               function (item) {
-                                   return render(me.itemTemplate, item);
-                               }
-                           ).join('');
-                }
-                else {
-                    html = render(me.menuTemplate, data);
-                }
-
 
                 var menu = me.menu;
-                menu.html(html);
+                menu.html(
+                    me.renderTemplate(data, me.template)
+                );
 
                 var items = cache.items
                           = menu.find(me.itemSelector);
 
-                var data = cache.data
-                           = items.map(
-                                 function (index, item) {
-                                     return me.parse($(item));
-                                 }
-                             );
+                data = [ ];
+
+                items.each(
+                    function (index, item) {
+
+                        item = $(item);
+
+                        var result = item.data();
+                        if (result.text == null) {
+                            result.text = item.html();
+                        }
+
+                        data.push(result);
+
+                    }
+                );
+
+                cache.data = data;
 
                 var input = me.element;
                 items.splice(0, 0, input[0]);
-                data.splice(0, 0, input.val());
+                data.splice(0, 0, { text: input.val() });
 
                 cache.index = cache.start;
                 cache.max = items.length - 1;
@@ -149,14 +144,14 @@ define(function (require, exports, module) {
          * 显示下拉菜单
          */
         open: function () {
-            this.cache.popup.open();
+            this.popup.open();
         },
 
         /**
          * 隐藏下拉菜单
          */
         close: function () {
-            this.cache.popup.close();
+            this.popup.close();
         },
 
         /**
@@ -175,14 +170,16 @@ define(function (require, exports, module) {
 
             me.menu.off(namespace);
 
-            cache.input.dispose();
-            cache.popup.dispose();
+            me.input.dispose();
+            me.popup.dispose();
 
             me.element =
             me.menu =
             me.cache = null;
         }
     };
+
+    jquerify(AutoComplete.prototype);
 
     /**
      * 默认配置
@@ -195,12 +192,7 @@ define(function (require, exports, module) {
         includeInput: true,
         itemSelector: 'li',
         show: { },
-        hide: { },
-        parse: function (element) {
-            return {
-                text: element.html()
-            };
-        }
+        hide: { }
     };
 
     /**
@@ -209,7 +201,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var namespace = '.cobble-ui-autocomplete';
+    var namespace = '.cobble_ui_autocomplete';
 
     /**
      * 用 Input 处理按键
@@ -225,7 +217,7 @@ define(function (require, exports, module) {
                 previousItem(autoComplete);
             },
             autoComplete.delay,
-            400
+            50
         );
 
         var downTimer = timer(
@@ -233,25 +225,41 @@ define(function (require, exports, module) {
                 nextItem(autoComplete);
             },
             autoComplete.delay,
-            400
+            50
         );
 
         return new Input({
-
             element: autoComplete.element,
             smart: true,
             longPress: false,
             action: {
-                up: upTimer.start,
-                down: downTimer.start,
+                up: function () {
+                    if (!autoComplete.popup.hidden) {
+                        previousItem((autoComplete));
+                        timer = upTimer;
+                    }
+                },
+                down: function () {
+                    if (!autoComplete.popup.hidden) {
+                        nextItem(autoComplete);
+                        timer = downTimer;
+                    }
+                },
                 enter: function () {
-                    trigger(autoComplete, 'onEnter');
+                    trigger(autoComplete, 'enter');
                     autoComplete.close();
                 }
             },
-            onKeyUp: function () {
-                upTimer.stop();
-                downTimer.stop();
+            onLongPressStart: function () {
+                if (timer) {
+                    timer.start();
+                }
+            },
+            onLongPressEnd: function () {
+                if (timer) {
+                    timer.stop();
+                    timer = null;
+                }
             },
             onChange: function () {
                 suggest(autoComplete);
@@ -268,7 +276,7 @@ define(function (require, exports, module) {
      */
     function createPopup(autoComplete) {
 
-        var input = autoComplete.element;
+        var element = autoComplete.element;
 
         var show = autoComplete.show;
         var hide = autoComplete.hide;
@@ -281,13 +289,13 @@ define(function (require, exports, module) {
         }
 
         return new Popup({
-            element: input,
+            element: element,
             layer: autoComplete.menu,
-            scope: autoComplete,
             show: show,
             hide: hide,
             onBeforeShow: function (event) {
-                if (event) {
+                // 通过元素 focus 触发
+                if (event[$.expando]) {
                     suggest(autoComplete);
                     return false;
                 }
@@ -298,8 +306,8 @@ define(function (require, exports, module) {
             },
             onBeforeHide: function (event) {
                 // 点击 input 不触发失焦隐藏
-                if (event) {
-                    return event.target !== input[0];
+                if (event[$.expando]) {
+                    return event.target !== element[0];
                 }
             }
         });
@@ -347,7 +355,8 @@ define(function (require, exports, module) {
         );
 
         autoComplete.close();
-        trigger(autoComplete, 'onSelect');
+
+        trigger(autoComplete, 'select');
     }
 
     /**
@@ -408,10 +417,10 @@ define(function (require, exports, module) {
         );
 
         autoComplete
-            .element
-            .val(
-                autoComplete.cache.data[index].text
-            );
+        .element
+        .val(
+            autoComplete.cache.data[index].text
+        );
     }
 
     /**
@@ -486,18 +495,11 @@ define(function (require, exports, module) {
      */
     function trigger(autoComplete, name) {
 
-        if ($.isFunction(autoComplete[name])) {
+        var cache = autoComplete.cache;
+        var data = cache.data[cache.index];
 
-            var cache = autoComplete.cache;
-            var data = { };
+        autoComplete.emit(name, data);
 
-            if (!cache.popup.hidden) {
-                data.item = cache.items.eq(cache.index);
-                data.data = cache.data.eq(cache.index);
-            }
-
-            autoComplete[name](data);
-        }
     }
 
 

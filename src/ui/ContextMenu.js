@@ -9,8 +9,10 @@ define(function (require, exports, module) {
     var Popup = require('../helper/Popup');
     var instance = require('../util/instance');
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var offsetParent = require('../function/offsetParent');
+
     var pin = require('../function/pin');
 
     /**
@@ -108,6 +110,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(ContextMenu.prototype);
+
     /**
      * 默认配置
      *
@@ -191,7 +195,7 @@ define(function (require, exports, module) {
         var element = contextMenu.element;
 
         // 默认隐藏
-        if (element.css('display') !== 'none') {
+        if (element.is(':visible')) {
             element.hide();
         }
 
@@ -220,17 +224,30 @@ define(function (require, exports, module) {
             );
         }
 
+        var show = contextMenu.show;
+        var animation = show.animation;
+
+        if ($.isFunction(animation)) {
+            show.animation = $.proxy(animation, contextMenu);
+        }
+
         var hide = contextMenu.hide;
+
         if (!hide.trigger) {
             hide.trigger = 'click,context';
+        }
+
+        animation = hide.animation;
+
+        if ($.isFunction(animation)) {
+            hide.animation = $.proxy(animation, contextMenu);
         }
 
         contextMenu.popup =
         new Popup({
             layer: element,
-            show: contextMenu.show,
-            hide: hide,
-            scope: contextMenu
+            show: show,
+            hide: hide
         });
     }
 

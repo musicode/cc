@@ -26,7 +26,7 @@ define(function (require, exports, module) {
      * @return {?Function}
      */
     exports.before = function (target, name, before) {
-        if (typeof name === 'string') {
+        if ($.type(name) === 'string') {
             return around(target, name, before);
         }
         else {
@@ -43,7 +43,7 @@ define(function (require, exports, module) {
      * @return {?Function}
      */
     exports.after = function (target, name, after) {
-        if (typeof name === 'string') {
+        if ($.type(name) === 'string') {
             return around(target, name, null, after);
         }
         else {

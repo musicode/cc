@@ -89,35 +89,37 @@
                 var songListMenu = new ContextMenu({
                     element: $('#song-list-menu'),
                     container: $('#song-list'),
-                    animation: {
-                        show: function () {
+                    show: {
+                        animation: function () {
                             this.element.hide()
                                         .slideDown(300);
-                        },
-                        hide: function () {
+                        }
+                    },
+                    hide: {
+                        animation: function () {
                             this.element.slideUp(300);
                         }
                     },
                     action: {
                         '[data-action="play"]': function (e) {
-                            var $target = $(e.target);
-                            console.log('播放: ' + $target.data('url'));
-                            this.hide();
+                            var target = $(e.target);
+                            console.log('播放: ' + target.data('url'));
+                            this.close();
                         },
                         '[data-action="like"]': function (e) {
-                            var $target = $(e.target);
-                            console.log('收藏: ' + $target.data('url'));
-                            this.hide();
+                            var target = $(e.target);
+                            console.log('收藏: ' + target.data('url'));
+                            this.close();
                         },
                         '[data-action="download"]': function (e) {
-                            var $target = $(e.target);
-                            console.log('下载: ' + $target.data('url'));
-                            this.hide();
+                            var target = $(e.target);
+                            console.log('下载: ' + target.data('url'));
+                            this.close();
                         },
                         '[data-action="remove"]': function (e) {
-                            var $target = $(e.target);
-                            console.log('删除: ' + $target.data('url'));
-                            this.hide();
+                            var target = $(e.target);
+                            console.log('删除: ' + target.data('url'));
+                            this.close();
                         }
                     }
                 });

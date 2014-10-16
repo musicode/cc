@@ -9,6 +9,7 @@ define(function (require, exports) {
     var Input = require('../helper/Input');
     var Placeholder = require('../helper/Placeholder');
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -48,12 +49,25 @@ define(function (require, exports) {
                 template: me.template
             });
 
+            var action = me.action;
+            if (action) {
+                $.each(
+                    action,
+                    function (key, handler) {
+                        action[key] = $.proxy(handler, me);
+                    }
+                );
+            }
+
             me.input = new Input({
                 element: element,
-                onChange: me.onChange,
-                onKeyDown: me.onKeyDown,
-                action: me.action,
-                scope: me
+                onChange: function (e) {
+                    me.emit(e);
+                },
+                onKeyDown: function (e) {
+                    me.emit(e);
+                },
+                action: action
             });
         },
 
@@ -81,9 +95,7 @@ define(function (require, exports) {
                 me.placeholder.refresh();
             }
 
-            if ($.isFunction(me.onChange)) {
-                me.onChange();
-            }
+            me.emit('change');
 
         },
 
@@ -107,6 +119,8 @@ define(function (require, exports) {
             }
         }
     };
+
+    jquerify(Text.prototype);
 
     /**
      * 默认配置

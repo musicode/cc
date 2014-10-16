@@ -42,19 +42,17 @@
                 var rater = new Rater({
                     element: $('#main'),
                     value: 3.5,
-                    total: 6,
+                    count: 6,
                     min: 2,
                     max: 4,
 
-                    className: {
-                        on: 'on',
-                        off: 'off',
-                        half: 'half'
-                    },
+                    onClass: 'on',
+                    offClass: 'off',
+                    halfClass: 'half',
 
                     half: true,
-                    onSelect: function (value) {
-                        console.log(value);
+                    onChange: function (event, data) {
+                        console.log(data);
                     }
                 });
 

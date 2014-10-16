@@ -48,6 +48,8 @@ define(function (require, exports, module) {
     var timer = require('../function/timer');
     var lifeCycle = require('../function/lifeCycle');
 
+    var urlUtil = require('../util/url');
+
     /**
      * Message 构造函数
      *
@@ -55,7 +57,7 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {string} options.agentUrl 代理页面，必须和最终产品页域名保持一致
      * @property {number=} options.delay 间隔时间，默认 100 ms 发送一次信息
-     * @property {function():Object} options.reader 读取当前页面信息的函数
+     * @property {Function():Object} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
         return lifeCycle.init(this, options);
@@ -75,7 +77,7 @@ define(function (require, exports, module) {
             var me = this;
 
             me.id = getGuid();
-            me.origin = getOrigin(me.agentUrl);
+            me.origin = urlUtil.getOrigin(me.agentUrl);
 
             me.timer = timer(
                 function () {
@@ -142,20 +144,6 @@ define(function (require, exports, module) {
     Message.defaultOptions = {
         delay: 100
     };
-
-    /**
-     * 解析域名
-     *
-     * 如 http://www.baidu.com/index.html 解析成 http://www.baidu.com
-     *
-     * @inner
-     * @param {string} url
-     * @return {string}
-     */
-    function getOrigin(url) {
-        var match = /http[s]?:\/\/[^/]*/.exec(url);
-        return match ? match[0] : '';
-    }
 
     /**
      * guid 初始值

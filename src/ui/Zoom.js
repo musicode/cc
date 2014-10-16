@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var offsetParent = require('../function/offsetParent');
     var imageDimension = require('../function/imageDimension');
@@ -192,7 +193,7 @@ define(function (require, exports, module) {
 
             me.element =
             me.finder =
-            me.rawImage = null;
+            me.viewport = null;
 
         }
     };

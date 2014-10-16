@@ -19,6 +19,7 @@ define(function (require, exports, module) {
 
     var ComboBox = require('../ui/ComboBox');
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -93,9 +94,8 @@ define(function (require, exports, module) {
 
                     me.setValue(data.value);
 
-                    if ($.isFunction(me.onChange)) {
-                        me.onChange(data);
-                    }
+                    me.emit('change', data);
+
                 }
             });
 
@@ -163,6 +163,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(Select.prototype);
+
     /**
      * 默认配置
      *
@@ -176,7 +178,7 @@ define(function (require, exports, module) {
         activeClass: 'active',
         openClass: 'open',
         itemTemplate: '<li data-value="${value}">${text}</li>',
-        renderTemplate: function (tpl, data) {
+        renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1];
             });

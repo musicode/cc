@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var Slider = require('../ui/Slider');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -90,9 +91,7 @@ define(function (require, exports, module) {
                     me.slider.setValue(value);
                 }
 
-                if ($.isFunction(me.onChange)) {
-                    me.onChange();
-                }
+                me.emit('change');
             }
         },
 
@@ -112,6 +111,8 @@ define(function (require, exports, module) {
             me.element = null;
         }
     };
+
+    jquerify(Range.prototype);
 
     /**
      * 默认配置

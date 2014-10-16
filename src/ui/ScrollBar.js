@@ -18,6 +18,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Slider = require('./Slider');
     var Wheel = require('../helper/Wheel');
@@ -89,7 +90,12 @@ define(function (require, exports, module) {
 
                 onChange: function () {
                     if (me.cache) {
-                        me.to(this.value, { panel: true });
+                        me.to(
+                            this.value,
+                            {
+                                panel: true
+                            }
+                        );
                     }
                 }
             });
@@ -107,10 +113,13 @@ define(function (require, exports, module) {
                                     }
                                 })
                             },
-                            orientationConf[ me.orientation  ]
+                            orientationConf[me.orientation]
                         );
 
-            me.refresh({ value: me.value });
+            me.refresh({
+                value: me.value
+            });
+
         },
 
         /**
@@ -198,22 +207,33 @@ define(function (require, exports, module) {
          */
         to: function (value, options) {
 
-            var me = this;
-            var cache = me.cache;
-            var slider = cache.slider;
+            if ($.isNumeric(value)) {
 
-            if ((options && options.panel)
-                || slider.setValue(value)
-            ) {
+                var me = this;
+                var cache = me.cache;
+                var slider = cache.slider;
 
-                me.panel.prop(cache.scroll, value * cache.factor);
-                me.value = value;
+                if ((options && options.panel)
+                    || slider.setValue(value)
+                ) {
 
-                if ($.isFunction(me.onScroll)) {
-                    me.onScroll(value);
+                    me.panel.prop(
+                        cache.scroll,
+                        value * cache.factor
+                    );
+
+                    me.value = value;
+
+                    me.emit(
+                        'scroll',
+                        {
+                            value: value
+                        }
+                    );
+
+                    return true;
                 }
 
-                return true;
             }
 
             return false;
@@ -238,6 +258,8 @@ define(function (require, exports, module) {
         }
 
     };
+
+    jquerify(ScrollBar.prototype);
 
     /**
      * 默认配置

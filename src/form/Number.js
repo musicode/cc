@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var timer = require('../function/timer');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     var plus = require('../function/plus');
@@ -79,7 +80,6 @@ define(function (require, exports, module) {
 
             me.input = new Input({
                 element: element,
-                scope: me,
                 longPress: true,
                 action: {
                     up: upHandler,
@@ -139,9 +139,7 @@ define(function (require, exports, module) {
 
             me.element.val(value);
 
-            if ($.isFunction(me.onChange)) {
-                me.onChange();
-            }
+            me.emit('change');
         },
 
         /**
@@ -189,6 +187,8 @@ define(function (require, exports, module) {
         }
 
     };
+
+    jquerify(Number.prototype);
 
     /**
      * 默认配置

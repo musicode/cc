@@ -82,16 +82,27 @@
                     container: $('#scrollbar-track'),
                     axis: 'x',
                     onDragStart: function (point) {
-                        console.log('drag start');
+                        console.log(this, 'drag start');
                     },
                     onDrag: function (point) {
-                        console.log(point);
+                        console.log(this, point);
                     },
                     onDragEnd: function (point) {
-                        console.log('drag end');
+                        console.log(this, 'drag end');
                     }
                 });
 
+                scrollbar.on({
+                    dragStart: function (e, data) {
+                        console.log(e.cobble, 'dragStart');
+                    },
+                    drag: function (e, data) {
+                        console.log(e.cobble, 'drag');
+                    },
+                    dragEnd: function (e, data) {
+                        console.log(e.cobble, 'dragEnd');
+                    }
+                })
 
                 new Draggable({
                     element: $('#target'),

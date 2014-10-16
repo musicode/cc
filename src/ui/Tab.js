@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
@@ -61,8 +62,8 @@ define(function (require, exports, module) {
                 activeClass: me.navActiveClass,
                 change: function (data) {
 
-                    var fromIndex = data.fromIndex;
-                    var toIndex = data.toIndex;
+                    var from = data.from;
+                    var to = data.to;
 
                     // 切换 content，优先使用动画
                     if ($.isFunction(me.animation)) {
@@ -78,20 +79,20 @@ define(function (require, exports, module) {
                             var activeClass = me.contentActiveClass;
 
                             if (activeClass) {
-                                contents.eq(fromIndex).removeClass(activeClass);
-                                contents.eq(toIndex).addClass(activeClass);
+                                contents.eq(from).removeClass(activeClass);
+                                contents.eq(to).addClass(activeClass);
                             }
                             else {
-                                contents.eq(fromIndex).hide();
-                                contents.eq(toIndex).show();
+                                contents.eq(from).hide();
+                                contents.eq(to).show();
                             }
                         }
                     }
 
-                    me.index = toIndex;
+                    me.index = to;
 
-                    if (fromIndex !== toIndex && $.isFunction(me.onChange)) {
-                        me.onChange(data);
+                    if (from !== to) {
+                        me.emit('change', data);
                     }
 
                 }
@@ -125,6 +126,8 @@ define(function (require, exports, module) {
         }
 
     };
+
+    jquerify(Tab.prototype);
 
     /**
      * 默认配置

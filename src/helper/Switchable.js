@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -20,8 +21,8 @@ define(function (require, exports, module) {
      * @property {string=} options.activeClass 触发元素被激活时的 class
      * @property {Function} options.change 切换动作
      * @argument {Object} options.change.data
-     * @property {number} options.change.data.fromIndex
-     * @property {number} options.change.data.toIndex
+     * @property {number} options.change.data.from
+     * @property {number} options.change.data.to
      */
     function Switchable(options) {
         return lifeCycle.init(this, options);
@@ -45,7 +46,7 @@ define(function (require, exports, module) {
             var index = me.index;
             var activeClass = me.activeClass;
 
-            if ($.type(index) !== 'number' && activeClass) {
+            if (!$.isNumeric(index) && activeClass) {
                 index = element.find(selector)
                                .index(element.find('.' + me.activeClass));
             }
@@ -83,16 +84,18 @@ define(function (require, exports, module) {
                 targets.eq(index).addClass(activeClass);
             }
 
+            // 强制为数字类型，避免后续出现问题
+            index = + index;
+
             var data = {
-                fromIndex: fromIndex,
-                toIndex: index
+                from: fromIndex,
+                to: index
             };
 
             me.index = index;
 
-            if ($.isFunction(me.change)) {
-                me.change(data);
-            }
+            me.change(data);
+
         },
 
         /**
@@ -109,9 +112,12 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(Switchable.prototype);
+
     /**
      * 默认配置
      *
+     * @static
      * @type {Object}
      */
     Switchable.defaultOptions = {

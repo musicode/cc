@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -120,6 +121,8 @@ define(function (require, exports, module) {
             me.element = null;
         }
     };
+
+    jquerify(Radio.prototype);
 
     /**
      * 默认配置

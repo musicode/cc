@@ -11,6 +11,7 @@ define(function (require, exports, module) {
     var dimension = require('../util/dimension');
 
     var pin = require('../function/pin');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var viewport = require('../function/viewport');
     var offsetParent = require('../function/offsetParent');
@@ -125,6 +126,9 @@ define(function (require, exports, module) {
                 element.css('position', position);
             }
 
+            // 默认隐藏
+            element.hide();
+
             if (!offsetParent(element).is('body')) {
                 instance.body.append(element);
             }
@@ -133,6 +137,9 @@ define(function (require, exports, module) {
 
                 var mask = me.mask
                         || (me.mask = $(me.maskTemplate));
+
+                // 默认隐藏
+                mask.hide();
 
                 // 遮罩放到对话框前面
                 // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
@@ -162,16 +169,8 @@ define(function (require, exports, module) {
                 element.css(name, value);
             }
 
-            var hidden = me.hidden;
-            me.hidden = null;
-
-            if (hidden) {
-                // 这里有空需要调整
-                me.initing = true;
-                me.hide();
-                delete me.initing;
-            }
-            else {
+            if (!me.hidden) {
+                me.hidden = true;
                 me.show();
             }
         },
@@ -187,9 +186,7 @@ define(function (require, exports, module) {
                 return;
             }
 
-            if ($.isFunction(me.onBeforeShow)
-                && me.onBeforeShow() === false
-            ) {
+            if (me.emit('beforeShow') === false) {
                 return;
             }
 
@@ -248,9 +245,7 @@ define(function (require, exports, module) {
                         )
                     );
 
-            if ($.isFunction(me.onAfterShow)) {
-                me.onAfterShow();
-            }
+            me.emit('afterShow');
         },
 
         /**
@@ -264,9 +259,7 @@ define(function (require, exports, module) {
                 return;
             }
 
-            if ($.isFunction(me.onBeforeHide)
-                && me.onBeforeHide() === false
-            ) {
+            if (me.emit('beforeHide') === false) {
                 return;
             }
 
@@ -298,11 +291,9 @@ define(function (require, exports, module) {
 
             me.hidden = true;
 
-            if ($.isFunction(me.onAfterHide)) {
-                me.onAfterHide();
-            }
+            me.emit('afterHide');
 
-            if (!me.initing && me.disposeOnHide) {
+            if (me.disposeOnHide) {
                 me.dispose();
             }
         },
@@ -325,11 +316,15 @@ define(function (require, exports, module) {
             var mask = me.mask;
 
             element.off(namespace);
-            mask && mask.off(namespace);
+            if (mask) {
+                mask.off(namespace);
+            }
 
             if (me.removeOnDispose) {
                 element.remove();
-                mask && mask.remove();
+                if (mask) {
+                    mask.remove();
+                }
             }
 
             me.element =
@@ -337,6 +332,8 @@ define(function (require, exports, module) {
         }
 
     };
+
+    jquerify(Dialog.prototype);
 
     /**
      * 默认配置

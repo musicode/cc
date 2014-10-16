@@ -26,6 +26,7 @@ define(function (require, exports, module) {
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
+    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var pageScrollLeft = require('../function/pageScrollLeft');
     var pageScrollTop = require('../function/pageScrollTop');
@@ -48,13 +49,13 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
-     * @property {Function} options.onDragStart 开始拖拽
+     * @property {Function=} options.onDragStart 开始拖拽
      * @argument {Object} options.onDragStart.point 坐标点
      *
-     * @property {Function} options.onDrag 正在拖拽
+     * @property {Function=} options.onDrag 正在拖拽
      * @argument {Object} options.onDragStart.point 坐标点
      *
-     * @property {Function} options.onDragEnd 结束拖拽
+     * @property {Function=} options.onDragEnd 结束拖拽
      * @argument {Object} options.onDragStart.point 坐标点
      */
     function Draggable(options) {
@@ -80,8 +81,8 @@ define(function (require, exports, module) {
             // 因为有这个问题，索性整个判断都放在 onDragStart 中处理
 
             element
-              .css(position(element))
-              .on('mousedown' + namespace, me, onDragStart);
+            .css(position(element))
+            .on('mousedown' + namespace, me, onDragStart);
         },
 
         /**
@@ -136,11 +137,12 @@ define(function (require, exports, module) {
 
             me.element.off(namespace);
 
-            me.cache =
             me.element =
             me.container = null;
         }
     };
+
+    jquerify(Draggable.prototype);
 
     /**
      * 默认配置
@@ -366,9 +368,10 @@ define(function (require, exports, module) {
 
         disableSelection();
 
-        instance.document
-                .on('mousemove' + namespace, draggable, onDrag)
-                .on('mouseup' + namespace, draggable, onDragEnd);
+        instance
+        .document
+        .on('mousemove' + namespace, draggable, onDrag)
+        .on('mouseup' + namespace, draggable, onDragEnd);
 
     }
 
@@ -394,10 +397,8 @@ define(function (require, exports, module) {
 
         // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
         // 只有坐标发生变动才算
-        if (++counter === 1
-            && $.isFunction(draggable.onDragStart)
-        ) {
-            draggable.onDragStart();
+        if (++counter === 1) {
+            draggable.emit('dragStart');
         }
 
         if (!draggable.silence) {
@@ -407,6 +408,9 @@ define(function (require, exports, module) {
         if ($.isFunction(draggable.onDrag)) {
             draggable.onDrag(point);
         }
+
+        draggable.emit('drag', point);
+
     }
 
     /**
@@ -419,16 +423,12 @@ define(function (require, exports, module) {
 
         enableSelection();
 
-        instance.document
-                .off('mousemove' + namespace)
-                .off('mouseup' + namespace);
+        instance.document.off(namespace);
 
         var draggable = e.data;
 
-        if (counter > 0
-            && $.isFunction(draggable.onDragEnd)
-        ) {
-            draggable.onDragEnd();
+        if (counter > 0) {
+            draggable.emit('dragEnd');
         }
 
         counter =
@@ -444,7 +444,7 @@ define(function (require, exports, module) {
      * @inner
      * @param {jQuery} element
      * @param {string|Array.<string>} selector
-     * @param {jQuery|HTMLElement} target
+     * @param {HTMLElement} target
      * @return {boolean}
      */
     function hitTarget(element, selector, target) {
@@ -456,8 +456,8 @@ define(function (require, exports, module) {
         }
 
         element
-            .find(selector)
-            .each(
+        .find(selector)
+        .each(
             function () {
                 if (result = contains(this, target)) {
                     return false;

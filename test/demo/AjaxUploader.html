@@ -24,37 +24,55 @@
 
             function (AjaxUploader) {
 
+                var element = $('#file');
                 var uploader = new AjaxUploader({
-                    element: $('#file'),
+                    element: element,
                     action: 'http://localhost:8808/upload',
                     multiple: true,
                     accept: ['jpg', 'png', 'gif', 'bmp'],
-                    onFileChange: function () {
-                        this.upload({
+                    onFileChange: function (event) {
+                        this.setData({
                             name: 'zhujl',
                             age: 25
                         });
+                        this.upload();
                     },
-                    onUploadStart: function (data) {
+                    onUploadStart: function (event, data) {
                         console.log('upload start:');
                         console.log(data.fileItem);
                     },
-                    onUploadProgress: function (data) {
+                    onUploadProgress: function (event, data) {
                         console.log('upload progress:');
-                        console.log((100 * data.uploaded / data.total) + '%');
+                        console.log(data.percent);
                     },
-                    onUploadSuccess: function (data) {
+                    onUploadSuccess: function (event, data) {
                         console.log('upload success');
                         console.log(data.responseText);
                     },
-                    onUploadError: function (data) {
+                    onUploadError: function (event, data) {
                         console.log('upload error');
                         console.log(data);
                     },
-                    onUploadComplete: function (data) {
+                    onUploadComplete: function (event, data) {
                         console.log('upload complete');
                     }
                 });
+
+                var handler = function (e, data) {
+                    console.log('===============');
+                    console.log(e.cobble, e.type, data);
+                };
+
+                uploader
+                .on({
+                    fileChange: handler,
+                    uploadStart: handler,
+                    uploadProgress: handler,
+                    uploadSuccess: handler,
+                    uploadError: handler,
+                    uploadComplete: handler
+                });
+
 
             }
         );
