@@ -50,7 +50,7 @@ define(function (require, exports, module) {
             this.movieName = instanceId;
 
             var element = this.element;
-            if (typeof element === 'string') {
+            if ($.type(element) === 'string') {
                 element = document.getElementById(element);
             }
 

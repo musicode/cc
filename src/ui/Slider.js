@@ -332,7 +332,7 @@ define(function (require, exports, module) {
      */
     Slider.defaultOptions = {
         step: 10,
-        scrollable: false,
+        scrollable: true,
         orientation: 'horizontal'
     };
 
@@ -446,7 +446,7 @@ define(function (require, exports, module) {
 
         options.onDrag = function (data) {
             slider.setValue(
-                data[ cache.position ],
+                data[cache.position],
                 {
                     pixel: true,
                     animate: slider.dragAnimation
@@ -473,7 +473,7 @@ define(function (require, exports, module) {
         }
 
         slider.setValue(
-            eventOffset(e)[ cache.axis ],
+            eventOffset(e)[cache.axis],
             {
                 pixel: true,
                 animate: slider.toAnimation

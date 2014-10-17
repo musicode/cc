@@ -28,7 +28,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.menu 下拉菜单元素
      *
      * @property {Array=} options.data 下拉菜单的数据
-     * @property {string=} options.template 菜单项模板
+     * @property {string=} options.template 菜单模板
      * @property {Function=} options.renderTemplate 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
@@ -104,11 +104,10 @@ define(function (require, exports, module) {
                 '[data-value]',
                 function (e) {
 
-                    var target = $(e.currentTarget);
-
                     me.close();
+
                     me.setValue(
-                        target.data('value')
+                        $(e.currentTarget).data('value')
                     );
 
                 }
@@ -141,7 +140,7 @@ define(function (require, exports, module) {
 
                 data = target.data();
 
-                if ($.type(data.text) !== 'string') {
+                if (data.text == null) {
                     data.text = target.html();
                 }
 
@@ -152,6 +151,7 @@ define(function (require, exports, module) {
             if (result) {
 
                 var activeClass = me.activeClass;
+
                 if (activeClass) {
                     menu
                     .find('.' + activeClass)
@@ -170,7 +170,7 @@ define(function (require, exports, module) {
                     me.value = null;
                 }
 
-                me.emit('change');
+                me.emit('change', data);
 
             }
 

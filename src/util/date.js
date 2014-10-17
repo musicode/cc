@@ -73,6 +73,10 @@ define(function (require, exports, module) {
 
     exports.stringify = function (date) {
 
+        if ($.type(date) === 'number') {
+            date = new Date(date);
+        }
+
         var year = date.getFullYear();
         var month = date.getMonth() + 1;
         var date = date.getDate();
@@ -88,6 +92,11 @@ define(function (require, exports, module) {
     };
 
     exports.simplify = function (date) {
+
+        if ($.type(date) === 'number') {
+            date = new Date(date);
+        }
+
         return {
             year: date.getFullYear(),
             month: date.getMonth() + 1,
@@ -99,11 +108,15 @@ define(function (require, exports, module) {
     /**
      * 获得 date 所在周的第一天
      *
-     * @param {Date} date
+     * @param {Date|number} date
      * @param {number} firstDay 周的第一天，可选值为 0 - 6
      * @return {Date}
      */
     exports.getWeekFirstDay = function (date, firstDay) {
+
+        if ($.type(date) === 'number') {
+            date = new Date(date);
+        }
 
         var day = date.getDay();
         day = day >= firstDay ? day : (day + 7);
@@ -117,7 +130,7 @@ define(function (require, exports, module) {
     /**
      * 获得 date 所在周的最后一天
      *
-     * @param {Date} date
+     * @param {Date|number} date
      * @param {number} firstDay 周的第一天，可选值为 0 - 6
      * @return {Date}
      */
@@ -134,28 +147,80 @@ define(function (require, exports, module) {
     /**
      * 获得 date 所在月份的第一天
      *
-     * @param {Date} date
+     * @param {Date|number} date
      * @return {Date}
      */
     exports.getMonthFirstDay = function (date) {
-        var time = date.getTime();
+
+        var time = $.type(date) === 'number'
+                 ? date
+                 : date.getTime();
+
         date = new Date(time);
         date.setDate(1);
+
         return date;
     };
 
     /**
      * 获得 date 所在月份的最后一天
      *
-     * @param {Date} date
+     * @param {Date|number} date
      * @return {Date}
      */
     exports.getMonthLastDay = function (date) {
-        var time = date.getTime();
+
+        var time = $.type(date) === 'number'
+                 ? date
+                 : date.getTime();
+
         date = new Date(time);
         date.setDate(1);
         date.setMonth(date.getMonth() + 1);
         date.setDate(0);
+
+        return date;
+    };
+
+    /**
+     * 上个月
+     *
+     * @param {Date|number} date
+     * @return {Date}
+     */
+    exports.prevMonth = function (date) {
+
+        var time = $.type(date) === 'number'
+                 ? date
+                 : date.getTime();
+
+        date = new Date(time);
+        date.setDate(1);
+        date.setTime(
+            time - exports.WEEK
+        );
+
+        return date;
+    };
+
+    /**
+     * 下个月
+     *
+     * @param {Date|number} date
+     * @return {Date}
+     */
+    exports.nextMonth = function (date) {
+
+        var time = $.type(date) === 'number'
+                 ? date
+                 : date.getTime();
+
+        date = new Date(time);
+        date.setDate(28);
+        date.setTime(
+            time + exports.WEEK
+        );
+
         return date;
     };
 

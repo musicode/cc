@@ -117,7 +117,7 @@ define(function (require, exports, module) {
                 element.on('click' + namespace, closeSelector, hideHandler);
             }
 
-            if ($.type(me.width) === 'number') {
+            if ($.isNumeric(me.width)) {
                 element.width(me.width);
             }
 
@@ -153,7 +153,7 @@ define(function (require, exports, module) {
                 var name = 'zIndex';
                 var value = me[name];
 
-                if ($.type(value) !== 'number') {
+                if (!$.isNumeric(value)) {
                     value = mask.css(name);
                     if (!$.isNumeric(value)) {
                         value = 'auto';

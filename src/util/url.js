@@ -21,7 +21,6 @@ define(function (require, exports, module) {
             var startIndex = 0;
 
             var firstChar = queryStr.charAt(0);
-            var secondChar = queryStr.charAt(1);
 
             // query 如 ?a=1
             if (firstChar === '?') {
@@ -31,6 +30,7 @@ define(function (require, exports, module) {
             else if (firstChar === '#') {
                 startIndex = 1;
 
+                var secondChar = queryStr.charAt(1);
                 // hash 如 #/a=1&b=2
                 if (secondChar === '/') {
                     startIndex = 2;
@@ -40,7 +40,6 @@ define(function (require, exports, module) {
             if (startIndex > 0) {
                 queryStr = queryStr.substr(startIndex);
             }
-
 
 
             $.each(

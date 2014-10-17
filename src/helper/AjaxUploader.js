@@ -78,9 +78,7 @@ define(function (require, exports, module) {
 
             // 确保是文件上传控件
             if (!element.is(':file')) {
-                var input = $('<input type="file" />');
-                element.replaceWith(input);
-                element = me.element = input;
+                throw new Error('AjaxUploader element must be <input type="file" />');
             }
 
             // 用一个 form 元素包着，便于重置
@@ -194,12 +192,10 @@ define(function (require, exports, module) {
 
             xhr.open('post', me.action, true);
 
-            if (me.useChunk) {
-                uploadChunk(me, fileItem);
-            }
-            else {
-                uploadFile(me, fileItem);
-            }
+            var upload = me.useChunk ? uploadChunk : uploadFile;
+
+            upload(me, fileItem);
+
         },
 
         /**
@@ -231,24 +227,6 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 插入到 target 后面
-         *
-         * @param {jQuery} target
-         */
-        appendTo: function (target) {
-            this.form.appendTo(target);
-        },
-
-        /**
-         * 插入到 target 前面
-         *
-         * @param {jQuery} target
-         */
-        prependTo: function (target) {
-            this.form.appendTo(target);
-        },
-
-        /**
          * 销毁对象
          */
         dispose: function () {
@@ -260,6 +238,7 @@ define(function (require, exports, module) {
             me.stop();
             me.element.off(namespace);
 
+            me.faker =
             me.element =
             me.fileQueue = null;
 
@@ -448,6 +427,13 @@ define(function (require, exports, module) {
         pptx    : 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
     };
 
+    /**
+     * 上传整个文件
+     *
+     * @inner
+     * @param {AjaxUploader} uploader
+     * @param {Object} fileItem
+     */
     function uploadFile(uploader, fileItem) {
 
         var formData = new FormData();
@@ -467,6 +453,13 @@ define(function (require, exports, module) {
         fileItem.xhr.send(formData);
     }
 
+    /**
+     * 上传文件的一个分片
+     *
+     * @inner
+     * @param {AjaxUploader} uploader
+     * @param {Object} fileItem
+     */
     function uploadChunk(uploader, fileItem) {
 
         var file = fileItem.nativeFile;
@@ -595,31 +588,30 @@ define(function (require, exports, module) {
         uploadProgress: {
             type: 'progress',
             handler: function (uploader, e) {
-                if ($.isFunction(uploader.onUploadProgress)) {
 
-                    var fileItem = getCurrentFileItem(uploader);
+                var fileItem = getCurrentFileItem(uploader);
 
-                    var total = fileItem.file.size;
-                    var uploaded = e.loaded;
+                var total = fileItem.file.size;
+                var uploaded = e.loaded;
 
-                    var chunkInfo = fileItem.chunk;
-                    if (chunkInfo) {
-                        uploaded += chunkInfo.uploaded;
-                    }
+                var chunkInfo = fileItem.chunk;
+                if (chunkInfo) {
+                    uploaded += chunkInfo.uploaded;
+                }
 
-                    var percent = uploaded / (total || 1);
-                    percent = parseInt(100 * percent, 10) + '%';
+                var percent = uploaded / (total || 1);
+                percent = parseInt(100 * percent, 10) + '%';
 
-                    var data = {
+                uploader.emit(
+                    'uploadProgress',
+                    {
                         fileItem: fileItem,
                         uploaded: uploaded,
                         total: total,
                         percent: percent
-                    };
+                    }
+                );
 
-                    uploader.emit('uploadProgress', data);
-
-                }
             }
         }
 

@@ -124,15 +124,16 @@ define(function () {
      * @param {Function} superClass 父类函数
      */
     function inherits(subClass, superClass) {
+        /* jshint -W054 */
         var F = new Function();
         F.prototype = superClass.prototype;
         subClass.prototype = new F();
         subClass.prototype.constructor = subClass;
+        /* jshint +W054 */
         // 由于引擎内部的使用场景都是inherits后，逐个编写子类的prototype方法
         // 所以，不考虑将原有子类prototype缓存再逐个拷贝回去
     }
 
-    /* jshint ignore:start */
     /**
      * HTML Filter替换的字符实体表
      *
@@ -141,13 +142,14 @@ define(function () {
      * @type {Object}
      */
     var HTML_ENTITY = {
+        /* jshint ignore:start */
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
+        /* jshint ignore:end */
     };
-    /* jshint ignore:end */
 
     /**
      * HTML Filter的替换函数
@@ -218,6 +220,19 @@ define(function () {
     }
 
     /**
+     * 对字符串进行可用于new RegExp的字面化
+     *
+     * @inner
+     * @param {string} source 需要字面化的字符串
+     * @return {string}
+     */
+    function regexpLiteral(source) {
+        return source.replace(/[\^\[\]\$\(\)\{\}\?\*\.\+]/g, function (c) {
+            return '\\' + c;
+        });
+    }
+
+    /**
      * 字符串格式化
      *
      * @inner
@@ -231,7 +246,7 @@ define(function () {
             /\{([0-9]+)\}/g,
             function (match, index) {
                 return args[index - 0 + 1];
-            } );
+            });
     }
 
     /**
@@ -547,16 +562,16 @@ define(function () {
             context.stack.push(this);
         },
 
-        /* jshint ignore:start */
         /**
          * 节点闭合，解析结束
          *
          * @param {Object} context 语法分析环境对象
          */
         close: function (context) {
-            while (context.stack.pop().constructor !== this.constructor) {}
+            if (context.stack.top() === this) {
+                context.stack.pop();
+            }
         },
-        /* jshint ignore:end */
 
         /**
          * 获取renderer body的生成代码
@@ -613,9 +628,7 @@ define(function () {
         if (closeEnd) {
             var node;
 
-            do {
-                node = stack.top();
-
+            while ((node = stack.top()) !== closeEnd) {
                 /* jshint ignore:start */
                 // 如果节点对象不包含autoClose方法
                 // 则认为该节点不支持自动闭合，需要抛出错误
@@ -626,7 +639,9 @@ define(function () {
                 /* jshint ignore:end */
 
                 node.autoClose(context);
-            } while (node !== closeEnd);
+            }
+
+            closeEnd.close(context);
         }
 
         return closeEnd;
@@ -808,11 +823,21 @@ define(function () {
      * @param {Engine} engine 引擎实例
      */
     function ForCommand(value, engine) {
-        /* jshint ignore:start */
-        if (!/^\s*(\$\{[\s\S]+\})\s+as\s+\$\{([0-9a-z_]+)\}\s*(,\s*\$\{([0-9a-z_]+)\})?\s*$/i.test(value)) {
+        var rule = new RegExp(
+            stringFormat(
+                /* jshint ignore:start */
+                '^\\s*({0}[\\s\\S]+{1})\\s+as\\s+{0}([0-9a-z_]+){1}\\s*(,\\s*{0}([0-9a-z_]+){1})?\\s*$',
+                /* jshint ignore:end */
+                regexpLiteral(engine.options.variableOpen),
+                regexpLiteral(engine.options.variableClose)
+            ),
+            'i'
+        );
+
+
+        if (!rule.test(value)) {
             throw new Error('Invalid ' + this.type + ' syntax: ' + value);
         }
-        /* jshint ignore:end */
 
         this.list = RegExp.$1;
         this.item = RegExp.$2;
@@ -981,6 +1006,7 @@ define(function () {
             //     + this.getRendererBody()
             //     + RENDER_STRING_RETURN);
 
+            /* jshint -W054 */
             var realRenderer = new Function(
                 'data', 'engine',
                 [
@@ -990,6 +1016,7 @@ define(function () {
                     RENDER_STRING_RETURN
                 ].join('\n')
             );
+            /* jshint +W054 */
 
             var engine = this.engine;
             this.renderer = function (data) {
@@ -1025,7 +1052,7 @@ define(function () {
                     break;
                 /* jshint ignore:end */
                 default:
-                    throw new Error('Target is exists: ' + name);
+                    throw new Error('Target exists: ' + name);
             }
         }
         else {
@@ -1142,25 +1169,11 @@ define(function () {
      *
      * @param {Object} context 语法分析环境对象
      */
-    TargetCommand.prototype.close =
-
-    /**
-     * 节点闭合，解析结束。自闭合时被调用
-     *
-     * @param {Object} context 语法分析环境对象
-     */
-    TargetCommand.prototype.autoClose = function (context) {
+    TargetCommand.prototype.close = function (context) {
         Command.prototype.close.call(this, context);
         this.state = this.master ? TargetState.READED : TargetState.APPLIED;
         context.target = null;
     };
-
-    /**
-     * 节点自动闭合，解析结束
-     *
-     * @param {Object} context 语法分析环境对象
-     */
-    IfCommand.prototype.autoClose = Command.prototype.close;
 
     /**
      * 节点自动闭合，解析结束
@@ -1412,6 +1425,7 @@ define(function () {
         this.options = {
             commandOpen: '<!--',
             commandClose: '-->',
+            commandSyntax: /^\s*(\/)?([a-z]+)\s*(?::([\s\S]*))?$/,
             variableOpen: '${',
             variableClose: '}',
             defaultFilter: 'html'
@@ -1461,7 +1475,9 @@ define(function () {
             }
         }
 
+        /* jshint -W054 */
         return new Function('return ""');
+        /* jshint +W054 */
     };
 
     /**
@@ -1518,6 +1534,7 @@ define(function () {
     function parseSource(source, engine) {
         var commandOpen = engine.options.commandOpen;
         var commandClose = engine.options.commandClose;
+        var commandSyntax = engine.options.commandSyntax;
 
         var stack = new Stack();
         var analyseContext = {
@@ -1555,23 +1572,11 @@ define(function () {
 
         var NodeType;
 
-        /**
-         * 判断节点是否是NodeType类型的实例
-         * 用于在stack中find提供filter
-         *
-         * @inner
-         * @param {Command} node 目标节点
-         * @return {boolean}
-         */
-        function isInstanceofNodeType(node) {
-            return node instanceof NodeType;
-        }
-
         parseTextBlock(
             source, commandOpen, commandClose, 0,
 
             function (text) { // <!--...-->内文本的处理函数
-                var match = /^\s*(\/)?([a-z]+)\s*(:([\s\S]*))?$/.exec(text);
+                var match = commandSyntax.exec(text);
 
                 // 符合command规则，并且存在相应的Command类，说明是合法有含义的Command
                 // 否则，为不具有command含义的普通文本
@@ -1589,11 +1594,10 @@ define(function () {
                     }
 
                     if (match[1]) {
-                        currentNode = stack.find(isInstanceofNodeType);
-                        currentNode && currentNode.close(analyseContext);
+                        currentNode = autoCloseCommand(analyseContext, NodeType);
                     }
                     else {
-                        currentNode = new NodeType(match[4], engine);
+                        currentNode = new NodeType(match[3], engine);
                         if (typeof currentNode.beforeOpen === 'function') {
                             currentNode.beforeOpen(analyseContext);
                         }
@@ -1626,6 +1630,6 @@ define(function () {
     var etpl = new Engine();
     etpl.Engine = Engine;
 
-    return etpl;
+    return etpl
 
 });

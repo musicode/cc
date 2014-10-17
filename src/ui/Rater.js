@@ -104,19 +104,15 @@ define(function (require, exports, module) {
             element.html(html);
 
             if (!me.readOnly) {
+
                 var itemSelector = me.itemSelector;
+
                 element
                 .on('mouseenter' + namespace, itemSelector, me, previewValue)
                 .on('mouseleave' + namespace, itemSelector, me, restoreValue)
                 .on('click' + namespace, itemSelector, me, changeValue);
             }
 
-            me.emit(
-                'change',
-                {
-                    value: me.value
-                }
-            );
         },
 
         /**

@@ -14,6 +14,7 @@ define(function (require) {
      * 只有具有 data-value 属性的元素才支持点击选中
      *
      */
+
     /**
      *
      * @constructor
@@ -58,17 +59,35 @@ define(function (require) {
 
             var me = this;
 
+            var date = me.date || new Date();
+            var today = me.today || new Date();
+
+            // 转成 00:00:00 便于比较大小
+            var data = {
+                date: date.setHours(0, 0, 0, 0),
+                today: today.setHours(0, 0, 0, 0)
+            };
+
             var conf = modeConfig[me.mode];
-
-            var date = copyDate(me.date);
-            var today = copyDate(me.today);
-
-            var prev = conf.prev(date);
-            var next = conf.next(date);
-            var create = conf.create(date, me.firstDay, today);
+            var prev = conf.prev(data);
+            var next = conf.next(data);
+            var create = conf.create(data, me.firstDay);
 
             var refresh = function () {
-                return me.render(create());
+
+                var list = create();
+
+                return me.render(
+                    $.extend(
+                        dateUtil.simplify(data.date),
+                        {
+                            start: list[0],
+                            end: list[ list.length - 1 ],
+                            list: list
+                        }
+                    )
+                );
+
             };
 
             refresh();
@@ -76,10 +95,6 @@ define(function (require) {
             var clickType = 'click' + namespace;
             var element = me.element;
             var activeClass = me.activeClass;
-
-            if (me.value) {
-                me.setValue(me.value);
-            }
 
             element.on(
                 clickType,
@@ -239,30 +254,21 @@ define(function (require) {
      */
     var namespace = '.cobble_ui_calendar';
 
-    function copyDate(date) {
-        return date
-             ? new Date(date.getTime())
-             : new Date();
-    }
 
-    function getDatasource(startDate, endDate, today) {
+    function getDatasource(start, end, today) {
 
         var data = [ ];
 
-        resetDate(today);
-        resetDate(startDate);
-        resetDate(endDate);
+        for (var time = start, item; time <= end; time += dateUtil.DAY) {
 
-        for (var time = startDate.getTime(), item; time <= endDate; time += dateUtil.DAY) {
-
-            item = dateUtil.simplify(new Date(time));
+            item = dateUtil.simplify(time);
 
             // 过去 or 现在 or 将来
             if (time > today) {
                 item.phase = 'future';
             }
             else if (time < today) {
-                item.phase = 'pass';
+                item.phase = 'past';
             }
             else {
                 item.phase = 'today';
@@ -274,89 +280,64 @@ define(function (require) {
         return data;
     }
 
-    /**
-     * 把日期时间重置为 00:00 00:00
-     *
-     * @param {Date} date
-     */
-    function resetDate(date) {
-        date.setHours(0);
-        date.setMinutes(0);
-        date.setSeconds(0);
-        date.setMilliseconds(0);
-    }
-
     var modeConfig = {
         month: {
-            prev: function (date) {
+            prev: function (data) {
                 return function () {
-                    date.setDate(1);
-                    date.setTime(
-                        date.getTime() - dateUtil.WEEK
-                    );
+                    var prev = dateUtil.prevMonth(data.date);
+                    data.date = prev.getTime();
                 };
             },
-            next: function (date) {
+            next: function (data) {
                 return function () {
-                    date.setDate(28);
-                    date.setTime(
-                        date.getTime() + dateUtil.WEEK
-                    );
+                    var next = dateUtil.nextMonth(data.date);
+                    data.date = next.getTime();
                 };
             },
-            create: function (date, firstDay, today) {
+            create: function (data, firstDay) {
                 return function () {
+
+                    var date = new Date(data.date);
 
                     var monthFirstDay = dateUtil.getMonthFirstDay(date);
                     var monthLastDay = dateUtil.getMonthLastDay(date);
 
-                    var list = getDatasource(
-                        dateUtil.getWeekFirstDay(monthFirstDay, firstDay),
-                        dateUtil.getWeekLastDay(monthLastDay, firstDay),
-                        new Date(today.getTime())
+                    var weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
+                    var weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+
+                    return getDatasource(
+                        + weekFirstDay,
+                        + weekLastDay,
+                        data.today
                     );
 
-                    return {
-                        year: date.getFullYear(),
-                        month: date.getMonth() + 1,
-                        start: list[0],
-                        end: list[ list.length - 1 ],
-                        list: list
-                    };
                 };
             }
         },
         week: {
-            prev: function (date) {
+            prev: function (data) {
                 return function () {
-                    date.setTime(
-                        date.getTime() - dateUtil.WEEK
-                    );
+                    data.date -= dateUtil.WEEK;
                 };
             },
-            next: function (date) {
+            next: function (data) {
                 return function () {
-                    date.setTime(
-                        date.getTime() + dateUtil.WEEK
-                    );
+                    data.date += dateUtil.WEEK;
                 };
             },
-            create: function (date, firstDay, today) {
+            create: function (data, firstDay) {
                 return function () {
 
-                    var list = getDatasource(
-                        dateUtil.getWeekFirstDay(date, firstDay),
-                        dateUtil.getWeekLastDay(date, firstDay),
-                        new Date(today.getTime())
+                    var date = new Date(data.date);
+                    var weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
+                    var weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
+
+                    return getDatasource(
+                        + weekFirstDay,
+                        + weekLastDay,
+                        data.today
                     );
 
-                    return {
-                        year: date.getFullYear(),
-                        month: date.getMonth() + 1,
-                        start: list[0],
-                        end: list[ list.length - 1 ],
-                        list: list
-                    };
                 };
             }
         }

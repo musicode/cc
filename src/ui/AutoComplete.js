@@ -64,15 +64,14 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var cache = me.cache
-                      = {
-                            // 按上下键遍历的最小索引
-                            min: me.includeInput ? 0 : 1,
-                            // 起始索引
-                            start: 0,
-                            // 缓存结果
-                            result: { }
-                        };
+            // 按上下键遍历的最小索引
+            me.minIndex = me.includeInput ? 0 : 1;
+
+            // 起始索引
+            me.startIndex = 0;
+
+            // 缓存结果
+            me.cache = { };
 
             me.input = createInput(me);
             me.popup = createPopup(me);
@@ -97,15 +96,12 @@ define(function (require, exports, module) {
 
             if ($.isArray(data) && data.length > 0) {
 
-                var cache = me.cache;
-
                 var menu = me.menu;
                 menu.html(
                     me.renderTemplate(data, me.template)
                 );
 
-                var items = cache.items
-                          = menu.find(me.itemSelector);
+                var items = menu.find(me.itemSelector);
 
                 data = [ ];
 
@@ -124,16 +120,30 @@ define(function (require, exports, module) {
                     }
                 );
 
-                cache.data = data;
-
                 var input = me.element;
                 items.splice(0, 0, input[0]);
                 data.splice(0, 0, { text: input.val() });
 
-                cache.index = cache.start;
-                cache.max = items.length - 1;
+                // 可以在 renderTemplate 时设置某一项选中
+                var index;
+                var activeItem = menu.find('.' + me.activeClass);
+                if (activeItem.length === 1) {
+                    index = items.index(activeItem);
+                }
+
+                var startIndex = me.startIndex;
+                var maxIndex = items.length - 1;
+
+                me.maxIndex = maxIndex;
+                me.index = index >= startIndex && index <= maxIndex
+                         ? index
+                         : startIndex;
+
+                me.items = items;
+                me.data = data;
 
                 me.open();
+
             }
             else {
                 me.close();
@@ -163,11 +173,6 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
-            var cache = me.cache;
-            if (cache.items) {
-                cache.items = null;
-            }
-
             me.menu.off(namespace);
 
             me.input.dispose();
@@ -175,6 +180,8 @@ define(function (require, exports, module) {
 
             me.element =
             me.menu =
+            me.data =
+            me.items =
             me.cache = null;
         }
     };
@@ -246,8 +253,13 @@ define(function (require, exports, module) {
                     }
                 },
                 enter: function () {
-                    trigger(autoComplete, 'enter');
+
                     autoComplete.close();
+
+                    autoComplete.emit(
+                        'enter',
+                        autoComplete.data[autoComplete.index]
+                    );
                 }
             },
             onLongPressStart: function () {
@@ -288,27 +300,42 @@ define(function (require, exports, module) {
             hide.trigger = 'click';
         }
 
+        var animation = show.animation;
+        if ($.isFunction(animation)) {
+            show.animation = $.proxy(animation, autoComplete);
+        }
+
+        animation = hide.animation;
+        if ($.isFunction(animation)) {
+            hide.animation = $.proxy(animation, autoComplete);
+        }
+
         return new Popup({
             element: element,
             layer: autoComplete.menu,
             show: show,
             hide: hide,
-            onBeforeShow: function (event) {
+            onBeforeShow: function (e) {
                 // 通过元素 focus 触发
-                if (event[$.expando]) {
+                if (e[$.expando]) {
                     suggest(autoComplete);
                     return false;
                 }
-                else {
-                    var cache = autoComplete.cache;
-                    cache.index = cache.start;
-                }
             },
-            onBeforeHide: function (event) {
+            onBeforeHide: function (e) {
+
+                var result;
+
                 // 点击 input 不触发失焦隐藏
-                if (event[$.expando]) {
-                    return event.target !== element[0];
+                if (e[$.expando]) {
+                    result = e.target !== element[0];
                 }
+
+                if (result) {
+                    autoComplete.index = autoComplete.startIndex;
+                }
+
+                return result;
             }
         });
     }
@@ -323,7 +350,7 @@ define(function (require, exports, module) {
 
         var cache = autoComplete.cache;
         var query = $.trim(autoComplete.element.val());
-        var data = cache.result[query];
+        var data = cache[query];
 
         if (data) {
             autoComplete.render(data);
@@ -332,7 +359,7 @@ define(function (require, exports, module) {
             autoComplete.load(
                 query,
                 function (data) {
-                    cache.result[query] = data;
+                    cache[query] = data;
                     autoComplete.render(data);
                 }
             );
@@ -348,15 +375,20 @@ define(function (require, exports, module) {
     function clickItem(e) {
 
         var autoComplete = e.data;
+        var index = autoComplete.items.index(e.currentTarget);
 
         activeItem(
             autoComplete,
-            autoComplete.cache.items.index(e.currentTarget)
+            index
         );
 
         autoComplete.close();
 
-        trigger(autoComplete, 'select');
+        autoComplete.emit(
+            'select',
+            autoComplete.data[index]
+        );
+
     }
 
     /**
@@ -367,11 +399,9 @@ define(function (require, exports, module) {
      */
     function previousItem(autoComplete) {
 
-        var cache = autoComplete.cache;
-
-        var index = cache.index - 1;
-        if (index < cache.min) {
-            index = cache.max;
+        var index = autoComplete.index - 1;
+        if (index < autoComplete.minIndex) {
+            index = autoComplete.maxIndex;
         }
 
         activeItem(autoComplete, index);
@@ -385,11 +415,9 @@ define(function (require, exports, module) {
      */
     function nextItem(autoComplete) {
 
-        var cache = autoComplete.cache;
-
-        var index = cache.index + 1;
-        if (index > cache.max) {
-            index = cache.min;
+        var index = autoComplete.index + 1;
+        if (index > autoComplete.maxIndex) {
+            index = autoComplete.minIndex;
         }
 
         activeItem(autoComplete, index);
@@ -404,22 +432,16 @@ define(function (require, exports, module) {
      */
     function activeItem(autoComplete, index) {
 
-        var className;
-
-        if (index > 0) {
-            className = autoComplete.activeClass;
-        }
-
         switchClass(
             autoComplete,
             index,
-            className
+            autoComplete.activeClass
         );
 
         autoComplete
         .element
         .val(
-            autoComplete.cache.data[index].text
+            autoComplete.data[index].text
         );
     }
 
@@ -435,7 +457,7 @@ define(function (require, exports, module) {
 
         switchClass(
             autoComplete,
-            autoComplete.cache.items.index(e.currentTarget),
+            autoComplete.items.index(e.currentTarget),
             autoComplete.hoverClass
         );
     }
@@ -447,12 +469,13 @@ define(function (require, exports, module) {
      * @param {Event} e
      */
     function leaveItem(e) {
+
         var autoComplete = e.data;
-        var cache = autoComplete.cache;
-        if (cache.className === autoComplete.hoverClass) {
+
+        if (autoComplete.className === autoComplete.hoverClass) {
             switchClass(
                 autoComplete,
-                cache.start
+                autoComplete.startIndex
             );
         }
     }
@@ -467,39 +490,23 @@ define(function (require, exports, module) {
      */
     function switchClass(autoComplete, newIndex, newClass) {
 
-        var cache = autoComplete.cache;
-        var items = cache.items;
+        var items = autoComplete.items;
+        var className = autoComplete.className;
 
-        var className = cache.className;
         if (className) {
-            items.eq(cache.index)
-                 .removeClass(className);
+            items
+            .eq(autoComplete.index)
+            .removeClass(className);
         }
 
         if (newClass) {
-            items.eq(newIndex)
-                 .addClass(newClass);
+            items
+            .eq(newIndex)
+            .addClass(newClass);
         }
 
-        cache.index = newIndex;
-        cache.className = newClass;
-    }
-
-    /**
-     * 触发对外接口
-     * 因为参数相同，所以提供一个方法
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     * @param {string} name
-     */
-    function trigger(autoComplete, name) {
-
-        var cache = autoComplete.cache;
-        var data = cache.data[cache.index];
-
-        autoComplete.emit(name, data);
-
+        autoComplete.index = newIndex;
+        autoComplete.className = newClass;
     }
 
 

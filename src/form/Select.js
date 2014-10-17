@@ -81,7 +81,7 @@ define(function (require, exports, module) {
                 data: me.data,
                 value: me.value,
                 defaultText: me.defaultText,
-                itemTemplate: me.itemTemplate,
+                template: me.template,
                 renderTemplate: me.renderTemplate,
                 activeClass: me.activeClass,
                 openClass: me.openClass,
@@ -90,7 +90,7 @@ define(function (require, exports, module) {
                         me.setText(text);
                     }
                 },
-                onChange: function (data) {
+                onChange: function (e, data) {
 
                     me.setValue(data.value);
 
@@ -125,10 +125,8 @@ define(function (require, exports, module) {
             if (result) {
                 me.value = value;
                 me.input.val(value == null ? '' : value);
-                // 初始化的时候进来，comboBox 还没初始化完
-                if (me.comboBox) {
-                    me.comboBox.setValue(value);
-                }
+
+                me.comboBox.setValue(value);
             }
 
             return result;
@@ -177,11 +175,21 @@ define(function (require, exports, module) {
         menuSelector: '.dropdown-menu',
         activeClass: 'active',
         openClass: 'open',
-        itemTemplate: '<li data-value="${value}">${text}</li>',
         renderTemplate: function (data, tpl) {
-            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
-                return data[$1];
-            });
+
+            var html = [ ];
+
+            $.each(
+                data,
+                function (index, item) {
+                    html.push(
+                        '<li data-value="' + item.value + '">' + item.text + '</li>'
+                    );
+                }
+            );
+
+            return html.join('');
+
         },
         setText: function (text) {
             var button = this.element.find('.btn');

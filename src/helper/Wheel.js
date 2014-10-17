@@ -22,7 +22,6 @@ define(function (require, exports, module) {
 
     var lifeCycle = require('../function/lifeCycle');
     var jquerify = require('../function/jquerify');
-    var fireEvent = require('../function/fireEvent');
     var offsetParent = require('../function/offsetParent');
 
     var instance = require('../util/instance');

@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calendar</title>
+    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+    <style>
+        #month-calendar {
+            width: 210px;
+        }
+        #month-calendar a,
+        #week-calendar a {
+            display: inline-block;
+        }
+        .calendar-header {
+            position: relative;
+            text-align: center;
+        }
+        .calendar-header .prev {
+            position: absolute;
+            left: 0;
+        }
+        .calendar-header .next {
+            position: absolute;
+            right: 0;
+        }
+        .calendar-body {
+            overflow: hidden;
+        }
+        .calendar-body ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            clear: all;
+        }
+        .calendar-body li,
+        .date {
+            float: left;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+        }
+        .weekend {
+            color: #EE4F04;
+        }
+        .month-prev,
+        .month-next {
+            color: #EEE;
+        }
+        .active {
+            background-color: green;
+        }
+
+        .week-calendar {
+            width: 270px;
+        }
+        .week-calendar table {
+            width: 100%;
+        }
+        .week-calendar .calendar-header {
+            border: 1px solid #F1F1F1;
+            border-bottom: none;
+            position: relative;
+            padding: 5px;
+        }
+        .week-calendar .calendar-title {
+            color: #6D6D6D;
+            margin: 0;
+        }
+        .week-calendar .prev,
+        .week-calendar .next {
+            position: absolute;
+            top: 3px;
+        }
+        .week-calendar .prev {
+            left: 5px;
+        }
+        .week-calendar .next {
+            right: 5px;
+        }
+        .week-calendar th,
+        .week-calendar td {
+            border: 1px solid #F1F1F1;
+            padding: 5px 0;
+            text-align: center;
+            width: 37px;
+        }
+        .week-calendar th {
+            font-weight: normal;
+        }
+        .week-calendar th.today {
+            font-weight: bold;
+        }
+        .week-calendar td {
+            border: 1px solid #F1F1F1;
+            color: #CCC;
+            font-size: 12px;
+        }
+        .week-calendar .calendar-header {
+
+        }
+
+
+        .month-calendar {
+            border: 1px solid #EEE;
+            background-color: #FAFAFA;
+            font-size: 12px;
+            width: 532px;
+            overflow: hidden;
+        }
+        .month-calendar table {
+            width: 100%;
+        }
+        .month-calendar th {
+            border-bottom: 1px solid #EEE;
+            font-weight: normal;
+        }
+        .month-calendar th,
+        .month-calendar td {
+            padding: 10px;
+            text-align: center;
+        }
+        .month-calendar .adjacency-month {
+            color: #CCC;
+        }
+        .month-calendar .calendar-panel,
+        .month-calendar .calendar-overview {
+            float: left;
+        }
+        .month-calendar .calendar-overview {
+            width: 222px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="month-calendar"></div>
+<div id="week-calendar"></div>
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+
+    require(
+
+    [
+        'cobble/ui/Calendar',
+        'cobble/util/etpl'
+    ],
+
+    function (Calendar, etpl) {
+
+        var monthTemplate =
+        '<div class="month-calendar">'
+        +     '<div class="calendar-panel">'
+        +         '<table>'
+        +             '<thead>'
+        +                 '<tr>'
+        +                     '<th>周一</th>'
+        +                     '<th>周二</th>'
+        +                     '<th>周三</th>'
+        +                     '<th>周四</th>'
+        +                     '<th>周五</th>'
+        +                     '<th>周六</th>'
+        +                     '<th>周日</th>'
+        +                 '</tr>'
+        +             '</thead>'
+        +             '<tbody>'
+        +                 '<!-- for: ${list} as ${item}, ${index} -->'
+        +                     '<!-- if: ${index} % 7 === 0 -->'
+
+        +                     '<!-- if: ${index} === 0 -->'
+        +                     '<tr>'
+        +                     '<!-- else -->'
+        +                     '</tr><tr>'
+        +                     '<!-- /if -->'
+
+        +                     '<!-- /if -->'
+
+        +                     '<td class="${item.phase} '
+        +                     '<!-- if: ${item.month} != ${month} -->'
+        +                     'adjacency-month'
+        +                     '<!-- else -->'
+        +                     'current-month'
+        +                     '<!-- /if -->'
+        +                     '" data-value="${item.year}-${item.month}-${item.date}">${item.date}</td>'
+
+        +                 '<!-- /for -->'
+        +             '</tbody>'
+        +         '</table>'
+        +     '</div>'
+        +     '<div class="calendar-overview">'
+        +         '<div class="header">'
+        +             '<div class="calendar-title">'
+        +                 '${year} 年 ${month} 月'
+        +             '</div>'
+        +             '<i class="icon icon-prev">&lt;</i>'
+        +             '<i class="icon icon-next">&gt;</i>'
+        +         '</div>'
+        +         '<div class="body">'
+        +             '<strong></strong>'
+        +         '</div>'
+        +     '</div>'
+        + '</div>';
+
+        var monthRender = etpl.compile(monthTemplate);
+
+        new Calendar({
+
+            element: $('#month-calendar'),
+
+            multiple: false,
+
+            firstDay: 1,
+            activeClass: 'active',
+
+            prevSelector: '.icon-prev',
+            nextSelector: '.icon-next',
+
+            renderTemplate: function (data) {
+                return monthRender(data);
+            }
+        });
+
+        var weekTemplate =
+        '<div class="week-calendar">'
+        +     '<div class="calendar-header">'
+        +         '<div class="calendar-title">'
+        +             '${start.month}月${start.date}日 - '
+        +             '${end.month}月${end.date}日'
+        +         '</div>'
+        +         '<i class="icon icon-prev">&lt;</i>'
+        +         '<i class="icon icon-next">&gt;</i>'
+        +     '</div>'
+        +     '<div class="calendar-body">'
+        +         '<table>'
+        +             '<thead>'
+        +                 '<tr>'
+        +                     '<!-- for: ${list} as ${item}, ${index} -->'
+        +                     '<th class="${item.phase}">'
+        +                         '<div>${item.date}</div>'
+        +                         '<!-- if: ${item.day} === 0 -->日'
+        +                         '<!-- elif: ${item.day} === 1 -->一'
+        +                         '<!-- elif: ${item.day} === 2 -->二'
+        +                         '<!-- elif: ${item.day} === 3 -->三'
+        +                         '<!-- elif: ${item.day} === 4 -->四'
+        +                         '<!-- elif: ${item.day} === 5 -->五'
+        +                         '<!-- elif: ${item.day} === 6 -->六'
+        +                         '<!-- /if -->'
+        +                     '</th>'
+        +                     '<!-- /for -->'
+        +                 '</tr>'
+        +             '</thead>'
+        +             '<tbody>'
+        +                 '<tr>'
+        +                     '<!-- for: ${list} as ${item}, ${index} -->'
+        +                     '<td class="${item.phase}'
+        +                     '<!-- if: ${item.morning} --> active<!-- /if -->'
+        +                     '" data-year="${item.year}" data-month="${item.month}" data-date="${item.date}" data-type="1">上</td>'
+        +                     '<!-- /for -->'
+        +                 '</tr>'
+        +                 '<tr>'
+        +                     '<!-- for: ${list} as ${item}, ${index} -->'
+        +                     '<td class="${item.phase}'
+        +                     '<!-- if: ${item.afternoon} --> active<!-- /if -->'
+        +                     '" data-year="${item.year}" data-month="${item.month}" data-date="${item.date}" data-type="2">下</td>'
+        +                     '<!-- /for -->'
+        +                 '</tr>'
+        +                 '<tr>'
+        +                     '<!-- for: ${list} as ${item}, ${index} -->'
+        +                     '<td class="${item.phase}'
+        +                     '<!-- if: ${item.evening} --> active<!-- /if -->'
+        +                     '" data-year="${item.year}" data-month="${item.month}" data-date="${item.date}" data-type="4">晚</td>'
+        +                     '<!-- /for -->'
+        +                 '</tr>'
+        +             '</tbody>'
+        +         '</table>'
+        +     '</div>'
+        + '</div>';
+
+        var weekRender = etpl.compile(weekTemplate);
+
+        new Calendar({
+
+            element: $('#week-calendar'),
+
+            multiple: true,
+            mode: 'week',
+
+            firstDay: 1,
+            activeClass: 'active',
+
+            prevSelector: '.icon-prev',
+            nextSelector: '.icon-next',
+
+            renderTemplate: function (data) {
+                return weekRender(data);
+            }
+        });
+    }
+    );
+</script>
+</body>
+</html>

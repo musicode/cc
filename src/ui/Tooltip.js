@@ -9,10 +9,8 @@ define(function (require, exports, module) {
      *
      * 鉴于需求较多，可通过 Tooltip.defaultOptions 进行配置
      *
-     * 默认读取元素的 title 属性进行展现，如有特殊需求，可通过 defaultOptions.titleAttr 配置
-     *
-     * 提示出现的位置可通过 defaultOptions.placement 和 defaultOptions.placementAttr 统一配置
-     * 如个别元素需特殊处理，可为元素加上 defaultOptions.placementAttr 配置的属性改写全局配置
+     * 提示出现的位置可通过 defaultOptions.placement 统一配置
+     * 如个别元素需特殊处理，可为元素加上 data-placement 属性改写全局配置
      *
      * 如果要实现小箭头效果，可参考如下配置:
      *
@@ -42,7 +40,7 @@ define(function (require, exports, module) {
      *
      * 如果实例化的 template 参数和 defaultOptions.template 不同，会在实例上新建一个 layer 属性
      *
-     * 如果想控制提示浮层的宽度，可以在触发元素上加 data-width="100px"
+     * 如果想控制提示浮层的最大宽度，可以在触发元素上加 data-width="100px"
      *
      */
 
@@ -78,7 +76,6 @@ define(function (require, exports, module) {
      *
      * @property {Function} options.update 更新提示浮层的内容
      * @property {Object=} options.placementClass 方位对应的 className
-     * @property {string=} options.placementAttr 优先级比 placement 更高的位置配置
      *
      * @property {Object} options.show
      * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
@@ -128,7 +125,7 @@ define(function (require, exports, module) {
             var element = me.element;
 
             var placementList = getPlacementList(
-                                    element.attr(me.placementAttr) || me.placement
+                                    element.data('placement') || me.placement
                                 );
 
             var layer = me.layer;
@@ -164,13 +161,23 @@ define(function (require, exports, module) {
                 hide.trigger = 'out,click';
             }
 
+            var animation = show.animation;
+            if ($.isFunction(animation)) {
+                show.animation = $.proxy(animation, me);
+            }
+
+            animation = hide.animation;
+            if ($.isFunction(animation)) {
+                hide.animation = $.proxy(animation, me);
+            }
+
             var width = element.data('width') || me.width || '';
 
             me.popup = new Popup({
                 element: element,
                 layer: layer,
-                show: me.show,
-                hide: me.hide,
+                show: show,
+                hide: hide,
                 onAfterShow: function (e) {
                     return me.emit(e);
                 },
@@ -340,7 +347,6 @@ define(function (require, exports, module) {
     Tooltip.defaultOptions = {
         placement: 'auto',
         template: '<div class="tooltip"></div>',
-        placementAttr: 'data-placement',
         placementClass: {
             top: 'tooltip-top',
             right: 'tooltip-right',
