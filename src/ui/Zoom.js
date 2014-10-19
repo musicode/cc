@@ -79,8 +79,11 @@ define(function (require, exports, module) {
                         background: 'url(' + url + ') no-repeat'
                     });
 
-                    var pageOffset = { left: 0, top: 0 };
                     var scaleImageOffset = scaleImage.offset();
+                    var pageOffset = {
+                        left: 0,
+                        top: 0
+                    };
 
                     // 确定移动范围
                     var left = scaleImageOffset.left;

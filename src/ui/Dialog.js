@@ -39,7 +39,6 @@ define(function (require, exports, module) {
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
      * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
-     *
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
      * @property {boolean=} options.hideOnClickMask 点击遮罩是否隐藏对话框，默认为 false
@@ -117,17 +116,19 @@ define(function (require, exports, module) {
                 element.on('click' + namespace, closeSelector, hideHandler);
             }
 
+            var style = {
+                // 默认隐藏
+                display: 'none'
+            };
+
             if ($.isNumeric(me.width)) {
-                element.width(me.width);
+                style.width = me.width;
             }
 
             var position = me.fixed ? 'fixed' : 'absolute';
             if (element.css('position') !== position) {
-                element.css('position', position);
+                style.position = position;
             }
-
-            // 默认隐藏
-            element.hide();
 
             if (!offsetParent(element).is('body')) {
                 instance.body.append(element);
@@ -160,14 +161,17 @@ define(function (require, exports, module) {
                     }
                 }
 
-                var style = {
+                var maskStyle = {
                     overflow: 'hidden'
                 };
-                style[name] = value;
+                maskStyle[name] = value;
 
-                mask.css(style);
-                element.css(name, value);
+                mask.css(maskStyle);
+
+                style[name] = value;
             }
+
+            element.css(style);
 
             if (!me.hidden) {
                 me.hidden = true;

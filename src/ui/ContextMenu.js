@@ -8,12 +8,12 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var instance = require('../util/instance');
+    var page = require('../')
 
+    var pin = require('../function/pin');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var offsetParent = require('../function/offsetParent');
-
-    var pin = require('../function/pin');
 
     /**
      * 鼠标右键菜单
@@ -225,26 +225,23 @@ define(function (require, exports, module) {
         }
 
         var show = contextMenu.show;
-        var animation = show.animation;
-
-        if ($.isFunction(animation)) {
-            show.animation = $.proxy(animation, contextMenu);
-        }
-
         var hide = contextMenu.hide;
 
         if (!hide.trigger) {
             hide.trigger = 'click,context';
         }
 
-        animation = hide.animation;
+        var animation = show.animation;
+        if ($.isFunction(animation)) {
+            show.animation = $.proxy(animation, contextMenu);
+        }
 
+        animation = hide.animation;
         if ($.isFunction(animation)) {
             hide.animation = $.proxy(animation, contextMenu);
         }
 
-        contextMenu.popup =
-        new Popup({
+        contextMenu.popup = new Popup({
             layer: element,
             show: show,
             hide: hide

@@ -6,14 +6,15 @@ define(function (require) {
 
     'use strict';
 
+    /**
+     * 90%
+     *
+     * 只有具有 data-value 属性的元素才支持点击选中
+     */
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var dateUtil = require('../util/date');
-
-    /**
-     * 只有具有 data-value 属性的元素才支持点击选中
-     *
-     */
 
     /**
      *
@@ -21,8 +22,8 @@ define(function (require) {
      * @param {Object} options
      * @property {jQuery} options.element 主元素
      * @property {string=} options.value 选中的值，multiple 为 false 时才有意义，没处理多选的逻辑
-     * @property {Date=} options.date 初始化时视图所在的日期，默认是当天
-     * @property {Date=} options.today 今天的日期，主要是为了服务器时间校正
+     * @property {Date=} options.date 初始化时视图所在的日期，默认是浏览器的当天
+     * @property {Date=} options.today 今天的日期，主要是为了服务器时间校正，默认是浏览器的当天
      * @property {number=} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否 toggle 选中

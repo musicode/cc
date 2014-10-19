@@ -101,7 +101,7 @@ define(function (require, exports, module) {
             if (me.scrollable) {
                 cache.wheel = new Wheel({
                     element: trackElement,
-                    onScroll: function (data) {
+                    onScroll: function (e, data) {
                         return !me.setValue(me.value + data.delta * me.step);
                     }
                 });

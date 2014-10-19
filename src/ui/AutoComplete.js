@@ -6,6 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * 90%
+     */
+
     var timer = require('../function/timer');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
@@ -19,12 +23,13 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 输入框元素
-     * @property {jQuery} options.menu 补全菜单，菜单最好使用相对定位，这样直接 show 出来，无需涉及定位逻辑
+     * @property {jQuery} options.menu 补全菜单，菜单最好使用绝对定位，这样直接 show 出来，无需涉及定位逻辑
      *
-     * @property {string} options.itemSelector 菜单项选择器，默认是 li
+     * @property {string=} options.itemSelector 菜单项选择器，默认是 li
      *
-     * @property {number=} options.delay 长按上下键遍历的等待间隔时间
-     * @property {boolean=} options.includeInput 上下遍历是否包含输入框
+     * @property {number=} options.delay 长按上下键遍历的等待间隔时间，默认 60ms
+     * @property {boolean=} options.includeInput 上下遍历是否包含输入框，默认包含
+     * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启，默认不开启
      *
      * @property {string=} options.hoverClass 菜单项 hover 时的 className
      * @property {string=} options.activeClass 菜单项 active 时的 className
@@ -37,15 +42,15 @@ define(function (require, exports, module) {
      * @property {number=} options.hide.delay 隐藏延时
      * @property {Function=} options.hide.animation 隐藏动画
      *
-     * @property {string=} options.template 菜单项模板，简单列表用这个够了
+     * @property {string=} options.template 菜单模板
      * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
      *
      * @property {Function} options.load 加载数据，可以是远程或本地数据
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @property {Function} options.onSelect 用户点击选中某个菜单项触发
-     * @property {Function} options.onEnter 用户按下回车触发
+     * @property {Function=} options.onSelect 用户点击选中某个菜单项触发
+     * @property {Function=} options.onEnter 用户按下回车触发
      */
     function AutoComplete(options) {
         return lifeCycle.init(this, options);
@@ -82,7 +87,7 @@ define(function (require, exports, module) {
             .menu
             .on('mouseenter' + namespace, itemSelector, me, enterItem)
             .on('mouseleave' + namespace, itemSelector, me, leaveItem)
-            .on('click' + namespace, me.itemSelector, me, clickItem);
+            .on('click' + namespace, itemSelector, me, clickItem);
         },
 
         /**
@@ -122,25 +127,26 @@ define(function (require, exports, module) {
 
                 var input = me.element;
                 items.splice(0, 0, input[0]);
-                data.splice(0, 0, { text: input.val() });
+                data.unshift({ text: input.val() });
 
                 // 可以在 renderTemplate 时设置某一项选中
-                var index;
-                var activeItem = menu.find('.' + me.activeClass);
+                var index = me.startIndex;
+                var className;
+
+                var activeClass = me.activeClass;
+                var activeItem = menu.find('.' + activeClass);
+
                 if (activeItem.length === 1) {
                     index = items.index(activeItem);
+                    className = activeClass;
                 }
 
-                var startIndex = me.startIndex;
-                var maxIndex = items.length - 1;
-
-                me.maxIndex = maxIndex;
-                me.index = index >= startIndex && index <= maxIndex
-                         ? index
-                         : startIndex;
+                me.maxIndex = items.length - 1;
 
                 me.items = items;
                 me.data = data;
+
+                switchClass(me, index, className);
 
                 me.open();
 
@@ -254,11 +260,13 @@ define(function (require, exports, module) {
                 },
                 enter: function () {
 
+                    var index = autoComplete.index;
+
                     autoComplete.close();
 
                     autoComplete.emit(
                         'enter',
-                        autoComplete.data[autoComplete.index]
+                        autoComplete.data[index]
                     );
                 }
             },
@@ -404,6 +412,16 @@ define(function (require, exports, module) {
             index = autoComplete.maxIndex;
         }
 
+        if (autoComplete.autoScroll && index > 0) {
+
+            var menu = autoComplete.menu;
+            var item = autoComplete.items.eq(index);
+
+            menu.scrollTop(
+                item.prop('offsetTop')
+            );
+        }
+
         activeItem(autoComplete, index);
     }
 
@@ -418,6 +436,18 @@ define(function (require, exports, module) {
         var index = autoComplete.index + 1;
         if (index > autoComplete.maxIndex) {
             index = autoComplete.minIndex;
+        }
+
+        if (autoComplete.autoScroll && index > 0) {
+
+            var menu = autoComplete.menu;
+            var item = autoComplete.items.eq(index);
+
+            menu.scrollTop(
+                item.prop('offsetTop')
+              + item.outerHeight(true)
+              - menu.height()
+            );
         }
 
         activeItem(autoComplete, index);

@@ -76,6 +76,10 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
+            if (!me.container) {
+                me.container = page();
+            }
+
             // 这里本想使用 not 选择器 来实现 cancal
             // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
             // 因为有这个问题，索性整个判断都放在 onDragStart 中处理
@@ -151,8 +155,6 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Draggable.defaultOptions = {
-
-        container: page(),
 
         rect: function () {
 

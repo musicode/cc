@@ -7,6 +7,8 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
+     * 90%
+     *
      * 元素自定义属性使用 data-text 和 data-value
      * 如果需要在点击菜单项获得其他数据，可在元素任意绑定 data-xxx
      * 当 onChange 事件触发时，会把所有 data 通过参数传入
@@ -54,9 +56,6 @@ define(function (require, exports, module) {
      * @argument {string} options.onText.text
      *
      * @property {Function=} options.onChange 选中菜单项触发
-     * @argument {Object} options.onChange.data
-     * @property {string} options.onChange.data.text
-     * @property {string} options.onChange.data.value
      */
     function ComboBox(options) {
         return lifeCycle.init(this, options);
@@ -91,7 +90,7 @@ define(function (require, exports, module) {
 
             // 不论是直接传入 value 或是通过 DOM 获取的 value
             // 都不需要触发 onChange 事件
-            // 因为初始化触发会带来同步问题
+            // 因为初始化触发事件会带来同步问题
             // 如果非要触发，可以在初始化后调用 setValue() 手动触发
 
             // 如果有数据，需要刷新
@@ -107,7 +106,7 @@ define(function (require, exports, module) {
                     me.close();
 
                     me.setValue(
-                        $(e.currentTarget).data('value')
+                        $(this).data('value')
                     );
 
                 }
@@ -175,7 +174,9 @@ define(function (require, exports, module) {
             }
 
             if ($.isFunction(me.setText)) {
-                me.setText(data.text || me.defaultText);
+                me.setText(
+                    data.text || me.defaultText
+                );
             }
 
             return result;

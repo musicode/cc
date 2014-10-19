@@ -106,7 +106,7 @@ define(function (require, exports, module) {
                                 slider: slider,
                                 wheel: new Wheel({
                                     element: me.panel,
-                                    onScroll: function (data) {
+                                    onScroll: function (e, data) {
                                         return !slider.setValue(
                                                 me.value + data.delta * cache.step
                                             );

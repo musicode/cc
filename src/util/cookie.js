@@ -99,7 +99,7 @@ define(function (require, exports, module) {
         }
 
         document.cookie = [
-            encodeURIComponent(key), '=', value,
+            encodeURIComponent(key), '=', encodeURIComponent(value),
             expires ? ';expires=' + expires.toUTCString() : '',
             options.path ? ';path=' + options.path : '',
             options.domain ? ';domain=' + options.domain : '',

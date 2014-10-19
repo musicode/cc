@@ -6,6 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * 90%
+     */
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
@@ -83,15 +87,15 @@ define(function (require, exports, module) {
                 element.on(mouseleave, itemSelector, $.proxy(me.play, me));
             }
 
-            me.min = 0;
-            me.max = element.find(itemSelector).length - 1
-                   - (me.showCount - 1);
+            me.minIndex = 0;
+            me.maxIndex = element.find(itemSelector).length - 1
+                        - (me.showCount - 1);
 
             me.switcher = new Switchable({
                 element: element,
                 index: me.index,
                 trigger: me.trigger,
-                selector: me.itemSelector,
+                selector: me.iconSelector,
                 activeClass: me.activeClass,
                 change: function (data) {
 
@@ -119,9 +123,9 @@ define(function (require, exports, module) {
             var me = this;
 
             var index = me.index - me.step;
-            if (index < me.min) {
+            if (index < me.minIndex) {
                 if (me.loop) {
-                    index = me.max;
+                    index = me.maxIndex;
                 }
                 else {
                     return;
@@ -140,9 +144,9 @@ define(function (require, exports, module) {
             var me = this;
 
             var index = me.index + me.step;
-            if (index > me.max) {
+            if (index > me.maxIndex) {
                 if (me.loop) {
-                    index = me.min;
+                    index = me.minIndex;
                 }
                 else {
                     return;
@@ -184,6 +188,7 @@ define(function (require, exports, module) {
                 return;
             }
 
+            // 重新开始当前播放
             if (me.playing) {
                 me.pause();
             }

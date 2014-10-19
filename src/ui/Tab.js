@@ -6,6 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * 90%
+     */
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
@@ -28,13 +32,14 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.animation 切换内容的动画，如果 contentActiveClass 不能满足需求，可自行实现
      * @argument {Object} options.animation.data
-     * @property {number} options.animation.data.fromIndex
-     * @property {number} options.animation.data.toIndex
+     * @property {number} options.animation.data.from
+     * @property {number} options.animation.data.to
      *
      * @property {Function=} options.onChange 切换 tab 触发
+     * @argument {Event} options.onChange.event 事件对象
      * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.data.fromIndex
-     * @property {number} options.onChange.data.toIndex
+     * @property {number} options.onChange.data.from
+     * @property {number} options.onChange.data.to
      */
     function Tab(options) {
         return lifeCycle.init(this, options);

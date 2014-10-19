@@ -261,8 +261,8 @@ define(function (require, exports, module) {
          * 定位
          *
          * @param {string} placement 方位，可选值有 topLeft     top    topRight
-         *                                          left               right
-         *                                          bottomLeft bottom  bottomRight
+         *                                        left               right
+         *                                        bottomLeft bottom  bottomRight
          *
          */
         pin: function (placement) {

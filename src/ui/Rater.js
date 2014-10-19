@@ -52,7 +52,7 @@ define(function (require, exports, module) {
      *     count: 5,                        // 总共有 5 颗星
      *     onClass: 'icon on',
      *     offClass: 'icon off',
-     *     onChange: function (data) {
+     *     onChange: function (e, data) {
      *         console.log('select ' + data.value);
      *     }
      * });
