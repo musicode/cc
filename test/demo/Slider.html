@@ -78,23 +78,17 @@
                 var horizontalSlider = new Slider({
                     element: $('#horizontal-slider'),
                     scrollable: true,
-                    step: 1,
+                    step: 10,
 
                     thumbSelector: '.slider-thumb',
                     draggingClass: 'slider-active',
                     hoverClass: 'slider-active',
 
-                    toAnimation: function (style, element) {
-                        element.animate(style, 100);
+                    toAnimation: function (style) {
+                        this.thumb.animate(style, 100);
                     },
-                    onChange: function (value) {
+                    onChange: function (e, value) {
                         console.log(this.value);
-                    },
-                    onBeforeDrag: function (data) {
-                        console.log(data);
-                    },
-                    onAfterDrag: function (data) {
-                        console.log(data);
                     }
                 });
 
@@ -103,10 +97,10 @@
                     element: $('#vertical-slider'),
                     orientation: 'vertical',
                     thumbSelector: '.slider-thumb',
-                    draggingAnimation: function (style, element) {
-                        element.animate(style, 10);
+                    animation: function (style) {
+                        this.thumb.animate(style, 10);
                     },
-                    onChange: function (event, data) {
+                    onChange: function (e, data) {
                         console.log(data);
                     }
                 });
@@ -121,7 +115,7 @@
                     max: 10,
                     step: 1,
                     scrollable: true,
-                    onChange: function (event, data) {
+                    onChange: function (e, data) {
                         console.log(data);
                     }
                 });

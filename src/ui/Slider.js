@@ -6,6 +6,15 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * 75%
+     */
+
+    var plus = require('../function/plus');
+    var minus = require('../function/minus');
+    var divide = require('../function/divide');
+    var multiply = require('../function/multiply');
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var restrain = require('../function/restrain');
@@ -22,10 +31,13 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element
      * @property {number=} options.value
+     *
      * @property {number=} options.min 允许的最小值
      * @property {number=} options.max 允许的最大值
      * @property {number=} options.step value 变化的最小间隔，默认是 10
+     *
      * @property {boolean=} options.scrollable 是否可以滚动触发，如果设为 true，需要设置 step
+     *
      * @property {string=} options.orientation 方向，可选值有 horizontal 和 vertical，默认是 horizontal
      * @property {string=} options.template 模板，如果 element 结构已完整，可不传模板
      *
@@ -33,16 +45,10 @@ define(function (require, exports, module) {
      * @property {string=} options.trackSelector 滑道选择器，不传表示 element 是滑道
      *
      * @property {string=} options.draggingClass 滑块正在拖拽时的 class
-     * @property {string=} options.hoverClass 鼠标悬浮滑道时的 class
      *
-     * @property {Function=} options.showAnimation 显示动画
-     * @property {Function=} options.hideAnimation 隐藏动画
-     * @property {Function=} options.toAnimation 通过点击直接滑到某个位置的动画
-     * @property {Function=} options.dragAnimation 通过拖拽滑块到某个位置的动画
+     * @property {Function=} options.animation 滑动动画
      *
      * @property {Function=} options.onChange 当 value 变化时触发
-     * @property {Function=} options.onBeforeDrag
-     * @property {Function=} options.onAfterDrag
      */
     function Slider(options) {
         return lifeCycle.init(this, options);
@@ -66,45 +72,74 @@ define(function (require, exports, module) {
                 element.html(me.template);
             }
 
-            var thumbElement = element.find(me.thumbSelector);
-            var trackElement = me.trackSelector
-                             ? element.find(me.trackSelector)
-                             : element;
+            var thumb = element.find(me.thumbSelector);
+            var track = me.trackSelector
+                      ? element.find(me.trackSelector)
+                      : element;
 
-            var cache = me.cache
-                      = $.extend(
-                            {
-                                thumb: thumbElement,
-                                track: trackElement
-                            },
-                            orientationConf[me.orientation]
-                        );
+            me.thumb = thumb;
+            me.track = track;
 
-            cache.draggable = createDraggable(
-                                me,
-                                {
-                                    element: thumbElement,
-                                    container: trackElement,
-                                    silence: true,
-                                    axis: cache.axis
-                                }
-                            );
+            var conf = orientationConf[me.orientation];
 
-            trackElement.on('click' + namespace, me, clickTrack);
+            var draggingClass = me.draggingClass;
 
-            if (me.hoverClass) {
-                trackElement
-                .on('mouseenter' + namespace, me, enterTrack)
-                .on('mouseleave' + namespace, me, leaveTrack);
-            }
+            me.draggable = new Draggable({
+                element: thumb,
+                container: track,
+                silence: true,
+                axis: me.axis,
+                onDragStart: function () {
+
+                    if ($.type(draggingClass) === 'string') {
+                        track.addClass(draggingClass);
+                    }
+
+                },
+                onDrag: function (e, data) {
+                    me.setValue(
+                        null,
+                        data[conf.position]
+                    );
+                },
+                onDragEnd: function () {
+
+                    if ($.type(draggingClass) === 'string') {
+                        track.removeClass(draggingClass);
+                    }
+
+                }
+            });
+
+            track.on(
+                'click' + namespace,
+                function (e) {
+
+                    if (contains(thumb, e.target)) {
+                        return;
+                    }
+
+                    me.setValue(
+                        null,
+                        eventOffset(e)[conf.axis]
+                    );
+
+                }
+            );
 
             if (me.scrollable) {
-                cache.wheel = new Wheel({
-                    element: trackElement,
+
+                var step = me.step;
+
+                me.wheel = new Wheel({
+                    element: track,
                     onScroll: function (e, data) {
-                        return !me.setValue(me.value + data.delta * me.step);
+                        return !me.setValue(
+                            me.value + data.delta * step
+                        );
                     }
                 });
+
             }
 
             me.refresh();
@@ -113,8 +148,8 @@ define(function (require, exports, module) {
         /**
          * 根据当前视图刷新相关计算数值
          *
-         * @param {Object} data
-         * @property {number=} data.value
+         * @param {Object=} data
+         * @property {number} data.value
          */
         refresh: function (data) {
 
@@ -124,31 +159,51 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
-            var max = me.max;
+            var conf = orientationConf[me.orientation];
+
+            // min，max 表示值，如 1，10
+            // minPixel，maxPixel 表示像素值，如 0，100
+            //
+            // step 表示步进值
+            // stepPixel 表示步进像素值
+
+            var minPixel = 0;
+            var maxPixel = me.draggable
+                             .getRectange(true)[conf.dimension];
+
+
             var min = me.min;
+            var max = me.max;
+            var step = me.step;
 
-            var cache = me.cache;
-            var total = cache.draggable
-                             .getRectange(true)[ cache.dimension ];
-
-            cache.min = 0;
-            cache.max = total;
-
+            // 同时满足这三个条件才算步进
             if ($.type(min) === 'number'
                 && $.type(max) === 'number'
+                && $.type(step) === 'number'
             ) {
-                cache.stepPixel = total / ((max - min) / me.step);
+                me.stepPixel = divide(
+                                    maxPixel,
+                                    divide(
+                                        minus(max, min),
+                                        step
+                                    )
+                                );
             }
+
+            me.minPixel = minPixel;
+            me.maxPixel = maxPixel;
 
             var value = me.value;
-            var options = { force: true };
 
             if ($.type(value) !== 'number') {
-                value = position(cache.thumb)[ cache.position ];
-                options.pixel = true;
+                value = position(me.thumb)[conf.position];
             }
 
-            me.setValue(value, options);
+            // 确保不同，才可正常更新
+            me.value = !value;
+
+            me.setValue(value);
+
         },
 
         /**
@@ -163,140 +218,71 @@ define(function (require, exports, module) {
         /**
          * 设置当前值
          *
-         * @param {number} value
-         * @param {Object=} options 可选项
-         * @property {boolean=} options.silence 是否不触发 onChange 事件，默认为 false
-         * @property {boolean=} options.force 是否强制更新
-         * @property {boolean=} options.pixel value 是否以像素为单位
-         * @property {Object=} options.animate
+         * @param {number} value 值
+         * @param {number=} pixel 像素值
          * @return {boolean} 是否更新成功
          */
-        setValue: function (value, options) {
-
-            options = options || { };
+        setValue: function (value, pixel) {
 
             var me = this;
-            var cache = me.cache;
+            var stepPixel = me.stepPixel;
 
-            var stepPixel = cache.stepPixel;
-            var pixel;
+            var min = me.min;
+            var max = me.max;
+            var step = me.step;
 
-            if ($.type(stepPixel) === 'number') {
-                if (options.pixel) {
-                    value = pixel2Value(value, me.min, me.step, stepPixel);
+            if ($.type(stepPixel) !== 'number') {
+                min = me.minPixel;
+                max = me.maxPixel;
+                step = stepPixel = 1;
+            }
+
+            if ($.type(value) !== 'number') {
+                // 通过 pixel 算 value
+                value = plus(
+                            min,
+                            multiply(
+                                Math.floor(
+                                    divide(pixel, stepPixel)
+                                ),
+                                step
+                            )
+                        );
+            }
+
+            value = restrain(value, min, max);
+
+            pixel = multiply(
+                        stepPixel,
+                        divide(
+                            minus(value, min),
+                            step
+                        )
+                    );
+
+            var result = value !== me.value;
+
+            if (result) {
+
+                me.value = value;
+
+                var style = { };
+                var conf = orientationConf[me.orientation];
+
+                style[conf.position] = pixel;
+
+                if ($.isFunction(me.animation)) {
+                    me.animation(style);
                 }
-                value = restrain(value, me.min, me.max);
-                pixel = value2Pixel(value, me.min, me.step, stepPixel);
-            }
-            else {
-                pixel = value
-                      = restrain(value, cache.min, cache.max);
-            }
+                else {
+                    me.thumb.css(style);
+                }
 
-            if (!options.force && value === me.value) {
-                return false;
-            }
-
-            me.value = value;
-
-            var element = cache.thumb;
-            var style = { };
-            style[cache.position] = pixel;
-
-            var animate = options.animate;
-            if ($.isFunction(animate)) {
-                animate.call(me, style, element);
-            }
-            else {
-                element.css(style);
-            }
-
-            if (!options.silence) {
                 me.emit('change');
             }
 
-            return true;
-        },
+            return result;
 
-        /**
-         * 获取 滑道 和 滑块 的大小
-         *
-         * @return {Object}
-         * @property {number} $return.track
-         * @property {number} $return.thumb
-         */
-        getSize: function () {
-
-            var cache = this.cache;
-
-            return {
-                track: cache.track[cache.innerDimension](),
-                thumb: cache.thumb[cache.outerDimension]()
-            };
-        },
-
-        /**
-         * 设置 滑道 和 滑块 的大小
-         *
-         * @param {Object} data
-         * @property {number=} data.track
-         * @property {number=} data.thumb
-         */
-        setSize: function (data) {
-
-            var cache = this.cache;
-            var dimension = cache.dimension;
-            var offset;
-
-            if ($.type(data.track) === 'number') {
-
-                var track = cache.track;
-
-                offset = track[cache.innerDimension]()
-                       - track[dimension]();
-
-                track[dimension](data.track - offset);
-            }
-
-            if ($.type(data.thumb) === 'number') {
-
-                var thumb = cache.thumb;
-
-                offset = thumb[cache.outerDimension]()
-                       - thumb[dimension ]();
-
-                thumb[dimension](data.thumb - offset);
-            }
-        },
-
-        /**
-         * 显示
-         */
-        show: function () {
-
-            var me = this;
-
-            if ($.isFunction(me.showAnimation)) {
-                me.showAnimation();
-            }
-            else {
-                me.element.show();
-            }
-        },
-
-        /**
-         * 隐藏
-         */
-        hide: function () {
-
-            var me = this;
-
-            if ($.isFunction(me.hideAnimation)) {
-                me.hideAnimation();
-            }
-            else {
-                me.element.hide();
-            }
         },
 
         /**
@@ -308,16 +294,16 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
-            var cache = me.cache;
-            cache.track.off(namespace);
-            cache.draggable.dispose();
+            me.track.off(namespace);
+            me.draggable.dispose();
 
-            if (cache.wheel) {
-                cache.wheel.dispose();
+            if (me.wheel) {
+                me.wheel.dispose();
             }
 
             me.element =
-            me.cache = null;
+            me.draggable =
+            me.wheel = null;
         }
 
     };
@@ -354,165 +340,14 @@ define(function (require, exports, module) {
         horizontal: {
             axis: 'x',
             position: 'left',
-            dimension: 'width',
-            innerDimension: 'innerWidth',
-            outerDimension: 'outerWidth'
+            dimension: 'width'
         },
         vertical: {
             axis: 'y',
             position: 'top',
-            dimension: 'height',
-            innerDimension: 'innerHeight',
-            outerDimension: 'outerHeight'
+            dimension: 'height'
         }
     };
-
-    /**
-     * value 转成 pixel
-     *
-     * @inner
-     * @param {number} value 实际值
-     * @param {number} min 实际最小值
-     * @param {number} step 步进值
-     * @param {number} stepPixel 步进像素值
-     * @return {number}
-     */
-    function value2Pixel(value, min, step, stepPixel) {
-        return stepPixel * (value - min) / step;
-    }
-
-    /**
-     * pixel 转成 value
-     *
-     * @inner
-     * @param {number} pixel 像素值
-     * @param {number} min 实际最小值
-     * @param {number} step 步进值
-     * @param {number} stepPixel 步进像素值
-     * @return {number}
-     */
-    function pixel2Value(pixel, min, step, stepPixel) {
-        return min + Math.floor(pixel / stepPixel) * step;
-    }
-
-    /**
-     * 创建可拖拽对象
-     *
-     * @inner
-     * @param {Slider} slider
-     * @param {Object} options 创建可拖拽对象的配置
-     * @return {Draggable}
-     */
-    function createDraggable(slider, options) {
-
-        var cache = slider.cache;
-        var draggingClass = slider.draggingClass;
-
-        options.onDragStart = function () {
-
-            cache.dragging = true;
-
-            if ($.type(draggingClass) === 'string') {
-                options.container
-                       .addClass(draggingClass);
-            }
-
-            slider.emit(
-                'beforeDrag',
-                {
-                    leave: cache.leave
-                }
-            );
-
-        };
-
-        options.onDragEnd = function () {
-
-            cache.dragging = false;
-
-            if ($.type(draggingClass) === 'string') {
-                options.container
-                       .removeClass(draggingClass);
-            }
-
-            slider.emit(
-                'afterDrag',
-                {
-                    leave: cache.leave
-                }
-            );
-
-        };
-
-        options.onDrag = function (data) {
-            slider.setValue(
-                data[cache.position],
-                {
-                    pixel: true,
-                    animate: slider.dragAnimation
-                }
-            );
-        };
-
-        return new Draggable(options);
-    }
-
-    /**
-     * 点击滑道直接跳转到目标位置
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function clickTrack(e) {
-
-        var slider = e.data;
-        var cache = slider.cache;
-
-        if (contains(cache.thumb, e.target)) {
-            return;
-        }
-
-        slider.setValue(
-            eventOffset(e)[cache.axis],
-            {
-                pixel: true,
-                animate: slider.toAnimation
-            }
-        );
-    }
-
-    /**
-     * 鼠标进入滑道添加 hoverClass
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function enterTrack(e) {
-        var slider = e.data;
-        slider.cache.leave = false;
-        slider.element.addClass(slider.hoverClass);
-    }
-
-    /**
-     * 鼠标离开滑道移除 hoverClass
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function leaveTrack(e) {
-
-        var slider = e.data;
-        var cache = slider.cache;
-
-        cache.leave = true;
-
-        if (!cache.dragging
-            || slider.hoverClass !== slider.draggingClass
-        ) {
-            slider.element.removeClass(slider.hoverClass);
-        }
-    }
-
 
     return Slider;
 

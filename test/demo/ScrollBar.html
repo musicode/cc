@@ -135,21 +135,34 @@
 
             function (ScrollBar, Input) {
 
+                var track = $('#scroll-position .scroll-bar-h');
+
+
                 var scrollHBar = new ScrollBar({
+                    element: track,
                     panel: $('#scroll-panel'),
-                    element: $('#scroll-position .scroll-bar-h'),
                     orientation: 'horizontal',
                     value: 20,
                     step: 10,
                     step4Panel: true,
                     thumbSelector: '.scroll-thumb',
-                    showAnimation: function () {
-                        this.element.show(300);
+                    animation: function (style) {
+                        var thumb = track.find('.scroll-thumb');
+                        thumb.animate(
+                            {
+                                left: style.left
+                            },
+                            1000
+                        );
+
                     },
                     onScroll: function (event, data) {
-                        console.log(data);
+                        //console.log(data);
                     }
                 });
+
+                scrollHBar.to(50);
+
 return
                 var scrollVBar = new ScrollBar({
                     panel: $('#scroll-panel'),

@@ -417,9 +417,15 @@ define(function (require, exports, module) {
             var menu = autoComplete.menu;
             var item = autoComplete.items.eq(index);
 
-            menu.scrollTop(
-                item.prop('offsetTop')
-            );
+            // item 在 menu 视窗区域不需要滚动
+            var min = menu.scrollTop();
+            var max = min + menu.height();
+
+            var top = item.prop('offsetTop');
+
+            if (top < min || top > max) {
+                menu.scrollTop(top);
+            }
         }
 
         activeItem(autoComplete, index);
@@ -443,11 +449,20 @@ define(function (require, exports, module) {
             var menu = autoComplete.menu;
             var item = autoComplete.items.eq(index);
 
-            menu.scrollTop(
-                item.prop('offsetTop')
-              + item.outerHeight(true)
-              - menu.height()
-            );
+            var menuHeight = menu.height();
+
+            // item 在 menu 视窗区域不需要滚动
+            var min = menu.scrollTop();
+            var max = min + menuHeight;
+
+            var top = item.prop('offsetTop') + item.outerHeight(true);
+
+            if (top < min || top > max) {
+                menu.scrollTop(
+                    top
+                  - menuHeight
+                );
+            }
         }
 
         activeItem(autoComplete, index);

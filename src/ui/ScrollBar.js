@@ -5,7 +5,6 @@
 define(function (require, exports, module) {
 
     /**
-     * @description
      *
      * 通过隐藏原生滚动条，控制元素的 scrollTop/scrollLeft 实现滚动
      *
@@ -45,15 +44,10 @@ define(function (require, exports, module) {
      * @property {string=} options.thumbSelector 从 template 选中滑块的选择器
      *
      * @property {string=} options.draggingClass 拖拽滑块时的 class
-     * @property {string=} options.hoverClass 鼠标悬浮于滚动条时的 class
      *
-     * @property {Function=} options.showAnimation 显示滚动条的方式，可自定义显示动画
-     * @property {Function=} options.hideAnimation 隐藏滚动条的方式，可自定义隐藏动画
-     * @property {Function=} options.dragAnimation 通过拖拽改变位置的动画
-     * @property {Function=} options.toAnimation 通过点击直接设置位置的动画
+     * @property {Function=} options.animation 滚动动画
      *
      * @property {Function=} options.onScroll
-     * @argument {number} options.onScroll.value
      */
     function ScrollBar(options) {
         return lifeCycle.init(this, options);
@@ -72,7 +66,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var slider = new Slider({
+            me.slider = new Slider({
 
                 element: me.element,
                 orientation: me.orientation,
@@ -80,41 +74,26 @@ define(function (require, exports, module) {
                 value: me.value,
                 scrollable: true,
                 draggingClass: me.draggingClass,
-                hoverClass: me.hoverClass,
                 thumbSelector: me.thumbSelector,
-                showAnimation: me.showAnimation,
-                hideAnimation: me.hideAnimation,
-                dragAnimation: me.dragAnimation,
-                toAnimation: me.toAnimation,
+                animation: me.animation,
                 template: me.template,
 
                 onChange: function () {
-                    if (me.cache) {
-                        me.to(
-                            this.value,
-                            {
-                                panel: true
-                            }
-                        );
-                    }
+                    me.to(
+                        this.value,
+                        'panel'
+                    );
                 }
             });
 
-            var cache = me.cache
-                      = $.extend(
-                            {
-                                slider: slider,
-                                wheel: new Wheel({
-                                    element: me.panel,
-                                    onScroll: function (e, data) {
-                                        return !slider.setValue(
-                                                me.value + data.delta * cache.step
-                                            );
-                                    }
-                                })
-                            },
-                            orientationConf[me.orientation]
-                        );
+            me.wheel = new Wheel({
+                            element: me.panel,
+                            onScroll: function (e, data) {
+                                return !me.slider.setValue(
+                                    me.value + data.delta * me.step
+                                );
+                            }
+                        });
 
             me.refresh({
                 value: me.value
@@ -125,8 +104,10 @@ define(function (require, exports, module) {
         /**
          * 刷新滚动条
          *
+         * 如果没有传入 value，则根据 DOM 位置自动算出 value
+         *
          * @param {Object=} data
-         * @property {number=} data.value
+         * @property {number} data.value
          */
         refresh: function (data) {
 
@@ -136,30 +117,31 @@ define(function (require, exports, module) {
                 $.extend(me, data);
             }
 
+            var conf = orientationConf[me.orientation];
+
+            var element = me.element;
             var panel = me.panel;
-            var cache = me.cache;
 
             // 计算视窗和滚动面板的比例
-            var viewportSize = cache.getViewportSize(panel);
-            var contentSize = cache.getContentSize(panel) || 1;
-            var ratio = cache.ratio
-                      = viewportSize / contentSize;
+            var viewportSize = conf.getViewportSize(panel);
+            var contentSize = conf.getContentSize(panel) || 1;
+            var ratio = viewportSize / contentSize;
 
             // 比例小于 1 才需要滚动条
             if (ratio < 1) {
 
-                var slider = cache.slider;
-                var trackSize = slider.getSize().track;
+                var slider = me.slider;
+                var trackSize = slider.track[conf.inner]();
 
-                slider.setSize({
-                    thumb: Math.max(ratio * trackSize, me[cache.min] || 0)
-                });
+                slider.thumb[conf.outer](
+                    Math.max(ratio * trackSize, me[conf.min] || 0)
+                );
 
-                var factor = cache.factor
+                var factor = me.factor
                            = contentSize / trackSize;
 
-                // 实际滚动的单位距离
-                var step = cache.step
+                // 滚动条实际滚动的单位距离
+                var step = me.step
                          = me.step4Panel
                          ? me.step / factor
                          : me.step;
@@ -168,59 +150,53 @@ define(function (require, exports, module) {
                 // 需要从 panel 读取 scrollTop/Left 值
                 var value = data && data.value;
                 if (!$.isNumeric(value)) {
-                    value = panel.prop(cache.scroll) / factor;
+                    value = panel.prop(conf.scroll) / factor;
                 }
+
+                // 确保 value 和 this.value 不同
+                me.value = !value;
 
                 slider.refresh({
                     step: step,
                     value: value
                 });
 
-                me.show();
+                element.show();
             }
             else {
-                me.hide();
+                element.hide();
             }
-        },
-
-        /**
-         * 显示滚动条
-         */
-        show: function () {
-            this.cache.slider.show();
-        },
-
-        /**
-         * 隐藏滚动条
-         */
-        hide: function () {
-            this.cache.slider.hide();
         },
 
         /**
          * 设置滚动条的位置
          *
          * @param {number} value
-         * @param {Object=} options
-         * @param {number=} options.panel 是否只滚动 panel
+         * @param {string=} target 滚动目标，默认滚动 panel 和 bar，也可以指定只滚动其中一个
          * @return {boolean} 是否滚动成功
          */
-        to: function (value, options) {
+        to: function (value, target) {
 
-            if ($.isNumeric(value)) {
+            var result = $.isNumeric(value);
+
+            if (result) {
 
                 var me = this;
-                var cache = me.cache;
-                var slider = cache.slider;
+                var conf = orientationConf[me.orientation];
+                var slider = me.slider;
 
-                if ((options && options.panel)
-                    || slider.setValue(value)
-                ) {
+                if (!target || target !== 'panel') {
+                    result = slider.setValue(value);
+                }
 
-                    me.panel.prop(
-                        cache.scroll,
-                        value * cache.factor
-                    );
+                if (result) {
+
+                    if (target === 'panel') {
+                        me.panel.prop(
+                            conf.scroll,
+                            value * me.factor
+                        );
+                    }
 
                     me.value = value;
 
@@ -231,12 +207,10 @@ define(function (require, exports, module) {
                         }
                     );
 
-                    return true;
                 }
-
             }
 
-            return false;
+            return result;
         },
 
         /**
@@ -248,13 +222,13 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
-            var cache = me.cache;
-            cache.slider.dispose();
-            cache.wheel.dispose();
+            me.slider.dispose();
+            me.wheel.dispose();
 
             me.element =
             me.panel =
-            me.cache = null;
+            me.slider =
+            me.wheel = null;
         }
 
     };
@@ -283,8 +257,10 @@ define(function (require, exports, module) {
      */
     var orientationConf = {
         horizontal: {
-            min: 'minWidth',
             scroll: 'scrollLeft',
+            inner: 'innerWidth',
+            outer: 'outerWidth',
+            min: 'minWidth',
             getViewportSize: function (element) {
                 return element.innerWidth();
             },
@@ -293,8 +269,10 @@ define(function (require, exports, module) {
             }
         },
         vertical: {
-            min: 'minHeight',
             scroll: 'scrollTop',
+            inner: 'innerHeight',
+            outer: 'outerHeight',
+            min: 'minHeight',
             getViewportSize: function (element) {
                 return element.innerHeight();
             },
@@ -303,7 +281,6 @@ define(function (require, exports, module) {
             }
         }
     };
-
 
     return ScrollBar;
 

@@ -407,10 +407,6 @@ define(function (require, exports, module) {
             draggable.element.css(point);
         }
 
-        if ($.isFunction(draggable.onDrag)) {
-            draggable.onDrag(point);
-        }
-
         draggable.emit('drag', point);
 
     }

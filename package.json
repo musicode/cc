@@ -1,33 +1,41 @@
 {
-  "name": "cobble",
-  "author": "zhujl",
-  "version": "0.2.1",
-  "description": "javascript tools for web develop",
-  "main": "",
-  "directories": {
-    "doc": "doc"
-  },
-  "devDependencies": {
-    "jasmine": "^2.0.1",
-    "karma": "^0.12.24",
-    "karma-chrome-launcher": "^0.1.5",
-    "karma-requirejs": "^0.2.2",
-    "requirejs": "^2.1.15"
-  },
-  "scripts": {
-    "test": ""
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zhujl/cobble"
-  },
-  "keywords": [
-    "javascript",
-    "tool"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zhujl/cobble/issues"
-  },
-  "homepage": "http://zhujl.com/cobble"
+    "name": "cobble",
+    "author": "zhujl",
+    "version": "0.2.1",
+    "description": "javascript tools for web develop",
+    "main": "",
+    "directories": {
+        "doc": "doc"
+    },
+    "devDependencies": {
+        "jasmine": "^2.0.1",
+        "karma": "^0.12.24",
+        "karma-chrome-launcher": "^0.1.5",
+        "karma-requirejs": "^0.2.2",
+        "requirejs": "^2.1.15"
+    },
+    "scripts": {
+        "test": ""
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/zhujl/cobble"
+    },
+    "keywords": [
+        "javascript",
+        "tool"
+    ],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/zhujl/cobble/issues"
+    },
+    "homepage": "http://zhujl.com/cobble",
+    "edp": {
+        "wwwroot": "/",
+        "depDir": "dep",
+        "srcDir": "src",
+        "loaderAutoConfig": "js,htm,html,tpl,vm,phtml",
+        "loaderUrl": "http://s1.bdstatic.com/r/www/cache/ecom/esl/1-8-2/esl.js",
+        "dependencies": {}
+    }
 }
