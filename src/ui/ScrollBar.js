@@ -65,7 +65,9 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
+            var conf = orientationConf[me.orientation];
 
+            var slider =
             me.slider = new Slider({
 
                 element: me.element,
@@ -86,14 +88,25 @@ define(function (require, exports, module) {
                 }
             });
 
+            var panel = me.panel;
+
             me.wheel = new Wheel({
-                            element: me.panel,
+                            element: panel,
                             onScroll: function (e, data) {
-                                return !me.slider.setValue(
+                                return !slider.setValue(
                                     me.value + data.delta * me.step
                                 );
                             }
                         });
+
+            panel.scroll(
+                function () {
+                    me.to(
+                        panel.prop(conf.scroll) / me.factor,
+                        'bar'
+                    );
+                }
+            );
 
             me.refresh({
                 value: me.value
