@@ -44,7 +44,6 @@ define(function (require, exports) {
             me.placeholder = new Placeholder({
                 element: element,
                 simple: false,
-                placeholderAttr: 'placeholder',
                 placeholderSelector: me.placeholderSelector,
                 template: me.template
             });

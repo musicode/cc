@@ -75,6 +75,12 @@ define(function (require, exports, module) {
 
     };
 
+    /**
+     * 解析 url，返回格式遵循 location 属性的命名
+     *
+     * @param {string} url
+     * @return {Object}
+     */
     exports.parse = function (url) {
 
         var link = document.createElement('a');

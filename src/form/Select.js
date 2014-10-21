@@ -33,13 +33,13 @@ define(function (require, exports, module) {
      * @property {Array=} options.data 下拉菜单的数据
      * @property {string=} options.value 当前选中的值
      *
-     * @property {string} options.buttonSelector 点击触发下拉菜单显示的元素
-     * @property {string} options.menuSelector 下拉菜单元素
+     * @property {string=} options.buttonSelector 点击触发下拉菜单显示的元素
+     * @property {string=} options.menuSelector 下拉菜单元素
      *
      * @property {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.openClass 菜单展开状态的 class
      *
-     * @property {Function} options.setText 把选中的菜单项文本写入到按钮上
+     * @property {Function=} options.setText 把选中的菜单项文本写入到按钮上
      * @property {Function=} options.onChange 选中菜单项触发
      */
     function Select(options) {

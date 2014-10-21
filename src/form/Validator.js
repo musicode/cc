@@ -31,8 +31,6 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 表单元素
      * @property {boolean=} options.realtime 是否实时验证，默认为 true
-     * @property {string=} options.requiredClass 不满足 required 要求的 className，
-     *                                           required 不同于一般的 error，最好区别对待
      *
      * @property {boolean} options.groupSelector className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
@@ -48,12 +46,9 @@ define(function (require, exports, module) {
      * @property {Object=} options.extension 扩展验证，比如跟业务紧密相关的验证，如下
      *                                       {
      *                                           password_confirm: function () {
-     *                                               return 'passwordDifferent'
+     *                                               return 'equals';
      *                                           }
      *                                       }
-     * @property {Function=} options.onSuccess 验证成功时调用
-     * @property {Function=} options.onError 验证失败时调用
-     * @argument {Array.<jQuery>} options.onError.fields 验证失败的表单字段
      */
     function Validator(options) {
         return lifeCycle.init(this, options);
@@ -83,24 +78,27 @@ define(function (require, exports, module) {
             }
 
             var groupSelector = me.groupSelector;
-            var focusType = 'focusin' + namespace;
-            var focusHandler = function (e) {
-                $(e.target)
-                .closest(groupSelector)
-                .removeClass(me.successClass)
-                .removeClass(me.errorClass);
-            };
 
-            element.on(focusType, focusHandler);
+            element.on(
+                'focusin' + namespace,
+                function (e) {
+                    $(e.target)
+                    .closest(groupSelector)
+                    .removeClass(me.successClass)
+                    .removeClass(me.errorClass);
+                }
+            );
 
             if (me.realtime) {
-
-                var blurType = 'focusout' + namespace;
-                var blurHandler = function (e) {
-                    validateGroup(me, $(e.target).closest(groupSelector));
-                };
-
-                element.on(blurType, blurHandler);
+                element.on(
+                    'focusout' + namespace,
+                    function (e) {
+                        validateGroup(
+                            me,
+                            $(e.target).closest(groupSelector)
+                        );
+                    }
+                );
             }
 
             element.on(
@@ -153,10 +151,10 @@ define(function (require, exports, module) {
 
                     group = $(group);
 
-                    if (group.css('display') !== 'none') {
-                        if ($.type(validateGroup(me, group)) === 'string') {
-                            result = false;
-                        }
+                    if (group.is(':visible')
+                        && $.type(validateGroup(me, group)) === 'string'
+                    ) {
+                        result = false;
                     }
                 }
             );
@@ -346,7 +344,8 @@ define(function (require, exports, module) {
         equals: function (field, form) {
             var equals = field.attr('equals');
             if (equals) {
-                return $.trim(field.val()) === $.trim(form.find('[name="' + equals + '"]').val());
+                var target = form.find('[name="' + equals + '"]');
+                return $.trim(field.val()) === $.trim(target.val());
             }
         }
 
