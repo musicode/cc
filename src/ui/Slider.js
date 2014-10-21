@@ -89,7 +89,7 @@ define(function (require, exports, module) {
                 container: track,
                 silence: true,
                 axis: me.axis,
-                onDragStart: function () {
+                onBeforeDrag: function () {
 
                     if ($.type(draggingClass) === 'string') {
                         track.addClass(draggingClass);
@@ -102,7 +102,7 @@ define(function (require, exports, module) {
                         data[conf.position]
                     );
                 },
-                onDragEnd: function () {
+                onAfterDrag: function () {
 
                     if ($.type(draggingClass) === 'string') {
                         track.removeClass(draggingClass);

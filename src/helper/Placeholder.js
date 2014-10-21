@@ -5,6 +5,8 @@
 define(function (require, exports, module) {
 
     /**
+     * 80%
+     *
      * 各浏览器对 placeholder 的实现不一样：
      *
      * 1. IE9- 未实现
@@ -41,7 +43,6 @@ define(function (require, exports, module) {
      * @property {boolean=} options.simple 是否使用简单模式
      * @property {boolean=} options.nativeFirst 是否原生优先
      *
-     * @property {string=} options.placeholderAttr 元素上的 placeholder 属性，默认是 placeholder
      * @property {string=} options.placeholderSelector 复杂模式查找占位符元素的选择器
      * @property {string=} options.simpleClass 简单模式使用的 class
      *
@@ -64,35 +65,21 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            var customAttr = me.placeholderAttr;
-            var nativeAtrr = 'placeholder';
+            var placeholder = element.attr('placeholder');
 
             // 在 removeAttr 之前取值
-            var value = me.value;
-            if (value == null) {
-
-                if (customAttr) {
-                    value = element.attr(customAttr);
-                }
-
-                value =
-                me.value = value || '';
+            if (me.value == null) {
+                me.value = placeholder || '';
             }
 
             if (supportPlaceholder) {
 
                 if (me.nativeFirst) {
-
                     conf = 'native';
-
-                    if (customAttr !== nativeAtrr) {
-                        element.attr(nativeAtrr, value);
-                    }
                 }
-
                 // 避免原生 placeholder 影响效果
-                else if (element.attr(nativeAtrr)) {
-                    element.removeAttr(nativeAtrr);
+                else if (placeholder) {
+                    element.removeAttr('placeholder');
                 }
             }
 
@@ -127,7 +114,6 @@ define(function (require, exports, module) {
     Placeholder.defaultOptions = {
         simple: false,
         nativeFirst: true,
-        placeholderAttr: 'placeholder',
         simpleClass: 'placeholder-active',
         placeholderSelector: 'div',
         template: '<div class="placeholder-wrapper">'

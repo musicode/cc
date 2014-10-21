@@ -49,14 +49,14 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
-     * @property {Function=} options.onDragStart 开始拖拽
-     * @argument {Object} options.onDragStart.point 坐标点
+     * @property {Function=} options.onBeforeDrag 开始拖拽
+     * @argument {Object} options.onBeforeDrag.point 坐标点
      *
      * @property {Function=} options.onDrag 正在拖拽
-     * @argument {Object} options.onDragStart.point 坐标点
+     * @argument {Object} options.onBeforeDrag.point 坐标点
      *
-     * @property {Function=} options.onDragEnd 结束拖拽
-     * @argument {Object} options.onDragStart.point 坐标点
+     * @property {Function=} options.onAfterDrag 结束拖拽
+     * @argument {Object} options.onAfterDrag.point 坐标点
      */
     function Draggable(options) {
         return lifeCycle.init(this, options);
@@ -82,11 +82,11 @@ define(function (require, exports, module) {
 
             // 这里本想使用 not 选择器 来实现 cancal
             // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
-            // 因为有这个问题，索性整个判断都放在 onDragStart 中处理
+            // 因为有这个问题，索性整个判断都放在 onBeforeDrag 中处理
 
             element
             .css(position(element))
-            .on('mousedown' + namespace, me, onDragStart);
+            .on('mousedown' + namespace, me, onBeforeDrag);
         },
 
         /**
@@ -295,7 +295,7 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onDragStart(e) {
+    function onBeforeDrag(e) {
 
         var draggable = e.data;
         var target = e.target;
@@ -373,7 +373,7 @@ define(function (require, exports, module) {
         instance
         .document
         .on('mousemove' + namespace, draggable, onDrag)
-        .on('mouseup' + namespace, draggable, onDragEnd);
+        .on('mouseup' + namespace, draggable, onAfterDrag);
 
     }
 
@@ -400,7 +400,7 @@ define(function (require, exports, module) {
         // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
         // 只有坐标发生变动才算
         if (++counter === 1) {
-            draggable.emit('dragStart');
+            draggable.emit('beforeDrag');
         }
 
         if (!draggable.silence) {
@@ -417,7 +417,7 @@ define(function (require, exports, module) {
      * @inner
      * @param {Event} e
      */
-    function onDragEnd(e) {
+    function onAfterDrag(e) {
 
         enableSelection();
 
@@ -426,7 +426,7 @@ define(function (require, exports, module) {
         var draggable = e.data;
 
         if (counter > 0) {
-            draggable.emit('dragEnd');
+            draggable.emit('afterDrag');
         }
 
         counter =

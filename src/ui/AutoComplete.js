@@ -270,12 +270,12 @@ define(function (require, exports, module) {
                     );
                 }
             },
-            onLongPressStart: function () {
+            onBeforeLongPress: function () {
                 if (timer) {
                     timer.start();
                 }
             },
-            onLongPressEnd: function () {
+            onAfterLongPress: function () {
                 if (timer) {
                     timer.stop();
                     timer = null;

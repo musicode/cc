@@ -57,13 +57,13 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.onChange 内容变化触发
      *
-     * @property {Function=} options.onLongPressStart 长按开始
-     * @argument {Event} options.onLongPressStart.event
+     * @property {Function=} options.onBeforeLongPress 长按开始
+     * @argument {Event} options.onBeforeLongPress.event
      *
-     * @property {Function=} options.onLongPressEnd 长按结束
-     *                                              如果返回 false，可不触发 change 事件
-     *                                              如果返回不是 false，值变化了才会触发 change 事件
-     * @argument {Event} options.onLongPressEnd.event
+     * @property {Function=} options.onAfterLongPress 长按结束
+     *                                                如果返回 false，可不触发 change 事件
+     *                                                如果返回不是 false，值变化了才会触发 change 事件
+     * @argument {Event} options.onAfterLongPress.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
      *                                    组合键只支持 shift/ctrl/alt/meta + 字母/数字
@@ -136,21 +136,21 @@ define(function (require, exports, module) {
                 onKeyUp: function (e) {
                     return me.emit(e);
                 },
-                onLongPressStart: function (e, data) {
+                onBeforeLongPress: function (e, data) {
 
                     me.longPressing = true;
 
                     value = element.val();
                     isCharKey = data.isCharKey;
 
-                    me.emit('longPressStart', data);
+                    me.emit('beforeLongPress', data);
 
                 },
-                onLongPressEnd: function (e) {
+                onAfterLongPress: function (e) {
 
                     me.longPressing = false;
 
-                    me.emit('longPressEnd');
+                    me.emit('afterLongPress');
 
                     if (isCharKey && value !== element.val()) {
                         me.emit('change');
@@ -184,6 +184,7 @@ define(function (require, exports, module) {
             me.on(
                 'change',
                 function () {
+
                     // 把高度重置为原始值才能取到正确的 newHeight
                     if (oldHeight !== originHeight) {
                         oldHeight = originHeight;
@@ -197,6 +198,7 @@ define(function (require, exports, module) {
                         element.height(newHeight);
                         oldHeight = newHeight;
                     }
+
                 }
             );
 

@@ -93,7 +93,7 @@ define(function (require, exports, module) {
             me.wheel = new Wheel({
                             element: panel,
                             onScroll: function (e, data) {
-                                return !slider.setValue(
+                                return !me.to(
                                     me.value + data.delta * me.step
                                 );
                             }

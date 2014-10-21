@@ -47,13 +47,13 @@ define(function (require, exports, module) {
      * @argument {Event} options.onKeyDown.event
      *
      * @property {Function=} options.onKeyUp 松开键位触发
-     * @argument {Event} options.onKeyDown.event
+     * @argument {Event} options.onKeyUp.event
      *
-     * @property {Function=} options.onLongPressStart 长按开始
-     * @argument {Event} options.onKeyDown.event
+     * @property {Function=} options.onBeforeLongPress 长按开始
+     * @argument {Event} options.onBeforeLongPress.event
      *
-     * @property {Function=} options.onLongPressEnd 长按结束
-     * @argument {Event} options.onKeyDown.event
+     * @property {Function=} options.onAfterLongPress 长按结束
+     * @argument {Event} options.onAfterLongPress.event
      *
      * @example
      *
@@ -400,7 +400,7 @@ define(function (require, exports, module) {
             if (counter === 1) {
 
                 keyboard.emit(
-                    'longPressStart',
+                    'beforeLongPress',
                     {
                         isCharKey: key2Char[keyCode] != null
                     }
@@ -446,7 +446,7 @@ define(function (require, exports, module) {
         cache.keyCode = null;
 
         if (cache.counter > 1) {
-            keyboard.emit('longPressEnd');
+            keyboard.emit('afterLongPress');
             cache.counter = 0;
         }
 
