@@ -383,7 +383,7 @@ define(function (require, exports, module) {
     function clickItem(e) {
 
         var autoComplete = e.data;
-        var index = autoComplete.items.index(e.currentTarget);
+        var index = autoComplete.items.index(this);
 
         activeItem(
             autoComplete,
@@ -502,7 +502,7 @@ define(function (require, exports, module) {
 
         switchClass(
             autoComplete,
-            autoComplete.items.index(e.currentTarget),
+            autoComplete.items.index(this),
             autoComplete.hoverClass
         );
     }

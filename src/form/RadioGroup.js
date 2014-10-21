@@ -78,7 +78,7 @@ define(function (require, exports, module) {
                         me.checkedRadio.uncheck();
                     }
 
-                    var index = radios.index(e.currentTarget);
+                    var index = radios.index(this);
                     me.checkedRadio = group[index];
 
                     me.emit('change');

@@ -96,6 +96,12 @@ define(function (require, exports, module) {
 
                     me.emit('change', data);
 
+                },
+                onAfterShow: function () {
+                    element.trigger('focusint');
+                },
+                onAfterHide: function () {
+                    element.trigger('focusout');
                 }
             });
 

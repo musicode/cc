@@ -102,7 +102,7 @@ define(function (require) {
                 '[data-value]',
                 function (e) {
 
-                    var target = $(e.currentTarget);
+                    var target = $(this);
                     var isActive = target.hasClass(activeClass);
 
                     var value;

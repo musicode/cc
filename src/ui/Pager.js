@@ -73,7 +73,7 @@ define(function (require, exports, module) {
                 me,
                 function (e) {
 
-                    var page = $(e.currentTarget).data('page');
+                    var page = $(this).data('page');
 
                     if ($.type(page) === 'number') {
                         me.to(page);

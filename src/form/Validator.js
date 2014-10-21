@@ -85,28 +85,22 @@ define(function (require, exports, module) {
             var groupSelector = me.groupSelector;
             var focusType = 'focusin' + namespace;
             var focusHandler = function (e) {
-                $(e.currentTarget)
+                $(e.target)
                 .closest(groupSelector)
                 .removeClass(me.successClass)
                 .removeClass(me.errorClass);
             };
 
-            element
-            .on(focusType, 'input', focusHandler)
-            .on(focusType, 'select', focusHandler)
-            .on(focusType, 'textarea', focusHandler);
+            element.on(focusType, focusHandler);
 
             if (me.realtime) {
 
                 var blurType = 'focusout' + namespace;
                 var blurHandler = function (e) {
-                    validateGroup(me, $(this).closest(groupSelector));
+                    validateGroup(me, $(e.target).closest(groupSelector));
                 };
 
-                element
-                .on(blurType, 'input', blurHandler)
-                .on(blurType, 'select', blurHandler)
-                .on(blurType, 'textarea', blurHandler);
+                element.on(blur, blurHandler);
             }
 
             element.on(

@@ -144,7 +144,7 @@ define(function (require, exports, module) {
         var switchable = e.data;
         var index = switchable.element
                        .find(switchable.selector)
-                       .index(e.currentTarget);
+                       .index(this);
 
         if (index !== switchable.index) {
             switchable.to(index);
@@ -160,15 +160,17 @@ define(function (require, exports, module) {
     function onEnter(e) {
 
         var switchable = e.data;
+        var target = this;
 
         switchable.timer =
         setTimeout(
             function () {
                 if (switchable.element) {
 
-                    var index = switchable.element
-                                   .find(switchable.selector)
-                                   .index(e.currentTarget);
+                    var index = switchable
+                                    .element
+                                    .find(switchable.selector)
+                                    .index(target);
 
                     if (index !== switchable.index) {
                         switchable.to(index);
