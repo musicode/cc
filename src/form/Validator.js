@@ -100,7 +100,7 @@ define(function (require, exports, module) {
                     validateGroup(me, $(e.target).closest(groupSelector));
                 };
 
-                element.on(blur, blurHandler);
+                element.on(blurType, blurHandler);
             }
 
             element.on(

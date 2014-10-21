@@ -98,7 +98,7 @@ define(function (require, exports, module) {
 
                 },
                 onAfterShow: function () {
-                    element.trigger('focusint');
+                    element.trigger('focusin');
                 },
                 onAfterHide: function () {
                     element.trigger('focusout');
