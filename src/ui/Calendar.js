@@ -31,17 +31,25 @@ define(function (require) {
      * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {string} options.activeClass 日期被选中的 className
      *
-     * @property {string} options.prevSelector
-     * @property {string} options.nextSelector
+     * @property {string} options.prevSelector 上月/上周 选择器
+     * @property {string} options.nextSelector 下月/下周 选择器
      *
      * @property {string} options.template
      * @property {Function} options.renderTemplate
      * @property {Function=} options.onBeforeRender 渲染开始前触发，可用于调整数据
      * @property {Function=} options.onAfterRender 渲染完成后触发，可用于初始化逻辑
      *
-     * @property {Function} options.onPrev
-     * @property {Function} options.onNext
+     * @property {Function} options.onPrev 点击 上月/上周 元素触发
+     * @argument {Event} options.onPrev.event 事件对象
+     * @argument {Object} options.onPrev.data 事件数据
+     *
+     * @property {Function} options.onNext 点击 下月/下周 元素触发
+     * @argument {Event} options.onNext.event 事件对象
+     * @argument {Object} options.onNext.data 事件数据
+     *
      * @property {Function=} options.onChange
+     * @argument {Event} options.onChange.event 事件对象
+     * @argument {Object} options.onChange.data 事件数据
      */
     function Calendar(options) {
         return lifeCycle.init(this, options);
@@ -255,7 +263,15 @@ define(function (require) {
      */
     var namespace = '.cobble_ui_calendar';
 
-
+    /**
+     * 获得渲染模板的数据
+     *
+     * @inner
+     * @param {number} start 开始日期时间戳
+     * @param {number} end 结束日期时间戳
+     * @param {number} today 今天的时间戳
+     * @return {Array.<Object>}
+     */
     function getDatasource(start, end, today) {
 
         var data = [ ];

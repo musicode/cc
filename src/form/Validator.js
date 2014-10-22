@@ -21,7 +21,60 @@ define(function (require, exports, module) {
      * minlength: 字符串最小长度
      *   pattern: 正则
      *
+     * {
+     *     fields: {
+     *         username: {
      *
+     *             // rules 可写在 DOM 属性或是配置对象
+     *             // 这个暂时不开放使用，先直接写在 DOM 属性上
+     *             rules: {
+     *                 required: true,
+     *                 min: 3,
+     *                 max: 10,
+     *                 minlength: 3,
+     *                 maxlength: 10,
+     *                 pattern: /\d/
+     *             },
+     *
+     *             // 与 rules 一一对应的错误信息
+     *             errors: {
+     *                 required: '请输入用户名',
+     *                 min: '最小为 3'，
+     *                 ...
+     *             },
+     *
+     *             // 自定义校验规则，可同步也可异步
+     *             // 同步返回错误信息或 undefined
+     *             // 异步返回 promise
+     *             // 如果校验通过，promise 参数长度为 0
+     *             // 如果校验失败，promise 第一个参数是错误信息
+     *             custom: function (field) {
+     *
+     *                 var promise = $.Deferred();
+     *
+     *                 $
+     *                 .post(
+     *                     'xxx',
+     *                     {
+     *                         value: ''
+     *                     }
+     *                 )
+     *                 .done(function (response) {
+     *
+     *                     if (response.code === 0) {
+     *                         promise.resolve();
+     *                     }
+     *                     else {
+     *                         promise.resolve('校验错误');
+     *                     }
+     *                 });
+     *
+     *                 return promise;
+     *
+     *             }
+     *         }
+     *     }
+     * }
      */
 
     /**
@@ -32,23 +85,21 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element 表单元素
      * @property {boolean=} options.realtime 是否实时验证，默认为 true
      *
-     * @property {boolean} options.groupSelector className 作用于哪个元素，不传表示当前字段元素，
-     *                                           传了则用 field.closest(selector) 进行向上查找
      * @property {string=} options.successClass 验证通过的 className
      * @property {string=} options.errorClass 验证失败的 className
+     *
+     * @property {string=} options.requiredClass 提示输入的 className，required 跟其他 error 区别开，体验会更好些
+     *                                           如果不在乎这种体验提升，可无视这项配置
+     *
+     * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
+     *                                           传了则用 field.closest(selector) 进行向上查找
+     *
      * @property {string=} options.errorSelector 显示错误文本的元素选择器，如 .error
-     * @property {Object=} options.errorText 配置错误文本，如下
-     *                                       {
-     *                                           username: {
-     *                                              required: '请输入用户名'
-     *                                           }
-     *                                       }
-     * @property {Object=} options.extension 扩展验证，比如跟业务紧密相关的验证，如下
-     *                                       {
-     *                                           password_confirm: function () {
-     *                                               return 'equals';
-     *                                           }
-     *                                       }
+     *
+     * @property {Object=} options.fields 配置字段
+     *
+     * @property {Function=} options.onValidate 校验完成时调用，触发方式可以是表单产生 submit 事件 或 点击按钮
+     *                                          当使用 <form> 元素时，此接口比较有用
      */
     function Validator(options) {
         return lifeCycle.init(this, options);
@@ -74,7 +125,12 @@ define(function (require, exports, module) {
                      : element.find('form');
 
             if (form.length > 0) {
-                form.attr('novalidate', 'novalidate');
+                form
+                .attr('novalidate', 'novalidate')
+                .on(
+                    'submit' + namespace,
+                    $.proxy(me.validate, me)
+                );
             }
 
             var groupSelector = me.groupSelector;
@@ -82,10 +138,14 @@ define(function (require, exports, module) {
             element.on(
                 'focusin' + namespace,
                 function (e) {
-                    $(e.target)
-                    .closest(groupSelector)
-                    .removeClass(me.successClass)
-                    .removeClass(me.errorClass);
+
+                    var group = $(e.target).closest(groupSelector);
+                    var className = [ me.successClass, me.errorClass, me.requiredClass ].join(' ');
+
+                    group.removeClass(
+                        $.trim(className)
+                    );
+
                 }
             );
 
@@ -93,18 +153,14 @@ define(function (require, exports, module) {
                 element.on(
                     'focusout' + namespace,
                     function (e) {
-                        validateGroup(
-                            me,
-                            $(e.target).closest(groupSelector)
-                        );
+
+                        var group = $(e.target).closest(groupSelector);
+
+                        validateGroup(me, group);
+
                     }
                 );
             }
-
-            element.on(
-                'submit' + namespace,
-                $.proxy(me.validate, me)
-            );
 
         },
 
@@ -145,19 +201,69 @@ define(function (require, exports, module) {
             }
 
             // 按组验证，每组里面只要有一个错了就算整组错了
+            var promiseList = [ ];
+
             $.each(
                 groups,
                 function (index, group) {
 
                     group = $(group);
 
-                    if (group.is(':visible')
-                        && $.type(validateGroup(me, group)) === 'string'
-                    ) {
-                        result = false;
+                    // 隐藏状态不需要验证
+                    if (group.is(':visible')) {
+
+                        var error = validateGroup(me, group);
+
+                        if (error) {
+                            if ($.type(error) === 'string') {
+                                result = false;
+                            }
+                            else {
+                                promiseList.push(result);
+                            }
+                        }
                     }
                 }
             );
+
+            if (promiseList.length > 0) {
+
+                result = $.Deferred();
+
+                $.when
+                .apply($, promiseList)
+                .done(function () {
+
+                    var error;
+
+                    $.each(
+                        arguments,
+                        function (index, data) {
+                            if (data) {
+                                error = data;
+                                return false;
+                            }
+                        }
+                    );
+
+                    me.emit(
+                        'validate',
+                        result
+                    );
+
+                    result.resolve(error);
+
+                });
+
+            }
+            else {
+
+                me.emit(
+                    'validate',
+                    result
+                );
+
+            }
 
             return result;
 
@@ -190,9 +296,15 @@ define(function (require, exports, module) {
         realtime: false,
         groupSelector: '.form-group',
         successClass: 'has-success',
+
         errorClass: 'has-error',
         errorSelector: '.error',
         errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${text}',
+
+        requiredClass: 'has-required',
+        requiredSelector: '.required',
+        requiredTemplate: '${text}',
+
         renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] || '';
@@ -381,32 +493,77 @@ define(function (require, exports, module) {
      * @inner
      * @param {Validator} validator 验证器实例
      * @param {jQuery} group 表单组元素
-     * @return {boolean|string} 正确时返回 true，错误时返回错误属性名称
+     * @return {string} 正确时返回 ''，错误时返回错误属性名称
      */
     function validateGroup(validator, group) {
 
         var errorField;
-        var errorName;
-        var errorAttr;
+        var error;
+
+        var promiseList = [ ];
 
         group
         .find('[name]')
         .each(function () {
 
             errorField = $(this);
+
             var result = validateField(validator, errorField);
 
-            if ($.type(result) === 'string') {
-                errorName = this.name;
-                errorAttr = result;
-                return false;
+            if (result) {
+                if ($.type(result) === 'string') {
+                    error = result;
+                    return false;
+                }
+                else {
+                    promiseList.push(result);
+                }
             }
         });
+
+        // 需要异步
+        if (promiseList.length > 0) {
+
+            var promise = $.Deferred();
+
+            $.when
+            .apply($, promiseList)
+            .done(function () {
+
+                var errror;
+
+                $.each(
+                    arguments,
+                    function (index, data) {
+                        if (data) {
+                            error = data;
+                            updateGroup(validator, group, errorField, error);
+                            return false;
+                        }
+                    }
+                );
+
+                promise.resolve(error);
+
+            });
+
+            return promise;
+        }
+        else {
+
+            updateGroup(validator, group, errorField, error);
+
+            return error;
+        }
+
+    }
+
+    function updateGroup(validator, group, field, error) {
 
         var successClass = validator.successClass;
         var errorClass = validator.errorClass;
 
-        if (errorAttr) {
+        if (error) {
 
             group
             .removeClass(successClass)
@@ -416,31 +573,22 @@ define(function (require, exports, module) {
             if (errorSelector) {
 
                 var errorElement = group.find(errorSelector);
-                var errorText = validator.errorText[errorName];
-                if (errorText) {
-                    errorText = errorText[errorAttr];
-                }
 
-                if (errorText) {
-                    var errorTemplate = validator.errorTemplate;
-                    if (errorTemplate) {
-                        errorText = validator.renderTemplate(
-                                        {
-                                            text: errorText
-                                        },
-                                        errorTemplate
-                                    );
-                    }
-                    errorElement.html(errorText);
+                var errorTemplate = validator.errorTemplate;
+                if (errorTemplate) {
+                    error = validator.renderTemplate(
+                                {
+                                    text: error
+                                },
+                                errorTemplate
+                            );
                 }
-                else {
-                    throw new Error(errorName + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
-                }
+                errorElement.html(error);
 
                 var errorPosition = validator.errorPosition;
                 if ($.isFunction(errorPosition)) {
                     errorPosition(
-                        errorField,
+                        field,
                         errorElement
                     );
                 }
@@ -451,8 +599,6 @@ define(function (require, exports, module) {
             .removeClass(errorClass)
             .addClass(successClass);
         }
-
-        return errorAttr ? errorAttr : true;
     }
 
     /**
@@ -461,9 +607,14 @@ define(function (require, exports, module) {
      * @inner
      * @param {Validator} validator 验证器实例
      * @param {jQuery} field 表单字段元素
-     * @return {boolean|string} 正确时返回 true，错误时返回错误属性名称
+     * @return {Promise|string} 正确时返回空，错误时返回错误信息
+     *                          如果涉及远程校验，返回 promise 对象
      */
     function validateField(validator, field) {
+
+        if (field.prop('disabled')) {
+            return;
+        }
 
         var form = validator.element;
 
@@ -479,14 +630,10 @@ define(function (require, exports, module) {
             Validator.type[type] || [ ],
             function (index, name) {
 
-                if (field.prop('disabled')) {
-                    return;
-                }
-
                 var result = Validator.attr[name](field, form);
 
                 if ($.type(result) === 'boolean') {
-                    if (result === false) {
+                    if (!result) {
                         errorAttr = name;
                         return false;
                     }
@@ -499,14 +646,27 @@ define(function (require, exports, module) {
             }
         );
 
-        if (!errorAttr) {
-            var extension = validator.extension;
-            if (extension && extension[name]) {
-                errorAttr = extension[name](field);
+        var conf = validator.fields[name];
+
+        if (conf) {
+            if (errorAttr) {
+                var error = conf.errors[errorAttr];
+                if (error) {
+                    return error;
+                }
+                else {
+                    throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
+                }
+            }
+            else {
+
+                var custom = conf.custom;
+
+                if ($.isFunction(custom)) {
+                    return custom(field);
+                }
             }
         }
-
-        return errorAttr ? errorAttr : true;
 
     }
 

@@ -44,7 +44,8 @@ define(function (require, exports, module) {
      * @property {number} options.animation.data.from
      *
      * @property {Function=} options.onChange 索引发生变化时触发
-     * @argument {Object} options.onChange.data
+     * @argument {Event} options.onChange.event 事件对象
+     * @argument {Object} options.onChange.data 事件数据
      * @property {number} options.onChange.data.to
      * @property {number} options.onChnage.data.from
      */

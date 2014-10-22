@@ -1,6 +1,6 @@
 /**
  * @file 组件生命周期管理
- * @author zhujialu
+ * @author zhujl
  */
 define(function (require, exports) {
 

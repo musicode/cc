@@ -1,13 +1,13 @@
 /**
- * @file 把小数转成小数，避免小数计算的精度问题
- * @author zhujialu
+ * @file 把小数转成整数，避免小数计算的精度问题
+ * @author zhujl
  */
 define(function (require, exports, module) {
 
     'use strict';
 
     /**
-     * 把小数转成小数，避免小数计算的精度问题
+     * 把小数转成整数，避免小数计算的精度问题
      *
      * @param {string|number} float 浮点数
      * @param {number=} length 可选，右移的位数
