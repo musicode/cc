@@ -201,6 +201,8 @@ define(function (require, exports, module) {
         }
     };
 
+    jquerify(Zoom.prototype);
+
     /**
      * 默认配置
      *

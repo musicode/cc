@@ -59,7 +59,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var call = require('../function/call');
     var split = require('../function/split');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');

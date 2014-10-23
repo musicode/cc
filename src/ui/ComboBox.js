@@ -126,9 +126,10 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
+         * @property {boolean=} silence 是否不触发 change 事件
          * @return {boolean} 是否设置成功
          */
-        setValue: function (value) {
+        setValue: function (value, silence) {
 
             var me = this;
             var data = { };
@@ -169,7 +170,9 @@ define(function (require, exports, module) {
                     me.value = null;
                 }
 
-                me.emit('change', data);
+                if (!silence) {
+                    me.emit('change', data);
+                }
 
             }
 
@@ -295,7 +298,7 @@ define(function (require, exports, module) {
             hide.trigger = 'click';
         }
 
-        var animation = show.animation
+        var animation = show.animation;
         if ($.isFunction(animation)) {
             show.animation = $.proxy(animation, comboBox);
         }

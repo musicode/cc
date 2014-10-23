@@ -8,7 +8,6 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var instance = require('../util/instance');
-    var page = require('../')
 
     var pin = require('../function/pin');
     var jquerify = require('../function/jquerify');

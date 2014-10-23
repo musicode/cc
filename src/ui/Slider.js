@@ -97,9 +97,11 @@ define(function (require, exports, module) {
 
                 },
                 onDrag: function (e, data) {
+
+                    var pixel = data[conf.position];
+
                     me.setValue(
-                        null,
-                        data[conf.position]
+                        pixel2Value(pixel, me.stepPixel, me.minValue, me.stepValue)
                     );
                 },
                 onAfterDrag: function () {
@@ -119,9 +121,10 @@ define(function (require, exports, module) {
                         return;
                     }
 
+                    var pixel = eventOffset(e)[conf.axis];
+
                     me.setValue(
-                        null,
-                        eventOffset(e)[conf.axis]
+                        pixel2Value(pixel, me.stepPixel, me.minValue, me.stepValue)
                     );
 
                 }
@@ -166,11 +169,15 @@ define(function (require, exports, module) {
             //
             // step 表示步进值
             // stepPixel 表示步进像素值
+            //
+            // 这里不能覆盖 me.min me.max me.step
+            // 不然再次调用 refresh 时，无法进行判断
 
             var minPixel = 0;
             var maxPixel = me.draggable
                              .getRectange(true)[conf.dimension];
 
+            var stepPixel;
 
             var min = me.min;
             var max = me.max;
@@ -181,17 +188,27 @@ define(function (require, exports, module) {
                 && $.type(max) === 'number'
                 && $.type(step) === 'number'
             ) {
-                me.stepPixel = divide(
-                                    maxPixel,
-                                    divide(
-                                        minus(max, min),
-                                        step
-                                    )
-                                );
+                stepPixel = divide(
+                                maxPixel,
+                                divide(
+                                    minus(max, min),
+                                    step
+                                )
+                            );
+            }
+            else {
+                min = minPixel;
+                max = maxPixel;
+                step = stepPixel = 1;
             }
 
             me.minPixel = minPixel;
             me.maxPixel = maxPixel;
+            me.stepPixel = stepPixel;
+
+            me.minValue = min;
+            me.maxValue = max;
+            me.stepValue = step;
 
             var value = me.value;
 
@@ -218,47 +235,19 @@ define(function (require, exports, module) {
         /**
          * 设置当前值
          *
-         * @param {number} value 值
-         * @param {number=} pixel 像素值
+         * @param {number} value
+         * @param {boolean=} silence 是否不触发 change 事件
          * @return {boolean} 是否更新成功
          */
-        setValue: function (value, pixel) {
+        setValue: function (value, silence) {
 
             var me = this;
-            var stepPixel = me.stepPixel;
 
-            var min = me.min;
-            var max = me.max;
-            var step = me.step;
-
-            if ($.type(stepPixel) !== 'number') {
-                min = me.minPixel;
-                max = me.maxPixel;
-                step = stepPixel = 1;
-            }
-
-            if ($.type(value) !== 'number') {
-                // 通过 pixel 算 value
-                value = plus(
-                            min,
-                            multiply(
-                                Math.floor(
-                                    divide(pixel, stepPixel)
-                                ),
-                                step
-                            )
-                        );
-            }
+            var min = me.minValue;
+            var max = me.maxValue;
+            var step = me.stepValue;
 
             value = restrain(value, min, max);
-
-            pixel = multiply(
-                        stepPixel,
-                        divide(
-                            minus(value, min),
-                            step
-                        )
-                    );
 
             var result = value !== me.value;
 
@@ -269,16 +258,26 @@ define(function (require, exports, module) {
                 var style = { };
                 var conf = orientationConf[me.orientation];
 
-                style[conf.position] = pixel;
+                style[conf.position] = multiply(
+                                            me.stepPixel,
+                                            divide(
+                                                minus(value, min),
+                                                step
+                                            )
+                                        );
+
+                var thumb = me.thumb;
 
                 if ($.isFunction(me.animation)) {
-                    me.animation(style);
+                    me.animation(style, thumb);
                 }
                 else {
-                    me.thumb.css(style);
+                    thumb.css(style);
                 }
 
-                me.emit('change');
+                if (!silence) {
+                    me.emit('change');
+                }
             }
 
             return result;
@@ -348,6 +347,28 @@ define(function (require, exports, module) {
             dimension: 'height'
         }
     };
+
+    /**
+     * 像素值转为 value
+     *
+     * @inner
+     * @param {number} pixel
+     * @param {number} stepPixel
+     * @param {number} minValue
+     * @param {number} stepValue
+     * @returns {number}
+     */
+    function pixel2Value(pixel, stepPixel, minValue, stepValue) {
+        return plus(
+                minValue,
+                multiply(
+                    Math.floor(
+                        divide(pixel, stepPixel)
+                    ),
+                    stepValue
+                )
+            );
+    }
 
     return Slider;
 

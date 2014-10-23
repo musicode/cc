@@ -32,7 +32,7 @@ define(function (require, exports, module) {
             }
         );
 
-        html +='</form>';
+        html += '</form>';
 
         return $(html);
     }

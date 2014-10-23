@@ -1630,6 +1630,6 @@ define(function () {
     var etpl = new Engine();
     etpl.Engine = Engine;
 
-    return etpl
+    return etpl;
 
 });

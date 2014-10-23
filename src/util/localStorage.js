@@ -10,7 +10,7 @@ define(function (require, exports, module) {
      * 设置键值
      *
      * @param {string|Object} key 键或一个键值对象
-     * @param {(string|number)=} alue 键值，当 key 是 Object 时，可不传
+     * @param {(string|number)=} value 键值，当 key 是 Object 时，可不传
      */
     function set(key, value) {
 
@@ -30,7 +30,7 @@ define(function (require, exports, module) {
             catch (e) { }
 
         }
-    };
+    }
 
     /**
      * 获取值
@@ -49,7 +49,7 @@ define(function (require, exports, module) {
 
         return result;
 
-    };
+    }
 
     /**
      * 删除一个键值对
@@ -63,7 +63,7 @@ define(function (require, exports, module) {
         }
         catch (e) { }
 
-    };
+    }
 
     if (localStorage) {
         exports.set = set;
