@@ -151,7 +151,13 @@ define(function (require, exports, module) {
                     'focusout' + namespace,
                     function (e) {
 
-                        var name = e.target.name;
+                        var target = $(e.target);
+                        var name = target.prop('name');
+
+                        if (!name) {
+                            target = target.find('[name]');
+                            name = target.prop('name');
+                        }
 
                         if (name) {
                             me.validate(name);
