@@ -44,13 +44,11 @@ define(function (require, exports, module) {
      *             },
      *
      *             // 自定义校验规则，可同步也可异步
-     *             // 同步返回错误信息或 undefined
-     *             // 异步返回 promise
-     *             // 如果校验通过，promise 参数长度为 0
-     *             // 如果校验失败，promise 第一个参数是错误信息
-     *             custom: function (field) {
+     *             // 同步返回 错误信息，如果正确，返回 '' 或 true
+     *             // 异步返回 undefined（即不 return，总得有个标识是异步吧...）
      *
-     *                 var promise = $.Deferred();
+     *             // 异步通过回调函数第一个参数表示是否验证通过，如果是长度大于 1 的字符串，表示错误，其他情况都算成功
+     *             custom: function (field, callback) {
      *
      *                 $
      *                 .post(
@@ -62,14 +60,13 @@ define(function (require, exports, module) {
      *                 .done(function (response) {
      *
      *                     if (response.code === 0) {
-     *                         promise.resolve();
+     *                         callback();
      *                     }
      *                     else {
-     *                         promise.resolve('校验错误');
+     *                         callback('校验错误');
      *                     }
      *                 });
      *
-     *                 return promise;
      *
      *             }
      *         }
@@ -83,13 +80,13 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 表单元素
-     * @property {boolean=} options.realtime 是否实时验证，默认为 true
+     * @property {boolean=} options.realtime 是否实时验证（元素失焦验证），默认为 false
      *
      * @property {string=} options.successClass 验证通过的 className
      * @property {string=} options.errorClass 验证失败的 className
      *
-     * @property {string=} options.requiredClass 提示输入的 className，required 跟其他 error 区别开，体验会更好些
-     *                                           如果不在乎这种体验提升，可无视这项配置
+     * @property {string=} options.emptyClass 提示输入的 className，empty 跟其他 error 区别开，体验会更好些
+     *                                        如果不在乎这种体验提升，可无视这项配置
      *
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
@@ -154,10 +151,11 @@ define(function (require, exports, module) {
                     'focusout' + namespace,
                     function (e) {
 
-                        var group = $(e.target).closest(groupSelector);
+                        var name = e.target.name;
 
-                        validateGroup(me, group);
-
+                        if (name) {
+                            me.validate(name);
+                        }
                     }
                 );
             }
@@ -201,7 +199,7 @@ define(function (require, exports, module) {
             }
 
             // 按组验证，每组里面只要有一个错了就算整组错了
-            var promiseList = [ ];
+            var groupPromises = [ ];
 
             $.each(
                 groups,
@@ -212,47 +210,67 @@ define(function (require, exports, module) {
                     // 隐藏状态不需要验证
                     if (group.is(':visible')) {
 
-                        var error = validateGroup(me, group);
 
-                        if (error) {
-                            if ($.type(error) === 'string') {
-                                result = false;
+                        var field;
+                        var error;
+
+                        var fieldPromises = [ ];
+
+                        group
+                        .find('[name]')
+                        .each(function () {
+
+                            field = $(this);
+
+                            var result = validateField(me, field);
+
+                            if (result) {
+                                if (result.promise) {
+                                    fieldPromises.push(result);
+                                }
+                                else if ($.type(result) === 'string') {
+                                    error = result;
+                                    return false;
+                                }
                             }
-                            else {
-                                promiseList.push(result);
-                            }
+
+                        });
+
+                        // 需要异步
+                        if (fieldPromises.length > 0) {
+
+                            groupPromises.push(
+                                resolvePromises(fieldPromises)
+                                .done(function (error) {
+                                    if (error) {
+                                        updateGroup(me, group, field, error);
+                                    }
+                                })
+                            );
+
                         }
+                        else if (error) {
+
+                            updateGroup(me, group, field, error);
+
+                            result = false;
+
+                        }
+
                     }
                 }
             );
 
-            if (promiseList.length > 0) {
+            if (groupPromises.length > 0) {
 
-                result = $.Deferred();
+                result =
 
-                $.when
-                .apply($, promiseList)
+                resolvePromises(groupPromises)
                 .done(function () {
-
-                    var error;
-
-                    $.each(
-                        arguments,
-                        function (index, data) {
-                            if (data) {
-                                error = data;
-                                return false;
-                            }
-                        }
-                    );
-
                     me.emit(
                         'validate',
                         result
                     );
-
-                    result.resolve(error);
-
                 });
 
             }
@@ -488,74 +506,37 @@ define(function (require, exports, module) {
     var namespace = '.cobble_form_validator';
 
     /**
-     * 验证表单组，只要组内有一个字段错了就算整组错了
+     * 解析一堆 promise
      *
      * @inner
-     * @param {Validator} validator 验证器实例
-     * @param {jQuery} group 表单组元素
-     * @return {string} 正确时返回 ''，错误时返回错误属性名称
+     * @param {Array.<Promise>} promises
+     * @return {Promise}
      */
-    function validateGroup(validator, group) {
+    function resolvePromises(promises) {
 
-        var errorField;
-        var error;
+        var promise = $.Deferred();
 
-        var promiseList = [ ];
+        $.when
+        .apply($, promises)
+        .done(function () {
 
-        group
-        .find('[name]')
-        .each(function () {
+            var error;
 
-            errorField = $(this);
-
-            var result = validateField(validator, errorField);
-
-            if (result) {
-                if ($.type(result) === 'string') {
-                    error = result;
-                    return false;
+            $.each(
+                arguments,
+                function (index, result) {
+                    if (result && $.type(result) === 'string') {
+                        error = result;
+                        return false;
+                    }
                 }
-                else {
-                    promiseList.push(result);
-                }
-            }
+            );
+
+            promise.resolve(error);
+
         });
 
-        // 需要异步
-        if (promiseList.length > 0) {
-
-            var promise = $.Deferred();
-
-            $.when
-            .apply($, promiseList)
-            .done(function () {
-
-                var errror;
-
-                $.each(
-                    arguments,
-                    function (index, data) {
-                        if (data) {
-                            error = data;
-                            updateGroup(validator, group, errorField, error);
-                            return false;
-                        }
-                    }
-                );
-
-                promise.resolve(error);
-
-            });
-
-            return promise;
-        }
-        else {
-
-            updateGroup(validator, group, errorField, error);
-
-            return error;
-        }
-
+        return promise;
     }
 
     function updateGroup(validator, group, field, error) {
@@ -607,8 +588,8 @@ define(function (require, exports, module) {
      * @inner
      * @param {Validator} validator 验证器实例
      * @param {jQuery} field 表单字段元素
-     * @return {Promise|string} 正确时返回空，错误时返回错误信息
-     *                          如果涉及远程校验，返回 promise 对象
+     * @return {Function|string} 正确时返回空，错误时返回错误信息
+     *                           如果涉及远程校验，返回回调函数
      */
     function validateField(validator, field) {
 
@@ -649,26 +630,44 @@ define(function (require, exports, module) {
         var conf = validator.fields[name];
 
         if (conf) {
+
             if (errorAttr) {
+
                 var error = conf.errors[errorAttr];
+
                 if (error) {
                     return error;
                 }
                 else {
                     throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
                 }
+
             }
             else {
 
                 var custom = conf.custom;
 
                 if ($.isFunction(custom)) {
-                    return custom(field);
+
+                    var promise = $.Deferred();
+
+                    var result = custom(
+                        field,
+                        function (error) {
+                            if (!promise.isResolved()) {
+                                promise.resolve(error);
+                            }
+                        }
+                    );
+
+                    return result == null ? promise : result;
+
                 }
             }
         }
 
     }
+
 
     return Validator;
 

@@ -22,12 +22,12 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element <input type="number" /> 元素
-     * @property {number} options.defaultValue 默认值
-     * @property {?string} options.template 模拟 <input type="number" /> 的模版，一般有一个输入框，一个向上的按钮，一个向下的按钮
-     * @property {?string} options.upSelector 向上按钮的选择器
-     * @property {?string} options.downSelector 向下按钮的选择器
-     * @property {?Function} options.onChange 数值变化时调用的接口
+     * @property {jQuery} options.element 输入框元素，如果结构完整，可直接传容器元素
+     * @property {number=} options.defaultValue 默认值，当输入的值验证失败时，可用默认值替换错误值，如果不想替换，则不传
+     * @property {string=} options.template 模拟 <input type="number" /> 的模版，一般有一个输入框，一个向上的按钮，一个向下的按钮
+     * @property {string=} options.upSelector 向上按钮的选择器
+     * @property {string=} options.downSelector 向下按钮的选择器
+     * @property {Function=} options.onChange 数值变化时调用的接口
      */
     function Number(options) {
         return lifeCycle.init(this, options);
@@ -46,10 +46,23 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
-            var faker = me.faker = $(me.template);
-            element.replaceWith(faker);
+            var upSelector = me.upSelector;
+            var downSelector = me.downSelector;
 
-            faker.find(':text').replaceWith(element);
+            var faker;
+
+            // 如果结构完整，不需要初始化模板
+            if (element.find(upSelector).length === 1) {
+                faker = element;
+                element = me.element = faker.find(':text');
+            }
+            else {
+                faker = $(me.template);
+                element.replaceWith(faker);
+                faker.find(':text').replaceWith(element);
+            }
+
+            me.faker = faker;
 
             me.step = + element.attr('step') || 1;
             me.min = element.attr('min');
@@ -57,10 +70,16 @@ define(function (require, exports, module) {
 
             var upHandler = function () {
 
-                var value = plus(me.getValue(), me.step);
+                var value = me.getValue();
 
-                if (me.max != null) {
-                    value = Math.min(me.max, value);
+                if ($.isNumeric(value)) {
+                    value = plus(value, me.step);
+                    if (me.max != null) {
+                        value = Math.min(me.max, value);
+                    }
+                }
+                else {
+                    value = me.min || 0;
                 }
 
                 me.setValue(value);
@@ -68,10 +87,16 @@ define(function (require, exports, module) {
             };
             var downHandler = function () {
 
-                var value = minus(me.getValue(), me.step);
+                var value = me.getValue();
 
-                if (me.min != null) {
-                    value = Math.max(me.min, value);
+                if ($.isNumeric(value)) {
+                    value = minus(value, me.step);
+                    if (me.min != null) {
+                        value = Math.max(me.min, value);
+                    }
+                }
+                else {
+                    value = me.max || 0;
                 }
 
                 me.setValue(value);
@@ -87,7 +112,6 @@ define(function (require, exports, module) {
                 }
             });
 
-
             var upTimer = timer(upHandler, 40, 400);
             var downTimer = timer(downHandler, 40, 400);
 
@@ -96,11 +120,13 @@ define(function (require, exports, module) {
             var blur = 'focusout' + namespace;
 
             faker
-            .on(mouseup, me.upSelector, upTimer.start)
-            .on(mousedown, me.downSelector, downTimer.start)
-            .on(blur, ':text', function () {
-                me.setValue(element.val());
-            });
+                .on(mousedown, upSelector, upTimer.start)
+                .on(mousedown, downSelector, downTimer.start)
+                .on(blur, ':text', function () {
+                    me.setValue(
+                        element.val()
+                    );
+                });
 
             instance.document.on(
                 mouseup,
@@ -133,8 +159,10 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            if (!me.validate(value)) {
-                value = me.defaultValue;
+            var defaultValue = me.defaultValue;
+
+            if (!me.validate(value) && defaultValue != null) {
+                value = defaultValue;
             }
 
             me.element.val(value);
@@ -145,7 +173,8 @@ define(function (require, exports, module) {
         /**
          * 验证
          *
-         * @param {?string} value
+         * @param {string=} value 验证值，不传默认读取输入框当前的值
+         * @return {boolean} 是否验证通过
          */
         validate: function (value) {
 
@@ -182,8 +211,8 @@ define(function (require, exports, module) {
             me.input.dispose();
 
             me.element =
-            me.faker =
-            me.input = null;
+                me.faker =
+                    me.input = null;
         }
 
     };
@@ -197,14 +226,13 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Number.defaultOptions = {
-        defaultValue: 0,
         upSelector: '.increase',
         downSelector: '.decrease',
         template: '<div class="form-number">'
-                +     '<input class="form-text" type="text" />'
-                +     '<i class="increase"></i>'
-                +     '<i class="decrease"></i>'
-                + '</div>'
+            +     '<input class="form-text" type="text" />'
+            +     '<i class="increase"></i>'
+            +     '<i class="decrease"></i>'
+            + '</div>'
     };
 
 
