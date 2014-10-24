@@ -272,10 +272,10 @@ define(function (require, exports, module) {
                 result =
 
                 resolvePromises(groupPromises)
-                .done(function () {
+                .done(function (error) {
                     me.emit(
                         'validate',
-                        result
+                        error
                     );
                 });
 

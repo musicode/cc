@@ -135,9 +135,10 @@ define(function (require, exports, module) {
         open: function () {
 
             var me = this;
-            var event = arguments[0];
 
-            if (onBeforeShow(me, event) === false) {
+            var event = onBeforeShow(me, arguments[0]);
+
+            if (event.isDefaultPrevented()) {
                 return;
             }
 
@@ -165,9 +166,9 @@ define(function (require, exports, module) {
                 return;
             }
 
-            var event = arguments[0];
+            var event = onBeforeHide(me, arguments[0]);
 
-            if (onBeforeHide(me, event) === false) {
+            if (event.isDefaultPrevented()) {
                 return;
             }
 

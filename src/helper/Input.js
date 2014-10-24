@@ -131,10 +131,10 @@ define(function (require, exports, module) {
                     if (isInput && e.keyCode === Keyboard.map.up) {
                         e.preventDefault();
                     }
-                    return me.emit(e);
+                    me.emit(e);
                 },
                 onKeyUp: function (e) {
-                    return me.emit(e);
+                    me.emit(e);
                 },
                 onBeforeLongPress: function (e, data) {
 

@@ -8,89 +8,111 @@ define(function (require, exports, module) {
 
     var jqPrototype = $.prototype;
 
+    /**
+     * 获取组件主元素
+     *
+     * @inner
+     * @param {*} instane
+     * @returns {?jQuery}
+     */
+    function getElement(instane) {
+        return instane.faker || instane.element;
+    }
+
     var methods = {
 
+        /**
+         * 绑定事件，方法签名和 $.on 相同
+         */
         on: function () {
-            jqPrototype.on.apply(this.element, arguments);
-        },
-
-        off: function () {
-            jqPrototype.off.apply(this.element, arguments);
+            jqPrototype.on.apply(
+                getElement(this),
+                arguments
+            );
         },
 
         /**
-         * 触发事件
+         * 解绑事件，方法签名和 $.off 相同
+         */
+        off: function () {
+            jqPrototype.off.apply(
+                getElement(this),
+                arguments
+            );
+        },
+
+        /**
+         * 触发事件，trigger 比较常用，为了避免重名，换为 emit
          *
          * @param {Event|string} event 事件对象或事件名称
-         * @param {*} data 事件数据
-         * @returns {*}
+         * @param {Object=} data 事件数据
+         * @returns {Event}
          */
         emit: function (event, data) {
 
             var me = this;
-            var element = me.element;
+            var element = getElement(me);
 
             if (!element) {
                 return;
             }
 
-            var result;
+            // 确保是 jQuery 事件对象
+            if (!event[$.expando]) {
+                event = $.Event(event);
+            }
 
-            event = event.type
-                  ? event
-                  : {
-                        type: event
-                    };
-
+            // 设置当前实例对象，便于在未知的地方拿到组件实例
             event.cobble = me;
 
-            var args = [ event ];
+            var args = [event];
             if (data) {
                 args.push(data);
             }
 
-            // 首先执行 onXXX 函数
+            // 首先执行 this.onXXX 函数
             var fn = me[$.camelCase('on-' + event.type)];
-            if ($.isFunction(fn)) {
-                result = fn.apply(me, args);
+
+            if ($.isFunction(fn)
+                && fn.apply(me, args) === false
+            ) {
+                event.preventDefault();
             }
 
-            jqPrototype.trigger.apply(element, args);
+            if (!event.isPropagationStopped()) {
+                jqPrototype.trigger.apply(element, args);
+            }
 
-            return result;
+            return event;
 
         },
 
+        /**
+         * 把 target 加到组件元素前面，方法签名和 $.before 相同
+         */
         before: function (target) {
-
-            var me = this;
-            var element = me.faker || me.element;
-
-            element.before(target);
+            getElement(this).before(target);
         },
 
+        /**
+         * 把 target 加到组件元素后面，方法签名和 $.after 相同
+         */
         after: function (target) {
-
-            var me = this;
-            var element = me.faker || me.element;
-
-            element.after(target);
+            getElement(this).after(target);
         },
 
+        /**
+         * 把组件元素加到 target 内部结束位置，方法签名和 $.appendTo 相同
+         */
         appendTo: function (target) {
-
-            var me = this;
-            var element = me.faker || me.element;
-
-            element.appendTo(target);
+            getElement(this).appendTo(target);
         },
 
+        /**
+         * 把组件元素加到 target 内部开始位置，方法签名和 $.prependTo 相同
+         */
         prependTo: function (target) {
-
-            var me = this;
-            var element = me.faker || me.element;
-
-            element.prependTo(target);
+            getElement(this).prependTo(target);
         }
 
     };
@@ -100,6 +122,7 @@ define(function (require, exports, module) {
         $.each(
             methods,
             function (name, fn) {
+                // 如果已实现，不要覆盖
                 if (protoType[name] == null) {
                     protoType[name] = fn;
                 }

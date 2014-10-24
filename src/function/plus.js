@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var getDecimalLength = require('./getDecimalLength');
+    var decimalLength = require('./decimalLength');
     var float2Int = require('./float2Int');
 
     /**
@@ -19,8 +19,8 @@ define(function (require, exports, module) {
     return function (a, b) {
 
         var length = Math.max(
-                        getDecimalLength(a),
-                        getDecimalLength(b)
+                        decimalLength(a),
+                        decimalLength(b)
                     );
 
         a = float2Int(a, length);

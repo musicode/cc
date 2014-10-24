@@ -179,10 +179,10 @@ define(function (require, exports, module) {
                 show: show,
                 hide: hide,
                 onAfterShow: function (e) {
-                    return me.emit(e);
+                    me.emit(e);
                 },
                 onBeforeHide: function (e) {
-                    return me.emit(e);
+                    me.emit(e);
                 },
                 onAfterHide: function (e) {
 
@@ -191,7 +191,7 @@ define(function (require, exports, module) {
                         me.resizer = null;
                     }
 
-                    return me.emit(e);
+                    me.emit(e);
                 },
                 onBeforeShow: function (e) {
 
@@ -199,7 +199,9 @@ define(function (require, exports, module) {
 
                     layer.css('max-width', width);
 
-                    if (me.emit('beforeShow') === false) {
+                    me.emit(e);
+
+                    if (e.isDefaultPrevented()) {
                         return false;
                     }
 

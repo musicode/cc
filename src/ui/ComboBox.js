@@ -314,10 +314,10 @@ define(function (require, exports, module) {
             show: show,
             hide: hide,
             onBeforeShow: function (e) {
-                return comboBox.emit(e);
+                comboBox.emit(e);
             },
             onBeforeHide: function (e) {
-                return comboBox.emit(e);
+                comboBox.emit(e);
             },
             onAfterShow: function (e) {
                 if (openClass) {
@@ -333,6 +333,7 @@ define(function (require, exports, module) {
             }
         });
     }
+
 
     return ComboBox;
 

@@ -103,8 +103,9 @@
                         }
                     },
 
-                    onBeforeShow: function () {
+                    onBeforeShow: function (e) {
                         //console.log('beforeShow');
+                        //e.stopPropagation();
                     },
                     onAfterShow: function () {
                         $('#select-trigger i').removeClass('icon-arrow-down')
@@ -119,6 +120,11 @@
                                               .addClass('icon-arrow-down');
                         //console.log('afterHide');
                     }
+                });
+
+                popup.on('beforeShow', function (e, data) {
+                    console.log(e, data);
+                    return false;
                 });
 
                 layer.on('click', 'li', function (e) {

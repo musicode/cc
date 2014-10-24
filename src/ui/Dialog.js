@@ -190,7 +190,9 @@ define(function (require, exports, module) {
                 return;
             }
 
-            if (me.emit('beforeShow') === false) {
+            var event = me.emit('beforeShow');
+
+            if (event.isDefaultPrevented()) {
                 return;
             }
 
@@ -263,7 +265,9 @@ define(function (require, exports, module) {
                 return;
             }
 
-            if (me.emit('beforeHide') === false) {
+            var event = me.emit('beforeHide');
+
+            if (event.isDefaultPrevented()) {
                 return;
             }
 
