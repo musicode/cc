@@ -660,9 +660,7 @@ define(function (require, exports, module) {
                     var result = custom(
                         field,
                         function (error) {
-                            if (!promise.isResolved()) {
-                                promise.resolve(error);
-                            }
+                            promise.resolve(error);
                         }
                     );
 
