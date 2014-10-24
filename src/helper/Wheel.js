@@ -14,8 +14,8 @@ define(function (require, exports, module) {
      * event.wheelDelta 向下滚动为正值，向上滚动为负值，值为 120 的倍数
      *
      * 此模块统一使用 onScroll 接口
-     *       统一使用 event.delta
-     *       统一为向上为负值，向下为正值，值为 1 的倍数
+     *      统一使用 event.delta
+     *      统一为向上为负值，向下为正值，值为 1 的倍数
      */
 
     'use strict';

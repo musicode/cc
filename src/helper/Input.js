@@ -5,6 +5,8 @@
 define(function (require, exports, module) {
 
     /**
+     * 90%
+     *
      * 1. 兼容 input 事件
      *
      * IE9+ 和 其他标准浏览器都支持 input 事件
@@ -61,8 +63,6 @@ define(function (require, exports, module) {
      * @argument {Event} options.onBeforeLongPress.event
      *
      * @property {Function=} options.onAfterLongPress 长按结束
-     *                                                如果返回 false，可不触发 change 事件
-     *                                                如果返回不是 false，值变化了才会触发 change 事件
      * @argument {Event} options.onAfterLongPress.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
@@ -110,9 +110,6 @@ define(function (require, exports, module) {
             var element = me.element;
             var isInput = element.prop('tagName') === 'INPUT';
 
-            var value;
-            var isCharKey;
-
             var action = me.action;
             if (action) {
                 $.each(
@@ -122,6 +119,9 @@ define(function (require, exports, module) {
                     }
                 );
             }
+
+            var oldValue;
+            var isCharKey;
 
             me.keyboard = new Keyboard({
                 element: element,
@@ -138,21 +138,17 @@ define(function (require, exports, module) {
                 },
                 onBeforeLongPress: function (e, data) {
 
-                    me.longPressing = true;
-
-                    value = element.val();
+                    oldValue = element.val();
                     isCharKey = data.isCharKey;
 
-                    me.emit('beforeLongPress', data);
+                    me.emit('beforeLongPress');
 
                 },
                 onAfterLongPress: function (e) {
 
-                    me.longPressing = false;
-
                     me.emit('afterLongPress');
 
-                    if (isCharKey && value !== element.val()) {
+                    if (isCharKey && oldValue !== element.val()) {
                         me.emit('change');
                     }
                 }

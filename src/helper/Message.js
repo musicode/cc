@@ -112,8 +112,7 @@ define(function (require, exports, module) {
                 var iframe = $('#' + me.id);
                 if (iframe.length === 0) {
                     iframe = $('<iframe id="' + me.id  + '"></iframe>')
-                                .hide()
-                                .appendTo(document.body);
+                    iframe.hide().appendTo('body');
                 }
 
                 iframe.prop(

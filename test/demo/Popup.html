@@ -105,7 +105,8 @@
 
                     onBeforeShow: function (e) {
                         //console.log('beforeShow');
-                        //e.stopPropagation();
+                        e.stopPropagation();
+                        e.preventDefault();
                     },
                     onAfterShow: function () {
                         $('#select-trigger i').removeClass('icon-arrow-down')

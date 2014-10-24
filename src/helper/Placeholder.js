@@ -60,8 +60,6 @@ define(function (require, exports, module) {
 
         init: function () {
 
-            var conf;
-
             var me = this;
             var element = me.element;
 
@@ -71,6 +69,8 @@ define(function (require, exports, module) {
             if (me.value == null) {
                 me.value = placeholder || '';
             }
+
+            var conf;
 
             if (supportPlaceholder) {
 
@@ -270,6 +270,7 @@ define(function (require, exports, module) {
 
                 // 必须放最后，jquery 某些 DOM 操作会解绑事件
                 var handler = $.proxy(me.refresh, me);
+
                 element
                 .on('focus' + namespace, handler)
                 .on('blur' + namespace, handler);

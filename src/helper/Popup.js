@@ -53,16 +53,17 @@ define(function (require, exports, module) {
      *
      *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
      *
-     *    在配置 delay 时，只作用于第一个触发方式，如 trigger.show 配置为 'over,click'，只有 over 才会 delay
+     *    在配置 delay 时，只作用于第一个触发方式，
+     *    如 trigger.show 配置为 'over,click'，只有 over 才会 delay
      *
      */
 
     'use strict';
 
     var split = require('../function/split');
+    var contains = require('../function/contains');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var contains = require('../function/contains');
     var instance = require('../util/instance');
 
     /**
@@ -72,8 +73,8 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.layer 弹出的元素
      * @property {jQuery=} options.element 触发的元素，如果是调用方法触发显示，可不传
+     * @property {jQuery} options.layer 弹出的元素
      *
      * @property {Object} options.show
      * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus context，可组合使用，以逗号分隔
