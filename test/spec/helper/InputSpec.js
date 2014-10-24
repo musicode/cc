@@ -60,8 +60,8 @@ define(function (require, exports, module) {
 
         it('longPress', function () {
 
-            var onLongPressStart = jasmine.createSpy('onLongPressStart');
-            var onLongPressEnd = jasmine.createSpy('onLongPressEnd');
+            var onBeforeLongPress = jasmine.createSpy('onBeforeLongPress');
+            var onAfterLongPress = jasmine.createSpy('onAfterLongPress');
             var onEnter = jasmine.createSpy('onEnter');
 
             instance = new Input({
@@ -70,76 +70,29 @@ define(function (require, exports, module) {
                 action: {
                     enter: onEnter
                 },
-                onLongPressStart: onLongPressStart,
-                onLongPressEnd: onLongPressEnd
+                onBeforeLongPress: onBeforeLongPress,
+                onAfterLongPress: onAfterLongPress
             });
 
             down(13);
 
             expect(onEnter.callCount).toBe(1);
-            expect(onLongPressStart.callCount).toBe(0);
-            expect(onLongPressEnd.callCount).toBe(0);
+            expect(onBeforeLongPress.callCount).toBe(0);
+            expect(onAfterLongPress.callCount).toBe(0);
 
             down(13);
 
             expect(onEnter.callCount).toBe(2);
-            expect(onLongPressStart.callCount).toBe(1);
-            expect(onLongPressEnd.callCount).toBe(0);
+            expect(onBeforeLongPress.callCount).toBe(1);
+            expect(onAfterLongPress.callCount).toBe(0);
 
             press(13);
 
             expect(onEnter.callCount).toBe(3);
-            expect(onLongPressEnd.callCount).toBe(1);
+            expect(onAfterLongPress.callCount).toBe(1);
         });
 
 
-        it('scope', function () {
-
-            var downScope;
-            var upScope;
-            var startScope;
-            var endScope;
-            var actionScope;
-
-            var scope = { };
-
-            instance = new Input({
-                element: input,
-                scope: scope,
-                onKeyDown: function () {
-                    downScope = this;
-                },
-                onKeyUp: function () {
-                    upScope = this;
-                },
-                onLongPressStart: function () {
-                    startScope = this;
-                },
-                onLongPressEnd: function () {
-                    endScope = this;
-                },
-                action: {
-                    enter: function () {
-                        actionScope = this;
-                    }
-                }
-            });
-
-            down(13);
-            down(13);
-            down(13);
-            down(13);
-            down(13);
-            up(13);
-
-
-            expect(downScope).toBe(scope);
-            expect(upScope).toBe(scope);
-            expect(startScope).toBe(scope);
-            expect(endScope).toBe(scope);
-            expect(actionScope).toBe(scope);
-
-        });
 
     });
 });

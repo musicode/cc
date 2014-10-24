@@ -25,17 +25,17 @@ define(function (require, exports, module) {
             instance = null;
         });
 
-        it('onDragStart onDrag onDragEnd', function () {
+        it('onBeforeDrag onDrag onAfterDrag', function () {
 
-            var onDragStart = jasmine.createSpy('onDragStart');
+            var onBeforeDrag = jasmine.createSpy('onBeforeDrag');
             var onDrag = jasmine.createSpy('onDrag');
-            var onDragEnd = jasmine.createSpy('onDragEnd');
+            var onAfterDrag = jasmine.createSpy('onAfterDrag');
 
             instance = new Draggable({
                 element: element,
-                onDragStart: onDragStart,
+                onBeforeDrag: onBeforeDrag,
                 onDrag: onDrag,
-                onDragEnd: onDragEnd
+                onAfterDrag: onAfterDrag
             });
 
             element.trigger({
@@ -43,7 +43,7 @@ define(function (require, exports, module) {
                 clientX: 100,
                 clientY: 200
             });
-            expect(onDragStart.callCount).toBe(0);
+            expect(onBeforeDrag.callCount).toBe(0);
 
             doc.trigger({
                 type: 'mousemove',
@@ -51,7 +51,7 @@ define(function (require, exports, module) {
                 clientY: 200
             });
 
-            expect(onDragStart.callCount).toBe(0);
+            expect(onBeforeDrag.callCount).toBe(0);
             expect(onDrag.callCount).toBe(0);
 
             doc.trigger({
@@ -59,7 +59,7 @@ define(function (require, exports, module) {
                 clientX: 300,
                 clientY: 200
             });
-            expect(onDragStart.callCount).toBe(1);
+            expect(onBeforeDrag.callCount).toBe(1);
             expect(onDrag.callCount).toBe(1);
 
             doc.trigger({
@@ -72,24 +72,24 @@ define(function (require, exports, module) {
                 clientX: 500,
                 clientY: 400
             });
-            expect(onDragStart.callCount).toBe(1);
+            expect(onBeforeDrag.callCount).toBe(1);
             expect(onDrag.callCount).toBe(3);
-            expect(onDragEnd.callCount).toBe(0);
+            expect(onAfterDrag.callCount).toBe(0);
 
             doc.trigger('mouseup');
             expect(onDrag.callCount).toBe(3);
-            expect(onDragEnd.callCount).toBe(1);
+            expect(onAfterDrag.callCount).toBe(1);
         });
 
         it('handle', function () {
 
             var element = $(template).appendTo(document.body);
-            var onDragStart = jasmine.createSpy('onDragStart');
+            var onBeforeDrag = jasmine.createSpy('onBeforeDrag');
 
             instance = new Draggable({
                 element: element,
                 handleSelector: '.header',
-                onDragStart: onDragStart
+                onBeforeDrag: onBeforeDrag
             });
 
             element.find('.body').trigger({
@@ -104,7 +104,7 @@ define(function (require, exports, module) {
             });
             element.trigger('mouseup');
 
-            expect(onDragStart).not.toHaveBeenCalled();
+            expect(onBeforeDrag).not.toHaveBeenCalled();
 
             element.find('.header').trigger({
                 type: 'mousedown',
@@ -118,18 +118,18 @@ define(function (require, exports, module) {
             });
             element.trigger('mouseup');
 
-            expect(onDragStart).toHaveBeenCalled();
+            expect(onBeforeDrag).toHaveBeenCalled();
         });
 
         it('cancel', function () {
 
             var element = $(template).appendTo(document.body);
-            var onDragStart = jasmine.createSpy('onDragStart');
+            var onBeforeDrag = jasmine.createSpy('onBeforeDrag');
 
             instance = new Draggable({
                 element: element,
                 cancelSelector: '.body',
-                onDragStart: onDragStart
+                onBeforeDrag: onBeforeDrag
             });
 
             element.find('.body').trigger({
@@ -143,7 +143,7 @@ define(function (require, exports, module) {
                 clientY: 300
             });
             element.trigger('mouseup');
-            expect(onDragStart).not.toHaveBeenCalled();
+            expect(onBeforeDrag).not.toHaveBeenCalled();
 
 
             element.find('.header').trigger({
@@ -157,7 +157,7 @@ define(function (require, exports, module) {
                 clientY: 300
             });
             element.trigger('mouseup');
-            expect(onDragStart).toHaveBeenCalled();
+            expect(onBeforeDrag).toHaveBeenCalled();
         });
 
     });

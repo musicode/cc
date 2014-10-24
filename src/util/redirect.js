@@ -11,8 +11,8 @@ define(function (require, exports, module) {
     /**
      * 创建表单元素
      *
-     * @param  {string} url
-     * @param  {string=} charset
+     * @param {string} url
+     * @param {string=} charset
      * @return {jQuery}
      */
     function createForm(url, charset) {
@@ -41,7 +41,7 @@ define(function (require, exports, module) {
      * 通过表单方式打开一个新 Tab
      *
      * @param {string} url
-     * @param {?string} charset 编码
+     * @param {string=} charset 编码
      */
     exports.openForm = function (url, charset) {
         var form = createForm(url, charset);

@@ -328,50 +328,6 @@ define(function (require, exports, module) {
             instance.dispose();
         });
 
-        it('scope', function () {
-
-            layer.hide();
-
-            var scope = { };
-
-            instance = new Popup({
-                layer: layer,
-                element: element,
-                scope: scope,
-                show: {
-                    trigger: 'over',
-                    animation: function () {
-                        expect(this).toBe(scope);
-                    }
-                },
-                hide: {
-                    trigger: 'out',
-                    animation: function () {
-                        expect(this).toBe(scope);
-                    }
-                },
-
-                onBeforeShow: function () {
-                    expect(this).toBe(scope);
-                },
-                onAfterShow: function () {
-                    expect(this).toBe(scope);
-                },
-                onBeforeHide: function () {
-                    expect(this).toBe(scope);
-                },
-                onAfterHide: function () {
-                    expect(this).toBe(scope);
-                }
-            });
-
-            element.mouseenter();
-            element.mouseleave();
-
-            instance.dispose();
-
-        });
-
     });
 
 });

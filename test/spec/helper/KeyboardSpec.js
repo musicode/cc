@@ -54,28 +54,28 @@ define(function (require, exports, module) {
 
         it('longPress', function () {
 
-            var onLongPressStart = jasmine.createSpy('onLongPressStart');
-            var onLongPressEnd = jasmine.createSpy('onLongPressEnd');
+            var onBeforeLongPress = jasmine.createSpy('onBeforeLongPress');
+            var onAfterLongPress = jasmine.createSpy('onAfterLongPress');
 
             instance = new Keyboard({
                 element: doc,
-                onLongPressStart: onLongPressStart,
-                onLongPressEnd: onLongPressEnd
+                onBeforeLongPress: onBeforeLongPress,
+                onAfterLongPress: onAfterLongPress
             });
 
             down(32);
 
-            expect(onLongPressStart.callCount).toBe(0);
-            expect(onLongPressEnd.callCount).toBe(0);
+            expect(onBeforeLongPress.callCount).toBe(0);
+            expect(onAfterLongPress.callCount).toBe(0);
 
             down(32);
 
-            expect(onLongPressStart.callCount).toBe(1);
-            expect(onLongPressEnd.callCount).toBe(0);
+            expect(onBeforeLongPress.callCount).toBe(1);
+            expect(onAfterLongPress.callCount).toBe(0);
 
             press(32);
 
-            expect(onLongPressEnd.callCount).toBe(1);
+            expect(onAfterLongPress.callCount).toBe(1);
         });
 
         it('action', function () {
@@ -173,10 +173,10 @@ define(function (require, exports, module) {
                 onKeyUp: function () {
                     upScope = this;
                 },
-                onLongPressStart: function () {
+                onBeforeLongPress: function () {
                     startScope = this;
                 },
-                onLongPressEnd: function () {
+                onAfterLongPress: function () {
                     endScope = this;
                 },
                 action: {
