@@ -95,8 +95,9 @@ define(function (require, exports, module) {
      *
      * @property {Object=} options.fields 配置字段
      *
-     * @property {Function=} options.onValidate 校验完成时调用，触发方式可以是表单产生 submit 事件 或 点击按钮
-     *                                          当使用 <form> 元素时，此接口比较有用
+     * @property {Function=} options.onBeforeValidate 校验开始前调用
+     * @property {Function=} options.onAfterValidate 校验结束后调用，触发方式可以是表单产生 submit 事件 或 点击按钮
+     *                                               当使用 <form> 元素时，此接口比较有用
      */
     function Validator(options) {
         return lifeCycle.init(this, options);
@@ -190,6 +191,8 @@ define(function (require, exports, module) {
                 fields = [ fields ];
             }
 
+            me.emit('beforeValidate');
+
             if ($.isArray(fields)) {
                 groups = $.map(
                             fields,
@@ -274,8 +277,8 @@ define(function (require, exports, module) {
                 resolvePromises(groupPromises)
                 .done(function (error) {
                     me.emit(
-                        'validate',
-                        error
+                        'afterValidate',
+                        error && $.type(error) === 'string'
                     );
                 });
 
@@ -283,7 +286,7 @@ define(function (require, exports, module) {
             else {
 
                 me.emit(
-                    'validate',
+                    'afterValidate',
                     result
                 );
 
