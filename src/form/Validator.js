@@ -191,7 +191,10 @@ define(function (require, exports, module) {
                 fields = [ fields ];
             }
 
-            me.emit('beforeValidate');
+            var event = me.emit('beforeValidate');
+            if (event.isDefaultPrevented()) {
+                return;
+            }
 
             if ($.isArray(fields)) {
                 groups = $.map(
