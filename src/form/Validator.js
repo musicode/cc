@@ -184,7 +184,9 @@ define(function (require, exports, module) {
             var element = me.element;
             var groupSelector = me.groupSelector;
 
-            var result = true;
+            // 收集错误信息
+            var errors = [ ];
+
             var groups;
 
             if ($.type(fields) === 'string') {
@@ -222,51 +224,34 @@ define(function (require, exports, module) {
                     // 隐藏状态不需要验证
                     if (group.is(':visible')) {
 
+                        var field = group.find('[name]');
 
-                        var field;
-                        var error;
+                        var error = validateField(me, field);
 
-                        var fieldPromises = [ ];
+                        if (error) {
+                            if (error.promise) {
 
-                        group
-                        .find('[name]')
-                        .each(function () {
+                                groupPromises.push(
+                                    resolvePromises([ error ])
+                                    .done(function (error) {
+                                        if (error) {
+                                            updateGroup(me, group, field, error);
+                                            errors.push({
+                                                element: field,
+                                                error: error
+                                            });
+                                        }
+                                    })
+                                );
 
-                            field = $(this);
-
-                            var result = validateField(me, field);
-
-                            if (result) {
-                                if (result.promise) {
-                                    fieldPromises.push(result);
-                                }
-                                else if ($.type(result) === 'string') {
-                                    error = result;
-                                    return false;
-                                }
                             }
-
-                        });
-
-                        // 需要异步
-                        if (fieldPromises.length > 0) {
-
-                            groupPromises.push(
-                                resolvePromises(fieldPromises)
-                                .done(function (error) {
-                                    if (error) {
-                                        updateGroup(me, group, field, error);
-                                    }
-                                })
-                            );
-
-                        }
-                        else if (error) {
-
-                            updateGroup(me, group, field, error);
-
-                            result = false;
-
+                            else if ($.type(error) === 'string') {
+                                updateGroup(me, group, field, error);
+                                errors.push({
+                                    element: field,
+                                    error: error
+                                });
+                            }
                         }
 
                     }
@@ -275,13 +260,11 @@ define(function (require, exports, module) {
 
             if (groupPromises.length > 0) {
 
-                result =
-
-                resolvePromises(groupPromises)
+                return resolvePromises(groupPromises)
                 .done(function (error) {
                     me.emit(
                         'afterValidate',
-                        error && $.type(error) === 'string'
+                        errors
                     );
                 });
 
@@ -290,12 +273,12 @@ define(function (require, exports, module) {
 
                 me.emit(
                     'afterValidate',
-                    result
+                    errors
                 );
 
-            }
+                return errors.length === 0;
 
-            return result;
+            }
 
         },
 
