@@ -120,13 +120,13 @@ define(function (require, exports, module) {
             var blur = 'focusout' + namespace;
 
             faker
-                .on(mousedown, upSelector, upTimer.start)
-                .on(mousedown, downSelector, downTimer.start)
-                .on(blur, ':text', function () {
-                    me.setValue(
-                        element.val()
-                    );
-                });
+            .on(mousedown, upSelector, upTimer.start)
+            .on(mousedown, downSelector, downTimer.start)
+            .on(blur, ':text', function () {
+                me.setValue(
+                    element.val()
+                );
+            });
 
             instance.document.on(
                 mouseup,
@@ -211,8 +211,8 @@ define(function (require, exports, module) {
             me.input.dispose();
 
             me.element =
-                me.faker =
-                    me.input = null;
+            me.faker =
+            me.input = null;
         }
 
     };
