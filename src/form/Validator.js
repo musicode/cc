@@ -264,7 +264,7 @@ define(function (require, exports, module) {
                 .done(function (error) {
                     me.emit(
                         'afterValidate',
-                         errors
+                        errors
                     );
                 });
 
