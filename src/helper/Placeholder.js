@@ -115,9 +115,9 @@ define(function (require, exports, module) {
         simple: false,
         nativeFirst: true,
         simpleClass: 'placeholder-active',
-        placeholderSelector: 'div',
+        placeholderSelector: '.placeholder',
         template: '<div class="placeholder-wrapper">'
-                +    '<div></div>'
+                +    '<div class="placeholder"></div>'
                 + '</div>'
     };
 
