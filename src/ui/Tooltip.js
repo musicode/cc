@@ -195,18 +195,6 @@ define(function (require, exports, module) {
                 },
                 onBeforeShow: function (e) {
 
-                    me.update();
-
-                    if (width) {
-                        layer.css('max-width', width);
-                    }
-
-                    me.emit(e);
-
-                    if (e.isDefaultPrevented()) {
-                        return false;
-                    }
-
                     var placement = placementList.length === 1
                                  && placementList[0];
 
@@ -228,6 +216,20 @@ define(function (require, exports, module) {
                         if (!placement) {
                             return false;
                         }
+                    }
+
+                    me.placement = placement;
+
+                    me.update();
+
+                    if (width) {
+                        layer.css('max-width', width);
+                    }
+
+                    me.emit(e);
+
+                    if (e.isDefaultPrevented()) {
+                        return false;
                     }
 
                     me.pin(placement);
@@ -350,7 +352,7 @@ define(function (require, exports, module) {
      */
     Tooltip.defaultOptions = {
         placement: 'auto',
-        template: '<div class="tooltip"></div>',
+        template: '<div class="tooltip"><div></div><i></i></div>',
         placementClass: {
             top: 'tooltip-top',
             right: 'tooltip-right',
@@ -374,8 +376,23 @@ define(function (require, exports, module) {
         offset: { },
 
         update: function () {
-            this.layer.html(
+
+            var layer = this.layer;
+
+            layer.find('div').html(
                 this.element.data('title')
+            );
+
+            var map = {
+                top: 'down',
+                right: 'left',
+                bottom: 'up',
+                left: 'right'
+            };
+
+            layer.find('i').prop(
+                'class',
+                'icon icon-caret-' + map[this.placement]
             );
         }
 
