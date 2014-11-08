@@ -197,7 +197,9 @@ define(function (require, exports, module) {
 
                     me.update();
 
-                    layer.css('max-width', width);
+                    if (width) {
+                        layer.css('max-width', width);
+                    }
 
                     me.emit(e);
 

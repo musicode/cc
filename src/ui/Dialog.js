@@ -121,7 +121,7 @@ define(function (require, exports, module) {
                 display: 'none'
             };
 
-            if ($.isNumeric(me.width)) {
+            if (me.width) {
                 style.width = me.width;
             }
 
