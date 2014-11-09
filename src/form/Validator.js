@@ -342,7 +342,7 @@ define(function (require, exports, module) {
                 left: position.left + field.outerWidth() - 35,
                 top: position.top - error.outerHeight() + 10,
                 // FF 计算有点问题，加 5 比较保险不会换行
-                width: error.width() + 5
+                width: error.outerWidth(true) + 5
             });
 
         }
@@ -384,7 +384,9 @@ define(function (require, exports, module) {
 
         money: [ 'required', 'pattern', 'min', 'max' ],
 
-        idcard: [ 'required', 'pattern' ]
+        idcard: [ 'required', 'pattern' ],
+
+        int: [ 'required', 'pattern', 'min', 'max' ]
 
     };
 
@@ -484,6 +486,7 @@ define(function (require, exports, module) {
      */
     Validator.pattern = {
         number: /^[\d.]*$/,
+        int: /^\d+$/,
         url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
         tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
         mobile: /^1[3-9]\d{9}$/,

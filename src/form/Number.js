@@ -226,12 +226,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Number.defaultOptions = {
-        upSelector: '.increase',
-        downSelector: '.decrease',
+        upSelector: '.icon-caret-up',
+        downSelector: '.icon-caret-down',
         template: '<div class="form-number">'
             +     '<input class="form-text" type="text" />'
-            +     '<i class="increase"></i>'
-            +     '<i class="decrease"></i>'
+            +     '<i class="icon icon-caret-up"></i>'
+            +     '<i class="icon icon-caret-down"></i>'
             + '</div>'
     };
 
