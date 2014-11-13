@@ -116,6 +116,9 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
+            me.calendar.dispose();
+            me.popup.dispose();
+
             me.calendar =
             me.popup = null;
 
@@ -125,6 +128,12 @@ define(function (require, exports, module) {
 
     jquerify(Date);
 
+    /**
+     * 默认配置
+     *
+     * @static
+     * @type {Object}
+     */
     Date.defaultOptions = {
 
         template: '<div class="form-date">'
@@ -168,11 +177,9 @@ define(function (require, exports, module) {
 
         +                 '<!-- /if -->'
 
-        +                 '<td class="${item.phase} '
+        +                 '<td class="${item.phase}'
         +                 '<!-- if: ${item.month} != ${month} -->'
-        +                 'adjacency-month'
-        +                 '<!-- else -->'
-        +                 'current-month'
+        +                 ' adjacency-month'
         +                 '<!-- /if -->'
         +                 '" data-value="${item.year}-${item.month}-${item.date}"'
         +                 ' data-year="${item.year}" data-month="${item.month}" data-date="${item.date}">'
@@ -188,6 +195,14 @@ define(function (require, exports, module) {
         }
     };
 
+    /**
+     * 批量初始化
+     *
+     * @static
+     * @param {jQuery} element
+     * @param {Object=} options
+     * @return {Array.<Date>}
+     */
     Date.init = function (element, options) {
 
         var result = [ ];
