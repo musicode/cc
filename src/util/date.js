@@ -197,7 +197,7 @@ define(function (require, exports, module) {
         date = new Date(time);
         date.setDate(1);
         date.setTime(
-            time - exports.WEEK
+            date.getTime() - exports.WEEK
         );
 
         return date;
@@ -218,7 +218,7 @@ define(function (require, exports, module) {
         date = new Date(time);
         date.setDate(28);
         date.setTime(
-            time + exports.WEEK
+            date.getTime() + exports.WEEK
         );
 
         return date;
