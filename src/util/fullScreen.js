@@ -79,6 +79,17 @@ define(function (require, exports, module) {
             );
         };
     }
+    else if (typeof window.ActiveXObject !== 'undefined') {
+        enter = exit = function () {
+            var wscript = new ActiveXObject('WScript.Shell');
+            if (wscript !== null) {
+                wscript.SendKeys('{F11}');
+            }
+        };
+    }
+    else {
+        enter = exit = $.noop;
+    }
 
     exports.enter = enter;
 
