@@ -335,14 +335,20 @@ define(function (require, exports, module) {
                 width: 'auto'
             });
 
-            var position = field.position();
+            // 先取宽度，取完宽度要再绝对定位，避免影响原来的布局
+            // 产生位置偏差
+            var width = error.outerWidth(true) + 5;
 
             error.css({
                 position: 'absolute',
+                width: width
+            });
+
+            var position = field.position();
+
+            error.css({
                 left: position.left + field.outerWidth() - 35,
                 top: position.top - error.outerHeight() + 10,
-                // FF 计算有点问题，加 5 比较保险不会换行
-                width: error.outerWidth(true) + 5
             });
 
         }
