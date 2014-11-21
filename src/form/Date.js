@@ -73,6 +73,22 @@ define(function (require, exports, module) {
                 renderTemplate: me.renderCalendarTemplate,
                 prevSelector: me.prevSelector,
                 nextSelector: me.nextSelector,
+                onBeforeRender: function (e, data) {
+
+                    $.each(
+                        data.list,
+                        function (index, item) {
+
+                            item.text = [
+                                item.year,
+                                (item.month < 10 ? '0' : '') + item.month,
+                                (item.date < 10 ? '0' : '') + item.date
+                            ].join('-');
+
+                        }
+                    )
+
+                },
                 onChange: function () {
 
                     var value = this.value;
@@ -177,11 +193,12 @@ define(function (require, exports, module) {
 
         +                 '<!-- /if -->'
 
-        +                 '<td class="${item.phase}'
-        +                 '<!-- if: ${item.month} != ${month} -->'
-        +                 ' adjacency-month'
+        +                 '<td class="${item.phase}"'
+
+        +                 '<!-- if: ${item.phase} != "past" -->'
+        +                 ' data-value="${item.text}"'
         +                 '<!-- /if -->'
-        +                 '" data-value="${item.year}-${item.month}-${item.date}"'
+
         +                 ' data-year="${item.year}" data-month="${item.month}" data-date="${item.date}">'
         +                 '${item.date}</td>'
 

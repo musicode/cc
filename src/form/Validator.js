@@ -323,7 +323,7 @@ define(function (require, exports, module) {
                 return data[$1] || '';
             });
         },
-        errorPosition: function (field, error) {
+        errorPlacement: function (field, error) {
 
             if (field.prop('type') === 'hidden') {
                 field = field.parent();
@@ -570,9 +570,9 @@ define(function (require, exports, module) {
                 }
                 errorElement.html(error);
 
-                var errorPosition = validator.errorPosition;
-                if ($.isFunction(errorPosition)) {
-                    errorPosition(
+                var errorPlacement = validator.errorPlacement;
+                if ($.isFunction(errorPlacement)) {
+                    errorPlacement(
                         field,
                         errorElement
                     );

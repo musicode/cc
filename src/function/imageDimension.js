@@ -35,6 +35,7 @@
             if (height != null && height > 0) {
                 callback(img.width, height);
                 delete imageList[index];
+                img = null;
             }
             else {
                 setTimeout(img.onload, 10);
