@@ -56,10 +56,13 @@ define(function (require, exports, module) {
                 faker.find(':text').replaceWith(element);
             }
 
-
             var calendarElement = faker.find(me.calendarSelector);
             if (calendarElement.is(':visible')) {
                 calendarElement.hide();
+            }
+
+            if (!me.value) {
+                me.value = element.val();
             }
 
             var today = me.today;
@@ -91,11 +94,8 @@ define(function (require, exports, module) {
                 },
                 onChange: function () {
 
-                    var value = this.value;
-                    if (value) {
-                        element.val(this.value);
-                        popup.close();
-                    }
+                    me.setValue(this.value);
+
                 }
             });
 
@@ -124,6 +124,49 @@ define(function (require, exports, module) {
                 }
             });
 
+            element.blur(
+                function () {
+
+                    setTimeout(
+                        function () {
+                            if (me.popup) {
+                                me.setValue(this.value);
+                            }
+                        },
+                        300
+                    );
+
+                }
+            );
+
+        },
+
+        getValue: function () {
+            return this.value;
+        },
+
+        setValue: function (value) {
+
+            var me = this;
+
+            value = $.type(value) === 'string'
+                  ? $.trim(value)
+                  : '';
+
+            if (!DATE_EXPR.test(value)) {
+                value = '';
+            }
+
+            if (value) {
+                me.element.val(value);
+                me.popup.close();
+            }
+
+            if (value !== me.value) {
+                me.value = value;
+                me.emit('change');
+            }
+
         },
 
         dispose: function () {
@@ -142,7 +185,9 @@ define(function (require, exports, module) {
 
     };
 
-    jquerify(Date);
+    jquerify(Date.prototype);
+
+    var DATE_EXPR = /^\d{4}-\d{2}-\d{2}$/;
 
     /**
      * 默认配置
