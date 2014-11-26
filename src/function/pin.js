@@ -54,7 +54,7 @@ define(function (require, exports, module) {
         }
 
         if ($.type(x) === 'string' && percentExpr.test(x)) {
-            x = (RegExp.$1 / 100) * (options.width || options.element.outerWidth(true));
+            x = (RegExp.$1 / 100) * (options.width || options.element.outerWidth());
         }
 
         return x;
@@ -85,7 +85,7 @@ define(function (require, exports, module) {
         }
 
         if ($.type(y) === 'string' && percentExpr.test(y)) {
-            y = (RegExp.$1 / 100) * (options.height || options.element.outerHeight(true));
+            y = (RegExp.$1 / 100) * (options.height || options.element.outerHeight());
         }
 
         return y;
@@ -121,8 +121,8 @@ define(function (require, exports, module) {
      * @property {jQuery} options.attachment.element 参照元素，默认是 body
      * @property {string|number} options.attachment.x 参照物元素的横坐标定位点，取值同 options.x
      * @property {string|number} options.attachment.y 参照物元素的纵坐标定位点，取值同 options.y
-     * @property {number=} options.attachment.width 参照物元素的宽度，默认取 attachment.outerWidth(true)
-     * @property {number=} options.attachment.height 参照物元素的高度，默认取 attachment.outerHeight(true)
+     * @property {number=} options.attachment.width 参照物元素的宽度，默认取 attachment.outerWidth()
+     * @property {number=} options.attachment.height 参照物元素的高度，默认取 attachment.outerHeight()
      *
      * @property {Object=} options.offset 偏移量
      * @property {number=} options.offset.x 水平方向偏移量，单位是 px
