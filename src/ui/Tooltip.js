@@ -12,21 +12,45 @@ define(function (require, exports, module) {
      * 提示出现的位置可通过 defaultOptions.placement 统一配置
      * 如个别元素需特殊处理，可为元素加上 data-placement 属性改写全局配置
      *
-     * 如果要实现小箭头效果，可参考如下配置:
+     * 如全局希望浮层显示在触发元素下方，可配置 Tooltip.defaultOptions.placement = 'bottom';
      *
-     * {
-     *    template: '<div class="tooltip"><i class="arrow"></i><div class="content"></div></div>',
-     *    update: function () {
-     *        this.layer.find('.content').html(
-     *            this.element.attr('title')
-     *        );
-     *    },
-     *    placementClass: {
-     *        top: 'top'
+     * 但是有个别元素，显示在下方体验不好，可在模板里写 <span data-placement="top">xx</span>
+     *
+     * 如果要实现箭头效果，有两种方式：
+     *
+     * 1. border 实现: 配置 defaultOptions.placementClass，这是一个方位映射表，如
+     *
+     *    {
+     *        top: 'tooltip-up',
+     *        bottom: 'tooltip-down'
      *    }
-     * }
      *
-     * 如需要调整位置，比如不是上下左右，而是下方偏右，可参考如下配置：
+     *    当显示在上方时，会给浮层元素加上 `tooltip-up` class;
+     *    当显示在下方时，会给浮层元素加上 `tooltip-down` class;
+     *
+     *    接下来可用 border 实现三角形，但需注意的是，
+     *    当箭头向上时，需要把 border-top-width 设置为 0，
+     *    这样才可避免透明的上边框影响触发逻辑，其他方向同理
+     *
+     * 2. 图标实现：配置 defaultOptions.updatePlacement 函数，如：
+     *
+     *    function (placement) {
+     *
+     *        var map = {
+     *            top: 'up',
+     *            right: 'right',
+     *            bottom: 'down',
+     *            left: 'left'
+     *        };
+     *
+     *        var icon = 'icon icon-angle-' + map[placement];
+     *
+     *        this.layer.find('.icon').prop('class', icon);
+     *
+     *    };
+     *
+     *
+     * 如需要微调位置，比如不是上下左右，而是下方偏右，可参考如下配置：
      *
      * {
      *     placement: 'bottom,auto',
@@ -74,7 +98,8 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.width 提示元素的宽度
      *
-     * @property {Function} options.update 更新提示浮层的内容
+     * @property {Function} options.updateContent 更新提示浮层的内容
+     * @property {Function} options.updatePlacement 更新提示浮层的方位
      * @property {Object=} options.placementClass 方位对应的 className
      *
      * @property {Object} options.show
@@ -218,9 +243,8 @@ define(function (require, exports, module) {
                         }
                     }
 
-                    me.placement = placement;
-
-                    me.update();
+                    me.updateContent();
+                    me.updatePlacement(placement);
 
                     if (width) {
                         layer.css('max-width', width);
@@ -352,7 +376,7 @@ define(function (require, exports, module) {
      */
     Tooltip.defaultOptions = {
         placement: 'auto',
-        template: '<div class="tooltip"><div></div><i></i></div>',
+        template: '<div class="tooltip tooltip-inverted"></div>',
         placementClass: {
             top: 'tooltip-top',
             right: 'tooltip-right',
@@ -375,26 +399,17 @@ define(function (require, exports, module) {
         gap: { x: 10, y: 10 },
         offset: { },
 
-        update: function () {
+        updateContent: function () {
 
             var layer = this.layer;
 
-            layer.find('div').html(
+            layer.html(
                 this.element.data('title')
             );
 
-            var map = {
-                top: 'down',
-                right: 'left',
-                bottom: 'up',
-                left: 'right'
-            };
+        },
 
-            layer.find('i').prop(
-                'class',
-                'icon icon-caret-' + map[this.placement]
-            );
-        }
+        updatePlacement: $.noop
 
     };
 

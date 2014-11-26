@@ -177,7 +177,7 @@ define(function (require, exports, module) {
      */
     Select.defaultOptions = {
         defaultText: '请选择',
-        buttonSelector: '.btn',
+        buttonSelector: '.btn-default',
         menuSelector: '.dropdown-menu',
         activeClass: 'active',
         openClass: 'open',
@@ -198,7 +198,7 @@ define(function (require, exports, module) {
 
         },
         setText: function (text) {
-            var button = this.element.find('.btn');
+            var button = this.element.find(this.buttonSelector);
             button.find('span').html(text);
         }
     };

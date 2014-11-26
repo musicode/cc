@@ -344,6 +344,12 @@ define(function (require, exports, module) {
                 width: width
             });
 
+            var parent = field.parent();
+
+            if (parent.is('.placeholder-wrapper')) {
+                field = parent;
+            }
+
             var position = field.position();
 
             error.css({

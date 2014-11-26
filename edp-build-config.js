@@ -15,7 +15,9 @@ exports.getProcessors = function () {
     var addCopyright = new AddCopyright();
 
     return {
-        'default': [ lessProcessor, moduleProcessor, pathMapperProcessor ],
+        'default': [
+            moduleProcessor, jsProcessor, pathMapperProcessor
+        ],
         'release': [
             lessProcessor, cssProcessor, moduleProcessor,
             jsProcessor, pathMapperProcessor, addCopyright
@@ -36,7 +38,7 @@ exports.exclude = [
     'dep/*/*/*.md',
     'dep/*/*/package.json',
     'edp-*',
-    '/node_modules',
+    'node_modules/*',
     '.bin',
     '.edpproj',
     '.svn',

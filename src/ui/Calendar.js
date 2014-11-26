@@ -49,7 +49,6 @@ define(function (require) {
      *
      * @property {Function=} options.onChange
      * @argument {Event} options.onChange.event 事件对象
-     * @argument {Object} options.onChange.data 事件数据
      */
     function Calendar(options) {
         return lifeCycle.init(this, options);
