@@ -325,7 +325,7 @@ define(function (require, exports, module) {
             hide: hide,
             onBeforeShow: function (e) {
                 // 通过元素 focus 触发
-                if (e.eventPhase) {
+                if ('eventPhase' in e) {
                     suggest(autoComplete);
                     return false;
                 }
@@ -335,7 +335,7 @@ define(function (require, exports, module) {
                 var result;
 
                 // 点击 input 不触发失焦隐藏
-                if (e.eventPhase) {
+                if ('eventPhase' in e) {
                     result = e.target !== element[0];
                 }
 

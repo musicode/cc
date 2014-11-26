@@ -111,7 +111,7 @@ define(function (require, exports, module) {
                 },
                 onBeforeHide: function (e) {
 
-                    if (e.eventPhase) {
+                    if ('eventPhase' in e) {
                         var target = $(e.target);
                         if (target[0] === element[0]
                             || !contains(document, target) // 日历刷新后触发，所以元素没了

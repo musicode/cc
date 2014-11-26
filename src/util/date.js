@@ -224,6 +224,18 @@ define(function (require, exports, module) {
         return date;
     };
 
+    exports.add = function (date, day) {
+
+        return new Date(date.getTime() + day * exports.DAY);
+
+    };
+
+    exports.subtract = function (date, day) {
+
+        return new Date(date.getTime() - day * exports.DAY);
+
+    };
+
     /**
      * 一天的毫秒数
      *
