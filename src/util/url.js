@@ -86,6 +86,9 @@ define(function (require, exports, module) {
         var link = document.createElement('a');
         link.href = url;
 
+        // 用 a 来格式化
+        url = link.href;
+
         var index = url.indexOf('?');
         var origin = link.protocol + '//' + link.host;
 
