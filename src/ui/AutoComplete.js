@@ -51,6 +51,8 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.onSelect 用户点击选中某个菜单项触发
      * @property {Function=} options.onEnter 用户按下回车触发
+     * @property {Function=} options.onBeforeRender 渲染菜单之前触发
+     * @property {Function=} options.onAfterRender 渲染菜单之后触发
      */
     function AutoComplete(options) {
         return lifeCycle.init(this, options);
@@ -101,6 +103,8 @@ define(function (require, exports, module) {
 
             if ($.isArray(data) && data.length > 0) {
 
+                me.emit('beforeRender');
+
                 var menu = me.menu;
                 menu.html(
                     me.renderTemplate(data, me.template)
@@ -147,6 +151,8 @@ define(function (require, exports, module) {
                 me.data = data;
 
                 switchClass(me, index, className);
+
+                me.emit('afterRender');
 
                 me.open();
 

@@ -20,6 +20,7 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 输入框元素，如果结构完整，也可传容器元素
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
+     * @property {boolean=} options.disablePast 是否禁止选择过去时间，默认为 true
      * @property {string=} options.template 模板
      * @property {string=} options.calendarTemplate 日历模板
      * @property {string=} options.calendarSelector 日期选择器
@@ -70,13 +71,15 @@ define(function (require, exports, module) {
             var calendar =
             me.calendar = new Calendar({
                 element: calendarElement,
-                date: today,
+                value: today,
                 today: today,
                 template: me.calendarTemplate,
                 renderTemplate: me.renderCalendarTemplate,
                 prevSelector: me.prevSelector,
                 nextSelector: me.nextSelector,
                 onBeforeRender: function (e, data) {
+
+                    data.disablePast = me.disablePast;
 
                     $.each(
                         data.list,
@@ -141,6 +144,14 @@ define(function (require, exports, module) {
 
         },
 
+        open: function () {
+            this.popup.open();
+        },
+
+        close: function () {
+            this.popup.close();
+        },
+
         getValue: function () {
             return this.value;
         },
@@ -203,6 +214,8 @@ define(function (require, exports, module) {
                 +     '</div>'
                 + '</div>',
 
+        disablePast: true,
+
         prevSelector: '.icon-chevron-left',
         nextSelector: '.icon-chevron-right',
 
@@ -240,7 +253,7 @@ define(function (require, exports, module) {
 
         +                 '<td class="${item.phase}"'
 
-        +                 '<!-- if: ${item.phase} != "past" -->'
+        +                 '<!-- if: !${disablePast} || ${item.phase} != "past" -->'
         +                 ' data-value="${item.text}"'
         +                 '<!-- /if -->'
 
