@@ -51,6 +51,7 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.onSelect 用户点击选中某个菜单项触发
      * @property {Function=} options.onEnter 用户按下回车触发
+     * @property {Function=} options.onChange 当遍历导致输入框值变化时触发
      * @property {Function=} options.onBeforeRender 渲染菜单之前触发
      * @property {Function=} options.onAfterRender 渲染菜单之后触发
      */
@@ -414,6 +415,7 @@ define(function (require, exports, module) {
     function previousItem(autoComplete) {
 
         var index = autoComplete.index - 1;
+
         if (index < autoComplete.minIndex) {
             index = autoComplete.maxIndex;
         }
@@ -446,6 +448,7 @@ define(function (require, exports, module) {
     function nextItem(autoComplete) {
 
         var index = autoComplete.index + 1;
+
         if (index > autoComplete.maxIndex) {
             index = autoComplete.minIndex;
         }
@@ -494,6 +497,9 @@ define(function (require, exports, module) {
         .val(
             autoComplete.data[index].text
         );
+
+        autoComplete.emit('change');
+
     }
 
     /**
@@ -505,12 +511,15 @@ define(function (require, exports, module) {
     function enterItem(e) {
 
         var autoComplete = e.data;
+        var items = autoComplete.items;
+        var index = items.index(this);
 
         switchClass(
             autoComplete,
-            autoComplete.items.index(this),
+            index,
             autoComplete.hoverClass
         );
+
     }
 
     /**
