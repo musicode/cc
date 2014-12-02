@@ -20,6 +20,8 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 输入框元素，如果结构完整，也可传容器元素
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
+     * @property {Date=} options.date 打开面板所在月份
+     * @property {string=} options.value 选中的日期
      * @property {boolean=} options.disablePast 是否禁止选择过去时间，默认为 true
      * @property {string=} options.template 模板
      * @property {string=} options.calendarTemplate 日历模板
@@ -71,7 +73,8 @@ define(function (require, exports, module) {
             var calendar =
             me.calendar = new Calendar({
                 element: calendarElement,
-                value: today,
+                date: me.date,
+                value: me.value,
                 today: today,
                 template: me.calendarTemplate,
                 renderTemplate: me.renderCalendarTemplate,
@@ -170,7 +173,7 @@ define(function (require, exports, module) {
 
             if (value) {
                 me.element.val(value);
-                me.popup.close();
+                me.popup && me.popup.close();
             }
 
             if (value !== me.value) {
@@ -251,9 +254,11 @@ define(function (require, exports, module) {
 
         +                 '<!-- /if -->'
 
-        +                 '<td class="${item.phase}"'
+        +                 '<!-- var: enable = !${disablePast} || ${item.phase} != "past" -->'
 
-        +                 '<!-- if: !${disablePast} || ${item.phase} != "past" -->'
+        +                 '<td class="${item.phase}<!-- if: !${enable} --> date-disabled<!-- /if -->"'
+
+        +                 '<!-- if: ${enable} -->'
         +                 ' data-value="${item.text}"'
         +                 '<!-- /if -->'
 
