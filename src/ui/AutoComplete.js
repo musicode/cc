@@ -167,14 +167,29 @@ define(function (require, exports, module) {
          * 显示下拉菜单
          */
         open: function () {
+
+            var me = this;
+
+            me.emit('beforeOpen');
+
             this.popup.open();
+
+            me.emit('afterOpen');
+
         },
 
         /**
          * 隐藏下拉菜单
          */
         close: function () {
+
+            var me = this;
+
+            me.emit('beforeClose');
+
             this.popup.close();
+
+            me.emit('afterClose');
         },
 
         /**

@@ -103,11 +103,11 @@ define(function (require, exports, module) {
                 '[data-value]',
                 function (e) {
 
-                    me.close();
-
                     me.setValue(
                         $(this).data('value')
                     );
+
+                    me.close();
 
                 }
             );

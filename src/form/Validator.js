@@ -82,11 +82,10 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element 表单元素
      * @property {boolean=} options.realtime 是否实时验证（元素失焦验证），默认为 false
      *
+     * @property {number=} options.scrollGap 开启 autoScroll 时，为了避免顶部贴边，最好加上一些间距
+     *
      * @property {string=} options.successClass 验证通过的 className
      * @property {string=} options.errorClass 验证失败的 className
-     *
-     * @property {string=} options.emptyClass 提示输入的 className，empty 跟其他 error 区别开，体验会更好些
-     *                                        如果不在乎这种体验提升，可无视这项配置
      *
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
@@ -176,11 +175,19 @@ define(function (require, exports, module) {
          *                                          如 ['username', 'password']
          *                                          默认验证所有字段
          *
+         * @param {boolean=} autoScroll 验证失败时，是否自动滚动到第一个错误项，当表单很长时，开启有利于提升体验
+         *
          * @return {boolean} 是否验证成功
          */
-        validate: function (fields) {
+        validate: function (fields, autoScroll) {
 
             var me = this;
+
+            var event = me.emit('beforeValidate');
+            if (event.isDefaultPrevented()) {
+                return;
+            }
+
             var element = me.element;
             var groupSelector = me.groupSelector;
 
@@ -191,11 +198,6 @@ define(function (require, exports, module) {
 
             if ($.type(fields) === 'string') {
                 fields = [ fields ];
-            }
-
-            var event = me.emit('beforeValidate');
-            if (event.isDefaultPrevented()) {
-                return;
             }
 
             if ($.isArray(fields)) {
@@ -209,7 +211,14 @@ define(function (require, exports, module) {
                         );
             }
             else {
+
                 groups = element.find(groupSelector);
+
+                if ($.type(fields) === 'boolean') {
+                    autoScroll = fields;
+                }
+
+                fields = [ ];
             }
 
             // 按组验证，每组里面只要有一个错了就算整组错了
@@ -225,6 +234,8 @@ define(function (require, exports, module) {
                     if (group.is(':visible')) {
 
                         var field = group.find('[name]');
+
+                        fields.push(field.prop('name'));
 
                         var error = validateField(me, field);
 
@@ -258,23 +269,31 @@ define(function (require, exports, module) {
                 }
             );
 
+            var afterValidate = function () {
+
+                if (autoScroll) {
+                    scrollToFirstError(errors, me.scrollGap);
+                }
+
+                me.emit(
+                    'afterValidate',
+                    // 转成对象的形式，才能用 jquery 的 trigger 传递数据
+                    {
+                        fields: fields,
+                        errors: errors
+                    }
+                );
+            };
+
             if (groupPromises.length > 0) {
 
                 return resolvePromises(groupPromises)
-                .done(function (error) {
-                    me.emit(
-                        'afterValidate',
-                        errors
-                    );
-                });
+                .done(afterValidate);
 
             }
             else {
 
-                me.emit(
-                    'afterValidate',
-                    errors
-                );
+                afterValidate();
 
                 return errors.length === 0;
 
@@ -307,6 +326,7 @@ define(function (require, exports, module) {
      */
     Validator.defaultOptions = {
         realtime: false,
+        scrollGap: 100,
         groupSelector: '.form-group',
         successClass: 'has-success',
 
@@ -501,7 +521,7 @@ define(function (require, exports, module) {
         int: /^\d+$/,
         url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
         tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
-        mobile: /^1[0-9]\d{9}$/,
+        mobile: /^1[3-9]\d{9}$/,
         email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i,
         money: /^[\d.]*$/,
         idcard: /(^\d{15}$)|(^\d{17}([0-9]|X)$)/i
@@ -514,6 +534,30 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_form_validator';
+
+    function scrollToFirstError(errors, scrollGap) {
+
+        if (errors.length > 0) {
+
+            var element = errors[0].element;
+
+            if (element.is(':hidden')) {
+                element = element.parent();
+            }
+
+            var top = element.offset().top;
+
+            if (scrollGap > 0) {
+                top -= scrollGap;
+            }
+
+            window.scrollTo(
+                window.scrollX,
+                top
+            );
+        }
+
+    }
 
     /**
      * 解析一堆 promise
