@@ -233,37 +233,51 @@ define(function (require, exports, module) {
                     // 隐藏状态不需要验证
                     if (group.is(':visible')) {
 
-                        var field = group.find('[name]');
+                        // 理论上说，一个 group 最好只有一个 field
+                        // 否则不好显示 error
+                        // 如果真的有多个，优先显示第一个
+                        group
+                        .find('[name]')
+                        .each(function () {
 
-                        fields.push(field.prop('name'));
+                            var field = $(this);
 
-                        var error = validateField(me, field);
+                            fields.push(field.prop('name'));
 
-                        if (error) {
-                            if (error.promise) {
+                            var error = validateField(me, field);
 
-                                groupPromises.push(
-                                    resolvePromises([ error ])
-                                    .done(function (error) {
-                                        if (error) {
-                                            updateGroup(me, group, field, error);
-                                            errors.push({
-                                                element: field,
-                                                error: error
-                                            });
-                                        }
-                                    })
-                                );
+                            if (error) {
+                                if (error.promise) {
 
+                                    groupPromises.push(
+                                        resolvePromises([ error ])
+                                        .done(function (error) {
+                                            if (error) {
+                                                updateGroup(me, group, field, error);
+                                                errors.push({
+                                                    element: field,
+                                                    error: error
+                                                });
+                                            }
+                                        })
+                                    );
+
+                                    return false;
+
+                                }
+                                else if ($.type(error) === 'string') {
+
+                                    updateGroup(me, group, field, error);
+
+                                    errors.push({
+                                        element: field,
+                                        error: error
+                                    });
+
+                                    return false;
+                                }
                             }
-                            else if ($.type(error) === 'string') {
-                                updateGroup(me, group, field, error);
-                                errors.push({
-                                    element: field,
-                                    error: error
-                                });
-                            }
-                        }
+                        });
 
                     }
                 }
