@@ -277,6 +277,9 @@ define(function (require, exports, module) {
                                     return false;
                                 }
                             }
+
+                            updateGroup(me, group, field, error);
+
                         });
 
                     }
@@ -387,8 +390,8 @@ define(function (require, exports, module) {
             var position = field.position();
 
             error.css({
-                left: position.left + field.outerWidth() - 35,
-                top: position.top - error.outerHeight() + 10,
+                left: position.left + field.outerWidth() - 37,
+                top: position.top - error.outerHeight() + 8,
             });
 
         }

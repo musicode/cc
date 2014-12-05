@@ -60,7 +60,7 @@ define(function (require, exports, module) {
                 element.on('mouseleave' + namespace, selector, me, onLeave);
             }
 
-            if ($.type(index) === 'number') {
+            if ($.type(index) === 'number' && index >= 0) {
                 me.to(index);
             }
         },
