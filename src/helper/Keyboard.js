@@ -26,7 +26,6 @@ define(function (require, exports, module) {
     var call = require('../function/call');
     var split = require('../function/split');
     var jquerify = require('../function/jquerify');
-    var lifeCycle = require('../function/lifeCycle');
 
     /**
      * 处理键盘相关的操作
@@ -76,7 +75,8 @@ define(function (require, exports, module) {
      * });
      */
     function Keyboard(options) {
-        return lifeCycle.init(this, options);
+        $.extend(this, Keyboard.defaultOptions, options);
+        this.init();
     }
 
     Keyboard.prototype = {
@@ -109,8 +109,6 @@ define(function (require, exports, module) {
         dispose: function () {
 
             var me = this;
-
-            lifeCycle.dispose(me);
 
             me.element.off(namespace);
 

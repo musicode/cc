@@ -16,6 +16,7 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
+    var Iterator = require('../helper/Iterator');
 
     /**
      * 自动补全
@@ -31,7 +32,6 @@ define(function (require, exports, module) {
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框，默认包含
      * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启，默认不开启
      *
-     * @property {string=} options.hoverClass 菜单项 hover 时的 className
      * @property {string=} options.activeClass 菜单项 active 时的 className
      *
      * @property {Object} options.show
@@ -72,25 +72,147 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            // 按上下键遍历的最小索引
-            me.minIndex = me.includeInput ? 0 : 1;
+            var menu = me.menu;
+            var element = me.element;
+            var activeClass = me.activeClass;
 
-            // 起始索引
-            me.startIndex = 0;
+            // 当前选中数据
+            var target;
 
             // 缓存结果
             me.cache = { };
 
-            me.input = createInput(me);
+            var iterator =
+            me.iterator = new Iterator({
+                element: element,
+                startIndex: 0,
+                minIndex: me.includeInput ? 0 : 1,
+                delay: me.delay,
+                onChange: function (e, data) {
+
+                    var to = data.to;
+                    var from = data.from;
+                    var action = data.action;
+
+                    target = this.data[to];
+
+                    data = target.data;
+                    var item = target.element;
+
+                    if (me.autoScroll) {
+
+
+                        if (action === 'prev') {
+
+                            // item 在 menu 视窗区域不需要滚动
+                            var min = menu.scrollTop();
+                            var max = min + menu.height();
+
+                            var top = item.prop('offsetTop');
+
+                            if (top < min || top > max) {
+                                menu.scrollTop(top);
+                            }
+                        }
+                        else {
+
+                            var menuHeight = menu.height();
+
+                            // item 在 menu 视窗区域不需要滚动
+                            var min = menu.scrollTop();
+                            var max = min + menuHeight;
+
+                            var top = item.prop('offsetTop') + item.outerHeight(true);
+
+                            if (top < min || top > max) {
+                                menu.scrollTop(
+                                    top
+                                  - menuHeight
+                                );
+                            }
+                        }
+                    }
+
+
+                    item.addClass(activeClass);
+
+                    this.data[from].element.removeClass(activeClass);
+
+                    element.val(
+                        data.text
+                    );
+
+                    me.emit(
+                        'change',
+                        {
+                            // 对外界使用来说，要隐藏 input 为 0 的实现
+                            index: to - 1,
+                            data: data
+                        }
+                    );
+
+                }
+            });
+
+            me.input = new Input({
+                element: element,
+                smart: true,
+                longPress: false,
+                action: {
+                    enter: function () {
+
+                        me.close();
+
+                        me.emit('enter', target.data);
+
+                    }
+                },
+                onChange: function () {
+                    suggest(me);
+                }
+            });
+
             me.popup = createPopup(me);
 
             var itemSelector = me.itemSelector;
 
-            me
-            .menu
-            .on('mouseenter' + namespace, itemSelector, me, enterItem)
-            .on('mouseleave' + namespace, itemSelector, me, leaveItem)
-            .on('click' + namespace, itemSelector, me, clickItem);
+            menu.on(
+                'click', itemSelector, function (e) {
+
+                    var index = $(this).data(indexKey);
+
+                    iterator.to(index);
+
+                    me.close();
+
+                    me.emit(
+                        'select',
+                        target.data
+                    );
+                }
+            )
+            .on(
+                'mouseenter', itemSelector, function (e) {
+
+                    var index = $(this).data(indexKey);
+
+                    if (target && index !== iterator.index) {
+                        target.element.removeClass(activeClass);
+                    }
+
+                    iterator.index = index;
+                }
+            )
+            .on(
+                'mouseleave', itemSelector, function (e) {
+
+                    iterator.to(
+                        iterator.startIndex
+                    );
+
+                }
+            );
+
         },
 
         /**
@@ -111,47 +233,50 @@ define(function (require, exports, module) {
                     me.renderTemplate(data, me.template)
                 );
 
-                var items = menu.find(me.itemSelector);
+                var element = me.element;
 
-                data = [ ];
-
-                items.each(
-                    function (index, item) {
-
-                        item = $(item);
-
-                        var result = item.data();
-                        if (result.text == null) {
-                            result.text = item.html();
+                var list = [
+                    {
+                        element: element,
+                        data: {
+                            text: element.val()
                         }
-
-                        data.push(result);
-
                     }
-                );
+                ];
 
-                var input = me.element;
-                items.splice(0, 0, input[0]);
-                data.unshift({ text: input.val() });
+                menu
+                .find(me.itemSelector)
+                .each(function (index) {
+
+                    var item = $(this);
+
+                    var result = item.data();
+                    if (result.text == null) {
+                        result.text = item.html();
+                    }
+
+                    var len =
+                    list.push({
+                        element: item,
+                        data: result
+                    });
+
+                    item.data(indexKey, len - 1);
+
+                });
+
+                var iterator = me.iterator;
+                iterator.setData(list);
 
                 // 可以在 renderTemplate 时设置某一项选中
-                var index = me.startIndex;
-                var className;
-
-                var activeClass = me.activeClass;
-                var activeItem = menu.find('.' + activeClass);
+                var activeItem = menu.find('.' + me.activeClass);
 
                 if (activeItem.length === 1) {
-                    index = items.index(activeItem);
-                    className = activeClass;
+                    var index = activeItem.data(indexKey);
+                    if ($.type(index) === 'number') {
+                        iterator.to(index);
+                    }
                 }
-
-                me.maxIndex = items.length - 1;
-
-                me.items = items;
-                me.data = data;
-
-                switchClass(me, index, className);
 
                 me.emit('afterRender');
 
@@ -238,76 +363,7 @@ define(function (require, exports, module) {
      */
     var namespace = '.cobble_ui_autocomplete';
 
-    /**
-     * 用 Input 处理按键
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     * @return {Input}
-     */
-    function createInput(autoComplete) {
-
-        var upTimer = timer(
-            function () {
-                previousItem(autoComplete);
-            },
-            autoComplete.delay,
-            50
-        );
-
-        var downTimer = timer(
-            function () {
-                nextItem(autoComplete);
-            },
-            autoComplete.delay,
-            50
-        );
-
-        return new Input({
-            element: autoComplete.element,
-            smart: true,
-            longPress: false,
-            action: {
-                up: function () {
-                    if (!autoComplete.popup.hidden) {
-                        previousItem((autoComplete));
-                        timer = upTimer;
-                    }
-                },
-                down: function () {
-                    if (!autoComplete.popup.hidden) {
-                        nextItem(autoComplete);
-                        timer = downTimer;
-                    }
-                },
-                enter: function () {
-
-                    var index = autoComplete.index;
-
-                    autoComplete.close();
-
-                    autoComplete.emit(
-                        'enter',
-                        autoComplete.data[index]
-                    );
-                }
-            },
-            onBeforeLongPress: function () {
-                if (timer) {
-                    timer.start();
-                }
-            },
-            onAfterLongPress: function () {
-                if (timer) {
-                    timer.stop();
-                    timer = null;
-                }
-            },
-            onChange: function () {
-                suggest(autoComplete);
-            }
-        });
-    }
+    var indexKey = '__index__';
 
     /**
      * 用 Popup 处理提示层的显示隐藏逻辑
@@ -362,7 +418,7 @@ define(function (require, exports, module) {
                 }
 
                 if (result) {
-                    autoComplete.index = autoComplete.startIndex;
+                    autoComplete.iterator.stop();
                 }
 
                 return result;
@@ -394,194 +450,6 @@ define(function (require, exports, module) {
                 }
             );
         }
-    }
-
-    /**
-     * 点击菜单项
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function clickItem(e) {
-
-        var autoComplete = e.data;
-        var index = autoComplete.items.index(this);
-
-        activeItem(
-            autoComplete,
-            index
-        );
-
-        autoComplete.close();
-
-        autoComplete.emit(
-            'select',
-            autoComplete.data[index]
-        );
-
-    }
-
-    /**
-     * 遍历到上一个菜单项
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     */
-    function previousItem(autoComplete) {
-
-        var index = autoComplete.index - 1;
-
-        if (index < autoComplete.minIndex) {
-            index = autoComplete.maxIndex;
-        }
-
-        if (autoComplete.autoScroll && index > 0) {
-
-            var menu = autoComplete.menu;
-            var item = autoComplete.items.eq(index);
-
-            // item 在 menu 视窗区域不需要滚动
-            var min = menu.scrollTop();
-            var max = min + menu.height();
-
-            var top = item.prop('offsetTop');
-
-            if (top < min || top > max) {
-                menu.scrollTop(top);
-            }
-        }
-
-        activeItem(autoComplete, index);
-    }
-
-    /**
-     * 遍历到下一个菜单项
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     */
-    function nextItem(autoComplete) {
-
-        var index = autoComplete.index + 1;
-
-        if (index > autoComplete.maxIndex) {
-            index = autoComplete.minIndex;
-        }
-
-        if (autoComplete.autoScroll && index > 0) {
-
-            var menu = autoComplete.menu;
-            var item = autoComplete.items.eq(index);
-
-            var menuHeight = menu.height();
-
-            // item 在 menu 视窗区域不需要滚动
-            var min = menu.scrollTop();
-            var max = min + menuHeight;
-
-            var top = item.prop('offsetTop') + item.outerHeight(true);
-
-            if (top < min || top > max) {
-                menu.scrollTop(
-                    top
-                  - menuHeight
-                );
-            }
-        }
-
-        activeItem(autoComplete, index);
-    }
-
-    /**
-     * active 某个菜单项
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     * @param {number} index 选择的索引
-     */
-    function activeItem(autoComplete, index) {
-
-        switchClass(
-            autoComplete,
-            index,
-            autoComplete.activeClass
-        );
-
-        autoComplete
-        .element
-        .val(
-            autoComplete.data[index].text
-        );
-
-        autoComplete.emit('change');
-
-    }
-
-    /**
-     * 鼠标移入菜单项
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function enterItem(e) {
-
-        var autoComplete = e.data;
-        var items = autoComplete.items;
-        var index = items.index(this);
-
-        switchClass(
-            autoComplete,
-            index,
-            autoComplete.hoverClass
-        );
-
-    }
-
-    /**
-     * 鼠标移出菜单项
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function leaveItem(e) {
-
-        var autoComplete = e.data;
-
-        if (autoComplete.className === autoComplete.hoverClass) {
-            switchClass(
-                autoComplete,
-                autoComplete.startIndex
-            );
-        }
-    }
-
-    /**
-     * 切换 className
-     *
-     * @inner
-     * @param {AutoComplete} autoComplete
-     * @param {number} newIndex
-     * @param {string=} newClass
-     */
-    function switchClass(autoComplete, newIndex, newClass) {
-
-        var items = autoComplete.items;
-        var className = autoComplete.className;
-
-        if (className) {
-            items
-            .eq(autoComplete.index)
-            .removeClass(className);
-        }
-
-        if (newClass) {
-            items
-            .eq(newIndex)
-            .addClass(newClass);
-        }
-
-        autoComplete.index = newIndex;
-        autoComplete.className = newClass;
     }
 
 
