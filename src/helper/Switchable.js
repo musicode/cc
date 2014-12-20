@@ -61,6 +61,7 @@ define(function (require, exports, module) {
             }
 
             if ($.type(index) === 'number' && index >= 0) {
+                me.index = defaultIndex;
                 me.to(index);
             }
         },
@@ -74,18 +75,32 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var fromIndex = me.index;
+            // 强制为数字类型，避免后续出现问题
+            if ($.isNumeric(index)) {
 
-            var targets = me.element.find(me.selector);
-            var activeClass = me.activeClass;
+                index = index >= 0 ? (+ index) : defaultIndex;
 
-            if (activeClass) {
-                targets.eq(fromIndex).removeClass(activeClass);
-                targets.eq(index).addClass(activeClass);
+            }
+            else {
+                index = defaultIndex;
             }
 
-            // 强制为数字类型，避免后续出现问题
-            index = + index;
+            var activeClass = me.activeClass;
+
+            var fromIndex = me.index;
+            var targets = me.element.find(me.selector);
+
+            if (activeClass) {
+
+                if (fromIndex >= 0) {
+                    targets.eq(fromIndex).removeClass(activeClass);
+                }
+
+                if (index >= 0) {
+                    targets.eq(index).addClass(activeClass);
+                }
+
+            }
 
             var data = {
                 from: fromIndex,
@@ -132,6 +147,8 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_helper_switchable';
+
+    var defaultIndex = -1;
 
     /**
      * 通过点击切换

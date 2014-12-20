@@ -188,8 +188,22 @@ define(function (require, exports, module) {
             $.each(
                 data,
                 function (index, item) {
+
+                    var data = [ ];
+
+                    $.each(
+                        item,
+                        function (key, value) {
+                            if (key !== 'text' && value != null) {
+                                data.push(
+                                    'data-' + key + '="' + value + '"'
+                                );
+                            }
+                        }
+                    );
+
                     html.push(
-                        '<li data-value="' + item.value + '">' + item.text + '</li>'
+                        '<li ' + data.join(' ') + '>' + item.text + '</li>'
                     );
                 }
             );

@@ -354,6 +354,9 @@ define(function (require, exports, module) {
         ogg     : 'audio/ogg',
         m4a     : 'audio/x-m4a',
         ra      : 'audio/x-realaudio',
+        ram     : 'audio/x-pn-realaudio',
+        mod     : 'audio/mod',
+
 
         '3gp'   : 'video/3gpp',
         '3gpp'  : 'video/3gpp',
@@ -371,6 +374,9 @@ define(function (require, exports, module) {
         avi     : 'video/x-msvideo',
         rm      : 'video/vnd.rn-realvideo',
         rmvb    : 'video/vnd.rn-realvideo',
+        ts      : 'video/MP2T',
+        dv      : 'video/x-dv',
+        mkv     : 'video/x-matroska',
 
         jar     : 'application/java-archive',
         war     : 'application/java-archive',
@@ -731,7 +737,8 @@ define(function (require, exports, module) {
             }
         );
 
-        return result.join(',');
+        return $.unique(result).join(',');
+
     }
 
     /**
