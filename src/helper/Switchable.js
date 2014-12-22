@@ -195,7 +195,7 @@ define(function (require, exports, module) {
 
                 }
             },
-            50
+            150
         );
     }
 

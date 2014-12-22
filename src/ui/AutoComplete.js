@@ -138,9 +138,11 @@ define(function (require, exports, module) {
 
                     this.data[from].element.removeClass(activeClass);
 
-                    element.val(
-                        data.text
-                    );
+                    if (action !== 'render') {
+                        element.val(
+                            data.text
+                        );
+                    }
 
                     me.emit(
                         'change',
@@ -274,7 +276,7 @@ define(function (require, exports, module) {
                 if (activeItem.length === 1) {
                     var index = activeItem.data(indexKey);
                     if ($.type(index) === 'number') {
-                        iterator.to(index);
+                        iterator.to(index, 'render');
                     }
                 }
 
@@ -297,7 +299,7 @@ define(function (require, exports, module) {
 
             me.emit('beforeOpen');
 
-            this.popup.open();
+            me.popup.open();
 
             me.emit('afterOpen');
 
@@ -312,7 +314,7 @@ define(function (require, exports, module) {
 
             me.emit('beforeClose');
 
-            this.popup.close();
+            me.popup.close();
 
             me.emit('afterClose');
         },

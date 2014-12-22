@@ -14,7 +14,6 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.element 监听键盘事件的元素
-     * @property {jQuery=} options.container 遍历项容器元素
      * @property {Object} options.data 需要遍历的数据，
      * @property {Object} options.index 当前索引，默认是 0
      * @property {number=} options.startIndex 开始索引
@@ -87,7 +86,7 @@ define(function (require, exports, module) {
 
             if (timer) {
                 timer.stop();
-                timer = null;
+                this.timer = null;
             }
 
         },
