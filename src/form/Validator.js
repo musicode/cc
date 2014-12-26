@@ -245,6 +245,10 @@ define(function (require, exports, module) {
                             fields.push(field.prop('name'));
 
                             var error = validateField(me, field);
+                            // 统一成字符串
+                            if (error === true) {
+                                error = '';
+                            }
 
                             if (error) {
                                 if (error.promise) {

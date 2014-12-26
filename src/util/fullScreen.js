@@ -13,8 +13,8 @@ define(function (require, exports, module) {
     var change;
 
     if (doc.requestFullscreen) {
-        enter = function (element) {
-            element.requestFullscreen();
+        enter = function () {
+            doc.requestFullscreen();
         };
         exit = function () {
             document.exitFullscreen();
@@ -30,8 +30,8 @@ define(function (require, exports, module) {
     }
 
     else if (doc.webkitRequestFullScreen) {
-        enter = function (element) {
-            element.webkitRequestFullScreen();
+        enter = function () {
+            doc.webkitRequestFullScreen();
         };
         exit = function () {
             document.webkitCancelFullScreen();
@@ -47,8 +47,8 @@ define(function (require, exports, module) {
     }
 
     else if (doc.mozRequestFullScreen) {
-        enter = function (element) {
-            element.mozRequestFullScreen();
+        enter = function () {
+            doc.mozRequestFullScreen();
         };
         exit = function () {
             document.mozCancelFullScreen();
@@ -64,8 +64,8 @@ define(function (require, exports, module) {
     }
 
     else if (doc.msRequestFullscreen) {
-        enter = function (element) {
-            element.msRequestFullscreen();
+        enter = function () {
+            doc.msRequestFullscreen();
         };
         exit = function () {
             document.msExitFullscreen();
@@ -86,9 +86,10 @@ define(function (require, exports, module) {
                 wscript.SendKeys('{F11}');
             }
         };
+        change = $.noop;
     }
     else {
-        enter = exit = $.noop;
+        enter = exit = change = $.noop;
     }
 
     exports.enter = enter;
