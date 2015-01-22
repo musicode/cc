@@ -25,6 +25,10 @@ define(function (require, exports, module) {
      *     fields: {
      *         username: {
      *
+     *             // 配置字段类型，可用统一的正则进行校验
+     *             // 也可直接写在 DOM 元素的 type 属性上
+     *             type: 'email',
+     *
      *             // rules 可写在 DOM 属性或是配置对象
      *             // 这个暂时不开放使用，先直接写在 DOM 属性上
      *             rules: {
@@ -191,9 +195,6 @@ define(function (require, exports, module) {
             var element = me.element;
             var groupSelector = me.groupSelector;
 
-            // 收集错误信息
-            var errors = [ ];
-
             var groups;
 
             if ($.type(fields) === 'string') {
@@ -211,86 +212,44 @@ define(function (require, exports, module) {
                         );
             }
             else {
-
                 groups = element.find(groupSelector);
-
                 if ($.type(fields) === 'boolean') {
                     autoScroll = fields;
                 }
-
-                fields = [ ];
             }
 
             // 按组验证，每组里面只要有一个错了就算整组错了
-            var groupPromises = [ ];
+            var data = [ ];
+            var promises = [ ];
 
-            $.each(
-                groups,
-                function (index, group) {
-
-                    group = $(group);
-
-                    // 隐藏状态不需要验证
-                    if (group.is(':visible')) {
-
-                        // 理论上说，一个 group 最好只有一个 field
-                        // 否则不好显示 error
-                        // 如果真的有多个，优先显示第一个
-                        group
-                        .find('[name]')
-                        .each(function () {
-
-                            var field = $(this);
-
-                            fields.push(field.prop('name'));
-
-                            var error = validateField(me, field);
-                            // 统一成字符串
-                            if (error === true) {
-                                error = '';
-                            }
-
-                            if (error) {
-                                if (error.promise) {
-
-                                    groupPromises.push(
-                                        resolvePromises([ error ])
-                                        .done(function (error) {
-                                            if (error) {
-                                                updateGroup(me, group, field, error);
-                                                errors.push({
-                                                    element: field,
-                                                    error: error
-                                                });
-                                            }
-                                        })
-                                    );
-
-                                    return false;
-
-                                }
-                                else if ($.type(error) === 'string') {
-
-                                    updateGroup(me, group, field, error);
-
-                                    errors.push({
-                                        element: field,
-                                        error: error
-                                    });
-
-                                    return false;
-                                }
-                            }
-
-                            updateGroup(me, group, field, error);
-
-                        });
-
+            groups.each(
+                function () {
+                    var result = me.validateGroup($(this));
+                    if (result.promise) {
+                        promises.push(result);
+                        result = result.data;
                     }
+                    $.merge(data, result);
                 }
             );
 
+            var fields = [ ];
+            var errors = [ ];
+
+            /**
+             * 同步/异步 最后调用的函数
+             */
             var afterValidate = function () {
+
+                $.each(
+                    data,
+                    function (index, item) {
+                        if (item.error) {
+                            errors.push(item);
+                        }
+                        fields.push(item.element);
+                    }
+                );
 
                 if (autoScroll) {
                     scrollToFirstError(errors, me.scrollGap);
@@ -306,10 +265,9 @@ define(function (require, exports, module) {
                 );
             };
 
-            if (groupPromises.length > 0) {
+            if (promises.length > 0) {
 
-                return resolvePromises(groupPromises)
-                .done(afterValidate);
+                return resolvePromises(promises).done(afterValidate);
 
             }
             else {
@@ -319,6 +277,209 @@ define(function (require, exports, module) {
                 return errors.length === 0;
 
             }
+
+        },
+
+        /**
+         * 验证分组
+         *
+         * @param {jQuery} group
+         * @returns {Promise|Array}
+         */
+        validateGroup: function (group) {
+
+            // 隐藏状态不需要验证
+            // 这里不用 :hidden，因为隐藏表单元素也能命中...
+            if (!group.is(':visible')) {
+                return;
+            }
+
+            var me = this;
+
+            var data = [ ];
+            var promises = [ ];
+            var indexs = [ ];
+
+            // 一个 group 最好只有一个 field，否则不好显示 error
+            // 如果真的需要多个 field，优先显示第一个 error
+            group
+                .find('[name]')
+                .each(function (index) {
+
+                    var target = this;
+                    var name = target.name;
+
+                    var field = $(target);
+                    var error;
+
+                    if (!target.disabled) {
+
+                        // 字段配置信息
+                        var conf = me.fields[name] || { };
+
+                        // 不要用 field.prop，因为不合法的 type，浏览器会纠正为 text
+                        var type = conf.type || field.attr('type') || 'text';
+                        var value = target.value;
+
+                        // 验证失败的属性名称，如 max
+                        var errorAttr;
+
+                        $.each(
+                            Validator.type[type] || [ ],
+                            function (index, name) {
+
+                                var result = Validator.attr[name](field, me.element);
+
+                                if (result === false) {
+                                    errorAttr = name;
+                                    return false;
+                                }
+                                // 如果不是强制字段，为空时避免后续属性的检测
+                                else if (value === '' && name === 'required') {
+                                    return false;
+                                }
+
+                            }
+                        );
+
+
+                        if (errorAttr && conf.errors) {
+
+                            error = conf.errors[errorAttr];
+
+                            if (!error) {
+                                throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
+                            }
+
+                        }
+                        else {
+
+                            var custom = conf.custom;
+
+                            if ($.isFunction(custom)) {
+
+                                var promise = $.Deferred();
+
+                                var result = custom(
+                                    field,
+                                    function (error) {
+                                        promise.resolve(error);
+                                    }
+                                );
+
+                                error = (result == null || result.done)
+                                      ? promise
+                                      : result;
+
+                            }
+                        }
+
+                    }
+
+                    data.push({
+                        element: field,
+                        error: error
+                    });
+
+                    if (error && error.promise) {
+                        promises.push(error);
+                        indexs.push(index);
+                    }
+
+                });
+
+            if (promises.length > 0) {
+
+                var promise = resolvePromises(promises).done(
+                            function (errors) {
+
+                                $.each(
+                                    errors,
+                                    function (index, error) {
+                                        data[indexs[index]].error = error;
+                                    }
+                                );
+
+                                me.refreshGroup(group, data);
+
+                            }
+                        );
+
+                promise.data = data;
+
+                return promise;
+
+            }
+            else {
+                me.refreshGroup(group, data);
+                return data;
+            }
+
+        },
+
+        /**
+         * 刷新分组的显示状态
+         *
+         * @param {jQuery} group 分组元素
+         * @param {Array} data 验证结果数据
+         */
+        refreshGroup: function (group, data) {
+
+            var me = this;
+            var successClass = me.successClass;
+            var errorClass = me.errorClass;
+
+            $.each(
+                data,
+                function (index, item) {
+
+                    var element = item.element;
+                    var error = item.error;
+
+                    // 错误的唯一格式
+                    if (error && $.type(error) === 'string') {
+
+                        group
+                            .removeClass(successClass)
+                            .addClass(errorClass);
+
+                        var errorSelector = me.errorSelector;
+                        if (errorSelector) {
+
+                            var renderTemplate = me.renderTemplate;
+                            if ($.isFunction(renderTemplate)) {
+                                error = renderTemplate(
+                                    {
+                                        text: error
+                                    },
+                                    me.errorTemplate
+                                );
+                            }
+
+                            var errorElement = group.find(errorSelector).eq(index);
+                            errorElement.html(error);
+
+                            var errorPlacement = me.errorPlacement;
+                            if ($.isFunction(errorPlacement)) {
+                                errorPlacement(
+                                    element,
+                                    errorElement
+                                );
+                            }
+                        }
+                    }
+                    else {
+
+                        // 纠正一下
+                        item.error = '';
+
+                        group
+                            .removeClass(errorClass)
+                            .addClass(successClass);
+                    }
+
+                }
+            );
 
         },
 
@@ -395,7 +556,7 @@ define(function (require, exports, module) {
 
             error.css({
                 left: position.left + field.outerWidth() - 37,
-                top: position.top - error.outerHeight() + 8,
+                top: position.top - error.outerHeight() + 8
             });
 
         }
@@ -439,7 +600,9 @@ define(function (require, exports, module) {
 
         idcard: [ 'required', 'pattern' ],
 
-        int: [ 'required', 'pattern', 'min', 'max' ]
+        int: [ 'required', 'pattern', 'min', 'max' ],
+
+        internationalMobile: [ 'required', 'pattern' ]
 
     };
 
@@ -545,7 +708,8 @@ define(function (require, exports, module) {
         mobile: /^1[3-9]\d{9}$/,
         email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i,
         money: /^[\d.]*$/,
-        idcard: /(^\d{15}$)|(^\d{17}([0-9]|X)$)/i
+        idcard: /(^\d{15}$)|(^\d{17}([0-9]|X)$)/i,
+        internationalMobile: /^\d{7,20}$/
     };
 
     /**
@@ -556,6 +720,13 @@ define(function (require, exports, module) {
      */
     var namespace = '.cobble_form_validator';
 
+    /**
+     * 跳转到第一个错误的位置，用于提升用户体验
+     *
+     * @inner
+     * @param {Array} errors
+     * @param {number} scrollGap
+     */
     function scrollToFirstError(errors, scrollGap) {
 
         if (errors.length > 0) {
@@ -595,150 +766,11 @@ define(function (require, exports, module) {
         .apply($, promises)
         .done(function () {
 
-            var error;
-
-            $.each(
-                arguments,
-                function (index, result) {
-                    if (result && $.type(result) === 'string') {
-                        error = result;
-                        return false;
-                    }
-                }
-            );
-
-            promise.resolve(error);
+            promise.resolve(arguments);
 
         });
 
         return promise;
-    }
-
-    function updateGroup(validator, group, field, error) {
-
-        var successClass = validator.successClass;
-        var errorClass = validator.errorClass;
-
-        if (error) {
-
-            group
-            .removeClass(successClass)
-            .addClass(errorClass);
-
-            var errorSelector = validator.errorSelector;
-            if (errorSelector) {
-
-                var errorElement = group.find(errorSelector);
-
-                var errorTemplate = validator.errorTemplate;
-                if (errorTemplate) {
-                    error = validator.renderTemplate(
-                                {
-                                    text: error
-                                },
-                                errorTemplate
-                            );
-                }
-                errorElement.html(error);
-
-                var errorPlacement = validator.errorPlacement;
-                if ($.isFunction(errorPlacement)) {
-                    errorPlacement(
-                        field,
-                        errorElement
-                    );
-                }
-            }
-        }
-        else {
-            group
-            .removeClass(errorClass)
-            .addClass(successClass);
-        }
-    }
-
-    /**
-     * 验证表单字段
-     *
-     * @inner
-     * @param {Validator} validator 验证器实例
-     * @param {jQuery} field 表单字段元素
-     * @return {Function|string} 正确时返回空，错误时返回错误信息
-     *                           如果涉及远程校验，返回回调函数
-     */
-    function validateField(validator, field) {
-
-        if (field.prop('disabled')) {
-            return;
-        }
-
-        var form = validator.element;
-
-        // 这里不要用 field.prop，因为不合法的 type，浏览器会纠正为 text
-        var type = field.attr('type');
-        var name = field.prop('name');
-        var value = field.prop('value');
-
-        // 验证失败的属性名称，如 required
-        var errorAttr;
-
-        $.each(
-            Validator.type[type] || [ ],
-            function (index, name) {
-
-                var result = Validator.attr[name](field, form);
-
-                if ($.type(result) === 'boolean') {
-                    if (!result) {
-                        errorAttr = name;
-                        return false;
-                    }
-                }
-                // 如果不是强制字段，为空时避免后续属性的检测
-                else if (value === '' && name === 'required') {
-                    return false;
-                }
-
-            }
-        );
-
-        var conf = validator.fields[name];
-
-        if (conf) {
-
-            if (errorAttr) {
-
-                var error = conf.errors[errorAttr];
-
-                if (error) {
-                    return error;
-                }
-                else {
-                    throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
-                }
-
-            }
-            else {
-
-                var custom = conf.custom;
-
-                if ($.isFunction(custom)) {
-
-                    var promise = $.Deferred();
-
-                    var result = custom(
-                        field,
-                        function (error) {
-                            promise.resolve(error);
-                        }
-                    );
-
-                    return result == null ? promise : result;
-
-                }
-            }
-        }
-
     }
 
 

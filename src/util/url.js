@@ -89,12 +89,24 @@ define(function (require, exports, module) {
         // 用 a 来格式化
         url = link.href;
 
-        var index = url.indexOf('?');
-        var origin = link.protocol + '//' + link.host;
+        var origin = '';
+
+        if (link.protocol && link.host) {
+            origin = link.protocol + '//' + link.host;
+        }
+        else if (/^(http[s]?:\/\/[^/]+)(?=\/)/.test(url)) {
+            origin = RegExp.$1;
+        }
+
+        var pathname = link.pathname;
+
+        if (pathname && pathname.charAt(0) !== '/') {
+            pathname = '/' + pathname;
+        }
 
         return {
             origin: origin,
-            pathname: index !== -1 ? url.substring(origin.length, index) : '',
+            pathname: pathname,
             search: link.search
         };
     };

@@ -496,10 +496,11 @@ define(function (require, exports, module) {
         // 正在上传分片的大小
         chunkInfo.uploading = end - start;
 
-        var range = 'bytes=' + (start + 1) + '-' + end + '/' + file.size;
+        var range = 'bytes ' + (start + 1) + '-' + end + '/' + file.size;
 
         var xhr = fileItem.xhr;
 
+        xhr.setRequestHeader('Content-Type', '');
         xhr.setRequestHeader('X_FILENAME', encodeURIComponent(file.name));
         xhr.setRequestHeader('Content-Range', range);
 

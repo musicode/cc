@@ -54,7 +54,9 @@ define(function (require, exports, module) {
 
             var element = me.element;
 
-            element.hide().before(me.template);
+            if (me.template) {
+                element.hide().before(me.template);
+            }
 
             if (element.prop('checked')) {
                 me.check();

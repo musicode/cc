@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Validator</title>
+    <link rel="stylesheet" href="http://zhujl.baidu.com:8828/src/muse.styl"/>
+
+</head>
+<body>
+
+<div class="form">
+    <div class="form-group">
+        <div class="form-label">手机号：</div>
+        <div class="form-controls">
+            <input type="text" name="mobile" class="form-text" required="required" max="10" min="1" />
+            <span class="error"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="form-label">邮箱：</div>
+        <div class="form-controls">
+            <input type="email" class="form-text" name="email" required />
+            <span class="error"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="form-label">同步自定义：</div>
+        <div class="form-controls">
+            <input type="text" class="form-text" name="sync" required />
+            <span class="error"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="form-label">异步自定义：</div>
+        <div class="form-controls">
+            <input type="text" class="form-text" name="async" required />
+            <span class="error"></span>
+        </div>
+    </div>
+    <div class="form-action">
+        <button class="btn-primary">确定</button>
+    </div>
+</div>
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+
+    require(
+
+        [ 'cobble/Form/Validator' ],
+
+        function (Validator) {
+
+            var validator = new Validator({
+                element: $('.form'),
+                fields: {
+                    mobile: {
+                        type: 'mobile',
+                        errors: {
+                            required: '请输入用户名',
+                            max: '最大为10',
+                            min: '最小为 :attr',
+                            pattern: '手机号错误'
+                        }
+                    },
+                    email: {
+                        errors: {
+                            required: '请输入邮箱',
+                            pattern: '邮箱错误'
+                        }
+                    },
+                    sync: {
+                        errors: {
+                            required: '请输入xx'
+                        },
+                        custom: function (value) {
+                            return '同步错误';
+                        }
+                    },
+                    async: {
+                        errors: {
+                            required: '请输入xx'
+                        },
+                        custom: function (value, callback) {
+                            setTimeout(
+                                function () {
+                                    callback('异步错误');
+                                },
+                                200
+                            );
+                        }
+                    }
+                },
+                onAfterValidate: function (e, data) {
+                    console.log(data);
+                }
+            });
+
+            $('.btn-primary').click(
+
+                function () {
+                    console.log(validator.validate());
+                }
+            );
+
+        }
+    );
+</script>
+</body>
+</html>
