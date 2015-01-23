@@ -35,6 +35,7 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.buttonSelector 点击触发下拉菜单显示的元素
      * @property {string=} options.menuSelector 下拉菜单元素
+     * @property {string=} options.labelSelector 按钮上显示文本的元素
      *
      * @property {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.openClass 菜单展开状态的 class
@@ -54,8 +55,6 @@ define(function (require, exports, module) {
 
         /**
          * 初始化
-         *
-         * @private
          */
         init: function () {
 
@@ -179,9 +178,10 @@ define(function (require, exports, module) {
         defaultText: '请选择',
         buttonSelector: '.btn-default',
         menuSelector: '.dropdown-menu',
+        labelSelector: 'span',
         activeClass: 'active',
         openClass: 'open',
-        renderTemplate: function (data, tpl) {
+        renderTemplate: function (data) {
 
             var html = [ ];
 
@@ -212,8 +212,7 @@ define(function (require, exports, module) {
 
         },
         setText: function (text) {
-            var button = this.element.find(this.buttonSelector);
-            button.find('span').html(text);
+            this.element.find(this.labelSelector).html(text);
         }
     };
 

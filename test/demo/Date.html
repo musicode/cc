@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>AutoComplete</title>
+
+        <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
+
+        <style>
+
+        </style>
+
+    </head>
+    <body>
+
+        <input type="text" />
+
+        <script src="./js/jquery.js"></script>
+        <script src="./js/esl.js"></script>
+        <script src="./js/config.js"></script>
+        <script>
+
+            require(
+
+                [
+                    'cobble/form/Date'
+                ],
+
+                function (FormDate) {
+
+                    var input = $('input');
+
+                    new FormDate({
+                        element: input
+                    });
+
+                }
+            );
+        </script>
+    </body>
+</html>

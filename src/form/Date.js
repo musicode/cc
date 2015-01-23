@@ -9,10 +9,11 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var contains = require('../function/contains');
+    var lpad = require('../function/lpad');
+    var init = require('../function/init');
 
     var Calendar = require('../ui/Calendar');
     var Popup = require('../helper/Popup');
-    var etpl = require('../util/etpl');
 
     /**
      * 表单日期选择器
@@ -22,8 +23,9 @@ define(function (require, exports, module) {
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
      * @property {Date=} options.date 打开面板所在月份
      * @property {string=} options.value 选中的日期
+     * @property {RegExp=} options.pattern 日期的格式，默认是 YYYY-mm-dd
      * @property {boolean=} options.disablePast 是否禁止选择过去时间，默认为 true
-     * @property {string=} options.template 模板
+     * @property {string=} options.template 组件模板
      * @property {string=} options.calendarTemplate 日历模板
      * @property {string=} options.calendarSelector 日期选择器
      * @property {string=} options.prevSelector 上个月的按钮选择器
@@ -45,11 +47,12 @@ define(function (require, exports, module) {
 
             var me = this;
             var element = me.element;
+            var calendarSelector = me.calendarSelector;
 
             var faker;
 
             // 如果结构完整，不需要初始化模板
-            if (element.find(me.calendarSelector).length === 1) {
+            if (element.find(calendarSelector).length === 1) {
                 faker = element;
                 element = me.element = faker.find(':text');
             }
@@ -59,53 +62,31 @@ define(function (require, exports, module) {
                 faker.find(':text').replaceWith(element);
             }
 
-            var calendarElement = faker.find(me.calendarSelector);
+            // 默认隐藏
+            var calendarElement = faker.find(calendarSelector);
             if (calendarElement.is(':visible')) {
                 calendarElement.hide();
             }
 
-            if (!me.value) {
+            // 必须有一个初始化的值，便于变化时对比
+            if ($.type(me.value) !== 'string') {
                 me.value = element.val();
             }
 
-            var today = me.today;
-
-            var calendar =
             me.calendar = new Calendar({
                 element: calendarElement,
                 date: me.date,
                 value: me.value,
-                today: today,
+                today: me.today,
                 template: me.calendarTemplate,
-                renderTemplate: me.renderCalendarTemplate,
+                renderTemplate: $.proxy(me.renderCalendarTemplate, me),
                 prevSelector: me.prevSelector,
                 nextSelector: me.nextSelector,
-                onBeforeRender: function (e, data) {
-
-                    data.disablePast = me.disablePast;
-
-                    $.each(
-                        data.list,
-                        function (index, item) {
-
-                            item.text = [
-                                item.year,
-                                (item.month < 10 ? '0' : '') + item.month,
-                                (item.date < 10 ? '0' : '') + item.date
-                            ].join('-');
-
-                        }
-                    )
-
-                },
                 onChange: function () {
-
                     me.setValue(this.value);
-
                 }
             });
 
-            var popup =
             me.popup = new Popup({
                 element: element,
                 layer: calendarElement,
@@ -130,35 +111,36 @@ define(function (require, exports, module) {
                 }
             });
 
-            element.blur(
-                function () {
-
-                    setTimeout(
-                        function () {
-                            if (me.popup) {
-                                me.setValue(this.value);
-                            }
-                        },
-                        300
-                    );
-
-                }
-            );
-
         },
 
+        /**
+         * 打开日历面板
+         */
         open: function () {
             this.popup.open();
         },
 
+        /**
+         * 关闭日历面板
+         */
         close: function () {
             this.popup.close();
         },
 
+        /**
+         * 取值
+         *
+         * @returns {string}
+         */
         getValue: function () {
             return this.value;
         },
 
+        /**
+         * 设值
+         *
+         * @param {string} value 日期，格式为 YYYY-mm-dd
+         */
         setValue: function (value) {
 
             var me = this;
@@ -167,13 +149,15 @@ define(function (require, exports, module) {
                   ? $.trim(value)
                   : '';
 
-            if (!DATE_EXPR.test(value)) {
+            if (!me.pattern.test(value)) {
                 value = '';
             }
 
             if (value) {
                 me.element.val(value);
-                me.popup && me.popup.close();
+                if (me.popup) {
+                    me.popup.close();
+                }
             }
 
             if (value !== me.value) {
@@ -183,6 +167,9 @@ define(function (require, exports, module) {
 
         },
 
+        /**
+         * 销毁对象
+         */
         dispose: function () {
 
             var me = this;
@@ -201,7 +188,6 @@ define(function (require, exports, module) {
 
     jquerify(Date.prototype);
 
-    var DATE_EXPR = /^\d{4}-\d{2}-\d{2}$/;
 
     /**
      * 默认配置
@@ -224,54 +210,84 @@ define(function (require, exports, module) {
 
         calendarSelector: '.calendar',
 
-        calendarTemplate: etpl.compile(
-            '<div class="calendar-header">'
-        +       '<i class="icon icon-chevron-left"></i>'
-        +       '<strong>${year}年${month}月</strong>'
-        +       '<i class="icon icon-chevron-right"></i>'
-        +   '</div>'
-        +   '<table>'
-        +         '<thead>'
-        +             '<tr>'
-        +                 '<th>一</th>'
-        +                 '<th>二</th>'
-        +                 '<th>三</th>'
-        +                 '<th>四</th>'
-        +                 '<th>五</th>'
-        +                 '<th>六</th>'
-        +                 '<th>日</th>'
-        +             '</tr>'
-        +         '</thead>'
-        +         '<tbody>'
-        +             '<!-- for: ${list} as ${item}, ${index} -->'
-        +                 '<!-- if: ${index} % 7 === 0 -->'
+        calendarTemplate: '',
 
-        +                 '<!-- if: ${index} === 0 -->'
-        +                 '<tr>'
-        +                 '<!-- else -->'
-        +                 '</tr><tr>'
-        +                 '<!-- /if -->'
+        pattern: /^\d{4}-\d{2}-\d{2}$/,
 
-        +                 '<!-- /if -->'
+        renderCalendarTemplate: function (data) {
 
-        +                 '<!-- var: enable = !${disablePast} || ${item.phase} != "past" -->'
+            data.disablePast = this.disablePast;
 
-        +                 '<td class="${item.phase}<!-- if: !${enable} --> date-disabled<!-- /if -->"'
+            $.each(
+                data.list,
+                function (index, item) {
 
-        +                 '<!-- if: ${enable} -->'
-        +                 ' data-value="${item.text}"'
-        +                 '<!-- /if -->'
+                    item.text = [
+                        item.year,
+                        lpad(item.month),
+                        lpad(item.date)
+                    ].join('-');
 
-        +                 ' data-year="${item.year}" data-month="${item.month}" data-date="${item.date}">'
-        +                 '${item.date}</td>'
+                }
+            );
 
-        +             '<!-- /for -->'
-        +         '</tbody>'
-        +     '</table>'
-        ),
+            var html = [
+                '<div class="calendar-header">',
+                    '<i class="icon icon-chevron-left"></i>',
+                    '<strong>', data.year, '年', data.month, '月</strong>',
+                    '<i class="icon icon-chevron-right"></i>',
+                '</div>',
+                '<table>',
+                      '<thead>',
+                          '<tr>',
+                              '<th>一</th>',
+                              '<th>二</th>',
+                              '<th>三</th>',
+                              '<th>四</th>',
+                              '<th>五</th>',
+                              '<th>六</th>',
+                              '<th>日</th>',
+                          '</tr>',
+                      '</thead>',
+                      '<tbody>'
+            ];
 
-        renderCalendarTemplate: function (data, tpl) {
-            return tpl(data);
+            $.each(
+                data.list,
+                function (index, item) {
+
+                    if (index % 7 === 0) {
+                        html.push(
+                            index === 0 ? '<tr>' : '</tr>'
+                        );
+                    }
+
+                    html.push('<td class="' + item.phase);
+
+                    var enable = !data.disablePast || item.phase !== 'past';
+
+                    if (!enable) {
+                        html.push(' date-disabled')
+                    }
+
+                    html.push('"');
+
+                    if (enable) {
+                        html.push(' data-value="' + item.text + '"');
+                    }
+
+                    html.push(' data-year="' + item.year + '"');
+                    html.push(' data-month="' + item.month + '"');
+                    html.push(' data-date="' + item.date + '">');
+                    html.push(item.date);
+                    html.push('</td>');
+
+                }
+            );
+
+            html.push('</tbody></table>');
+
+            return html.join('');
         }
     };
 
@@ -283,27 +299,7 @@ define(function (require, exports, module) {
      * @param {Object=} options
      * @return {Array.<Date>}
      */
-    Date.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Date(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
+    Date.init = init(Date);
 
     return Date;
 

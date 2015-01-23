@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var init = require('../function/init');
 
     /**
      *
@@ -215,27 +216,7 @@ define(function (require, exports, module) {
      * @param {Object=} options
      * @return {Array.<Checkbox>}
      */
-    Checkbox.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Checkbox(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
+    Checkbox.init = init(Checkbox);
 
     /**
      * jquery 事件命名空间

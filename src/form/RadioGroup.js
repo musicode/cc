@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     var Radio = require('../form/Radio');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var init = require('../function/init');
 
     /**
      * 单选框分组
@@ -181,27 +182,7 @@ define(function (require, exports, module) {
      * @param {Object=} options
      * @return {Array.<RadioGroup>}
      */
-    RadioGroup.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new RadioGroup(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
+    RadioGroup.init = init(RadioGroup);
 
 
     return RadioGroup;
