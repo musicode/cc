@@ -49,7 +49,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element <input type="radio" /> 元素
-     * @property {string} options.template 模拟单选框的模版
+     * @property {string=} options.template 模拟单选框的模版
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
      * @property {string=} options.wrapperSelector 应用 className 的元素选择器，默认是 label
@@ -129,6 +129,42 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 是否选中
+         *
+         * @returns {boolean}
+         */
+        isChecked: function () {
+            return this.element.prop('checked');
+        },
+
+        /**
+         * 是否禁用
+         *
+         * @returns {boolean}
+         */
+        isDisabled: function () {
+            return this.element.prop('disabled');
+        },
+
+        /**
+         * 获取值
+         *
+         * @return {string}
+         */
+        getValue: function () {
+            this.element.val();
+        },
+
+        /**
+         * 设置值
+         *
+         * @param {string|number} value
+         */
+        setValue: function (value) {
+            this.element.val(value);
+        },
+
+        /**
          * 为 wrapper 元素设置 className
          *
          * @param {string} type 动作类型，可选值有 add remove
@@ -155,6 +191,7 @@ define(function (require, exports, module) {
 
             me.element.off(namespace);
             me.element = null;
+
         }
     };
 

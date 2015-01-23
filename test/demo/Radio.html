@@ -26,15 +26,15 @@
     <body>
         <form>
             <label class="radio">
-                <input type="radio" name="city" />北京
+                <input type="radio" name="city" value="beijing" />北京
             </label>
 
             <label class="radio">
-                <input type="radio" name="city" checked />北京
+                <input type="radio" name="city" value="shanghai" checked />上海
             </label>
 
             <label class="radio">
-                <input type="radio" name="city" disabled />北京
+                <input type="radio" name="city" value="guangzhou" disabled />广州
             </label>
 
         </form>
@@ -54,7 +54,7 @@
                             name: 'city',
                             checkedClass: 'checked',
                             disabledClass: 'disabled',
-                            template: '<i class="icon"></i>'
+                            template: ''
                         }
                     );
                 }

@@ -16,7 +16,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.element box 组件的容器元素
-     * @property {string} options.template
+     * @property {string=} options.template
      * @property {string=} options.checkedClass
      * @property {string=} options.disabledClass
      * @property {Funciton=} options.onChange
@@ -39,7 +39,7 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            var radios = element.find(':radio');
+            var radios = me.radios = element.find(':radio');
             var group = me.group = [ ];
 
             radios.each(
@@ -49,15 +49,19 @@ define(function (require, exports, module) {
                         element: $(this)
                     };
 
-                    if (me.template) {
-                        options.template = me.template;
-                    }
-                    if (me.checkedClass) {
-                        options.checkedClass = me.checkedClass;
-                    }
-                    if (me.disabledClass) {
-                        options.disabledClass = me.disabledClass;
-                    }
+                    var props = [
+                        'checkedClass', 'disabledClass',
+                        'template', 'wrapperSelector'
+                    ];
+
+                    $.each(
+                        props,
+                        function (index, name) {
+                            if (me[name]) {
+                                options[name] = me[name];
+                            }
+                        }
+                    );
 
                     var instance = new Radio(options);
 
@@ -74,16 +78,12 @@ define(function (require, exports, module) {
                 ':radio',
                 function (e) {
 
-                    if (me.checkedRadio) {
-                        me.checkedRadio.uncheck();
-                    }
+                    me.setValue(this.value);
 
-                    var index = radios.index(this);
-                    me.checkedRadio = group[index];
-
-                    me.emit('change');
                 }
             );
+
+            console.log(this);
 
         },
 
@@ -97,8 +97,48 @@ define(function (require, exports, module) {
             var me = this;
 
             return me.checkedRadio
-                 ? me.checkedRadio.element.prop('value')
+                 ? me.checkedRadio.getValue()
                  : '';
+        },
+
+        /**
+         * 设置当前选中值
+         *
+         * @param {string|number} value
+         */
+        setValue: function (value) {
+
+            var me = this;
+            var radio = me.element.find('[value="' + value + '"]');
+
+            if (radio.length === 1 && radio) {
+
+                var index = me.radios.index(radio);
+                var instance = me.group[index];
+
+                if (instance.isDisabled()) {
+                    return;
+                }
+
+                if (me.checkedRadio) {
+
+                    if (me.checkedRadio === instance) {
+                        return;
+                    }
+
+                    instance.check();
+
+                    me.checkedRadio.uncheck();
+                }
+                else {
+                    instance.check();
+                }
+
+                me.checkedRadio = instance;
+
+                me.emit('change');
+            }
+
         },
 
         /**
