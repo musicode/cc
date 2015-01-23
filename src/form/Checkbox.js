@@ -10,6 +10,9 @@ define(function (require, exports, module) {
     var lifeCycle = require('../function/lifeCycle');
 
     /**
+     *
+     * ## 结构
+     *
      * 复选框的结构通常如下：
      *
      * <label>
@@ -17,6 +20,19 @@ define(function (require, exports, module) {
      * </label>
      *
      * 好处是点击 `北京` 或 复选框，都能实现 toggle
+     *
+     * ## 默认选中
+     *
+     * 如果需要默认选中，input 可以设置为 checked，如下：
+     *
+     * <input type="checkbox" name="city" checked="checked" />
+     *
+     * ## 默认禁用
+     *
+     * 如果需要默认禁用，input 可以设置为 disabled，如下：
+     *
+     * <input type="checkbox" name="city" disabled="disabled" />
+     *
      */
 
     /**
@@ -28,6 +44,7 @@ define(function (require, exports, module) {
      * @property {string} options.template 模拟复选框的模版
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
+     * @property {string=} options.wrapperSelector 应用 className 的元素选择器，默认是 label
      */
     function Checkbox(options) {
         return lifeCycle.init(this, options);
@@ -48,7 +65,9 @@ define(function (require, exports, module) {
 
             var element = me.element;
 
-            element.hide().before(me.template);
+            if (me.template) {
+                element.hide().before(me.template);
+            }
 
             if (element.prop('checked')) {
                 me.check();
@@ -58,7 +77,19 @@ define(function (require, exports, module) {
                 me.disable();
             }
 
-            element.on('click' + namespace, me, toggleCheck);
+            element.on(
+                'click' + namespace,
+                function (e) {
+
+                    if (element.prop('checked')) {
+                        me.check();
+                    }
+                    else {
+                        me.uncheck();
+                    }
+
+                }
+            );
 
         },
 
@@ -67,9 +98,8 @@ define(function (require, exports, module) {
          */
         check: function () {
             var me = this;
-            var element = me.element;
-            element.prop('checked', true);
-            setClass(element, 'add', me.checkedClass);
+            me.element.prop('checked', true);
+            me.setClass('add', me.checkedClass);
         },
 
         /**
@@ -77,9 +107,8 @@ define(function (require, exports, module) {
          */
         uncheck: function () {
             var me = this;
-            var element = me.element;
-            element.prop('checked', false);
-            setClass(element, 'remove', me.checkedClass);
+            me.element.prop('checked', false);
+            me.setClass('remove', me.checkedClass);
         },
 
         /**
@@ -87,9 +116,8 @@ define(function (require, exports, module) {
          */
         enable: function () {
             var me = this;
-            var element = me.element;
-            element.prop('disabled', false);
-            setClass(element, 'remove', me.disabledClass);
+            me.element.prop('disabled', false);
+            me.setClass('remove', me.disabledClass);
         },
 
         /**
@@ -97,9 +125,24 @@ define(function (require, exports, module) {
          */
         disable: function () {
             var me = this;
-            var element = me.element;
-            element.prop('disabled', true);
-            setClass(element, 'add', me.disabledClass);
+            me.element.prop('disabled', true);
+            me.setClass('add', me.disabledClass);
+        },
+
+        /**
+         * 为 wrapper 元素设置 className
+         *
+         * @param {string} type 动作类型，可选值有 add remove
+         * @param {string} className
+         */
+        setClass: function (type, className) {
+            if (className) {
+                var me = this;
+                var wrapper = me.element.closest(me.wrapperSelector);
+                if (wrapper.length === 1) {
+                    wrapper[type + 'Class'](className);
+                }
+            }
         },
 
         /**
@@ -125,7 +168,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Checkbox.defaultOptions = {
-
+        wrapperSelector: 'label'
     };
 
     /**
@@ -165,40 +208,6 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_form_checkbox';
-
-    /**
-     * toggle 选中状态
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function toggleCheck(e) {
-
-        var checkbox = e.data;
-
-        if (checkbox.element.prop('checked')) {
-            checkbox.check();
-        }
-        else {
-            checkbox.uncheck();
-        }
-    }
-
-    /**
-     * 为 label 元素设置 className
-     *
-     * @inner
-     * @param {jQuery} element
-     * @param {string} type
-     * @param {string} className
-     */
-    function setClass(element, type, className) {
-        if (className) {
-            var action = type + 'Class';
-            var label = element.closest('label');
-            label[action](className);
-        }
-    }
 
 
     return Checkbox;

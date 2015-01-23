@@ -122,7 +122,7 @@ define(function (require, exports, module) {
         }
     };
 
-    jquerify(RadioGroup);
+    jquerify(RadioGroup.prototype);
 
     /**
      * 默认配置

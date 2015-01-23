@@ -301,7 +301,7 @@ define(function (require, exports, module) {
             var indexs = [ ];
 
             // 一个 group 最好只有一个 field，否则不好显示 error
-            // 如果真的需要多个 field，优先显示第一个 error
+            // 如果真的需要多个 field，依次匹配 error 元素
             group
                 .find('[name]')
                 .each(function (index) {

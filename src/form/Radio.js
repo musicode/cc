@@ -10,13 +10,30 @@ define(function (require, exports, module) {
     var lifeCycle = require('../function/lifeCycle');
 
     /**
-     * 单选框的结构通常如下：
+     *
+     * ## 结构
+     *
+     * 复选框的结构通常如下：
      *
      * <label>
      *     <input type="radio" name="city" /> 北京
      * </label>
      *
-     * 好处是点击 `北京` 或 单选框，都能实现选中
+     * 好处是点击 `北京` 或 复选框，都能选中
+     *
+     * ## 默认选中
+     *
+     * 如果需要默认选中，input 可以设置为 checked，如下：
+     *
+     * <input type="radio" name="city" checked="checked" />
+     *
+     * ## 默认禁用
+     *
+     * 如果需要默认禁用，input 可以设置为 disabled，如下：
+     *
+     * <input type="radio" name="city" disabled="disabled" />
+     *
+     * ## 特殊性
      *
      * 单选框不同于复选框的一个地方是：
      *
@@ -24,6 +41,7 @@ define(function (require, exports, module) {
      *
      * 所以 Radio 必须和 BoxGroup 一起使用
      */
+
 
     /**
      * 单选框构造函数
@@ -34,6 +52,7 @@ define(function (require, exports, module) {
      * @property {string} options.template 模拟单选框的模版
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
+     * @property {string=} options.wrapperSelector 应用 className 的元素选择器，默认是 label
      */
     function Radio(options) {
         return lifeCycle.init(this, options);
@@ -66,7 +85,10 @@ define(function (require, exports, module) {
                 me.disable();
             }
 
-            element.on('click' + namespace, $.proxy(me.check, me));
+            element.on(
+                'click' + namespace,
+                $.proxy(me.check, me)
+            );
         },
 
         /**
@@ -74,9 +96,8 @@ define(function (require, exports, module) {
          */
         check: function () {
             var me = this;
-            var element = me.element;
-            element.prop('checked', true);
-            setClass(element, 'add', me.checkedClass);
+            me.element.prop('checked', true);
+            me.setClass('add', me.checkedClass);
         },
 
         /**
@@ -84,9 +105,8 @@ define(function (require, exports, module) {
          */
         uncheck: function () {
             var me = this;
-            var element = me.element;
-            if (!element.prop('checked')) {
-                setClass(element, 'remove', me.checkedClass);
+            if (!me.element.prop('checked')) {
+                me.setClass('remove', me.checkedClass);
             }
         },
 
@@ -95,9 +115,8 @@ define(function (require, exports, module) {
          */
         enable: function () {
             var me = this;
-            var element = me.element;
-            element.prop('disabled', false);
-            setClass(element, 'remove', me.disabledClass);
+            me.element.prop('disabled', false);
+            me.setClass('remove', me.disabledClass);
         },
 
         /**
@@ -105,9 +124,24 @@ define(function (require, exports, module) {
          */
         disable: function () {
             var me = this;
-            var element = me.element;
-            element.prop('disabled', true);
-            setClass(element, 'add', me.disabledClass);
+            me.element.prop('disabled', true);
+            me.setClass('add', me.disabledClass);
+        },
+
+        /**
+         * 为 wrapper 元素设置 className
+         *
+         * @param {string} type 动作类型，可选值有 add remove
+         * @param {string} className
+         */
+        setClass: function (type, className) {
+            if (className) {
+                var me = this;
+                var wrapper = me.element.closest(me.wrapperSelector);
+                if (wrapper.length === 1) {
+                    wrapper[type + 'Class'](className);
+                }
+            }
         },
 
         /**
@@ -133,7 +167,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Radio.defaultOptions = {
-
+        wrapperSelector: 'label'
     };
 
     /**
@@ -143,22 +177,6 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_form_radio';
-
-    /**
-     * 为 label 元素设置 className
-     *
-     * @inner
-     * @param {jQuery} element
-     * @param {string} type
-     * @param {string} className
-     */
-    function setClass(element, type, className) {
-        if (className) {
-            var action = type + 'Class';
-            var label = element.closest('label');
-            label[action](className);
-        }
-    }
 
 
     return Radio;
