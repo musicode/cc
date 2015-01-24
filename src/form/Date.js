@@ -180,24 +180,24 @@ define(function (require, exports, module) {
 
             if (value !== me.value) {
 
+                me.value = value;
+
                 // 更新日历
                 if (date) {
 
                     var calendar = me.calendar;
 
-                    if (calendar.inRange(date)) {
-                        calendar.setValue(value);
-                    }
-                    else {
-                        calendar.value = value;
+                    if (!calendar.inRange(date)) {
                         calendar.render(date);
                     }
+
+                    calendar.setValue(value);
+
                 }
 
                 me.element.val(value);
                 me.popup.close();
 
-                me.value = value;
                 me.emit('change');
 
             }
@@ -252,7 +252,7 @@ define(function (require, exports, module) {
 
         renderCalendarTemplate: function (data) {
 
-            data.disablePast = this.disablePast;
+            var disablePast = this.disablePast;
 
             $.each(
                 data.list,
@@ -300,10 +300,10 @@ define(function (require, exports, module) {
 
                     html.push('<td class="' + item.phase);
 
-                    var enable = !data.disablePast || item.phase !== 'past';
+                    var enable = !disablePast || item.phase !== 'past';
 
                     if (!enable) {
-                        html.push(' date-disabled')
+                        html.push(' date-disabled');
                     }
 
                     html.push('"');

@@ -82,7 +82,7 @@ define(function (require) {
             element.on(
                 clickType,
                 '[data-value]',
-                function (e) {
+                function () {
 
                     var target = $(this);
                     var isActive = target.hasClass(activeClass);
@@ -127,6 +127,15 @@ define(function (require) {
         },
 
         /**
+         * 获得选中的日期
+         *
+         * @returns {string|*}
+         */
+        getValue: function () {
+            return this.value;
+        },
+
+        /**
          * 设置选中的日期（只能设置当前视图内的日期）
          *
          * @param {string} value
@@ -135,32 +144,28 @@ define(function (require) {
 
             var me = this;
 
-            if (me.value == value) {
-                return;
-            }
-
             var element = me.element;
-            var activeClass = me.activeClass;
-
             var target = element.find('[data-value="' + value + '"]');
-            var activeElement = element.find('.' + activeClass);
 
-            if (target.length === 1) {
+            if (me.value != value) {
 
-                if (!me.multiple) {
+                me.value = value;
+
+                var activeClass = me.activeClass;
+                var activeElement = element.find('.' + activeClass);
+
+                if (value) {
+                    if (!me.multiple) {
+                        activeElement.removeClass(activeClass);
+                    }
+                    target.addClass(activeClass);
+                }
+                else {
                     activeElement.removeClass(activeClass);
                 }
 
-                target.addClass(activeClass);
-
+                me.emit('change');
             }
-            else {
-                value = '';
-                activeElement.removeClass(activeClass);
-            }
-
-            me.value = value;
-            me.emit('change');
 
         },
 
