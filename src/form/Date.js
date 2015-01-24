@@ -6,6 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * disablePast 还有改进空间
+     */
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var contains = require('../function/contains');
