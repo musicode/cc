@@ -75,10 +75,14 @@ define(function (require) {
                 me.date || new Date()
             );
 
-            var value = me.value;
-            if (value) {
-                me.value = null;
-                me.setValue(value, true);
+            if (me.value) {
+                me.setValue(
+                    me.value,
+                    {
+                        force: true,
+                        silence: true
+                    }
+                );
             }
 
             var clickType = 'click' + namespace;
@@ -146,9 +150,11 @@ define(function (require) {
          * 设置选中的日期（只能设置当前视图内的日期）
          *
          * @param {string} value
-         * @property {boolean=} silence 是否不触发 change 事件
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
 
@@ -159,7 +165,9 @@ define(function (require) {
                 value = '';
             }
 
-            if (me.value != value) {
+            options = options || { };
+
+            if (options.force || me.value != value) {
 
                 me.value = value;
 
@@ -176,7 +184,7 @@ define(function (require) {
                     activeElement.removeClass(activeClass);
                 }
 
-                if (!silence) {
+                if (!options.silence) {
                     me.emit('change');
                 }
             }

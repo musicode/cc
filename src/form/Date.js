@@ -123,10 +123,14 @@ define(function (require, exports, module) {
                 }
             });
 
-            var value = me.value;
-            if (value) {
-                me.value = null;
-                me.setValue(value, true);
+            if (me.value) {
+                me.setValue(
+                    me.value,
+                    {
+                        force: true,
+                        silence: true
+                    }
+               );
             }
 
         },
@@ -158,15 +162,19 @@ define(function (require, exports, module) {
          * 设值
          *
          * @param {string} value 日期，格式为 YYYY-mm-dd
-         * @property {boolean=} silence 是否不触发 change 事件
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
 
             value = $.type(value) === 'string'
                   ? $.trim(value)
                   : '';
+
+            options = options || { };
 
             var date;
             var match = value.match(me.pattern);
@@ -188,7 +196,7 @@ define(function (require, exports, module) {
                 value = '';
             }
 
-            if (value !== me.value) {
+            if (options.force || value !== me.value) {
 
                 me.value = value;
 
@@ -201,14 +209,19 @@ define(function (require, exports, module) {
                         calendar.render(date);
                     }
 
-                    calendar.setValue(value, true);
+                    calendar.setValue(
+                        value,
+                        {
+                            silence: true
+                        }
+                    );
 
                 }
 
                 me.element.val(value);
                 me.popup.close();
 
-                if (!silence) {
+                if (!options.silence) {
                     me.emit('change');
                 }
 
