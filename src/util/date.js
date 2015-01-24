@@ -224,15 +224,61 @@ define(function (require, exports, module) {
         return date;
     };
 
-    exports.add = function (date, day) {
+    /**
+     * 上周
+     *
+     * @param {Date|number} date
+     * @return {Date}
+     */
+    exports.prevWeek = function (date) {
 
-        return new Date(date.getTime() + day * exports.DAY);
+        return exports.subtract(date, 7);
 
     };
 
+    /**
+     * 下周
+     *
+     * @param {Date|number} date
+     * @return {Date}
+     */
+    exports.nextWeek = function (date) {
+
+        return exports.add(date, 7);
+
+    };
+
+    /**
+     * 日期增加（未来）
+     *
+     * @param {Date|number} date
+     * @param {number} day
+     * @returns {Date}
+     */
+    exports.add = function (date, day) {
+
+        if ($.type(date) === 'date') {
+            date = date.getTime();
+        }
+
+        return new Date(date + day * exports.DAY);
+
+    };
+
+    /**
+     * 日期减少（以前）
+     *
+     * @param {Date|number} date
+     * @param {number} day
+     * @returns {Date}
+     */
     exports.subtract = function (date, day) {
 
-        return new Date(date.getTime() - day * exports.DAY);
+        if ($.type(date) === 'date') {
+            date = date.getTime();
+        }
+
+        return new Date(date - day * exports.DAY);
 
     };
 

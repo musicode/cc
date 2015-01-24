@@ -67,38 +67,13 @@ define(function (require) {
 
             var me = this;
 
-            var date = me.date || new Date();
             var today = me.today || new Date();
-
             // 转成 00:00:00 便于比较大小
-            var data = {
-                date: date.setHours(0, 0, 0, 0),
-                today: today.setHours(0, 0, 0, 0)
-            };
+            me.today = today.setHours(0, 0, 0, 0);
 
-            var conf = modeConfig[me.mode];
-            var prev = conf.prev(data);
-            var next = conf.next(data);
-            var create = conf.create(data, me.firstDay);
-
-            var refresh = function () {
-
-                var list = create();
-
-                return me.render(
-                    $.extend(
-                        dateUtil.simplify(data.date),
-                        {
-                            start: list[0],
-                            end: list[ list.length - 1 ],
-                            list: list
-                        }
-                    )
-                );
-
-            };
-
-            refresh();
+            me.render(
+                me.date || new Date()
+            );
 
             var clickType = 'click' + namespace;
             var element = me.element;
@@ -136,13 +111,7 @@ define(function (require) {
                 element.on(
                     clickType,
                     prevSelector,
-                    function () {
-                        prev();
-                        me.emit(
-                            'prev',
-                            refresh()
-                        );
-                    }
+                    $.proxy(me.prev, me)
                 );
             }
 
@@ -151,63 +120,159 @@ define(function (require) {
                 element.on(
                     clickType,
                     nextSelector,
-                    function () {
-                        next();
-                        me.emit(
-                            'next',
-                            refresh()
-                        );
-                    }
+                    $.proxy(me.next, me)
                 );
             }
 
         },
 
         /**
-         * 设置选中的日期
+         * 设置选中的日期（只能设置当前视图内的日期）
          *
          * @param {string} value
          */
         setValue: function (value) {
 
             var me = this;
-            var multiple = me.multiple;
+
+            if (me.value == value) {
+                return;
+            }
+
             var element = me.element;
+            var activeClass = me.activeClass;
+
             var target = element.find('[data-value="' + value + '"]');
+            var activeElement = element.find('.' + activeClass);
 
             if (target.length === 1) {
 
-                var activeClass = me.activeClass;
-
-                if (!multiple) {
-                    element
-                    .find('.' + activeClass)
-                    .removeClass(activeClass);
+                if (!me.multiple) {
+                    activeElement.removeClass(activeClass);
                 }
 
                 target.addClass(activeClass);
 
             }
-            else if (!multiple) {
+            else {
                 value = '';
+                activeElement.removeClass(activeClass);
             }
 
-            if (me.value != value) {
-                me.value = value;
-                me.emit('change');
+            me.value = value;
+            me.emit('change');
+
+        },
+
+        /**
+         * 上月/周
+         */
+        prev: function () {
+
+            var me = this;
+            var date = me.date;
+
+            date = me.mode === 'week'
+                 ? dateUtil.prevWeek(date)
+                 : dateUtil.prevMonth(date);
+
+            me.render(date);
+
+            me.emit('prev');
+
+        },
+
+        /**
+         * 下月/周
+         */
+        next: function () {
+
+            var me = this;
+            var date = me.date;
+
+            date = me.mode === 'week'
+                 ? dateUtil.nextWeek(date)
+                 : dateUtil.nextMonth(date);
+
+            me.render(date);
+
+            me.emit('next');
+
+        },
+
+        /**
+         * date 是否在当前视图的数据区间内
+         *
+         * @param {Date} date
+         * @return {boolean}
+         */
+        inRange: function (date) {
+
+            var data = this.data;
+
+            var start = dateUtil.parse(data.start);
+            var end = dateUtil.parse(data.end);
+
+            return date >= start && date <= end;
+
+        },
+
+        /**
+         * 创建渲染日历需要的数据
+         *
+         * @param {Date} date
+         * @return {Object}
+         */
+        createData: function (date) {
+
+            var me = this;
+            var firstDay = me.firstDay;
+
+            var weekFirstDay;
+            var weekLastDay;
+
+            if (me.mode === 'week') {
+                weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
+                weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
             }
+            else {
+                var monthFirstDay = dateUtil.getMonthFirstDay(date);
+                var monthLastDay = dateUtil.getMonthLastDay(date);
+
+                weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
+                weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+            }
+
+            var list = getDatasource(
+                + weekFirstDay,
+                + weekLastDay,
+                me.today
+            );
+
+            return $.extend(
+                dateUtil.simplify(date),
+                {
+                    start: list[0],
+                    end: list[ list.length - 1 ],
+                    list: list
+                }
+            );
 
         },
 
         /**
          * 渲染日历
          *
-         * @param {Object} data 渲染需要使用的数据
-         * @return {Object}
+         * @param {Date} date
          */
-        render: function (data) {
+        render: function (date) {
 
             var me = this;
+
+            // 转成 00:00:00 便于和 today 比较大小
+            me.date = date.setHours(0, 0, 0, 0);
+
+            var data = me.data = me.createData(date);
 
             me.emit('beforeRender', data);
 
@@ -223,7 +288,6 @@ define(function (require) {
 
             me.emit('afterRender', data);
 
-            return data;
         },
 
         /**
@@ -237,6 +301,7 @@ define(function (require) {
 
             me.element.off(namespace);
             me.element = null;
+
         }
 
     };
@@ -295,69 +360,6 @@ define(function (require) {
 
         return data;
     }
-
-    var modeConfig = {
-        month: {
-            prev: function (data) {
-                return function () {
-                    var prev = dateUtil.prevMonth(data.date);
-                    data.date = prev.getTime();
-                };
-            },
-            next: function (data) {
-                return function () {
-                    var next = dateUtil.nextMonth(data.date);
-                    data.date = next.getTime();
-                };
-            },
-            create: function (data, firstDay) {
-                return function () {
-
-                    var date = new Date(data.date);
-
-                    var monthFirstDay = dateUtil.getMonthFirstDay(date);
-                    var monthLastDay = dateUtil.getMonthLastDay(date);
-
-                    var weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
-                    var weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
-
-                    return getDatasource(
-                        + weekFirstDay,
-                        + weekLastDay,
-                        data.today
-                    );
-
-                };
-            }
-        },
-        week: {
-            prev: function (data) {
-                return function () {
-                    data.date -= dateUtil.WEEK;
-                };
-            },
-            next: function (data) {
-                return function () {
-                    data.date += dateUtil.WEEK;
-                };
-            },
-            create: function (data, firstDay) {
-                return function () {
-
-                    var date = new Date(data.date);
-                    var weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
-                    var weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
-
-                    return getDatasource(
-                        + weekFirstDay,
-                        + weekLastDay,
-                        data.today
-                    );
-
-                };
-            }
-        }
-    };
 
 
     return Calendar;

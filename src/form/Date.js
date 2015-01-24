@@ -14,6 +14,7 @@ define(function (require, exports, module) {
 
     var Calendar = require('../ui/Calendar');
     var Popup = require('../helper/Popup');
+    var dateUtil = require('../util/date');
 
     /**
      * 表单日期选择器
@@ -24,6 +25,13 @@ define(function (require, exports, module) {
      * @property {Date=} options.date 打开面板所在月份
      * @property {string=} options.value 选中的日期
      * @property {RegExp=} options.pattern 日期的格式，默认是 YYYY-mm-dd
+     *
+     *                                     如果需要改写，请注意，正则必须包含三个分组（方便取值）
+     *
+     *                                     分组 1 表示年份
+     *                                     分组 2 表示月份
+     *                                     分组 3 表示日期
+     *
      * @property {boolean=} options.disablePast 是否禁止选择过去时间，默认为 true
      * @property {string=} options.template 组件模板
      * @property {string=} options.calendarTemplate 日历模板
@@ -75,6 +83,7 @@ define(function (require, exports, module) {
 
             me.calendar = new Calendar({
                 element: calendarElement,
+                mode: 'month',
                 date: me.date,
                 value: me.value,
                 today: me.today,
@@ -149,20 +158,48 @@ define(function (require, exports, module) {
                   ? $.trim(value)
                   : '';
 
-            if (!me.pattern.test(value)) {
+            var date;
+            var match = value.match(me.pattern);
+
+            if (match) {
+
+                if (match.length < 4) {
+                    throw new Error('[form/Date]pattern 必须包含 3 个分组.');
+                }
+
+                date = dateUtil.parse(
+                    parseInt(match[1], 10),
+                    parseInt(match[2], 10),
+                    parseInt(match[3], 10)
+                );
+
+            }
+            else {
                 value = '';
             }
 
-            if (value) {
-                me.element.val(value);
-                if (me.popup) {
-                    me.popup.close();
-                }
-            }
-
             if (value !== me.value) {
+
+                // 更新日历
+                if (date) {
+
+                    var calendar = me.calendar;
+
+                    if (calendar.inRange(date)) {
+                        calendar.setValue(value);
+                    }
+                    else {
+                        calendar.value = value;
+                        calendar.render(date);
+                    }
+                }
+
+                me.element.val(value);
+                me.popup.close();
+
                 me.value = value;
                 me.emit('change');
+
             }
 
         },
@@ -199,8 +236,7 @@ define(function (require, exports, module) {
 
         template: '<div class="form-date">'
                 +     '<input type="text" />'
-                +     '<div class="calendar">'
-                +     '</div>'
+                +     '<div class="calendar"></div>'
                 + '</div>',
 
         disablePast: true,
@@ -212,7 +248,7 @@ define(function (require, exports, module) {
 
         calendarTemplate: '',
 
-        pattern: /^\d{4}-\d{2}-\d{2}$/,
+        pattern: /^(\d{4})-(\d{2})-(\d{2})$/,
 
         renderCalendarTemplate: function (data) {
 
@@ -300,6 +336,7 @@ define(function (require, exports, module) {
      * @return {Array.<Date>}
      */
     Date.init = init(Date);
+
 
     return Date;
 
