@@ -6,7 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var init = require('../function/init');
     var timer = require('../function/timer');
+    var toNumber = require('../function/toNumber');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
@@ -64,9 +66,11 @@ define(function (require, exports, module) {
 
             me.faker = faker;
 
-            me.step = + element.attr('step') || 1;
-            me.min = element.attr('min');
-            me.max = element.attr('max');
+            me.step = toNumber(element.attr('step'), 1);
+            me.min = toNumber(element.attr('min'));
+            me.max = toNumber(element.attr('max'));
+
+            me.value = toNumber(element.val(), '');
 
             var upHandler = function () {
 
@@ -120,13 +124,13 @@ define(function (require, exports, module) {
             var blur = 'focusout' + namespace;
 
             faker
-            .on(mousedown, upSelector, upTimer.start)
-            .on(mousedown, downSelector, downTimer.start)
-            .on(blur, ':text', function () {
-                me.setValue(
-                    element.val()
-                );
-            });
+                .on(mousedown, upSelector, upTimer.start)
+                .on(mousedown, downSelector, downTimer.start)
+                .on(blur, ':text', function () {
+                    me.setValue(
+                        element.val()
+                    );
+                });
 
             instance.document.on(
                 mouseup,
@@ -145,29 +149,46 @@ define(function (require, exports, module) {
         getValue: function () {
 
             var me = this;
+            var element = me.element;
 
-            return me.element.val() || me.defaultValue;
-
+            return document.activeElement === element[0]
+                ? element.val()
+                : me.value;
         },
 
         /**
          * 设值
          *
          * @param {string|number} value
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, options) {
 
             var me = this;
 
+            var element = me.element;
             var defaultValue = me.defaultValue;
 
             if (!me.validate(value) && defaultValue != null) {
                 value = defaultValue;
             }
 
-            me.element.val(value);
+            value = toNumber(value, '');
 
-            me.emit('change');
+            options = options || { };
+
+            if (options.force || value !== element.val()) {
+
+                me.value = value;
+                element.val(value);
+
+                if (!options.silence) {
+                    me.emit('change');
+                }
+            }
+
         },
 
         /**
@@ -179,22 +200,21 @@ define(function (require, exports, module) {
         validate: function (value) {
 
             var me = this;
-            var element = me.element;
 
             if (value == null) {
-                value = $.trim(element.val());
+                value = me.getValue();
             }
 
-            if ($.type(value) === 'string') {
-                value = + value;
-            }
+            value = toNumber(value, '');
 
-            if (isNaN(value) || (value < me.min || value > me.max)) {
+            if (value === '' || (value < me.min || value > me.max)) {
                 return false;
             }
 
             var result = divide(minus(value, me.min), me.step);
+
             return result === Math.floor(result);
+
         },
 
         /**
@@ -229,10 +249,10 @@ define(function (require, exports, module) {
         upSelector: '.icon-caret-up',
         downSelector: '.icon-caret-down',
         template: '<div class="form-number">'
-            +     '<input class="form-text" type="text" />'
-            +     '<i class="icon icon-caret-up"></i>'
-            +     '<i class="icon icon-caret-down"></i>'
-            + '</div>'
+                +     '<input class="form-text" type="text" />'
+                +     '<i class="icon icon-caret-up"></i>'
+                +     '<i class="icon icon-caret-down"></i>'
+                + '</div>'
     };
 
 
@@ -244,27 +264,7 @@ define(function (require, exports, module) {
      * @param {Object=} options
      * @return {Array.<Number>}
      */
-    Number.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Number(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
+    Number.init = init(Number);
 
     /**
      * jquery 事件命名空间
@@ -273,6 +273,7 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_form_number';
+
 
 
     return Number;

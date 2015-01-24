@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Number</title>
+        <style>
+            .input-number {
+                position: relative;
+                display: inline-block;
+            }
+            input {
+                margin: 0;
+            }
+            .btn-up,
+            .btn-down {
+                border: 5px solid transparent;
+                position: absolute;
+                right: 2px;
+            }
+            .btn-up {
+                border-bottom-color: #CCC;
+                top: 0;
+            }
+            .btn-down {
+                border-top-color: #CCC;
+                top: 13px;
+            }
+        </style>
+    </head>
+    <body>
+
+        <input type="text" min="-5" step="1.5" />
+
+        <script src="./js/jquery.js"></script>
+        <script src="./js/esl.js"></script>
+        <script src="./js/config.js"></script>
+        <script>
+
+            require(
+
+                [ 'cobble/form/Number' ],
+
+                function (Number) {
+
+                    var number = new Number({
+
+                        element: $('input'),
+
+                        template: '<div class="input-number">'
+                                +     '<input type="text" />'
+                                +     '<i class="btn-up"></i>'
+                                +     '<i class="btn-down"></i>'
+                                + '</div>',
+
+                        defaultValue: '',
+
+                        upSelector: '.btn-up',
+                        downSelector: '.btn-down'
+                    });
+
+                }
+            );
+
+        </script>
+
+    </body>
+</html>

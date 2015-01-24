@@ -9,9 +9,10 @@ define(function (require, exports) {
     var Input = require('../helper/Input');
     var Placeholder = require('../helper/Placeholder');
 
+    var init = require('../function/init');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var init = require('../function/init');
+
 
     /**
      * 文本输入框构造函数
@@ -77,7 +78,9 @@ define(function (require, exports) {
          * @return {string}
          */
         getValue: function () {
-            return this.element.val();
+            return $.trim(
+                this.element.val()
+            );
         },
 
         /**
@@ -117,6 +120,7 @@ define(function (require, exports) {
                 me.placeholder.dispose();
                 me.placeholder = null;
             }
+
         }
     };
 
