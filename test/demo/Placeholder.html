@@ -3,33 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Placeholder</title>
+    <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
+
     <style>
+        .form-text {
+            background-color: transparent;
+            position: relative;
+            z-index: 2;
+        }
         .placeholder-wrapper {
-            display: inline-block;
-            font-size: 13px;
-        }
-        .placeholder-wrapper div {
-            position: absolute;
-            color: #BBB;
-            cursor: text;
-            height: 16px;
-            padding: 6px 10px;
-        }
-        .placeholder-active {
-            color: #BBB;
-        }
-        input {
-            border: 1px solid #CCC;
-            height: 16px;
-            margin: 0;
-            padding: 5px 10px;
+            background-color: #FFF;
         }
     </style>
 </head>
 <body>
 
-    <input type="text" placeholder="请输入用户名" />
-    <input type="text" placeholder="请输入用户名" />
+    <input type="text" class="form-text" placeholder="请输入用户名" value="" />
+    <input type="text" class="form-text" placeholder="请输入用户名" value="" />
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -42,21 +32,20 @@
 
             function (Placeholder) {
 
-                var placeholder1 = new Placeholder({
-                    element: $(':text:eq(0)'),
-                    simple: true
-                });
+                var element = $(':text');
 
-                var placeholder2 = new Placeholder({
-                    element: $(':text:eq(1)'),
+                var placeholder1 = new Placeholder({
+                    element: element.eq(0),
                     simple: false,
                     nativeFirst: false
                 });
 
-                return;
+                var placeholder2 = new Placeholder({
+                    element: element.eq(1),
+                    simple: false,
+                    nativeFirst: false
+                });
 
-                placeholder1.dispose();
-                placeholder2.dispose();
             }
         );
     </script>

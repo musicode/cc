@@ -30,6 +30,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var init = require('../function/init');
+    var input = require('../function/input');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
@@ -113,7 +115,7 @@ define(function (require, exports, module) {
      */
     Placeholder.defaultOptions = {
         simple: false,
-        nativeFirst: true,
+        nativeFirst: false,
         simpleClass: 'placeholder-active',
         placeholderSelector: '.placeholder',
         template: '<div class="placeholder-wrapper">'
@@ -128,22 +130,7 @@ define(function (require, exports, module) {
      * @param {jQuery} element 需要初始化的元素
      * @return {Array.<Placeholder>}
      */
-    Placeholder.init = function (element) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Placeholder({
-                        element: $(this)
-                    })
-                );
-            }
-        );
-
-        return result;
-    };
+    Placeholder.init = init(Placeholder);
 
     /**
      * jquery 事件命名空间
@@ -154,7 +141,7 @@ define(function (require, exports, module) {
     var namespace = '.cobble_helper_placeholder';
 
     // 创建测试元素
-    var input = $('<input type="text" />')[0];
+    var element = $('<input type="text" />')[0];
 
     /**
      * 特性检测浏览器是否支持 placeholder 特性
@@ -162,10 +149,10 @@ define(function (require, exports, module) {
      * @inner
      * @type {boolean}
      */
-    var supportPlaceholder = 'placeholder' in input;
+    var supportPlaceholder = 'placeholder' in element;
 
     // 删除变量
-    input = null;
+    element = null;
 
     /**
      * 模式配置
@@ -258,51 +245,38 @@ define(function (require, exports, module) {
                 element.replaceWith(wrapper);
                 wrapper.append(element);
 
-                var faker = wrapper.find(me.placeholderSelector);
-                faker.on(
-                    'click' + namespace,
-                    function () {
-                        element.focus();
-                    }
-                );
-
-                me.faker = faker;
+                me.faker = wrapper.find(me.placeholderSelector);
 
                 // 必须放最后，jquery 某些 DOM 操作会解绑事件
                 var handler = $.proxy(me.refresh, me);
 
+                input.init(element);
+
                 element
-                .on('focus' + namespace, handler)
-                .on('blur' + namespace, handler);
+                    .on('focus' + namespace, handler)
+                    .on('blur' + namespace, handler)
+                    .on('input' + namespace, handler);
 
             },
             show: function () {
 
                 var me = this;
 
-                me
-                .faker
-                .html(me.value)
-                .show();
+                me.faker.html(me.value).show();
 
             },
             hide: function () {
-                this
-                .faker
-                .hide();
+                this.faker.hide();
             },
             refresh: function () {
 
                 var me = this;
-                var element = me.element[0];
-                var result = !element.value
-                           && document.activeElement !== element;
 
-                if (result) {
-                    me.show();
+                if (me.element.val()) {
+                    me.hide();
                 }
                 else {
-                    me.hide();
+                    me.show();
                 }
             },
             dispose: function () {
@@ -311,8 +285,10 @@ define(function (require, exports, module) {
 
                 lifeCycle.dispose(me);
 
-                me.faker.off(namespace);
-                me.element.off(namespace);
+                var element = me.element;
+
+                input.dispose(element);
+                element.off(namespace);
 
                 me.faker =
                 me.element = null;
