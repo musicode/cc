@@ -75,9 +75,14 @@ define(function (require) {
                 me.date || new Date()
             );
 
+            var value = me.value;
+            if (value) {
+                me.value = null;
+                me.setValue(value, true);
+            }
+
             var clickType = 'click' + namespace;
             var element = me.element;
-            var activeClass = me.activeClass;
 
             element.on(
                 clickType,
@@ -85,6 +90,8 @@ define(function (require) {
                 function () {
 
                     var target = $(this);
+
+                    var activeClass = me.activeClass;
                     var isActive = target.hasClass(activeClass);
 
                     var value;
@@ -139,13 +146,18 @@ define(function (require) {
          * 设置选中的日期（只能设置当前视图内的日期）
          *
          * @param {string} value
+         * @property {boolean=} silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, silence) {
 
             var me = this;
 
             var element = me.element;
             var target = element.find('[data-value="' + value + '"]');
+
+            if (target.length !== 1) {
+                value = '';
+            }
 
             if (me.value != value) {
 
@@ -164,7 +176,9 @@ define(function (require) {
                     activeElement.removeClass(activeClass);
                 }
 
-                me.emit('change');
+                if (!silence) {
+                    me.emit('change');
+                }
             }
 
         },
@@ -284,12 +298,6 @@ define(function (require) {
             me.element.html(
                 me.renderTemplate(data, me.template)
             );
-
-            var value = me.value;
-            if (value) {
-                me.value = null;
-                me.setValue(value);
-            }
 
             me.emit('afterRender', data);
 

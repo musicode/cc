@@ -216,12 +216,16 @@
 
             firstDay: 1,
             activeClass: 'active',
+            value: '2015-1-20',
 
             prevSelector: '.icon-prev',
             nextSelector: '.icon-next',
 
             renderTemplate: function (data) {
                 return monthRender(data);
+            },
+            onChange: function (e) {
+                console.log('change');
             }
         });
 

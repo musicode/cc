@@ -80,6 +80,11 @@ define(function (require, exports, module) {
                 accept: accept && accept.split(','),
                 multiple: element.attr('multiple') === 'multiple'
             });
+
+            faker
+            .on('click' + namespace, me.uploadSelector, function () {
+                me.uploader.upload();
+            });
         },
 
         /**
@@ -91,6 +96,7 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
+            me.faker.off(namespace);
             me.uploader.dispose();
 
             me.faker =
@@ -111,9 +117,20 @@ define(function (require, exports, module) {
         browseSelector: '.browse-file',
         uploadSelector: '.upload-file',
         progressSelector: '.upload-progress',
-        template: '<button class="btn-primary browse-file">选择文件</button>'
-                + '<button class="btn-default upload-file">上传</button>'
+        template: '<div class="uploader">'
+                +     '<div class="upload-progress"></div>'
+                +     '<button class="btn-primary browse-file">选择文件</button>'
+                +     '<button class="btn-default upload-file">上传</button>'
+                + '</div>'
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_form_file';
 
 
     return File;

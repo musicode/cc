@@ -31,7 +31,11 @@
                     var input = $('input');
 
                     new FormDate({
-                        element: input
+                        element: input,
+                        value: '2015-01-20',
+                        onChange: function () {
+                            console.log('change');
+                        }
                     });
 
                 }

@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     var Slider = require('../ui/Slider');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var init = require('../function/init');
 
     /**
      * range 构造函数
@@ -132,28 +133,7 @@ define(function (require, exports, module) {
      * @param {Object=} options
      * @return {Array.<Range>}
      */
-    Range.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Range(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
-
+    Range.init = init(Range);
 
 
     return Range;

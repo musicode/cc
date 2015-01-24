@@ -11,6 +11,7 @@ define(function (require, exports) {
 
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var init = require('../function/init');
 
     /**
      * 文本输入框构造函数
@@ -139,27 +140,7 @@ define(function (require, exports) {
      * @param {Object=} options
      * @return {Array.<Text>}
      */
-    Text.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(
-            function () {
-                result.push(
-                    new Text(
-                        $.extend(
-                            {
-                                element: $(this)
-                            },
-                            options
-                        )
-                    )
-                );
-            }
-        );
-
-        return result;
-    };
+    Text.init = init(Text);
 
 
     return Text;

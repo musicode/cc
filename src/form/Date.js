@@ -89,7 +89,6 @@ define(function (require, exports, module) {
                 element: calendarElement,
                 mode: 'month',
                 date: me.date,
-                value: me.value,
                 today: me.today,
                 template: me.calendarTemplate,
                 renderTemplate: $.proxy(me.renderCalendarTemplate, me),
@@ -124,6 +123,12 @@ define(function (require, exports, module) {
                 }
             });
 
+            var value = me.value;
+            if (value) {
+                me.value = null;
+                me.setValue(value, true);
+            }
+
         },
 
         /**
@@ -153,8 +158,9 @@ define(function (require, exports, module) {
          * 设值
          *
          * @param {string} value 日期，格式为 YYYY-mm-dd
+         * @property {boolean=} silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, silence) {
 
             var me = this;
 
@@ -195,14 +201,16 @@ define(function (require, exports, module) {
                         calendar.render(date);
                     }
 
-                    calendar.setValue(value);
+                    calendar.setValue(value, true);
 
                 }
 
                 me.element.val(value);
                 me.popup.close();
 
-                me.emit('change');
+                if (!silence) {
+                    me.emit('change');
+                }
 
             }
 

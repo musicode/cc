@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Form</title>
+        <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+        <style>
+            input {
+                position: absolute;
+                left: 0;
+                top: 0;
+                opacity: 0;
+                width: 54px;
+                height: 34px;
+            }
+
+        </style>
+    </head>
+    <body>
+
+        <input type="file" />
+
+        <script src="./js/jquery.js"></script>
+        <script src="./js/esl.js"></script>
+        <script src="./js/config.js"></script>
+        <script>
+
+            require(
+
+                [ 'cobble/form/File' ],
+
+                function (File) {
+
+                    new File({
+                        element: $(':file')
+                    });
+                }
+
+            );
+
+        </script>
+    </body>
+</html>
