@@ -76,7 +76,7 @@ define(function (require, exports, module) {
 
                 var value = me.getValue();
 
-                if ($.isNumeric(value)) {
+                if ($.type(value) === 'number') {
                     value = plus(value, me.step);
                     if (me.max != null) {
                         value = Math.min(me.max, value);
@@ -93,14 +93,14 @@ define(function (require, exports, module) {
 
                 var value = me.getValue();
 
-                if ($.isNumeric(value)) {
+                if ($.type(value) === 'number') {
                     value = minus(value, me.step);
                     if (me.min != null) {
                         value = Math.max(me.min, value);
                     }
                 }
                 else {
-                    value = me.max || 0;
+                    value = me.min || 0;
                 }
 
                 me.setValue(value);
@@ -141,6 +141,22 @@ define(function (require, exports, module) {
             );
         },
 
+        getLegalValue: function (value) {
+
+            var me = this;
+
+            if ($.type(value) === 'string') {
+                value = $.trim(value);
+            }
+
+            value = me.validate(value)
+                  ? toNumber(value)
+                  : me.defaultValue;
+
+            return $.type(value) === 'number' ? value : '';
+
+        },
+
         /**
          * 取值
          *
@@ -152,8 +168,9 @@ define(function (require, exports, module) {
             var element = me.element;
 
             return document.activeElement === element[0]
-                ? element.val()
+                ? me.getLegalValue(element.val())
                 : me.value;
+
         },
 
         /**
@@ -167,15 +184,9 @@ define(function (require, exports, module) {
         setValue: function (value, options) {
 
             var me = this;
-
             var element = me.element;
-            var defaultValue = me.defaultValue;
 
-            if (!me.validate(value) && defaultValue != null) {
-                value = defaultValue;
-            }
-
-            value = toNumber(value, '');
+            value = me.getLegalValue(value);
 
             options = options || { };
 
