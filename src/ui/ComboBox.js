@@ -69,8 +69,6 @@ define(function (require, exports, module) {
 
         /**
          * 初始化
-         *
-         * @private
          */
         init: function () {
 
@@ -93,10 +91,21 @@ define(function (require, exports, module) {
             // 因为初始化触发事件会带来同步问题
             // 如果非要触发，可以在初始化后调用 setValue() 手动触发
 
-            // 如果有数据，需要刷新
-            me.refresh({
-                data: me.data
-            });
+            if (me.data) {
+                menu.html(
+                    me.renderTemplate(me.data, me.template)
+                );
+            }
+
+            if (me.value != null) {
+                me.setValue(
+                    me.value,
+                    {
+                        force: true,
+                        silence: true
+                    }
+                );
+            }
 
             menu.on(
                 'click' + namespace,
@@ -126,13 +135,14 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
-         * @property {boolean=} silence 是否不触发 change 事件
-         * @return {boolean} 是否设置成功
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
-            var data = { };
+            var data;
 
             var menu = me.menu;
             var target = menu.find('[data-value="' + value + '"]');
@@ -145,20 +155,23 @@ define(function (require, exports, module) {
                 }
 
             }
+            else {
+                data = { };
+            }
 
-            var result = value != me.value;
+            options = options || { };
 
-            if (result) {
+            if (options.force || value != me.value) {
 
                 var activeClass = me.activeClass;
 
                 if (activeClass) {
                     menu
-                    .find('.' + activeClass)
-                    .removeClass(activeClass);
+                        .find('.' + activeClass)
+                        .removeClass(activeClass);
                 }
 
-                if (target.size() === 1) {
+                if (target.length === 1) {
 
                     me.value = value;
 
@@ -170,7 +183,7 @@ define(function (require, exports, module) {
                     me.value = null;
                 }
 
-                if (!silence) {
+                if (!options.silence) {
                     me.emit('change', data);
                 }
 
@@ -181,8 +194,6 @@ define(function (require, exports, module) {
                     data.text || me.defaultText
                 );
             }
-
-            return result;
 
         },
 
@@ -198,6 +209,8 @@ define(function (require, exports, module) {
             var me = this;
             var value = me.value;
 
+            var setOptions = { };
+
             if (options) {
 
                 var data = options.data;
@@ -212,14 +225,16 @@ define(function (require, exports, module) {
 
                 // 传了值表示必须强制触发 change 事件
                 if ('value' in options) {
+
                     value = options.value;
-                    // 确保两者不一样
-                    me.value = !value;
+
+                    setOptions.force = true;
+
                 }
 
             }
 
-            me.setValue(value);
+            me.setValue(value, setOptions);
 
         },
 

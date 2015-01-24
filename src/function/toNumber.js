@@ -1,6 +1,6 @@
 /**
  * @file 转成 number 类型
- * @author zhujialu
+ * @author zhujl
  */
 define(function (require, exports, module) {
 

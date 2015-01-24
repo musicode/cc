@@ -141,6 +141,12 @@ define(function (require, exports, module) {
             );
         },
 
+        /**
+         * 获取合法值
+         *
+         * @param {*} value
+         * @returns {number|string}
+         */
         getLegalValue: function (value) {
 
             var me = this;

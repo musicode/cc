@@ -84,16 +84,15 @@ define(function (require, exports, module) {
                 renderTemplate: me.renderTemplate,
                 activeClass: me.activeClass,
                 openClass: me.openClass,
-                setText: function (text) {
-                    if ($.isFunction(me.setText)) {
-                        me.setText(text);
-                    }
-                },
+                setText: $.proxy(me.setText, me),
                 onChange: function (e, data) {
 
-                    me.setValue(data.value);
-
-                    me.emit('change', data);
+                    me.setValue(
+                        data.value,
+                        {
+                            data: data
+                        }
+                    );
 
                 },
                 onAfterShow: function () {
@@ -119,22 +118,31 @@ define(function (require, exports, module) {
          * 设置当前选中的值
          *
          * @param {string} value
-         * @return {boolean} 是否设置成功
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, options) {
 
             var me = this;
 
-            var result = value != me.value;
+            options = options || { };
 
-            if (result) {
+            if (options.force || value != me.value) {
+
                 me.value = value;
-                me.input.val(value == null ? '' : value);
+
+                me.input.val(
+                    value == null ? '' : value
+                );
 
                 me.comboBox.setValue(value);
-            }
 
-            return result;
+                if (!options.silence) {
+                    me.emit('change', options.data);
+                }
+
+            }
 
         },
 
