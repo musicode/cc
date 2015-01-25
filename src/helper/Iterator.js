@@ -19,11 +19,10 @@ define(function (require, exports, module) {
      * @property {number=} options.startIndex 开始索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
-     * @property {number=} options.prevKey 上一个 keyCode，默认是方向键上
-     * @property {number=} options.nextKey 下一个 keyCode，默认是方向键下
+     * @property {string=} options.prevKey 上一个键名，默认是方向键上（up）
+     * @property {string=} options.nextKey 下一个键名，默认是方向键下（down）
      * @property {boolean=} options.loop 是否可循环遍历
      * @property {number=} options.delay 遍历时间间隔，值越小速度越快
-     * @property {boolean=} options.autoScroll 是否自动滚动
      * @property {Function=} options.onChange
      *
      */

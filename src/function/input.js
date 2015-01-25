@@ -75,16 +75,13 @@ define(function (require, exports, module) {
         element.off(namespace);
     }
 
-    return {
+    exports.init = support === 'input'
+                 ? $.noop
+                 : bindPropertyChange;
 
-        init: support === 'input'
-            ? $.noop
-            : bindPropertyChange,
+    exports.dispose = support === 'input'
+                    ? $.noop
+                    : unbindPropertyChange;
 
-        dispose: support === 'input'
-            ? $.noop
-            : unbindPropertyChange
-
-    }
 
 });

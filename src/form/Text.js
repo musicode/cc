@@ -1,5 +1,5 @@
 /**
- * @file 完善 <input type="text" />
+ * @file 文本输入框
  * @author zhujl
  */
 define(function (require, exports) {
@@ -87,18 +87,29 @@ define(function (require, exports) {
          * 设置输入框的值
          *
          * @params {string} value
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, options) {
 
             var me = this;
 
-            me.element.val(value);
+            options = options || { };
 
-            if (me.placeholder) {
-                me.placeholder.refresh();
+            if (options.force || me.getValue() !== value) {
+
+                me.element.val(value);
+
+                if (me.placeholder) {
+                    me.placeholder.refresh();
+                }
+
+                if (!options.silence) {
+                    me.emit('change');
+                }
+
             }
-
-            me.emit('change');
 
         },
 
@@ -112,14 +123,11 @@ define(function (require, exports) {
             lifeCycle.dispose(me);
 
             me.input.dispose();
+            me.placeholder.dispose();
 
             me.element =
-            me.input = null;
-
-            if (me.placeholder) {
-                me.placeholder.dispose();
-                me.placeholder = null;
-            }
+            me.input =
+            me.placeholder = null;
 
         }
     };

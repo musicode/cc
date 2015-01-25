@@ -70,6 +70,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var init = require('../function/init');
     var split = require('../function/split');
     var position = require('../util/position');
     var debounce = require('../function/debounce');
@@ -421,25 +422,7 @@ define(function (require, exports, module) {
      * @param {Object=} options 配置参数
      * @return {Array.<Tooltip>}
      */
-    Tooltip.init = function (element, options) {
-
-        var result = [ ];
-
-        element.each(function () {
-            result.push(
-                new Tooltip(
-                    $.extend(
-                        {
-                            element: $(this)
-                        },
-                        options
-                    )
-                )
-            );
-        });
-
-        return result;
-    };
+    Tooltip.init = init(Tooltip);
 
     /**
      * 测试左侧
