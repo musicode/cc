@@ -1,9 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title></title>
-</head>
-<body>
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Form</title>
+        <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
 
-</body>
+        <style>
+            .form-text {
+                background-color: transparent;
+                position: relative;
+                z-index: 2;
+            }
+            .placeholder-wrapper {
+                background-color: #FFF;
+            }
+        </style>
+    </head>
+    <body>
+
+        <input type="text" class="form-text" placeholder="请输入文本" />
+
+        <textarea class="form-text" placeholder="请输入文本"></textarea>
+
+        <script src="./js/jquery.js"></script>
+        <script src="./js/esl.js"></script>
+        <script src="./js/config.js"></script>
+        <script>
+
+            require(
+
+                [ 'cobble/Form/Text' ],
+
+                function (Text) {
+
+                    new Text({
+                        element: $(':text'),
+                        onChange: function () {
+                            console.log(this.element.val());
+                        }
+                    });
+
+                    new Text({
+                        element: $('textarea'),
+                        onChange: function () {
+                            console.log(this.element.val());
+                        }
+                    });
+
+                }
+            );
+        </script>
+    </body>
 </html>

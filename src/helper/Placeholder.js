@@ -115,7 +115,7 @@ define(function (require, exports, module) {
      */
     Placeholder.defaultOptions = {
         simple: false,
-        nativeFirst: false,
+        nativeFirst: true,
         simpleClass: 'placeholder-active',
         placeholderSelector: '.placeholder',
         template: '<div class="placeholder-wrapper">'

@@ -161,6 +161,9 @@ define(function (require, exports, module) {
                 smart: true,
                 longPress: false,
                 action: {
+                    up: function (e) {
+                        e.preventDefault();
+                    },
                     enter: function () {
 
                         me.close();

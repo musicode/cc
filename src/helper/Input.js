@@ -27,12 +27,12 @@ define(function (require, exports, module) {
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      *
-     * 3. chrome 下 <input type="text" /> 按方向键上会使光标跑到最左侧
      *
      */
 
     'use strict';
 
+    var input = require('../function/input');
     var around = require('../function/around');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
@@ -100,15 +100,9 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-
-            var bindEvent = support === 'input'
-                          ? bindInput
-                          : bindPropertyChange;
-
-            bindEvent(me);
-
             var element = me.element;
-            var isInput = element.prop('tagName') === 'INPUT';
+
+            input.init(element);
 
             var action = me.action;
             if (action) {
@@ -121,16 +115,13 @@ define(function (require, exports, module) {
             }
 
             var oldValue;
-            var isCharKey;
+            var isLongPressing;
 
             me.keyboard = new Keyboard({
                 element: element,
                 action: action,
                 longPress: me.longPress,
                 onKeyDown: function (e) {
-                    if (isInput && e.keyCode === Keyboard.map.up) {
-                        e.preventDefault();
-                    }
                     me.emit(e);
                 },
                 onKeyUp: function (e) {
@@ -139,18 +130,25 @@ define(function (require, exports, module) {
                 onBeforeLongPress: function (e, data) {
 
                     oldValue = element.val();
-                    isCharKey = data.isCharKey;
 
+                    isLongPressing = true;
                     me.emit('beforeLongPress');
 
                 },
                 onAfterLongPress: function (e) {
 
+                    isLongPressing = false;
                     me.emit('afterLongPress');
 
-                    if (isCharKey && oldValue !== element.val()) {
+                    if (oldValue !== element.val()) {
                         me.emit('change');
                     }
+                }
+            });
+
+            element.on('input', function () {
+                if (!isLongPressing || !me.smart) {
+                    me.emit('change');
                 }
             });
 
@@ -209,7 +207,9 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
-            me.element.off(namespace);
+            var element = me.element;
+            input.dispose(element);
+            element.off(namespace);
 
             me.keyboard.dispose();
 
@@ -238,84 +238,6 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_helper_input';
-
-    var input = $('<input type="text" />')[0];
-
-    /**
-     * 特性检测支持的 input 事件名称
-     *
-     * @inner
-     * @type {string}
-     */
-    var support = 'oninput' in input
-                ? 'input'
-                : 'propertychange';
-
-    input = null;
-
-    /**
-     * 初始化标准浏览器的 input 事件监听
-     *
-     * @inner
-     * @param {Input} input
-     */
-    function bindInput(input) {
-        input.element.on(
-            support + namespace,
-            function () {
-                input.emit('change');
-            }
-        );
-    }
-
-    /**
-     * 初始化 IE8- 的 propertychange 事件监听
-     *
-     * @inner
-     * @param {Input} input
-     */
-    function bindPropertyChange(input) {
-
-        var element = input.element;
-
-        // propertychange 事件在 IE67 下可能出现死循环，原因不明
-        // 简单的判断 propertyName 是否为 value 不够
-        // 必须跟上次的值比较一下
-        var oldValue = element.val();
-
-        // element.val('xxx') 在 IE 下会触发 propertychange
-        // 这和标准浏览器的行为不一致
-        // 这个并不能完美解决问题
-        // 比如使用 element[0].value = 'xx' 无法检测到
-        var changeByVal = false;
-
-        element.on(
-            support + namespace,
-            function (e) {
-                if (changeByVal) {
-                    changeByVal = false;
-                    return;
-                }
-                if (e.originalEvent.propertyName === 'value') {
-                    var newValue = element.val();
-                    if (newValue !== oldValue) {
-                        input.emit('change');
-                        oldValue = newValue;
-                    }
-                }
-            }
-        );
-
-        around(
-            element,
-            'val',
-            function () {
-                if (arguments.length !== 0) {
-                    changeByVal = true;
-                }
-            }
-        );
-    }
 
 
     return Input;

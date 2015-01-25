@@ -277,16 +277,6 @@ define(function (require, exports, module) {
 
     $.extend(name2Code, char2Key, combinationKeys);
 
-    // 为了快速查找，转换一下 charKeys
-    var key2Char = { };
-
-    $.each(
-        char2Key,
-        function (key, value) {
-            key2Char[value] = key;
-        }
-    );
-
     /**
      * 键值映射表
      *
@@ -398,10 +388,7 @@ define(function (require, exports, module) {
             if (counter === 1) {
 
                 keyboard.emit(
-                    'beforeLongPress',
-                    {
-                        isCharKey: key2Char[keyCode] != null
-                    }
+                    'beforeLongPress'
                 );
 
             }
