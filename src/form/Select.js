@@ -181,7 +181,7 @@ define(function (require, exports, module) {
         defaultText: '请选择',
         buttonSelector: '.btn-default',
         menuSelector: '.dropdown-menu',
-        labelSelector: 'span',
+        labelSelector: '.btn-default span',
         activeClass: 'active',
         openClass: 'open',
         renderTemplate: function (data) {

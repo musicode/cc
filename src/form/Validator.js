@@ -253,7 +253,9 @@ define(function (require, exports, module) {
                         if (item.error) {
                             errors.push(item);
                         }
-                        fields.push(item.element);
+                        fields.push(
+                            item.element.prop('name')
+                        );
                     }
                 );
 
@@ -321,7 +323,13 @@ define(function (require, exports, module) {
                     if (!target.disabled) {
 
                         // 字段配置信息
-                        var conf = me.fields[name] || { };
+                        var hasConf = true;
+                        var conf = me.fields[name];
+
+                        if (!conf) {
+                            hasConf = false;
+                            conf = { };
+                        }
 
                         // 不要用 field.prop，因为不合法的 type，浏览器会纠正为 text
                         var type = conf.type || field.attr('type') || 'text';
@@ -382,7 +390,7 @@ define(function (require, exports, module) {
 
                     }
 
-                    if (error != null) {
+                    if (hasConf) {
 
                         index = data.push({
                             element: field,
