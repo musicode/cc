@@ -88,11 +88,10 @@ define(function (require, exports, module) {
                 onChange: function (e, data) {
 
                     me.setValue(
-                        data.value,
-                        {
-                            data: data
-                        }
+                        data.value
                     );
+
+                    me.emit('change', data);
 
                 },
                 onAfterShow: function () {
@@ -137,10 +136,6 @@ define(function (require, exports, module) {
                 );
 
                 me.comboBox.setValue(value);
-
-                if (!options.silence) {
-                    me.emit('change', options.data);
-                }
 
             }
 

@@ -73,7 +73,8 @@ define(function (require, exports, module) {
         var counter = 0;
 
         var oldValue = element.val();
-        var newValue;
+
+        var timer;
 
         var startIms = function () {
 
@@ -90,13 +91,33 @@ define(function (require, exports, module) {
 
                 isImsInput = false;
 
+                var value = element.val();
+
                 element.data(imsDataKey, isImsInput);
 
-                if (oldValue !== newValue) {
+                if (oldValue !== value) {
                     element.trigger('input');
                 }
 
-                oldValue = newValue;
+                oldValue = value;
+
+            }
+
+        };
+
+        var startTimer = function () {
+
+            if (counter === 1) {
+                startIms();
+            }
+
+        };
+
+        var endTimer = function () {
+
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
             }
 
         };
@@ -110,6 +131,7 @@ define(function (require, exports, module) {
 
                 // 这里不处理长按
                 if (counter > 1) {
+                    endTimer();
                     return;
                 }
 
@@ -117,14 +139,10 @@ define(function (require, exports, module) {
                     startIms();
                 }
                 else {
-                    setTimeout(
-                        function () {
-                            if (counter === 1) {
-                                startIms();
-                            }
-                        },
+                    timer = setTimeout(
+                        startTimer,
                         300
-                     );
+                    );
                 }
 
             }
@@ -134,12 +152,10 @@ define(function (require, exports, module) {
             'keyup' + namespace,
             function (e) {
 
+                endTimer();
+
                 if (isImsInput && isImsKey(e.keyCode)) {
-
-                    newValue = element.val();
-
                     endIms();
-
                 }
 
                 counter = 0;
