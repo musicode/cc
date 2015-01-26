@@ -11,14 +11,12 @@ define(function (require, exports, module) {
     var input = $('<input type="text" />')[0];
 
     /**
-     * 特性检测支持的 input 事件名称
+     * 特性检测是否支持 input 事件
      *
      * @inner
      * @type {string}
      */
-    var support = 'oninput' in input
-                ? 'input'
-                : 'propertychange';
+    var supportInput = 'oninput' in input;
 
     input = null;
 
@@ -75,11 +73,11 @@ define(function (require, exports, module) {
         element.off(namespace);
     }
 
-    exports.init = support === 'input'
+    exports.init = supportInput
                  ? $.noop
                  : bindPropertyChange;
 
-    exports.dispose = support === 'input'
+    exports.dispose = supportInput
                     ? $.noop
                     : unbindPropertyChange;
 

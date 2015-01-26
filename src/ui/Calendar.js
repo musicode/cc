@@ -255,6 +255,9 @@ define(function (require) {
             var me = this;
             var firstDay = me.firstDay;
 
+            // 转成 00:00:00 便于和 today 比较大小
+            date = date.setHours(0, 0, 0, 0);
+
             var weekFirstDay;
             var weekLastDay;
 
@@ -296,8 +299,7 @@ define(function (require) {
 
             var me = this;
 
-            // 转成 00:00:00 便于和 today 比较大小
-            me.date = date.setHours(0, 0, 0, 0);
+            me.date = date;
 
             var data = me.data = me.createData(date);
 
