@@ -222,14 +222,20 @@ define(function (require, exports, module) {
             var data = [ ];
             var promises = [ ];
 
-            groups.each(
-                function () {
-                    var result = me.validateGroup($(this));
-                    if (result.promise) {
-                        promises.push(result);
-                        result = result.data;
+            $.each(
+                groups,
+                function (index, group) {
+
+                    var result = me.validateGroup($(group));
+
+                    if (result) {
+                        if (result.promise) {
+                            promises.push(result);
+                            result = result.data;
+                        }
+                        $.merge(data, result);
                     }
-                    $.merge(data, result);
+
                 }
             );
 
@@ -376,14 +382,17 @@ define(function (require, exports, module) {
 
                     }
 
-                    data.push({
-                        element: field,
-                        error: error
-                    });
+                    if (error != null) {
 
-                    if (error && error.promise) {
-                        promises.push(error);
-                        indexs.push(index);
+                        index = data.push({
+                            element: field,
+                            error: error
+                        });
+
+                        if (error && error.promise) {
+                            promises.push(error);
+                            indexs.push(index);
+                        }
                     }
 
                 });

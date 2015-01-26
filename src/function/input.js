@@ -208,7 +208,7 @@ define(function (require, exports, module) {
         var changeByVal = false;
 
         element.on(
-            support + namespace,
+            'propertychange' + namespace,
             function (e) {
                 if (changeByVal) {
                     changeByVal = false;

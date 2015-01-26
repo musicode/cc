@@ -271,8 +271,9 @@ define(function (require, exports, module) {
             refresh: function () {
 
                 var me = this;
+                var value = me.element.val();
 
-                if (me.element.val()) {
+                if ($.trim(value)) {
                     me.hide();
                 }
                 else {
