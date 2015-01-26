@@ -239,7 +239,7 @@ define(function (require, exports, module) {
                 }
             );
 
-            var fields = [ ];
+            fields = [ ];
             var errors = [ ];
 
             /**

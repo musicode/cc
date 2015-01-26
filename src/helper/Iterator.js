@@ -124,17 +124,19 @@ define(function (require, exports, module) {
             var me = this;
             var from = me.index;
 
-            me.index = index;
+            if (from !== index) {
 
-            me.emit(
-                'change',
-                {
-                    from: from,
-                    to: index,
-                    action: action || 'to'
-                }
-            );
+                me.index = index;
 
+                me.emit(
+                    'change',
+                    {
+                        from: from,
+                        to: index,
+                        action: action || 'to'
+                    }
+                );
+            }
         },
 
         prev: function () {
