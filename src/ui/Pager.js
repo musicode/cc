@@ -35,7 +35,7 @@ define(function (require, exports, module) {
      *
      * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
      *
-     * @property {string=} options.pageTemplate 页码模板 pageAni
+     * @property {string=} options.pageTemplate 页码模板
      * @property {string=} options.prevTemplate 上一页模板
      * @property {string=} options.nextTemplate 下一页模板
      * @property {string=} options.ellipsisTemplate 省略号模板

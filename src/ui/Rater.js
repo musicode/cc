@@ -128,24 +128,37 @@ define(function (require, exports, module) {
          * 设置当前星级
          *
          * @param {number} value
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          */
-        setValue: function (value) {
+        setValue: function (value, options) {
 
             var me = this;
 
-            if (value === me.value || me.readOnly) {
+            if (me.readOnly) {
                 return;
             }
 
-            refresh(me, value);
-            me.value = value;
+            options = options || { };
 
-            me.emit(
-                'change',
-                {
-                    value: value
+            if (options.force || value !== me.value) {
+
+                me.value = value;
+
+                refresh(me, value);
+
+                if (!options.silence) {
+                    me.emit(
+                        'change',
+                        {
+                            value: value
+                        }
+                    );
                 }
-            );
+            }
+
+
         },
 
         /**

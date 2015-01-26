@@ -216,10 +216,12 @@ define(function (require, exports, module) {
                 value = position(me.thumb)[conf.position];
             }
 
-            // 确保不同，才可正常更新
-            me.value = !value;
-
-            me.setValue(value);
+            me.setValue(
+                value,
+                {
+                    force: true
+                }
+            );
 
         },
 
@@ -236,10 +238,12 @@ define(function (require, exports, module) {
          * 设置当前值
          *
          * @param {number} value
-         * @param {boolean=} silence 是否不触发 change 事件
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          * @return {boolean} 是否更新成功
          */
-        setValue: function (value, silence) {
+        setValue: function (value, options) {
 
             var me = this;
 
@@ -249,9 +253,9 @@ define(function (require, exports, module) {
 
             value = restrain(value, min, max);
 
-            var result = value !== me.value;
+            options = options || { };
 
-            if (result) {
+            if (options.force || value !== me.value) {
 
                 me.value = value;
 
@@ -275,12 +279,15 @@ define(function (require, exports, module) {
                     thumb.css(style);
                 }
 
-                if (!silence) {
+                if (!options.silence) {
                     me.emit('change');
                 }
+
+                return true;
+
             }
 
-            return result;
+            return false;
 
         },
 

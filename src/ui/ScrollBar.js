@@ -301,7 +301,12 @@ define(function (require, exports, module) {
             var slider = scrollBar.slider;
 
             if (!target || target !== 'panel') {
-                result = slider.setValue(value, true);
+                result = slider.setValue(
+                            value,
+                            {
+                                silence: true
+                            }
+                        );
             }
 
             // 重新获取 slider 校正过的值
