@@ -14,7 +14,7 @@ define(function (require, exports, module) {
      * 特性检测是否支持 input 事件
      *
      * @inner
-     * @type {string}
+     * @type {boolean}
      */
     var supportInput = 'oninput' in input;
 
@@ -23,12 +23,162 @@ define(function (require, exports, module) {
     var namespace = '.cobble_function_input';
 
     /**
+     * =========================================
+     * 处理中文输入法 - start
+     * =========================================
+     */
+
+    /**
+     * 存于元素 data 中的标识
+     *
+     * 如果为 true，表示正在使用中文输入法输入
+     *
+     * @inner
+     * @type {string}
+     */
+    var imsDataKey = '__ims__key__';
+
+    /**
+     * 中文输入法是否开启，有两种判断方式：
+     *
+     * 1. keydown 的 keyCode 可能是 0 或 229
+     * 2. keydown 的 keyCode 可能是正常值，但是不触发 keyup
+     *
+     * @inner
+     * @type {Object}
+     */
+    var imsKeyCode = {
+        0: 1,
+        229: 1
+    };
+
+    /**
+     * keyup 事件中，触发中文输入法写入到输入框的 keyCode
+     *
+     * @inner
+     * @param {?number} keyCode
+     * @return {boolean}
+     */
+    function isImsKey(keyCode) {
+        return (keyCode >= 49 && keyCode <= 54)     // 主键盘数字键 1-6
+            || (keyCode >= 186 && keyCode <= 192)   // 中文标点符号
+            || (keyCode >= 219 && keyCode <= 222)   // 中文标点符号
+            || keyCode === 32                       // 空格
+            || keyCode === 13;                      // 回车
+    }
+
+    function processIms(element) {
+
+        var isImsInput;
+        var counter = 0;
+
+        var oldValue = element.val();
+        var newValue;
+
+        var startIms = function () {
+
+            if (!isImsInput) {
+                isImsInput = true;
+                element.data(imsDataKey, isImsInput);
+            }
+
+        };
+
+        var endIms = function () {
+
+            if (isImsInput) {
+
+                isImsInput = false;
+
+                element.data(imsDataKey, isImsInput);
+
+                if (oldValue !== newValue) {
+                    element.trigger('input');
+                }
+
+                oldValue = newValue;
+            }
+
+        };
+
+
+        element.on(
+            'keydown' + namespace,
+            function (e) {
+
+                counter++;
+
+                // 这里不处理长按
+                if (counter > 1) {
+                    return;
+                }
+
+                if (imsKeyCode[e.keyCode]) {
+                    startIms();
+                }
+                else {
+                    setTimeout(
+                        function () {
+                            if (counter === 1) {
+                                startIms();
+                            }
+                        },
+                        300
+                     );
+                }
+
+            }
+        );
+
+        element.on(
+            'keyup' + namespace,
+            function (e) {
+
+                if (isImsInput && isImsKey(e.keyCode)) {
+
+                    newValue = element.val();
+
+                    endIms();
+
+                }
+
+                counter = 0;
+
+            }
+        );
+    }
+
+    /**
+     * =========================================
+     * 处理中文输入法 - end
+     * =========================================
+     */
+
+    function bindInput(element) {
+
+        processIms(element);
+
+        element.on(
+            'input' + namespace,
+            function (e) {
+
+                if (element.data(imsDataKey)) {
+                    e.stopImmediatePropagation();
+                }
+
+            }
+        );
+    }
+
+    /**
      * 初始化 IE8- 的 propertychange 事件监听
      *
      * @inner
      * @param {jQuery} element
      */
     function bindPropertyChange(element) {
+
+        processIms(element);
 
         // propertychange 事件在 IE67 下可能出现死循环，原因不明
         // 简单的判断 propertyName 是否为 value 不够
@@ -50,7 +200,7 @@ define(function (require, exports, module) {
                 }
                 if (e.originalEvent.propertyName === 'value') {
                     var newValue = element.val();
-                    if (newValue !== oldValue) {
+                    if (newValue !== oldValue && !element.data(imsDataKey)) {
                         element.trigger('input');
                         oldValue = newValue;
                     }
@@ -69,17 +219,14 @@ define(function (require, exports, module) {
         );
     }
 
-    function unbindPropertyChange(element) {
-        element.off(namespace);
-    }
-
     exports.init = supportInput
-                 ? $.noop
+                 ? bindInput
                  : bindPropertyChange;
 
-    exports.dispose = supportInput
-                    ? $.noop
-                    : unbindPropertyChange;
+    exports.dispose = function (element) {
+        element.off(namespace);
+        element.removeAttr(imsDataKey);
+    };
 
 
 });

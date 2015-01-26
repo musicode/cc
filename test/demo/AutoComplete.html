@@ -104,6 +104,10 @@
                     },
                     load: function (value, callback) {
 
+                        if (!value) {
+                            return;
+                        }
+
                         return $.ajax(
                             'http://hui.baidu.com/api/suggestion.php',
                             {

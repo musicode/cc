@@ -163,6 +163,19 @@ define(function (require, exports, module) {
 
             me.to(index, 'next');
 
+        },
+
+        dispose: function () {
+
+            var me = this;
+
+            me.stop();
+
+            me.keyboard.dispose();
+
+            me.element =
+            me.keyboard = null;
+
         }
 
     };
