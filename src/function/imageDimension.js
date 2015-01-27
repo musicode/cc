@@ -34,7 +34,7 @@
 
             if (height != null && height > 0) {
                 callback(img.width, height);
-                delete imageList[index];
+                delete imageList[index - 1];
                 img = null;
             }
             else {

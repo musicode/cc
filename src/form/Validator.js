@@ -239,7 +239,7 @@ define(function (require, exports, module) {
                 }
             );
 
-            fields = [ ];
+            var fields = [ ];
             var errors = [ ];
 
             /**
@@ -399,7 +399,7 @@ define(function (require, exports, module) {
 
                         if (error && error.promise) {
                             promises.push(error);
-                            indexs.push(index);
+                            indexs.push(index - 1);
                         }
                     }
 
