@@ -34,6 +34,7 @@ define(function (require, exports, module) {
     var disableSelection = require('../function/disableSelection');
 
     var instance = require('../util/instance');
+    var supportEvent = require('../util/click');
 
     /**
      * 拖拽
@@ -86,7 +87,7 @@ define(function (require, exports, module) {
 
             element
             .css(position(element))
-            .on('mousedown' + namespace, me, onBeforeDrag);
+            .on(supportEvent.mousedown + namespace, me, onBeforeDrag);
         },
 
         /**
@@ -273,16 +274,16 @@ define(function (require, exports, module) {
      */
     var global = {
         absoluteX: function (e) {
-            return e.clientX + pageScrollLeft();
+            return supportEvent.clientX(e) + pageScrollLeft();
         },
         absoluteY: function (e) {
-            return e.clientY + pageScrollTop();
+            return supportEvent.clientY(e) + pageScrollTop();
         },
         fixedX: function (e) {
-            return e.clientX;
+            return supportEvent.clientX(e);
         },
         fixedY: function (e) {
-            return e.clientY;
+            return supportEvent.clientY(e);
         }
     };
 
@@ -372,8 +373,8 @@ define(function (require, exports, module) {
 
         instance
         .document
-        .on('mousemove' + namespace, draggable, onDrag)
-        .on('mouseup' + namespace, draggable, onAfterDrag);
+        .on(supportEvent.mousemove + namespace, draggable, onDrag)
+        .on(supportEvent.mouseup + namespace, draggable, onAfterDrag);
 
     }
 

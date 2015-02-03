@@ -65,6 +65,7 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var instance = require('../util/instance');
+    var supportEvent = require('../util/click');
 
     /**
      * 简单的弹出式交互
@@ -279,17 +280,6 @@ define(function (require, exports, module) {
             },
             handler: showFactory('focus')
         },
-
-        click: {
-            on: function (popup) {
-                popup.element.on('click', popup, showTrigger.click.handler);
-            },
-            off: function (popup) {
-                popup.element.off('click', showTrigger.click.handler);
-            },
-            handler: showFactory('click')
-        },
-
         over: {
             on: function (popup) {
                 popup.element.on('mouseenter', popup, showTrigger.over.handler);
@@ -310,6 +300,19 @@ define(function (require, exports, module) {
         }
     };
 
+    var clickType = supportEvent.click;
+
+    showTrigger.click =
+    showTrigger.touchstart = {
+        on: function (popup) {
+            popup.element.on(clickType, popup, showTrigger.click.handler);
+        },
+        off: function (popup) {
+            popup.element.off(clickType, showTrigger.click.handler);
+        },
+        handler: showFactory(clickType)
+    };
+
     var hideTrigger = {
         blur: {
             on: function (popup) {
@@ -320,30 +323,6 @@ define(function (require, exports, module) {
             },
             handler: hideFactory('blur')
         },
-
-        click: {
-            on: function (popup) {
-                instance.document.on(
-                    'click',
-                    popup,
-                    popup.cache.clickHandler = hideTrigger.click.handler()
-                );
-            },
-            off: function (popup) {
-                var cache = popup.cache;
-                instance.document.off('click', cache.clickHandler);
-                cache.clickHandler = null;
-            },
-            handler: function () {
-                return hideFactory(
-                    'click',
-                    function (popup, e) {
-                        return !contains(popup.layer, e.target);
-                    }
-                );
-            }
-        },
-
         out: {
             on: function (popup) {
                 var handler = hideTrigger.out.handler;
@@ -388,6 +367,30 @@ define(function (require, exports, module) {
                     }
                 );
             }
+        }
+    };
+
+    hideTrigger.click =
+    hideTrigger.touchstart = {
+        on: function (popup) {
+            instance.document.on(
+                clickType,
+                popup,
+                popup.cache.clickHandler = hideTrigger.click.handler()
+            );
+        },
+        off: function (popup) {
+            var cache = popup.cache;
+            instance.document.off(clickType, cache.clickHandler);
+            cache.clickHandler = null;
+        },
+        handler: function () {
+            return hideFactory(
+                clickType,
+                function (popup, e) {
+                    return !contains(popup.layer, e.target);
+                }
+            );
         }
     };
 
