@@ -114,6 +114,10 @@ define(function (require, exports, module) {
                 }
             });
 
+            if (autoPlay) {
+                me.play();
+            }
+
         },
 
         /**
