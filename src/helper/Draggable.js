@@ -34,7 +34,7 @@ define(function (require, exports, module) {
     var disableSelection = require('../function/disableSelection');
 
     var instance = require('../util/instance');
-    var supportEvent = require('../util/click');
+    var supportEvent = require('../util/mouse');
 
     /**
      * 拖拽

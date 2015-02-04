@@ -1,5 +1,5 @@
 /**
- * @file 点击事件，如果是移动平台，换为 touch 事件
+ * @file 鼠标事件，如果是移动平台，换为 touch 事件
  * @author zhujl
  */
 define(function (require, exports, module) {
@@ -25,7 +25,7 @@ define(function (require, exports, module) {
         }
     };
 
-    var click = {
+    var mouse = {
         click: 'click',
         mousedown: 'mousedown',
         mousemove: 'mousemove',
@@ -44,6 +44,16 @@ define(function (require, exports, module) {
         }
     };
 
-    return 'ontouchstart' in document.body ? touch : click;
+    /**
+     * 类似超极本这种设备同时支持两种方式，应优先使用鼠标
+     *
+     * 但是不好判断 mouse-only touch-only mouse-touch，讨论如下：
+     *
+     * https://github.com/Modernizr/Modernizr/issues/869
+     *
+     * 所以换个判断方式
+     */
+
+    return 'onorientationchange' in window ? touch : mouse;
 
 });

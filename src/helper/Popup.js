@@ -65,7 +65,7 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var instance = require('../util/instance');
-    var supportEvent = require('../util/click');
+    var supportEvent = require('../util/mouse');
 
     /**
      * 简单的弹出式交互
