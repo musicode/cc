@@ -59,7 +59,9 @@ define(function (require, exports, module) {
 
             // 确保是 jQuery 事件对象
             if (!event[$.expando]) {
-                event = $.Event(event);
+                event = $.type(event) === 'string'
+                      ? $.Event(event)
+                      : $.Event(null, event);
             }
 
             // 设置当前实例对象，便于在未知的地方拿到组件实例

@@ -151,7 +151,7 @@ define(function (require, exports, module) {
                         me.emit('enter', target.data);
                     }
                 },
-                onChange: function () {console.log(11);
+                onChange: function () {
                     suggest(me);
                 }
             });
