@@ -13,6 +13,8 @@ define(function (require, exports, module) {
     var timer = require('../function/timer');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var autoScrollUp = require('../function/autoScrollUp');
+    var autoScrollDown = require('../function/autoScrollDown');
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
@@ -96,47 +98,27 @@ define(function (require, exports, module) {
 
                     target = this.data[to];
 
-                    data = target.data;
                     var item = target.element;
 
                     if (me.autoScroll) {
 
+                        var fn = action === 'prev'
+                               ? autoScrollUp
+                               : autoScrollDown;
 
-                        if (action === 'prev') {
+                        fn(menu, item);
 
-                            // item 在 menu 视窗区域不需要滚动
-                            var min = menu.scrollTop();
-                            var max = min + menu.height();
-
-                            var top = item.prop('offsetTop');
-
-                            if (top < min || top > max) {
-                                menu.scrollTop(top);
-                            }
-                        }
-                        else {
-
-                            var menuHeight = menu.height();
-
-                            // item 在 menu 视窗区域不需要滚动
-                            var min = menu.scrollTop();
-                            var max = min + menuHeight;
-
-                            var top = item.prop('offsetTop') + item.outerHeight(true);
-
-                            if (top < min || top > max) {
-                                menu.scrollTop(
-                                    top
-                                  - menuHeight
-                                );
-                            }
-                        }
                     }
 
+                    if (to > 0) {
+                        item.addClass(activeClass);
+                    }
 
-                    item.addClass(activeClass);
+                    if (from > 0) {
+                        this.data[from].element.removeClass(activeClass);
+                    }
 
-                    this.data[from].element.removeClass(activeClass);
+                    data = target.data;
 
                     if (action !== 'render') {
                         element.val(
@@ -165,14 +147,11 @@ define(function (require, exports, module) {
                         e.preventDefault();
                     },
                     enter: function () {
-
                         me.close();
-
                         me.emit('enter', target.data);
-
                     }
                 },
-                onChange: function () {
+                onChange: function () {console.log(11);
                     suggest(me);
                 }
             });
@@ -181,42 +160,37 @@ define(function (require, exports, module) {
 
             var itemSelector = me.itemSelector;
 
-            menu.on(
-                'click', itemSelector, function (e) {
+            menu
+            .on('click' + namespace, itemSelector, function () {
 
-                    var index = $(this).data(indexKey);
+                var index = $(this).data(indexKey);
 
-                    iterator.to(index);
+                iterator.to(
+                    index
+                );
 
-                    me.close();
+                me.close();
 
-                    me.emit(
-                        'select',
-                        target.data
-                    );
-                }
-            )
-            .on(
-                'mouseenter', itemSelector, function (e) {
+                me.emit(
+                    'select',
+                    target.data
+                );
 
-                    var index = $(this).data(indexKey);
+            })
+            .on('mouseenter' + namespace, itemSelector, function () {
 
-                    if (target && index !== iterator.index) {
-                        target.element.removeClass(activeClass);
-                    }
+                iterator.to(
+                    $(this).data(indexKey)
+                );
 
-                    iterator.index = index;
-                }
-            )
-            .on(
-                'mouseleave', itemSelector, function (e) {
+            })
+            .on('mouseleave' + namespace, itemSelector, function () {
 
-                    iterator.to(
-                        iterator.startIndex
-                    );
+                iterator.to(
+                    iterator.startIndex
+                );
 
-                }
-            );
+            });
 
         },
 
@@ -299,13 +273,13 @@ define(function (require, exports, module) {
         open: function () {
 
             var me = this;
+            var popup = me.popup;
 
-            me.emit('beforeOpen');
-
-            me.popup.open();
-
-            me.emit('afterOpen');
-
+            if (popup.hidden) {
+                me.emit('beforeOpen');
+                popup.open();
+                me.emit('afterOpen');
+            }
         },
 
         /**
@@ -314,12 +288,13 @@ define(function (require, exports, module) {
         close: function () {
 
             var me = this;
+            var popup = me.popup;
 
-            me.emit('beforeClose');
-
-            me.popup.close();
-
-            me.emit('afterClose');
+            if (!popup.hidden) {
+                me.emit('beforeClose');
+                popup.close();
+                me.emit('afterClose');
+            }
         },
 
         /**

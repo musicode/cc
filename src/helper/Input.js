@@ -36,6 +36,7 @@ define(function (require, exports, module) {
     var around = require('../function/around');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var keyboard = require('../util/keyboard');
 
     var Keyboard = require('./Keyboard');
 
@@ -127,7 +128,7 @@ define(function (require, exports, module) {
                 onKeyUp: function (e) {
                     me.emit(e);
                 },
-                onBeforeLongPress: function (e, data) {
+                onBeforeLongPress: function () {
 
                     oldValue = element.val();
 
@@ -140,7 +141,7 @@ define(function (require, exports, module) {
                     isLongPressing = false;
                     me.emit('afterLongPress');
 
-                    if (oldValue !== element.val()) {
+                    if (keyboard.isCharKey(e.keyCode) && oldValue !== element.val()) {
                         me.emit('change');
                     }
                 }
