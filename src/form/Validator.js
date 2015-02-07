@@ -323,33 +323,41 @@ define(function (require, exports, module) {
                     if (!target.disabled) {
 
                         // 字段配置信息
-                        var hasConf = true;
+                        var hasConf;
                         var conf = me.fields[name];
 
-                        if (!conf) {
+                        if (conf) {
+                            hasConf = true;
+                            conf = $.extend(true, { }, conf);
+                        }
+                        else {
                             hasConf = false;
                             conf = { };
                         }
 
-                        // 不要用 field.prop，因为不合法的 type，浏览器会纠正为 text
-                        var type = conf.type || field.attr('type') || 'text';
-                        var value = target.value;
+                        if (!conf.type) {
+                            // 不用 field.prop，因为不合法的 type，浏览器会纠正为 text
+                            conf.type = field.attr('type') || 'text';
+                        }
+
+                        conf.form = me.element;
+                        conf.value = $.trim(target.value);
 
                         // 验证失败的属性名称，如 max
                         var errorAttr;
 
                         $.each(
-                            Validator.type[type] || [ ],
+                            Validator.type[conf.type] || [ ],
                             function (index, name) {
 
-                                var result = Validator.attr[name](field, me.element);
+                                var result = Validator.attr[name](field, conf);
 
                                 if (result === false) {
                                     errorAttr = name;
                                     return false;
                                 }
                                 // 如果不是强制字段，为空时避免后续属性的检测
-                                else if (value === '' && name === 'required') {
+                                else if (conf.value === '' && name === 'required') {
                                     return false;
                                 }
 
@@ -631,8 +639,8 @@ define(function (require, exports, module) {
      */
     Validator.attr = {
 
-        required: function (field) {
-            if ($.trim(field.val()).length > 0) {
+        required: function (field, data) {
+            if (data.value.length > 0) {
                 return true;
             }
             else if (field.attr('required') === 'required') {
@@ -640,55 +648,55 @@ define(function (require, exports, module) {
             }
         },
 
-        pattern: function (field) {
+        pattern: function (field, data) {
 
             var pattern = field.attr('pattern')
-                        || Validator.pattern[field.attr('type')];
+                        || Validator.pattern[data.type];
 
             if ($.type(pattern) === 'string') {
                 pattern = new RegExp(pattern);
             }
 
             if (pattern) {
-                return pattern.test($.trim(field.val()));
+                return pattern.test(data.value);
             }
         },
 
-        minlength: function (field) {
+        minlength: function (field, data) {
             var len = field.attr('minlength');
             if ($.isNumeric(len)) {
-                return $.trim(field.val()).length >= + len;
+                return data.value.length >= + len;
             }
         },
 
-        maxlength: function (field) {
+        maxlength: function (field, data) {
             var len = field.attr('maxlength');
             if ($.isNumeric(len)) {
-                return $.trim(field.val()).length <= + len;
+                return data.value.length <= + len;
             }
         },
 
-        min: function (field) {
+        min: function (field, data) {
             var min = field.attr('min');
             if ($.isNumeric(min)) {
                 // min 转成数字进行比较
-                return $.trim(field.val()) >= + min;
+                return data.value >= + min;
             }
         },
 
-        max: function (field) {
+        max: function (field, data) {
             var max = field.attr('max');
             if ($.isNumeric(max)) {
                 // max 转成数字进行比较
-                return $.trim(field.val()) <= + max;
+                return data.value <= + max;
             }
         },
 
-        step: function (field) {
+        step: function (field, data) {
             var min = field.attr('min') || 1;
             var step = field.attr('step');
             if ($.isNumeric(step)) {
-                return ($.trim(field.val()) - min) % step === 0;
+                return (data.value - min) % step === 0;
             }
         },
 
@@ -698,14 +706,13 @@ define(function (require, exports, module) {
          * <input type="password" name="password_confirm" equals="password" />
          *
          * @param {jQuery} field 字段元素
-         * @param {jQuery} form 表单元素
          * @return {?boolean}
          */
-        equals: function (field, form) {
+        equals: function (field, data) {
             var equals = field.attr('equals');
             if (equals) {
-                var target = form.find('[name="' + equals + '"]');
-                return $.trim(field.val()) === $.trim(target.val());
+                var target = data.form.find('[name="' + equals + '"]');
+                return data.value === $.trim(target.val());
             }
         }
 
