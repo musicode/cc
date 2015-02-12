@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var around = require('./around');
+    var around = require('../function/around');
 
     var input = $('<input type="text" />')[0];
 
@@ -20,7 +20,7 @@ define(function (require, exports, module) {
 
     input = null;
 
-    var namespace = '.cobble_function_input';
+    var namespace = '.cobble_util_input';
 
     /**
      * =========================================
@@ -243,7 +243,7 @@ define(function (require, exports, module) {
 
     exports.dispose = function (element) {
         element.off(namespace);
-        element.removeAttr(imsDataKey);
+        element.removeData(imsDataKey);
     };
 
 

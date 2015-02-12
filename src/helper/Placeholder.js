@@ -31,9 +31,10 @@ define(function (require, exports, module) {
     'use strict';
 
     var init = require('../function/init');
-    var input = require('../function/input');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+
+    var input = require('../util/input');
 
     /**
      * 使输入框元素具有 placeholder 功能

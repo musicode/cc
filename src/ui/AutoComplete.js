@@ -79,7 +79,10 @@ define(function (require, exports, module) {
             var activeClass = me.activeClass;
 
             // 当前选中数据
-            var target;
+            var activeData;
+
+            // 当前选中的元素
+            var activeElement;
 
             // 缓存结果
             me.cache = { };
@@ -96,9 +99,13 @@ define(function (require, exports, module) {
                     var from = data.from;
                     var action = data.action;
 
-                    target = this.data[to];
+                    var target = this.data[to];
 
-                    var item = target.element;
+                    if (activeElement) {
+                        activeElement.removeClass(activeClass);
+                    }
+
+                    activeElement = target.element;
 
                     if (me.autoScroll) {
 
@@ -106,23 +113,19 @@ define(function (require, exports, module) {
                                ? autoScrollUp
                                : autoScrollDown;
 
-                        fn(menu, item);
+                        fn(menu, activeElement);
 
                     }
 
                     if (to > 0) {
-                        item.addClass(activeClass);
+                        activeElement.addClass(activeClass);
                     }
 
-                    if (from > 0) {
-                        this.data[from].element.removeClass(activeClass);
-                    }
-
-                    data = target.data;
+                    activeData = target.data;
 
                     if (action !== 'render') {
                         element.val(
-                            data.text
+                            activeData.text
                         );
                     }
 
@@ -131,7 +134,7 @@ define(function (require, exports, module) {
                         {
                             // 对外界使用来说，要隐藏 input 为 0 的实现
                             index: to - 1,
-                            data: data
+                            data: activeData
                         }
                     );
 
@@ -148,7 +151,7 @@ define(function (require, exports, module) {
                     },
                     enter: function () {
                         me.close();
-                        me.emit('enter', target.data);
+                        me.emit('enter', activeData);
                     }
                 },
                 onChange: function () {
@@ -173,15 +176,20 @@ define(function (require, exports, module) {
 
                 me.emit(
                     'select',
-                    target.data
+                    activeData
                 );
 
             })
             .on('mouseenter' + namespace, itemSelector, function () {
 
-                iterator.to(
-                    $(this).data(indexKey)
-                );
+                if (activeElement) {
+                    activeElement.removeClass(activeClass);
+                }
+
+                activeElement = $(this);
+                activeElement.addClass(activeClass);
+
+                iterator.index = activeElement.data(indexKey);
 
             })
             .on('mouseleave' + namespace, itemSelector, function () {

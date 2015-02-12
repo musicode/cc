@@ -32,11 +32,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var input = require('../function/input');
     var around = require('../function/around');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var keyboard = require('../util/keyboard');
+    var input = require('../util/input');
 
     var Keyboard = require('./Keyboard');
 
@@ -177,7 +177,7 @@ define(function (require, exports, module) {
             var padding = element.innerHeight() - originHeight;
 
             me.on(
-                'change',
+                'input',
                 function () {
 
                     // 把高度重置为原始值才能取到正确的 newHeight
