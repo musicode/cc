@@ -12,16 +12,16 @@ define(function (require, exports, module) {
         mousemove: 'touchmove',
         mouseup: 'touchend',
         pageX: function (e) {
-            return e.originalEvent.touches[0].pageX;
+            return e.originalEvent.changedTouches[0].pageX;
         },
         pageY: function (e) {
-            return e.originalEvent.touches[0].pageY;
+            return e.originalEvent.changedTouches[0].pageY;
         },
         clientX: function (e) {
-            return e.originalEvent.touches[0].clientX;
+            return e.originalEvent.changedTouches[0].clientX;
         },
         clientY: function (e) {
-            return e.originalEvent.touches[0].clientY;
+            return e.originalEvent.changedTouches[0].clientY;
         }
     };
 

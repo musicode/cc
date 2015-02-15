@@ -29,6 +29,14 @@ define(function (require, exports, module) {
      */
 
     /**
+     * 是否是移动端
+     *
+     * @inner
+     * @type {boolean}
+     */
+    var isMobileEnd = /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+    /**
      * 存于元素 data 中的标识
      *
      * 如果为 true，表示正在使用中文输入法输入
@@ -43,6 +51,11 @@ define(function (require, exports, module) {
      *
      * 1. keydown 的 keyCode 可能是 0 或 229
      * 2. keydown 的 keyCode 可能是正常值，但是不触发 keyup
+     *
+     * 移动端不同是，输入中文时，
+     * 文字的拼音形式不会实时写入到输入框，
+     * 而是按下确定的文字时才写入，
+     * 即移动端只有在 keydown 时触发一次 229|0，keyup 时再触发一次 229|0
      *
      * @inner
      * @type {Object}
@@ -65,8 +78,7 @@ define(function (require, exports, module) {
             || (keyCode >= 219 && keyCode <= 222)   // 中文标点符号
             || keyCode === 32                       // 空格
             || keyCode === 13                       // 回车
-            || keyCode === 8                        // backspace 删光也会触发
-            || keyCode === 0;                       // 手机这个奇葩...
+            || keyCode === 8;                       // backspace 删光也会触发
     }
 
     function processIms(element) {
@@ -156,8 +168,11 @@ define(function (require, exports, module) {
 
                 endTimer();
 
-                if (isImsInput && isImsKey(e.keyCode)) {
-                    endIms();
+                if (isImsInput) {
+                    var keyCode = e.keyCode;
+                    if (isMobileEnd ? imsKeyCode[keyCode] : isImsKey(keyCode)) {
+                        endIms();
+                    }
                 }
 
                 counter = 0;

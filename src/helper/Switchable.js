@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var toNumber = require('../function/toNumber');
 
     /**
      * 可切换组件
@@ -42,25 +43,57 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
             var selector = me.selector;
+            var items = me.items = element.find(selector);
 
-            var index = me.index;
+            var index = toNumber(me.index, defaultIndex);
             var activeClass = me.activeClass;
 
-            if (!$.isNumeric(index) && activeClass) {
-                index = element.find(selector)
-                               .index(element.find('.' + me.activeClass));
+            if (index === defaultIndex && activeClass) {
+                index = items.index(element.find('.' + activeClass));
             }
 
-            var trigger = me.trigger;
-            if (trigger === 'click') {
-                element.on('click' + namespace, selector, me, onClick);
-            }
-            else if (trigger === 'over') {
-                element.on('mouseenter' + namespace, selector, me, onEnter);
-                element.on('mouseleave' + namespace, selector, me, onLeave);
+            if (selector) {
+
+                var trigger = me.trigger;
+
+                if (trigger === 'click') {
+
+                    element.on('click' + namespace, selector, function () {
+                        me.to(
+                            items.index(this)
+                        );
+                    });
+
+                }
+                else if (trigger === 'over') {
+
+                    element.on('mouseenter' + namespace, selector, function () {
+
+                        var target = this;
+
+                        me.timer = setTimeout(
+                            function () {
+                                if (me.element) {
+                                    me.to(
+                                        items.index(target)
+                                    );
+                                }
+                            },
+                            150
+                        );
+                    });
+
+                    element.on('mouseleave' + namespace, selector, function () {
+                        if (me.timer) {
+                            clearTimeout(me.timer);
+                            me.timer = null;
+                        }
+                    });
+
+                }
             }
 
-            if ($.type(index) === 'number' && index >= 0) {
+            if (index >= 0) {
                 me.index = defaultIndex;
                 me.to(index);
             }
@@ -75,41 +108,37 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            // 强制为数字类型，避免后续出现问题
-            if ($.isNumeric(index)) {
-
-                index = index >= 0 ? (+ index) : defaultIndex;
-
-            }
-            else {
-                index = defaultIndex;
-            }
-
-            var activeClass = me.activeClass;
+            index = toNumber(index, defaultIndex);
 
             var fromIndex = me.index;
-            var targets = me.element.find(me.selector);
 
-            if (activeClass) {
+            if (index !== fromIndex) {
 
-                if (fromIndex >= 0) {
-                    targets.eq(fromIndex).removeClass(activeClass);
+                var activeClass = me.activeClass;
+
+                var items = me.items;
+
+                if (activeClass) {
+
+                    if (fromIndex >= 0) {
+                        items.eq(fromIndex).removeClass(activeClass);
+                    }
+
+                    if (index >= 0) {
+                        items.eq(index).addClass(activeClass);
+                    }
+
                 }
 
-                if (index >= 0) {
-                    targets.eq(index).addClass(activeClass);
-                }
+                var data = {
+                    from: fromIndex,
+                    to: index
+                };
 
+                me.index = index;
+
+                me.change(data);
             }
-
-            var data = {
-                from: fromIndex,
-                to: index
-            };
-
-            me.index = index;
-
-            me.change(data);
 
         },
 
@@ -123,7 +152,9 @@ define(function (require, exports, module) {
             lifeCycle.dispose(me);
 
             me.element.off(namespace);
-            me.element = null;
+
+            me.element =
+            me.items = null;
         }
     };
 
@@ -149,69 +180,6 @@ define(function (require, exports, module) {
     var namespace = '.cobble_helper_switchable';
 
     var defaultIndex = -1;
-
-    /**
-     * 通过点击切换
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onClick(e) {
-
-        var switchable = e.data;
-        var index = switchable.element
-                       .find(switchable.selector)
-                       .index(this);
-
-        if (index !== switchable.index) {
-            switchable.to(index);
-        }
-    }
-
-    /**
-     * 鼠标进入设置一个延时触发，否则会太过灵敏
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onEnter(e) {
-
-        var switchable = e.data;
-        var target = this;
-
-        switchable.timer =
-        setTimeout(
-            function () {
-                if (switchable.element) {
-
-                    var index = switchable
-                                    .element
-                                    .find(switchable.selector)
-                                    .index(target);
-
-                    if (index !== switchable.index) {
-                        switchable.to(index);
-                    }
-
-                }
-            },
-            150
-        );
-    }
-
-    /**
-     * 鼠标移出时删除延时
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onLeave(e) {
-        var switchable = e.data;
-        if (switchable.timer) {
-            clearTimeout(switchable.timer);
-            switchable.timer = null;
-        }
-    }
 
 
     return Switchable;

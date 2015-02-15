@@ -1,9 +1,6 @@
 <!doctype html>
 
-<script>alert(1)</script>
 <html lang="en">
-
-<script>alert(2)</script>
 
 <head>
     <meta charset="UTF-8">
@@ -99,8 +96,7 @@
         require(
 
             [
-                'cobble/ui/Carousel',
-                'cobble/util/ease'
+                'cobble/ui/Carousel'
             ],
 
             function (Carousel) {
@@ -124,8 +120,7 @@
                             {
                                 left: -185 * to
                             },
-                            500,
-                            'easeInOutQuint'
+                            500
                         );
                     },
 
