@@ -93,8 +93,9 @@ define(function (require, exports, module) {
                 }
             }
 
+            me.index = defaultIndex;
+
             if (index >= 0) {
-                me.index = defaultIndex;
                 me.to(index);
             }
         },
@@ -130,14 +131,12 @@ define(function (require, exports, module) {
 
                 }
 
-                var data = {
-                    from: fromIndex,
-                    to: index
-                };
-
                 me.index = index;
 
-                me.change(data);
+                me.change({
+                    from: fromIndex,
+                    to: index
+                });
             }
 
         },

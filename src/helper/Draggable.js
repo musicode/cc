@@ -23,18 +23,21 @@ define(function (require, exports, module) {
     'use strict';
 
     var page = require('../function/page');
+    var toNumber = require('../function/toNumber');
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var innerOffset = require('../function/innerOffset');
+    var outerOffset = require('../function/outerOffset');
     var pageScrollLeft = require('../function/pageScrollLeft');
     var pageScrollTop = require('../function/pageScrollTop');
     var enableSelection = require('../function/enableSelection');
     var disableSelection = require('../function/disableSelection');
 
     var instance = require('../util/instance');
-    var supportEvent = require('../util/mouse');
+    var supportEvents = require('../util/mouse');
 
     /**
      * 拖拽
@@ -85,9 +88,92 @@ define(function (require, exports, module) {
             // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
             // 因为有这个问题，索性整个判断都放在 onBeforeDrag 中处理
 
-            element
-            .css(position(element))
-            .on(supportEvent.mousedown + namespace, me, onBeforeDrag);
+            element.css(position(element));
+
+            $.each(supportEvents, function (key, event) {
+
+                if (!event.support) {
+                    return;
+                }
+
+                element.on(
+                    event.mousedown + namespace,
+                    function (e) {
+
+                        var target = e.target;
+
+                        var handle = me.handleSelector;
+                        var cancel = me.cancelSelector;
+
+                        if (handle && !hitTarget(element, handle, target)
+                            || cancel && hitTarget(element, cancel, target)
+                        ) {
+                            return;
+                        }
+
+                        // =====================================================================
+                        // 计算偏移量
+                        // 这样方便 onDrag 时作为当前全局坐标( client 坐标或 page 坐标)的减数，减少计算量
+                        // =====================================================================
+
+                        var coord = global[key];
+                        var elementOffset = outerOffset(element);
+
+                        // 因为 offset() 包含 margin
+                        // 所以减去 margin 才是真正的坐标值
+                        var offsetX = coord.absoluteX(e) - elementOffset.left;
+                        var offsetY = coord.absoluteY(e) - elementOffset.top;
+
+                        // 因为 onDrag 是用`全局坐标`减去偏移量
+                        // 所以偏移量应该是全局坐标的偏移量
+                        var container = me.container;
+                        if (contains(container, element)) {
+                            var containerOffset = innerOffset(container);
+                            offsetX += containerOffset.left;
+                            offsetY += containerOffset.top;
+                        }
+
+                        // ====================================================
+                        // 取最新的坐标值比较靠谱
+                        // ====================================================
+                        var style = position(element);
+                        var pos = style.position;
+                        point.left = style.left;
+                        point.top = style.top;
+
+                        var axis = me.axis;
+                        var rect = me.getRectange(true);
+
+                        xCalculator = axis === 'y'
+                                    ? calculator.constant(point.left)
+                                    : calculator.change(
+                                        coord[ pos + 'X' ],
+                                        offsetX,
+                                        rect.x,
+                                        rect.x + rect.width
+                                    );
+
+                        yCalculator = axis === 'x'
+                                    ? calculator.constant(point.top)
+                                    : calculator.change(
+                                        coord[ pos + 'Y' ],
+                                        offsetY,
+                                        rect.y,
+                                        rect.y + rect.height
+                                    );
+
+                        counter = 0;
+
+                        disableSelection();
+
+                        instance
+                            .document
+                            .on(event.mousemove + namespace, me, onDrag)
+                            .on(event.mouseup + namespace, me, onAfterDrag);
+                    }
+                );
+
+            });
         },
 
         /**
@@ -171,7 +257,7 @@ define(function (require, exports, module) {
 
             // 如果不是父子元素关系，需要把容器的外围信息加上
             if (!contains(container, me.element)) {
-                var containerOffset = offset(container);
+                var containerOffset = innerOffset(container);
                 result.x = containerOffset.left;
                 result.y = containerOffset.top;
             }
@@ -272,111 +358,27 @@ define(function (require, exports, module) {
      * @inner
      * @type {Object}
      */
-    var global = {
-        absoluteX: function (e) {
-            return supportEvent.clientX(e) + pageScrollLeft();
-        },
-        absoluteY: function (e) {
-            return supportEvent.clientY(e) + pageScrollTop();
-        },
-        fixedX: function (e) {
-            return supportEvent.clientX(e);
-        },
-        fixedY: function (e) {
-            return supportEvent.clientY(e);
+    var global = { };
+
+    $.each(supportEvents, function (key, event) {
+        if (event.support) {
+            global[key] = {
+                absoluteX: function (e) {
+                    return event.clientX(e) + pageScrollLeft();
+                },
+                absoluteY: function (e) {
+                    return event.clientY(e) + pageScrollTop();
+                },
+                fixedX: function (e) {
+                    return event.clientX(e);
+                },
+                fixedY: function (e) {
+                    return event.clientY(e);
+                }
+            };
         }
-    };
+    });
 
-    /**
-     * mousedown 触发拖拽
-     *
-     * 这里把 onDrag 需要的数据都准备好了
-     * 原则是尽量减少 onDrag 的计算次数
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onBeforeDrag(e) {
-
-        var draggable = e.data;
-        var target = e.target;
-        var element = draggable.element;
-
-        var handle = draggable.handleSelector;
-        var cancel = draggable.cancelSelector;
-
-        if (handle && !hitTarget(element, handle, target)
-            || cancel && hitTarget(element, cancel, target)
-        ) {
-            return;
-        }
-
-        // =====================================================
-        // 计算偏移量
-        // 这样方便 onDrag 时作为当前全局坐标( client 坐标或 page 坐标)的减数，减少计算量
-        // =====================================================
-
-        var elementOffset = element.offset();
-
-        // 因为 offset() 包含 margin
-        // 所以减去 margin 才是真正的坐标值
-        var offsetX = global.absoluteX(e)
-                    - (elementOffset.left
-                        - (parseInt(element.css('margin-left'), 10) || 0)
-                      );
-        var offsetY = global.absoluteY(e)
-                    - (elementOffset.top
-                        - (parseInt(element.css('margin-top'), 10) || 0)
-                      );
-
-        // 因为 onDrag 是用`全局坐标`减去偏移量
-        // 所以偏移量应该是全局坐标的偏移量
-        var container = draggable.container;
-        if (contains(container, element)) {
-            var containerOffset = offset(container);
-            offsetX += containerOffset.left;
-            offsetY += containerOffset.top;
-        }
-
-        // ====================================================
-        // 取最新的坐标值比较靠谱
-        // ====================================================
-        var style = position(element);
-        var pos = style.position;
-        point.left = style.left;
-        point.top = style.top;
-
-        var axis = draggable.axis;
-        var rect = draggable.getRectange(true);
-
-        xCalculator = axis === 'y'
-                    ? calculator.constant(point.left)
-                    : calculator.change(
-                        global[ pos + 'X' ],
-                        offsetX,
-                        rect.x,
-                        rect.x + rect.width
-                    );
-
-        yCalculator = axis === 'x'
-                    ? calculator.constant(point.top)
-                    : calculator.change(
-                        global[ pos + 'Y' ],
-                        offsetY,
-                        rect.y,
-                        rect.y + rect.height
-                    );
-
-        counter = 0;
-
-        disableSelection();
-
-        instance
-        .document
-        .on(supportEvent.mousemove + namespace, draggable, onDrag)
-        .on(supportEvent.mouseup + namespace, draggable, onAfterDrag);
-
-    }
 
     /**
      * 正在拖拽
@@ -465,21 +467,6 @@ define(function (require, exports, module) {
         );
 
         return result;
-    }
-
-    /**
-     * 封装 jq 的 offset 方法，使其包含 border 的宽度
-     *
-     * @inner
-     * @param {jQuery} element
-     * @return {Object}
-     */
-    function offset(element) {
-        var offsetData = element.offset();
-        return {
-            left: offsetData.left + (parseInt(element.css('border-left-width'), 10) || 0),
-            top: offsetData.top + (parseInt(element.css('border-top-width'), 10) || 0)
-        };
     }
 
 

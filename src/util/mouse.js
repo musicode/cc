@@ -6,26 +6,32 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    function getTouchObject(e) {
+        return e.originalEvent.changedTouches[0];
+    }
+
     var touch = {
+        support: 'ontouchend' in window,
         click: 'touchstart',
         mousedown: 'touchstart',
         mousemove: 'touchmove',
         mouseup: 'touchend',
         pageX: function (e) {
-            return e.originalEvent.changedTouches[0].pageX;
+            return getTouchObject(e).pageX;
         },
         pageY: function (e) {
-            return e.originalEvent.changedTouches[0].pageY;
+            return getTouchObject(e).pageY;
         },
         clientX: function (e) {
-            return e.originalEvent.changedTouches[0].clientX;
+            return getTouchObject(e).clientX;
         },
         clientY: function (e) {
-            return e.originalEvent.changedTouches[0].clientY;
+            return getTouchObject(e).clientY;
         }
     };
 
     var mouse = {
+        support: 'onclick' in window,
         click: 'click',
         mousedown: 'mousedown',
         mousemove: 'mousemove',
@@ -44,16 +50,9 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * 类似超极本这种设备同时支持两种方式，应优先使用鼠标
-     *
-     * 但是不好判断 mouse-only touch-only mouse-touch，讨论如下：
-     *
-     * https://github.com/Modernizr/Modernizr/issues/869
-     *
-     * 所以换个判断方式
-     */
-
-    return 'onorientationchange' in window ? touch : mouse;
+    return {
+        touch: touch,
+        mouse: mouse
+    };
 
 });

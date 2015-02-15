@@ -14,6 +14,7 @@ define(function (require, exports, module) {
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
+
     /**
      * 轮播
      *
@@ -84,8 +85,9 @@ define(function (require, exports, module) {
             var autoPlay = me.autoPlay;
             var itemSelector = me.itemSelector;
             if (autoPlay && me.pauseOnHover) {
-                element.on(mouseenter, itemSelector, $.proxy(me.pause, me));
-                element.on(mouseleave, itemSelector, $.proxy(me.play, me));
+                element
+                    .on(mouseenter, itemSelector, $.proxy(me.pause, me))
+                    .on(mouseleave, itemSelector, $.proxy(me.play, me));
             }
 
             me.minIndex = 0;
@@ -100,16 +102,11 @@ define(function (require, exports, module) {
                 activeClass: me.activeClass,
                 change: function (data) {
 
-                    var oldIndex = me.index;
-                    var newIndex = this.index;
+                    me.index = data.to;
 
                     me.animation(data);
 
-                    me.index = newIndex;
-
-                    if (oldIndex !== newIndex) {
-                        me.emit('change', data);
-                    }
+                    me.emit('change', data);
 
                 }
             });
