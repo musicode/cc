@@ -169,7 +169,10 @@ define(function (require, exports, module) {
                 var index = $(this).data(indexKey);
 
                 iterator.to(
-                    index
+                    index,
+                    {
+                        force: true
+                    }
                 );
 
                 me.close();
@@ -261,7 +264,12 @@ define(function (require, exports, module) {
                 if (activeItem.length === 1) {
                     var index = activeItem.data(indexKey);
                     if ($.type(index) === 'number') {
-                        iterator.to(index, 'render');
+                        iterator.to(
+                            index,
+                            {
+                                action: 'render'
+                            }
+                        );
                     }
                 }
 

@@ -119,23 +119,35 @@ define(function (require, exports, module) {
 
         },
 
-        to: function (index, action) {
+        /**
+         *
+         * @param {number} index
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
+         * @property {string=} options.action 动作类型
+         */
+        to: function (index, options) {
 
             var me = this;
             var from = me.index;
 
-            if (from !== index) {
+            options = options || { };
+
+            if (options.force || from !== index) {
 
                 me.index = index;
 
-                me.emit(
-                    'change',
-                    {
-                        from: from,
-                        to: index,
-                        action: action || 'to'
-                    }
-                );
+                if (!options.silence) {
+                    me.emit(
+                        'change',
+                        {
+                            from: from,
+                            to: index,
+                            action: options.action || 'to'
+                        }
+                    );
+                }
             }
         },
 
@@ -149,7 +161,12 @@ define(function (require, exports, module) {
                 index = me.loop ? me.maxIndex : me.minIndex;
             }
 
-            me.to(index, 'prev');
+            me.to(
+                index,
+                {
+                    action: 'prev'
+                }
+            );
 
         },
 
@@ -163,7 +180,12 @@ define(function (require, exports, module) {
                 index = me.loop ? me.minIndex : me.maxIndex;
             }
 
-            me.to(index, 'next');
+            me.to(
+                index,
+                {
+                    action: 'next'
+                }
+            );
 
         },
 
