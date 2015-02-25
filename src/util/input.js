@@ -78,7 +78,7 @@ define(function (require, exports, module) {
             || (keyCode >= 219 && keyCode <= 222)   // 中文标点符号
             || keyCode === 32                       // 空格
             || keyCode === 13                       // 回车
-            || keyCode === 8;                       // backspace 删光也会触发
+            || keyCode === 8;                       // backspace 清空也会触发
     }
 
     function processIms(element) {
@@ -155,7 +155,7 @@ define(function (require, exports, module) {
                 else {
                     timer = setTimeout(
                         startTimer,
-                        300
+                        600
                     );
                 }
 

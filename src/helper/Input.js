@@ -177,7 +177,7 @@ define(function (require, exports, module) {
             var padding = element.innerHeight() - originHeight;
 
             me.on(
-                'input',
+                'change',
                 function () {
 
                     // 把高度重置为原始值才能取到正确的 newHeight
