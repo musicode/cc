@@ -147,7 +147,7 @@ define(function (require, exports, module) {
                 }
             });
 
-            element.on('input', function () {
+            element.on('input' + namespace, function () {
                 if (!isLongPressing || !me.smart) {
                     me.emit('change');
                 }

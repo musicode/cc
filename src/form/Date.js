@@ -15,6 +15,7 @@ define(function (require, exports, module) {
     var contains = require('../function/contains');
     var lpad = require('../function/lpad');
     var init = require('../function/init');
+    var replaceWith = require('../function/replaceWith');
 
     var Calendar = require('../ui/Calendar');
     var Popup = require('../helper/Popup');
@@ -70,8 +71,8 @@ define(function (require, exports, module) {
             }
             else {
                 faker = $(me.template);
-                element.replaceWith(faker);
-                faker.find(':text').replaceWith(element);
+                replaceWith(element, faker);
+                replaceWith(faker.find(':text'), element);
             }
 
             // 默认隐藏

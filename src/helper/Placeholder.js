@@ -33,6 +33,7 @@ define(function (require, exports, module) {
     var init = require('../function/init');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var replaceWith = require('../function/replaceWith');
 
     var input = require('../util/input');
 
@@ -243,7 +244,7 @@ define(function (require, exports, module) {
                 var element = me.element;
                 var wrapper = $(me.template);
 
-                element.replaceWith(wrapper);
+                replaceWith(element, wrapper);
                 wrapper.append(element);
 
                 me.faker = wrapper.find(me.placeholderSelector);

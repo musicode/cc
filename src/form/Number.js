@@ -11,6 +11,7 @@ define(function (require, exports, module) {
     var toNumber = require('../function/toNumber');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var replaceWith = require('../function/replaceWith');
 
     var plus = require('../function/plus');
     var minus = require('../function/minus');
@@ -60,8 +61,8 @@ define(function (require, exports, module) {
             }
             else {
                 faker = $(me.template);
-                element.replaceWith(faker);
-                faker.find(':text').replaceWith(element);
+                replaceWith(element, faker);
+                replaceWith(faker.find(':text'), element);
             }
 
             me.faker = faker;

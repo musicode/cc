@@ -194,7 +194,6 @@ define(function (require, exports, module) {
         element.on(
             'input' + namespace,
             function (e) {
-
                 if (element.data(imsDataKey)) {
                     e.stopImmediatePropagation();
                 }
