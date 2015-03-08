@@ -29,12 +29,17 @@ define(function (require, exports, module) {
      */
 
     /**
-     * 是否是移动端
+     * 是否是奇葩浏览器
      *
      * @inner
      * @type {boolean}
      */
-    var isMobileEnd = /iPhone|iPad|Android/i.test(navigator.userAgent);
+    var isQipa = /iPhone|iPad|Android/i.test(navigator.userAgent);
+
+    if (!isQipa) {
+        // windows chrome keyup 永远是 229
+        isQipa = /windows.+?chrome/i.test(navigator.userAgent);
+    }
 
     /**
      * 存于元素 data 中的标识
@@ -170,7 +175,7 @@ define(function (require, exports, module) {
 
                 if (isImsInput) {
                     var keyCode = e.keyCode;
-                    if (isMobileEnd ? imsKeyCode[keyCode] : isImsKey(keyCode)) {
+                    if (isQipa ? imsKeyCode[keyCode] : isImsKey(keyCode)) {
                         endIms();
                     }
                 }

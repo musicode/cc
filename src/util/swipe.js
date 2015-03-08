@@ -12,7 +12,7 @@ define(function (require, exports, module) {
 
         e = e.originalEvent;
 
-        var touches= e.changedTouches;
+        var touches = e.changedTouches || e.touches;
 
         if (touches.length === 1) {
             return touches[0];
@@ -37,6 +37,7 @@ define(function (require, exports, module) {
 
             element.trigger(event);
 
+            return event;
         };
 
         var start = { };
@@ -45,12 +46,15 @@ define(function (require, exports, module) {
 
         eventGroup[ 'touchmove' + namespace ] = function (e) {
 
-            e.preventDefault();
-
             var point = getPoint(e);
 
             if (point) {
-                trigger('swiping', point);
+
+                var event = trigger('swiping', point);
+
+                if (event.isDefaultPrevented()) {
+                    e.preventDefault();
+                }
             }
 
         };
