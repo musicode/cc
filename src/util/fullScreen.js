@@ -12,6 +12,8 @@ define(function (require, exports, module) {
     var exit;
     var change;
 
+    var noop = $.noop;
+
     if (doc.requestFullscreen) {
         enter = function () {
             doc.requestFullscreen();
@@ -86,10 +88,10 @@ define(function (require, exports, module) {
                 wscript.SendKeys('{F11}');
             }
         };
-        change = $.noop;
+        change = noop;
     }
     else {
-        enter = exit = change = $.noop;
+        enter = exit = change = noop;
     }
 
     exports.enter = enter;
@@ -97,5 +99,7 @@ define(function (require, exports, module) {
     exports.exit = exit;
 
     exports.change = change;
+
+    exports.support = change !== noop;
 
 });
