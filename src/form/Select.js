@@ -91,7 +91,9 @@ define(function (require, exports, module) {
                         data.value
                     );
 
-                    me.emit('change', data);
+                    if (!me.silence) {
+                        me.emit('change', data);
+                    }
 
                 },
                 onAfterShow: function () {
@@ -135,7 +137,11 @@ define(function (require, exports, module) {
                     value == null ? '' : value
                 );
 
+                me.silence = options.silence;
+
                 me.comboBox.setValue(value);
+
+                delete me.silence;
 
             }
 

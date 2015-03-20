@@ -163,11 +163,6 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            // 自动变高必须设置 overflow-y: hidden
-            if (element.css('overflow-y') !== 'hidden') {
-                element.css('overflow-y', 'hidden');
-            }
-
             var originHeight = element.height();
 
             var oldHeight = originHeight;
