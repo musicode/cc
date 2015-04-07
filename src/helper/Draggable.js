@@ -429,7 +429,7 @@ define(function (require, exports, module) {
         var draggable = e.data;
 
         if (counter > 0) {
-            draggable.emit('afterDrag');
+            draggable.emit('afterDrag', point);
         }
 
         counter =

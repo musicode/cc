@@ -83,31 +83,13 @@ define(function (require, exports, module) {
      */
     exports.parse = function (url) {
 
-        var link = document.createElement('a');
-        link.href = url;
-
-        // 用 a 来格式化
-        url = link.href;
-
-        var origin = '';
-
-        if (link.protocol && link.host) {
-            origin = link.protocol + '//' + link.host;
-        }
-        else if (/^(http[s]?:\/\/[^/]+)(?=\/)/.test(url)) {
-            origin = RegExp.$1;
-        }
-
-        var pathname = link.pathname;
-
-        if (pathname && pathname.charAt(0) !== '/') {
-            pathname = '/' + pathname;
-        }
+        // 用 a 解析非常不靠谱，太多兼容问题
+        var match = url.match(/^(http[s]?:\/\/[^/]+)(\/[^?]+)?(\?.+)?/);
 
         return {
-            origin: origin,
-            pathname: pathname,
-            search: link.search
+            origin: match[1] || '',
+            pathname: match[2] || '',
+            search: match[3] || ''
         };
     };
 

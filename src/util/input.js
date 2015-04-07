@@ -42,12 +42,6 @@ define(function (require, exports, module) {
 
     var namespace = '.cobble_util_input';
 
-    /**
-     * =========================================
-     * 处理中文输入法 - end
-     * =========================================
-     */
-
     function bindInput() {
         // 空函数
     }
@@ -80,7 +74,7 @@ define(function (require, exports, module) {
                 }
                 if (e.originalEvent.propertyName === 'value') {
                     var newValue = element.val();
-                    if (newValue !== oldValue && !element.data(imsDataKey)) {
+                    if (newValue !== oldValue) {
                         element.trigger('input');
                         oldValue = newValue;
                     }
@@ -105,7 +99,6 @@ define(function (require, exports, module) {
 
     exports.dispose = function (element) {
         element.off(namespace);
-        element.removeData(imsDataKey);
     };
 
 
