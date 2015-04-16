@@ -15,6 +15,8 @@ define(function (require, exports, module) {
      *     具体可见 http://www.iana.org/assignments/media-types
      *
      *     但鉴于这种方式不直观(小白可能都没听过 MIME type)，还是用扩展名好了
+     *
+     * [TODO] 上传增加单独取消
      */
 
     'use strict';

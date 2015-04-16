@@ -38,6 +38,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.modal 是否是窗口模态，默认为 true
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
      * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
+     * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
@@ -245,13 +246,14 @@ define(function (require, exports, module) {
                         me.resizer =
                         debounce(
                             function () {
-                                refresh(me);
+                                refresh(me, true);
                             },
                             50
                         )
                     );
 
             me.emit('afterShow');
+
         },
 
         /**
@@ -363,6 +365,7 @@ define(function (require, exports, module) {
         disposeOnHide: true,
         removeOnDispose: true,
         hideOnClickMask: false,
+        positionOnResize: true,
 
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',
@@ -409,41 +412,46 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Dialog} dialog
+     * @param {boolean=} isResize 是否是 resize 触发刷新
      */
-    function refresh(dialog) {
+    function refresh(dialog, isResize) {
 
-        var element = dialog.element;
-        var pinOptions = {
+        if (!isResize || dialog.positionOnResize) {
 
-            silence: true,
+            var element = dialog.element;
 
-            element: element,
-            x: dialog.x === '50%' ? '50%' : 0,
-            y: dialog.y === '50%' ? '50%' : 0,
+            var pinOptions = {
 
-            attachment: {
-                element: viewport(),
-                width: dimension.getViewportWidth(),
-                height: dimension.getViewportHeight(),
-                x: dialog.x,
-                y: dialog.y
-            }
-        };
+                silence: true,
 
-        if (!dialog.fixed) {
-            pinOptions.offset = {
-                x: dimension.getPageScrollLeft(),
-                y: dimension.getPageScrollTop()
+                element: element,
+                x: dialog.x === '50%' ? '50%' : 0,
+                y: dialog.y === '50%' ? '50%' : 0,
+
+                attachment: {
+                    element: viewport(),
+                    width: dimension.getViewportWidth(),
+                    height: dimension.getViewportHeight(),
+                    x: dialog.x,
+                    y: dialog.y
+                }
             };
-        }
 
-        var style = pin(pinOptions);
+            if (!dialog.fixed) {
+                pinOptions.offset = {
+                    x: dimension.getPageScrollLeft(),
+                    y: dimension.getPageScrollTop()
+                };
+            }
 
-        if ($.isFunction(dialog.resizeAnimation)) {
-            dialog.resizeAnimation(style);
-        }
-        else {
-            element.css(style);
+            var style = pin(pinOptions);
+
+            if ($.isFunction(dialog.resizeAnimation)) {
+                dialog.resizeAnimation(style);
+            }
+            else {
+                element.css(style);
+            }
         }
 
         var mask = dialog.mask;
