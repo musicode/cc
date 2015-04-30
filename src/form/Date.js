@@ -231,6 +231,15 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 渲染日历
+         *
+         * @param {Date} date
+         */
+        render: function (date) {
+            this.calendar.render(date);
+        },
+
+        /**
          * 销毁对象
          */
         dispose: function () {

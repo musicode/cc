@@ -68,6 +68,14 @@ define(function (require, exports, module) {
      *
      */
 
+    /**
+     * @update
+     *
+     * 1. 鉴于全局元素比较多，而且通常有动态创建的元素的场景，因此改成事件代理
+     *
+     * 2. 为了减少元素数量，同一个模板改为元素共享
+     */
+
     'use strict';
 
     var init = require('../function/init');
@@ -96,7 +104,7 @@ define(function (require, exports, module) {
      * @property {string=} options.placement 提示元素出现的位置
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
-     *
+     * @property {string=} options.selector 如果传了选择器，表示为 element 的 selector 元素进行事件代理
      * @property {string=} options.width 提示元素的宽度
      *
      * @property {Function} options.updateContent 更新提示浮层的内容
@@ -159,16 +167,14 @@ define(function (require, exports, module) {
 
                 var template = me.template;
 
-                // 和默认配置的模板相同，可共用一个元素
-                // 比如纯展示文本的 tip，完全可以这样实现
-                if (template === Tooltip.defaultOptions.template) {
-                    layer = layerElement || (layerElement = $(template));
-                }
-                else {
-                    layer = $(template);
+                layer = templateElementMap[ template ];
+
+                if (!layer) {
+                    layer = templateElementMap[ template ] = $(template);
                 }
 
                 me.layer = layer;
+
             }
 
             layer.hide();
@@ -202,6 +208,7 @@ define(function (require, exports, module) {
             me.popup = new Popup({
                 element: element,
                 layer: layer,
+                selector: me.selector,
                 show: show,
                 hide: hide,
                 onAfterShow: function (e) {
@@ -220,6 +227,16 @@ define(function (require, exports, module) {
                     me.emit(e);
                 },
                 onBeforeShow: function (e) {
+
+                    var skinClass;
+                    var sourceElement = me.sourceElement;
+
+                    if (sourceElement) {
+                        skinClass = sourceElement.data('skin');
+                    }
+
+                    sourceElement =
+                    me.sourceElement = $(e.currentTarget);
 
                     var placement = placementList.length === 1
                                  && placementList[0];
@@ -242,6 +259,15 @@ define(function (require, exports, module) {
                         if (!placement) {
                             return false;
                         }
+                    }
+
+                    if (skinClass) {
+                        layer.removeClass(skinClass);
+                    }
+
+                    var skinClass = sourceElement.data('skin');
+                    if (skinClass) {
+                        layer.addClass(skinClass);
                     }
 
                     me.updateContent();
@@ -289,6 +315,15 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 获得触发源元素
+         *
+         * @return {jQuery}
+         */
+        getSourceElement: function () {
+            return this.sourceElement;
+        },
+
+        /**
          * 定位
          *
          * @param {string} placement 方位，可选值有 topLeft     top    topRight
@@ -322,7 +357,7 @@ define(function (require, exports, module) {
             var gap = me.gap;
             var options = {
                 element: me.layer,
-                attachment: me.element,
+                attachment: me.sourceElement,
                 offsetX: $.type(gap.x) === 'number' ? gap.x : 0,
                 offsetY: $.type(gap.y) === 'number' ? gap.y : 0
             };
@@ -357,11 +392,8 @@ define(function (require, exports, module) {
 
             me.popup.dispose();
 
-            if (me.layer !== layerElement) {
-                me.layer.remove();
-            }
-
             me.element =
+            me.sourceElement =
             me.layer =
             me.popup = null;
         }
@@ -405,7 +437,7 @@ define(function (require, exports, module) {
             var layer = this.layer;
 
             layer.html(
-                this.element.data('title')
+                this.getSourceElement().data('title')
             );
 
         },
@@ -431,7 +463,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testLeft() {
-        return this.element.offset().left > this.layer.outerWidth();
+        return this.sourceElement.offset().left > this.layer.outerWidth();
     }
 
     /**
@@ -441,10 +473,10 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testRight() {
-        var element = this.element;
+        var sourceElement = this.sourceElement;
         return pageWidth() >
-               (element.offset().left
-               + element.outerWidth()
+               (sourceElement.offset().left
+               + sourceElement.outerWidth()
                + this.layer.outerWidth());
     }
 
@@ -455,7 +487,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testTop() {
-        return this.element.offset().top > this.layer.outerHeight();
+        return this.sourceElement.offset().top > this.layer.outerHeight();
     }
 
     /**
@@ -465,10 +497,10 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testBottom() {
-        var element = this.element;
+        var sourceElement = this.sourceElement;
         return pageHeight() >
-               (element.offset().top
-                + element.outerHeight()
+               (sourceElement.offset().top
+                + sourceElement.outerHeight()
                 + this.layer.outerHeight());
     }
 
@@ -545,14 +577,13 @@ define(function (require, exports, module) {
         }
     };
 
-
     /**
-     * 全局唯一的浮层元素
+     * 每个模板对应一个元素，这样可以少创建很多元素
      *
      * @inner
-     * @type {jQuery}
+     * @type {Object}
      */
-    var layerElement;
+    var templateElementMap = { };
 
     /**
      * 存储当前方位 className 的 key

@@ -8,9 +8,6 @@ define(function (require, exports, module) {
 
     /**
      * 90%
-     *
-     * 鼠标点击菜单项不能触发 select，否则会导致 input.select()，从而触发 focus 事件
-     * 因此改名为 itemClick
      */
 
     var timer = require('../function/timer');
@@ -54,7 +51,7 @@ define(function (require, exports, module) {
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @property {Function=} options.onItemClick 用户点击选中某个菜单项触发
+     * @property {Function=} options.onSelect 用户点击选中某个菜单项触发
      * @property {Function=} options.onEnter 用户按下回车触发
      * @property {Function=} options.onChange 当遍历导致输入框值变化时触发
      * @property {Function=} options.onBeforeRender 渲染菜单之前触发
@@ -166,27 +163,8 @@ define(function (require, exports, module) {
 
             var itemSelector = me.itemSelector;
 
-            var bindMouseLeave = function () {
-                menu
-                .on('mouseleave' + namespace, itemSelector, function () {
-
-                    iterator.to(
-                        iterator.startIndex
-                    );
-
-                    unbindMouseLeave();
-
-                });
-            };
-
-            var unbindMouseLeave = function () {
-                menu.off('mouseleave' + namespace);
-            };
-
             menu
             .on('click' + namespace, itemSelector, function () {
-
-                unbindMouseLeave();
 
                 var index = $(this).data(indexKey);
 
@@ -200,7 +178,7 @@ define(function (require, exports, module) {
                 me.close();
 
                 me.emit(
-                    'itemClick',
+                    'select',
                     activeData
                 );
 
@@ -216,7 +194,12 @@ define(function (require, exports, module) {
 
                 iterator.index = activeElement.data(indexKey);
 
-                bindMouseLeave();
+            })
+            .on('mouseleave' + namespace, itemSelector, function () {
+
+                iterator.to(
+                    iterator.startIndex
+                );
 
             });
 
