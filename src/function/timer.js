@@ -19,11 +19,18 @@ define(function (require, exports, module) {
 
         var timer;
 
-        return {
+        var switcher = {
 
             start: function task() {
+
+                var hasTimer = timer;
+
+                switcher.stop();
+
                 fn();
-                timer = setTimeout(task, timer ? delay : wait);
+
+                timer = setTimeout(task, hasTimer ? delay : wait);
+
             },
 
             stop: function () {
@@ -33,6 +40,8 @@ define(function (require, exports, module) {
                 }
             }
         };
+
+        return switcher;
 
     };
 

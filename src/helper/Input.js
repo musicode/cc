@@ -141,7 +141,9 @@ define(function (require, exports, module) {
                     isLongPressing = false;
                     me.emit('afterLongPress');
 
-                    if (keyboard.isCharKey(e.keyCode) && oldValue !== element.val()) {
+                    if (oldValue !== element.val()
+                        && (keyboard.isCharKey(e.keyCode) || keyboard.isDeleteKey())
+                    ) {
                         me.emit('change');
                     }
                 }
@@ -152,6 +154,26 @@ define(function (require, exports, module) {
                     me.emit('change');
                 }
             });
+
+        },
+
+        autoWidth: function () {
+
+            var me = this;
+            var element = me.element;
+
+            me.on(
+                'change',
+                function () {
+
+                    if (element.scrollLeft() > 0) {
+                        element.width(
+                            element.prop('scrollWidth')
+                        );
+                    }
+
+                }
+            );
 
         },
 

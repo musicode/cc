@@ -1,6 +1,6 @@
 /**
  * @file 表单日期选择器
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 
@@ -201,23 +201,18 @@ define(function (require, exports, module) {
 
                 me.value = value;
 
-                // 更新日历
-                if (date) {
+                var calendar = me.calendar;
 
-                    var calendar = me.calendar;
-
-                    if (!calendar.inRange(date)) {
-                        calendar.render(date);
-                    }
-
-                    calendar.setValue(
-                        value,
-                        {
-                            silence: true
-                        }
-                    );
-
+                if (date && !calendar.inRange(date)) {
+                    calendar.render(date);
                 }
+
+                calendar.setValue(
+                    value,
+                    {
+                        silence: true
+                    }
+                );
 
                 me.element.val(value);
                 me.popup.close();

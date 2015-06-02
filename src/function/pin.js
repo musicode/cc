@@ -6,6 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var instance = require('../util/instance');
+    var parsePercent = require('./parsePercent');
+
     /**
      * 名称映射百分比
      *
@@ -53,8 +56,11 @@ define(function (require, exports, module) {
             x = options.x;
         }
 
-        if ($.type(x) === 'string' && percentExpr.test(x)) {
-            x = (RegExp.$1 / 100) * (options.width || options.element.outerWidth());
+        if ($.type(x) === 'string') {
+            var percent = parsePercent(x);
+            if (percent != null) {
+                x = percent * (options.width || options.element.outerWidth());
+            }
         }
 
         return x;
@@ -84,8 +90,11 @@ define(function (require, exports, module) {
             y = options.y;
         }
 
-        if ($.type(y) === 'string' && percentExpr.test(y)) {
-            y = (RegExp.$1 / 100) * (options.height || options.element.outerHeight());
+        if ($.type(y) === 'string') {
+            var percent = parsePercent(y);
+            if (percent != null) {
+                y = percent * (options.height || options.element.outerHeight());
+            }
         }
 
         return y;
@@ -136,6 +145,10 @@ define(function (require, exports, module) {
 
         var element = options.element;
         var attachment = options.attachment || { };
+
+        if (!attachment.element) {
+            attachment.element = instance.body;
+        }
 
         var attachmentOffset = attachment.element.offset();
 

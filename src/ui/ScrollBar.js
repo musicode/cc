@@ -13,15 +13,24 @@ define(function (require, exports, module) {
      * 1. 计算 视窗高度 / 内容高度，用这个比值渲染滚动滑块
      * 2. 计算 内容大小 / 滚动条大小，算出滑块每滚动 1px，内容元素滚动多少
      *
+     * 注意：
+     *
+     * 1. 宽高必须用整形，否则涉及到浮点运算，很容易出现精度问题
+     *    在滚动距离非常大时，这个问题会非常明显
+     *
      */
 
     'use strict';
 
     var divide = require('../function/divide');
+    var multiply = require('../function/multiply');
+    var restrain = require('../function/restrain');
     var jquerify = require('../function/jquerify');
+    var contains = require('../function/contains');
+    var eventOffset = require('../function/eventOffset');
     var lifeCycle = require('../function/lifeCycle');
-    var Slider = require('./Slider');
     var Wheel = require('../helper/Wheel');
+    var Draggable = require('../helper/Draggable');
 
     /**
      * 自定义滚动条
@@ -46,7 +55,8 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.draggingClass 拖拽滑块时的 class
      *
-     * @property {Function=} options.animation 滚动动画
+     * @property {Function=} options.showAnimation
+     * @property {Function=} options.hideAnimation
      *
      * @property {Function=} options.onScroll
      * @argument {Event} options.onScroll.event
@@ -68,62 +78,100 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var conf = orientationConf[me.orientation];
+            var element = me.element;
 
-            var animation = me.animation;
-            if ($.isFunction(animation)) {
-                animation = $.proxy(animation, me);
+            var scrollHandler = function (e, data) {
+
+                var offset = data.delta * me.scrollStep;
+
+                return !me.to(
+                    me.value + offset,
+                    {
+                        from: 'wheel'
+                    }
+                );
+
+            };
+
+            me.panelWheel = new Wheel({
+                element: me.panel,
+                onScroll: scrollHandler
+            });
+
+            me.barWheel = new Wheel({
+                element: element,
+                onScroll: scrollHandler
+            });
+
+
+            var thumbSelector = me.thumbSelector;
+            var thumbElement = element.find(thumbSelector);
+            if (thumbElement.length === 0) {
+                element.html(me.template);
+                thumbElement = element.find(thumbSelector);
             }
 
-            me.slider = new Slider({
+            me.thumb = thumbElement;
 
-                element: me.element,
-                orientation: me.orientation,
-                step: me.step,
-                value: me.value,
-                scrollable: true,
-                draggingClass: me.draggingClass,
-                thumbSelector: me.thumbSelector,
-                animation: animation,
-                template: me.template,
 
-                // bar 带着 panel 动
-                onChange: function () {
-                    to(
-                        me,
-                        this.value,
-                        'panel'
-                    );
+            var axisName;
+            var positionName;
+
+            if (me.orientation === 'vertical') {
+                axisName = 'y';
+                positionName = 'top';
+            }
+            else {
+                axisName = 'x';
+                positionName = 'left';
+            }
+
+            var to = function (pixel, from) {
+                me.to(
+                    me.barPixelToValue(pixel),
+                    {
+                        from: from
+                    }
+                );
+            };
+
+            var draggingClass = me.draggingClass;
+
+            me.draggable = new Draggable({
+                element: thumbElement,
+                container: element,
+                axis: axisName,
+                onBeforeDrag: function () {
+                    if ($.type(draggingClass) === 'string') {
+                        element.addClass(draggingClass);
+                    }
+                },
+                onDrag: function (e, data) {
+                    to(data[ positionName ], 'bar');
+                },
+                onAfterDrag: function () {
+                    if ($.type(draggingClass) === 'string') {
+                        element.removeClass(draggingClass);
+                    }
                 }
             });
 
-            var panel = me.panel;
-
-            // 在 panel 滑动滚轮，panel 和 bar 都需要动
-            me.wheel = new Wheel({
-                element: panel,
-                onScroll: function (e, data) {
-                    return !to(
-                        me,
-                        me.value + data.delta * me.step
-                    );
-                }
-            });
-
-            // panel 带着 bar 动
-            panel.scroll(
-                function () {
-                    to(
-                        me,
-                        divide(panel.prop(conf.scroll), me.factor),
-                        'bar'
-                    );
+            element.on(
+                'click' + namespace,
+                function (e) {
+                    if (contains(thumbElement, e.target)) {
+                        return;
+                    }
+                    to(eventOffset(e)[ axisName ], 'click');
                 }
             );
 
-            me.refresh({
-                value: me.value
-            });
+            me.refresh(
+                {
+                    value: me.value
+                },
+                true
+            );
 
         },
 
@@ -137,78 +185,65 @@ define(function (require, exports, module) {
          */
         refresh: function (data) {
 
+            //
+            // [HACK]
+            // 某些浏览器（测试时是火狐）
+            // 在 js 执行期间获取到的 scrollHeight
+            // 和 js 执行完之后获取的 scrollHeight 不一样
+            // 因此设置一个延时，确保刷新时是最新的 DOM 树
+            //
+
             var me = this;
 
-            if ($.isPlainObject(data)) {
-                $.extend(me, data);
-            }
-
-            var conf = orientationConf[me.orientation];
-
-            var element = me.element;
-            var panel = me.panel;
-
-            // 计算视窗和滚动面板的比例
-            var viewportSize = conf.getViewportSize(panel);
-            var contentSize = conf.getContentSize(panel) || 1;
-            var ratio = viewportSize / contentSize;
-
-            // 比例小于 1 才需要滚动条
-            if (ratio < 1) {
-
-                var slider = me.slider;
-                var trackSize = slider.track[conf.inner]();
-                var thumbSize = ratio * trackSize;
-
-                var minThumbSize = me[conf.min];
-                if (thumbSize < minThumbSize) {
-                    thumbSize = minThumbSize;
+            setTimeout(
+                function () {
+                    delayRefresh(me, data);
                 }
+            );
 
-                slider.thumb[conf.outer](thumbSize);
-
-                var factor = me.factor
-                           = contentSize / trackSize;
-
-                // 滚动条实际滚动的单位距离
-                var step = me.step
-                         = me.step4Panel
-                         ? me.step / factor
-                         : me.step;
-
-                // 如果没有传入 value
-                // 需要从 panel 读取 scrollTop/Left 值
-                var value = data && data.value;
-                if (!$.isNumeric(value)) {
-                    value = divide(panel.prop(conf.scroll), factor);
-                }
-
-                // 确保二者不一样
-                me.value = !value;
-
-                slider.refresh({
-                    step: step,
-                    value: value
-                });
-
-                element.show();
-            }
-            else {
-                element.hide();
-            }
 
         },
 
         /**
          * 设置滚动条的位置
          *
-         * @param {number} value
-         * @param {boolean=} silence 是否不触发 change 事件
+         * @param {number} value 0 到 100，0 表示起点， 100 表示终点
+         * @param {Object=} options 选项
+         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+         * @property {boolean=} options.silence 是否不触发 change 事件
          * @return {boolean} 是否滚动成功
          */
-        to: function (value, silence) {
+        to: function (value, options) {
 
-            return to(this, value, null, silence);
+            var me = this;
+
+            options = options || { };
+
+            value = restrain(value, minValue, maxValue);
+
+            if (options.force || value != me.value) {
+
+                me.value = value;
+
+                var from = options.from;
+
+                if (from !== 'panel') {
+                    me.syncPanel(value);
+                }
+
+                if (from !== 'bar') {
+                    me.syncBar(value);
+                }
+
+                if (!options.silence) {
+                    me.emit('scroll');
+                }
+
+                return true;
+
+            }
+
+            return false;
 
         },
 
@@ -221,18 +256,28 @@ define(function (require, exports, module) {
 
             lifeCycle.dispose(me);
 
-            me.slider.dispose();
-            me.wheel.dispose();
+            me.element.off(namespace);
+            me.panelWheel.dispose();
+            me.barWheel.dispose();
+            me.draggable.dispose();
 
             me.element =
-            me.panel =
-            me.slider =
-            me.wheel = null;
+            me.panelWheel =
+            me.barWheel =
+            me.draggable =
+            me.thumb = null;
+
         }
 
     };
 
     jquerify(ScrollBar.prototype);
+
+    var minValue = 0;
+
+    var maxValue = 100;
+
+    var namespace = '.cobble_ui_scrollbar';
 
     /**
      * 默认配置
@@ -241,105 +286,157 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ScrollBar.defaultOptions = {
-        step: 10,
-        step4Panel: false,
+        scrollStep: 5,
         orientation: 'vertical',
+        minWidth: 10,
+        minHeight: 10,
         template: '<i class="scroll-thumb"></i>',
-        thumbSelector: '.scroll-thumb'
-    };
-
-    /**
-     * 配置方向属性
-     *
-     * @inner
-     * @type {Object}
-     */
-    var orientationConf = {
-        horizontal: {
-            scroll: 'scrollLeft',
-            inner: 'innerWidth',
-            outer: 'outerWidth',
-            min: 'minWidth',
-            getViewportSize: function (element) {
-                return element.innerWidth();
-            },
-            getContentSize: function (element) {
-                return element.prop('scrollWidth');
-            }
+        thumbSelector: '.scroll-thumb',
+        showAnimation: function () {
+            this.element.show();
         },
-        vertical: {
-            scroll: 'scrollTop',
-            inner: 'innerHeight',
-            outer: 'outerHeight',
-            min: 'minHeight',
-            getViewportSize: function (element) {
-                return element.innerHeight();
-            },
-            getContentSize: function (element) {
-                return element.prop('scrollHeight');
-            }
+        hideAnimation: function () {
+            this.element.hide();
         }
     };
 
-    /**
-     * 设置滚动条的位置
-     *
-     * @inner
-     * @param {ScrollBar} scrollBar
-     * @param {number} value
-     * @param {string=} target 滚动目标，默认滚动 panel 和 bar，也可以指定只滚动其中一个
-     * @param {boolean=} silence 是否不触发 change 事件
-     * @return {boolean} 是否滚动成功
-     */
-    function to(scrollBar, value, target, silence) {
+    function delayRefresh(me, data) {
 
-        var result = $.isNumeric(value)
-                   && scrollBar.value !== value;
+        var silence;
 
-        if (result) {
-
-            var slider = scrollBar.slider;
-
-            if (!target || target !== 'panel') {
-                result = slider.setValue(
-                            value,
-                            {
-                                silence: true
-                            }
-                        );
-            }
-
-            // 重新获取 slider 校正过的值
-            value = slider.getValue();
-
-            scrollBar.value = value;
-
-            if (result) {
-
-                if (!target || target === 'panel') {
-
-                    var conf = orientationConf[scrollBar.orientation];
-
-                    scrollBar.panel.prop(
-                        conf.scroll,
-                        value * scrollBar.factor
-                    );
-                }
-
-                if (!silence) {
-                    scrollBar.emit(
-                        'scroll',
-                        {
-                            value: value
-                        }
-                    );
-                }
-            }
-
+        if ($.isPlainObject(data)) {
+            $.extend(me, data);
         }
 
-        return result;
+        if (data === true || arguments[1] === true) {
+            silence = true;
+        }
+
+        var innerSizeName;
+        var outerSizeName;
+        var scrollSizeName;
+        var minSizeName;
+        var positionName;
+        var scrollName;
+
+        if (me.orientation === 'vertical') {
+            innerSizeName = 'innerHeight';
+            outerSizeName = 'outerHeight';
+            scrollSizeName = 'scrollHeight';
+            minSizeName = 'minHeight';
+            positionName = 'top';
+            scrollName = 'scrollTop';
+        }
+        else {
+            innerSizeName = 'innerWidth';
+            outerSizeName = 'outerWidth';
+            scrollSizeName = 'scrollWidth';
+            minSizeName = 'minWidth';
+            positionName = 'left';
+            scrollName = 'scrollLeft';
+        }
+
+        var panelElement = me.panel;
+
+        var viewportSize = panelElement[ innerSizeName ]();
+        var contentSize = panelElement.prop(scrollSizeName);
+
+        var ratio = contentSize > 0
+                  ? viewportSize / contentSize
+                  : 1;
+
+        if (ratio > 0 && ratio < 1) {
+
+            me.showAnimation();
+
+            var trackElement = me.element;
+            var thumbElement = me.thumb;
+
+            var trackSize = trackElement[ innerSizeName ]();
+            var thumbSize = multiply(ratio, trackSize);
+
+            var minThumbSize = me[ minSizeName ];
+            if (thumbSize < minThumbSize) {
+                thumbSize = minThumbSize;
+            }
+
+            // 转成整数，为了避免结果是 0，这里使用向上取整
+            thumbSize = Math.ceil(thumbSize);
+
+            thumbElement[ outerSizeName ](thumbSize);
+
+            var panelMaxPixel = contentSize - viewportSize;
+            var barMaxPixel = trackSize - thumbSize;
+// console.log('====================')
+// console.log('panel: ', contentSize, viewportSize, panelMaxPixel);
+// console.log('bar: ', trackSize, thumbSize, barMaxPixel);
+            me.panelPixelToValue = function (pixel) {
+                return multiply(
+                        maxValue,
+                        divide(pixel, panelMaxPixel)
+                    );
+            };
+
+            me.valueToPanelPixel = function (value) {
+                return multiply(
+                        panelMaxPixel,
+                        divide(value, maxValue)
+                    );
+            };
+
+            me.barPixelToValue = function (pixel) {
+                return multiply(
+                        maxValue,
+                        divide(pixel, barMaxPixel)
+                    );
+            };
+
+            me.valueToBarPixel = function (value) {
+                return multiply(
+                        barMaxPixel,
+                        divide(value, maxValue)
+                    );
+            };
+
+            me.syncBar = function (value) {
+                var pixel = me.valueToBarPixel(value);
+                thumbElement.css(positionName, pixel);
+            };
+
+            me.syncPanel = function (value) {
+                var pixel = me.valueToPanelPixel(value);
+                panelElement[scrollName](pixel);
+            };
+
+            var from;
+            var value = data && data.value;
+
+            if (value >= minValue && value <= maxValue) { }
+            else {
+                from = 'panel';
+                value = me.panelPixelToValue(
+                    panelElement[ scrollName ]()
+                );
+            }
+
+            me.to(
+                value,
+                {
+                    force: true,
+                    silence: silence,
+                    from: from
+                }
+            );
+
+        }
+        else {
+            me.hideAnimation();
+
+            me.syncPanel =
+            me.syncBar = $.noop;
+        }
     }
+
 
     return ScrollBar;
 

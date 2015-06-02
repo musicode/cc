@@ -1,6 +1,6 @@
 /**
  * @file 模拟 <input type="checkbox" />
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

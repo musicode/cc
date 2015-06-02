@@ -177,7 +177,8 @@ define(function (require, exports, module) {
 
             }
 
-            layer.hide();
+            // 为了第三方做动画，这里最好不要隐藏，而是让第三方用样式自由控制
+            // layer.hide();
 
             if (!offsetParent(layer).is('body')) {
                 instance.body.append(layer);

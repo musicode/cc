@@ -127,12 +127,53 @@ define(function (require, exports, module) {
 
             if (form.length > 0) {
                 form
-                .attr('novalidate', 'novalidate')
-                .on(
-                    'submit' + namespace,
-                    $.proxy(me.validate, me)
-                );
+                    .attr('novalidate', 'novalidate')
+                    .on(
+                        'submit' + namespace,
+                        $.proxy(me.validate, me)
+                    );
             }
+
+            $.each(
+                me.fields,
+                function (name, conf) {
+
+                    var field = element.find('[name="' + name + '"]');
+
+                    var type = conf.type;
+
+                    if (!type) {
+                        // 不用 field.prop，因为不合法的 type，浏览器会纠正为 text
+                        type = conf.type = field.attr('type') || 'text';
+                    }
+
+                    var rules = conf.rules;
+
+                    if (!rules) {
+                        rules = conf.rules = { };
+                    }
+
+                    var ruleList = Validator.type[type] || [ ];
+
+                    $.each(
+                        ruleList,
+                        function (index, ruleName) {
+
+                            if (rules[ruleName] == null) {
+
+                                var parse = ruleParser[ruleName];
+
+                                if ($.isFunction(parse)) {
+                                    rules[ruleName] = parse(field, conf);
+                                }
+
+                            }
+
+                        }
+                    );
+
+                }
+            );
 
             var groupSelector = me.groupSelector;
 
@@ -315,74 +356,70 @@ define(function (require, exports, module) {
                 .each(function (index) {
 
                     var target = this;
+
                     var name = target.name;
+                    var value = target.value;
+                    var disabled = target.disabled;
 
                     var field = $(target);
+
+                    var hasConf;
                     var error;
 
-                    if (!target.disabled) {
+                    if (!disabled) {
 
                         // 字段配置信息
-                        var hasConf;
                         var conf = me.fields[name];
 
                         if (conf) {
+
                             hasConf = true;
+
+                            // 因为要改值，所以复制一份
                             conf = $.extend(true, { }, conf);
-                        }
-                        else {
-                            hasConf = false;
-                            conf = { };
-                        }
 
-                        if (!conf.type) {
-                            // 不用 field.prop，因为不合法的 type，浏览器会纠正为 text
-                            conf.type = field.attr('type') || 'text';
-                        }
+                            conf.form = me.element;
+                            conf.value = $.trim(value);
 
-                        conf.form = me.element;
-                        conf.value = $.trim(target.value);
+                            // 验证失败的属性名称，如 max
+                            var errorAttr;
 
-                        // 验证失败的属性名称，如 max
-                        var errorAttr;
+                            $.each(
+                                Validator.type[conf.type] || [ ],
+                                function (index, name) {
 
-                        $.each(
-                            Validator.type[conf.type] || [ ],
-                            function (index, name) {
+                                    var result = Validator.rule[name](conf);
 
-                                var result = Validator.attr[name](field, conf);
+                                    if (result === false) {
+                                        errorAttr = name;
+                                        return false;
+                                    }
+                                    // 如果不是强制字段，为空时避免后续属性的检测
+                                    else if (conf.value === '' && name === 'required') {
+                                        return false;
+                                    }
 
-                                if (result === false) {
-                                    errorAttr = name;
-                                    return false;
                                 }
-                                // 如果不是强制字段，为空时避免后续属性的检测
-                                else if (conf.value === '' && name === 'required') {
-                                    return false;
+                            );
+
+                            if (errorAttr) {
+
+                                var errors = conf.errors;
+
+                                if (errors) {
+                                    error = errors[errorAttr];
+                                }
+
+                                if (!error) {
+                                   throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
                                 }
 
                             }
-                        );
-
-
-                        if (errorAttr && conf.errors) {
-
-                            error = conf.errors[errorAttr];
-
-                            if (!error) {
-                                throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
-                            }
-
-                        }
-                        else {
-
-                            var custom = conf.custom;
-
-                            if ($.isFunction(custom)) {
+                            else if ($.isFunction(conf.custom)) {
 
                                 var promise = $.Deferred();
 
-                                var result = custom(
+                                var result = conf.custom(
                                     field,
                                     function (error) {
                                         promise.resolve(error);
@@ -392,10 +429,9 @@ define(function (require, exports, module) {
                                 error = (result == null || result.done)
                                       ? promise
                                       : result;
-
                             }
-                        }
 
+                        }
                     }
 
                     if (hasConf) {
@@ -632,70 +668,63 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 配置属性验证
+     * 配置验证规则
      *
      * @static
      * @type {Object}
      */
-    Validator.attr = {
+    Validator.rule = {
 
-        required: function (field, data) {
+        required: function (data) {
             if (data.value.length > 0) {
                 return true;
             }
-            else if (field.attr('required') === 'required') {
+            else if (data.rules.required) {
                 return false;
             }
         },
 
-        pattern: function (field, data) {
-
-            var pattern = field.attr('pattern')
-                        || Validator.pattern[data.type];
-
-            if ($.type(pattern) === 'string') {
-                pattern = new RegExp(pattern);
-            }
-
+        pattern: function (data) {
+            var pattern = data.rules.pattern;
             if (pattern) {
                 return pattern.test(data.value);
             }
         },
 
-        minlength: function (field, data) {
-            var len = field.attr('minlength');
+        minlength: function (data) {
+            var len = data.rules.minlength;
             if ($.isNumeric(len)) {
                 return data.value.length >= + len;
             }
         },
 
-        maxlength: function (field, data) {
-            var len = field.attr('maxlength');
+        maxlength: function (data) {
+            var len = data.rules.maxlength;
             if ($.isNumeric(len)) {
                 return data.value.length <= + len;
             }
         },
 
-        min: function (field, data) {
-            var min = field.attr('min');
+        min: function (data) {
+            var min = data.rules.min;
             if ($.isNumeric(min)) {
                 // min 转成数字进行比较
                 return data.value >= + min;
             }
         },
 
-        max: function (field, data) {
-            var max = field.attr('max');
+        max: function (data) {
+            var max = data.rules.max;
             if ($.isNumeric(max)) {
                 // max 转成数字进行比较
                 return data.value <= + max;
             }
         },
 
-        step: function (field, data) {
-            var min = field.attr('min') || 1;
-            var step = field.attr('step');
+        step: function (data) {
+            var step = data.rules.step;
             if ($.isNumeric(step)) {
+                var min = data.rules.min || 1;
                 return (data.value - min) % step === 0;
             }
         },
@@ -705,11 +734,11 @@ define(function (require, exports, module) {
          * <input type="password" name="password" required />
          * <input type="password" name="password_confirm" equals="password" />
          *
-         * @param {jQuery} field 字段元素
+         * @param {Object} data
          * @return {?boolean}
          */
-        equals: function (field, data) {
-            var equals = field.attr('equals');
+        equals: function (data) {
+            var equals = data.rules.equals;
             if (equals) {
                 var target = data.form.find('[name="' + equals + '"]');
                 return data.value === $.trim(target.val());
@@ -734,6 +763,37 @@ define(function (require, exports, module) {
         money: /^[\d.]*$/,
         idcard: /(^\d{15}$)|(^\d{17}([0-9]|X)$)/i,
         internationalMobile: /^\d{7,20}$/
+    };
+
+    var ruleParser = {
+        required: function (element, conf) {
+            return element.attr('required') === 'required';
+        },
+        pattern: function (element, conf) {
+            var pattern = element.attr('pattern') || Validator.pattern[conf.type];
+            if ($.type(pattern) === 'string') {
+                pattern = new RegExp(pattern);
+            }
+            return pattern;
+        },
+        minlength: function (element) {
+            return element.attr('minlength');
+        },
+        maxlength: function (element) {
+            return element.attr('maxlength');
+        },
+        min: function (element) {
+            return element.attr('min');
+        },
+        max: function (element) {
+            return element.attr('max');
+        },
+        step: function (element) {
+            return element.attr('step');
+        },
+        equals: function (element) {
+            return element.attr('equals');
+        }
     };
 
     /**

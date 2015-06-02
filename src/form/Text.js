@@ -20,7 +20,11 @@ define(function (require, exports) {
      * @param {Object} options
      * @property {jQuery} options.element <input type="text" /> 或 <textarea> 元素
      * @property {string} options.template
+     *
      * @property {string} options.placeholderSelector
+     * @property {boolean=} options.placeholderNativeFirst
+     * @property {boolean=} options.placeholderSimple
+     *
      * @property {Function=} options.onChange 文本值变化事件
      * @property {Function=} options.onKeyDown 鼠标按下事件
      * @property {Object=} options.action 键盘事件
@@ -45,7 +49,8 @@ define(function (require, exports) {
 
             me.placeholder = new Placeholder({
                 element: element,
-                simple: false,
+                simple: me.placeholderSimple,
+                nativeFirst: me.placeholderNativeFirst,
                 placeholderSelector: me.placeholderSelector,
                 template: me.template
             });
@@ -141,7 +146,12 @@ define(function (require, exports) {
      * @type {Object}
      */
     Text.defaultOptions = {
-
+        simple: false,
+        nativeFirst: true,
+        placeholderSelector: '.placeholder',
+        template: '<div class="placeholder-wrapper">'
+                +    '<div class="placeholder"></div>'
+                + '</div>'
     };
 
     /**

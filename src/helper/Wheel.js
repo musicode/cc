@@ -167,6 +167,8 @@ define(function (require, exports, module) {
 
         if (e.type !== 'wheel') {
 
+            e.type = 'wheel';
+
             var event = e.originalEvent;
 
             if (event.type !== 'wheel') {
@@ -184,18 +186,14 @@ define(function (require, exports, module) {
                     deltaY = event.detail;
                 }
 
-                $.extend(
-                    e,
-                    {
-                        deltaMode: 1,
-                        deltaX: deltaX,
-                        deltaY: deltaY
-                    }
-                );
+                e.originalEvent = {
+                    deltaMode: 1,
+                    deltaX: deltaX,
+                    deltaY: deltaY
+                };
+
             }
         }
-
-        e.type = 'wheel';
 
         onWheel(e);
 

@@ -85,9 +85,18 @@ define(function (require, exports, module) {
         '$/': 111,
 
         space: 32,
-        backspace: 8,
-        tab: 9,
+        tab: 9
 
+    };
+
+    /**
+     * 删除键
+     *
+     * @inner
+     * @type {Object}
+     */
+    var deleteKey = {
+        backspace: 8,
         'delete': 46
     };
 
@@ -169,11 +178,16 @@ define(function (require, exports, module) {
     $.extend(exports, charKey, functionKey, combinationKey);
 
     exports.charKey = charKey;
+    exports.deleteKey = deleteKey;
     exports.functionKey = functionKey;
     exports.combinationKey = combinationKey;
 
     exports.isCharKey = function (keyCode) {
         return keyCode in reserve(charKey);
+    };
+
+    exports.isDeleteKey = function (keyCode) {
+        return keyCode in reserve(deleteKey);
     };
 
     exports.isFunctionKey = function (keyCode) {

@@ -8,6 +8,9 @@ define(function (require, exports, module) {
 
     /**
      * 90%
+     *
+     * 鼠标点击菜单项不能触发 select，否则会导致 input.select()，从而触发 focus 事件
+     * 因此改名为 itemClick
      */
 
     var timer = require('../function/timer');
@@ -51,7 +54,7 @@ define(function (require, exports, module) {
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @property {Function=} options.onSelect 用户点击选中某个菜单项触发
+     * @property {Function=} options.onItemClick 用户点击选中某个菜单项触发
      * @property {Function=} options.onEnter 用户按下回车触发
      * @property {Function=} options.onChange 当遍历导致输入框值变化时触发
      * @property {Function=} options.onBeforeRender 渲染菜单之前触发
@@ -87,11 +90,22 @@ define(function (require, exports, module) {
             // 缓存结果
             me.cache = { };
 
+            // 可遍历的数据
+            var iteratorData = [
+                {
+                    element: element,
+                    data: {
+                        text: element.val()
+                    }
+                }
+            ];
+
             var iterator =
             me.iterator = new Iterator({
                 element: element,
                 startIndex: 0,
                 minIndex: me.includeInput ? 0 : 1,
+                data: iteratorData,
                 delay: me.delay,
                 onChange: function (e, data) {
 
@@ -155,7 +169,10 @@ define(function (require, exports, module) {
                     }
                 },
                 onChange: function () {
+
+                    iteratorData[0].data.text = element.val();
                     suggest(me);
+
                 }
             });
 
@@ -163,8 +180,29 @@ define(function (require, exports, module) {
 
             var itemSelector = me.itemSelector;
 
+            var bindMouseLeave = function () {
+                menu
+                .on('mouseleave' + namespace, itemSelector, function () {
+
+                    console.log(iterator.startIndex);
+
+                    iterator.to(
+                        iterator.startIndex
+                    );
+
+                    unbindMouseLeave();
+
+                });
+            };
+
+            var unbindMouseLeave = function () {
+                menu.off('mouseleave' + namespace);
+            };
+
             menu
             .on('click' + namespace, itemSelector, function () {
+
+                unbindMouseLeave();
 
                 var index = $(this).data(indexKey);
 
@@ -178,7 +216,7 @@ define(function (require, exports, module) {
                 me.close();
 
                 me.emit(
-                    'select',
+                    'itemClick',
                     activeData
                 );
 
@@ -194,12 +232,7 @@ define(function (require, exports, module) {
 
                 iterator.index = activeElement.data(indexKey);
 
-            })
-            .on('mouseleave' + namespace, itemSelector, function () {
-
-                iterator.to(
-                    iterator.startIndex
-                );
+                bindMouseLeave();
 
             });
 
@@ -218,21 +251,16 @@ define(function (require, exports, module) {
 
                 me.emit('beforeRender');
 
+                var iterator = me.iterator;
+                iterator.stop();
+
+                var iteratorData = iterator.getData();
+                iteratorData.length = 1;
+
                 var menu = me.menu;
                 menu.html(
                     me.renderTemplate(data, me.template)
                 );
-
-                var element = me.element;
-
-                var list = [
-                    {
-                        element: element,
-                        data: {
-                            text: element.val()
-                        }
-                    }
-                ];
 
                 menu
                 .find(me.itemSelector)
@@ -240,23 +268,23 @@ define(function (require, exports, module) {
 
                     var item = $(this);
 
-                    var result = item.data();
-                    if (result.text == null) {
-                        result.text = item.html();
+                    var data = item.data();
+                    if (data.text == null) {
+                        data.text = item.html();
                     }
 
-                    var len =
-                    list.push({
+                    var nextIndex =
+                    iteratorData.push({
                         element: item,
-                        data: result
+                        data: data
                     });
 
-                    item.data(indexKey, len - 1);
+                    item.data(indexKey, nextIndex - 1);
 
                 });
 
-                var iterator = me.iterator;
-                iterator.setData(list);
+                iterator.maxIndex = iteratorData.length - 1;
+
 
                 // 可以在 renderTemplate 时设置某一项选中
                 var activeItem = menu.find('.' + me.activeClass);

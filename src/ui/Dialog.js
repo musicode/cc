@@ -38,6 +38,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.modal 是否是窗口模态，默认为 true
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
      * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
+     * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
@@ -56,6 +57,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.hideMaskAnimation 隐藏遮罩动画
      *
      * @property {string=} options.skinClass 皮肤
+     * @property {string=} options.draggableClass 可拖拽时给 element 添加的 class
      * @property {string=} options.headerSelector 可拖拽的元素（一般是头部）
      * @property {string=} options.titleSelector 填充 title 的元素
      * @property {string=} options.closeSelector 点击可关闭对话框的元素
@@ -86,9 +88,22 @@ define(function (require, exports, module) {
             var element = me.element
                         || (me.element = $(me.template));
 
+            var classList = [ ];
+
             var skinClass = me.skinClass;
             if (skinClass) {
-                element.addClass(skinClass);
+                classList.push(skinClass);
+            }
+
+            var draggableClass = me.draggableClass;
+            if (me.draggable && draggableClass) {
+                classList.push(draggableClass);
+            }
+
+            if (classList.length > 0) {
+                element.addClass(
+                    classList.join(' ')
+                );
             }
 
             var removeOnEmpty = me.removeOnEmpty;
@@ -116,10 +131,7 @@ define(function (require, exports, module) {
                 element.on('click' + namespace, closeSelector, hideHandler);
             }
 
-            var style = {
-                // 默认隐藏
-                display: 'none'
-            };
+            var style = { };
 
             if (me.width) {
                 style.width = me.width;
@@ -138,9 +150,6 @@ define(function (require, exports, module) {
 
                 var mask = me.mask
                         || (me.mask = $(me.maskTemplate));
-
-                // 默认隐藏
-                mask.hide();
 
                 // 遮罩放到对话框前面
                 // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
@@ -224,18 +233,10 @@ define(function (require, exports, module) {
                 });
             }
 
-            if ($.isFunction(me.showAnimation)) {
-                me.showAnimation();
-            }
-            else {
-                element.show();
-            }
+            me.showAnimation();
 
-            if ($.isFunction(me.showMaskAnimation)) {
+            if (me.mask) {
                 me.showMaskAnimation();
-            }
-            else if (me.mask) {
-                me.mask.show();
             }
 
             me.hidden = false;
@@ -245,13 +246,14 @@ define(function (require, exports, module) {
                         me.resizer =
                         debounce(
                             function () {
-                                refresh(me);
+                                refresh(me, true);
                             },
                             50
                         )
                     );
 
             me.emit('afterShow');
+
         },
 
         /**
@@ -283,18 +285,10 @@ define(function (require, exports, module) {
                 me.drager = null;
             }
 
-            if ($.isFunction(me.hideAnimation)) {
-                me.hideAnimation();
-            }
-            else {
-                me.element.hide();
-            }
+            me.hideAnimation();
 
-            if ($.isFunction(me.hideMaskAnimation)) {
+            if (me.mask) {
                 me.hideMaskAnimation();
-            }
-            else if (me.mask) {
-                me.mask.hide();
             }
 
             me.hidden = true;
@@ -363,7 +357,9 @@ define(function (require, exports, module) {
         disposeOnHide: true,
         removeOnDispose: true,
         hideOnClickMask: false,
+        positionOnResize: true,
 
+        draggableClass: 'draggable',
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',
         closeSelector: '.dialog-close',
@@ -375,7 +371,23 @@ define(function (require, exports, module) {
                 +     '<div class="dialog-body"></div>'
                 + '</div>',
 
-        maskTemplate: '<div class="dialog-mask"></div>'
+        maskTemplate: '<div class="dialog-mask"></div>',
+
+        showAnimation: function () {
+            this.element.show();
+        },
+        hideAnimation: function () {
+            this.element.hide();
+        },
+        showMaskAnimation: function () {
+            this.mask.show();
+        },
+        hideMaskAnimation: function () {
+            this.mask.hide();
+        },
+        resizeAnimation: function (style) {
+            this.element.css(style);
+        }
     };
 
     /**
@@ -409,41 +421,41 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Dialog} dialog
+     * @param {boolean=} isResize 是否是 resize 触发刷新
      */
-    function refresh(dialog) {
+    function refresh(dialog, isResize) {
 
-        var element = dialog.element;
-        var pinOptions = {
+        if (!isResize || dialog.positionOnResize) {
 
-            silence: true,
+            var element = dialog.element;
 
-            element: element,
-            x: dialog.x === '50%' ? '50%' : 0,
-            y: dialog.y === '50%' ? '50%' : 0,
+            var pinOptions = {
 
-            attachment: {
-                element: viewport(),
-                width: dimension.getViewportWidth(),
-                height: dimension.getViewportHeight(),
-                x: dialog.x,
-                y: dialog.y
-            }
-        };
+                silence: true,
 
-        if (!dialog.fixed) {
-            pinOptions.offset = {
-                x: dimension.getPageScrollLeft(),
-                y: dimension.getPageScrollTop()
+                element: element,
+                x: dialog.x === '50%' ? '50%' : 0,
+                y: dialog.y === '50%' ? '50%' : 0,
+
+                attachment: {
+                    element: viewport(),
+                    width: dimension.getViewportWidth(),
+                    height: dimension.getViewportHeight(),
+                    x: dialog.x,
+                    y: dialog.y
+                }
             };
-        }
 
-        var style = pin(pinOptions);
+            if (!dialog.fixed) {
+                pinOptions.offset = {
+                    x: dimension.getPageScrollLeft(),
+                    y: dimension.getPageScrollTop()
+                };
+            }
 
-        if ($.isFunction(dialog.resizeAnimation)) {
-            dialog.resizeAnimation(style);
-        }
-        else {
-            element.css(style);
+            dialog.resizeAnimation(
+                pin(pinOptions)
+            );
         }
 
         var mask = dialog.mask;

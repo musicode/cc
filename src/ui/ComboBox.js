@@ -73,10 +73,50 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-
-            me.popup = createPopup(me);
-
+            var button = me.button;
             var menu = me.menu;
+
+            var main = me.element || button;
+            var openClass = me.openClass;
+
+            var show = me.show;
+            var hide = me.hide;
+
+            var animation = show.animation;
+            if ($.isFunction(animation)) {
+                show.animation = $.proxy(animation, me);
+            }
+
+            animation = hide.animation;
+            if ($.isFunction(animation)) {
+                hide.animation = $.proxy(animation, me);
+            }
+
+            me.popup = new Popup({
+                element: button,
+                layer: menu,
+                show: show,
+                hide: hide,
+                onBeforeShow: function (e) {
+                    me.emit(e);
+                },
+                onBeforeHide: function (e) {
+                    me.emit(e);
+                },
+                onAfterShow: function (e) {
+                    if (openClass) {
+                        main.addClass(openClass);
+                    }
+                    me.emit(e);
+                },
+                onAfterHide: function (e) {
+                    if (openClass) {
+                        main.removeClass(openClass);
+                    }
+                    me.emit(e);
+                }
+            });
+
 
             // 通过 DOM 取值
             if (me.value == null) {
@@ -265,6 +305,7 @@ define(function (require, exports, module) {
             me.popup.dispose();
 
             me.popup =
+            me.element =
             me.button =
             me.menu = null;
         }
@@ -279,8 +320,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ComboBox.defaultOptions = {
-        show: { },
-        hide: { }
+        show: {
+            trigger: 'click'
+        },
+        hide: {
+            trigger: 'click'
+        }
     };
 
     /**
@@ -290,64 +335,6 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_ui_combobox';
-
-    /**
-     * 创建 Popup 实例
-     *
-     * @inner
-     * @param {ComboBox} comboBox
-     * @return {Popup}
-     */
-    function createPopup(comboBox) {
-
-        var main = comboBox.element || comboBox.button;
-        var openClass = comboBox.openClass;
-
-        var show = comboBox.show;
-        var hide = comboBox.hide;
-
-        if (!show.trigger) {
-            show.trigger = 'click';
-        }
-        if (!hide.trigger) {
-            hide.trigger = 'click';
-        }
-
-        var animation = show.animation;
-        if ($.isFunction(animation)) {
-            show.animation = $.proxy(animation, comboBox);
-        }
-
-        animation = hide.animation;
-        if ($.isFunction(animation)) {
-            hide.animation = $.proxy(animation, comboBox);
-        }
-
-        return new Popup({
-            element: comboBox.button,
-            layer: comboBox.menu,
-            show: show,
-            hide: hide,
-            onBeforeShow: function (e) {
-                comboBox.emit(e);
-            },
-            onBeforeHide: function (e) {
-                comboBox.emit(e);
-            },
-            onAfterShow: function (e) {
-                if (openClass) {
-                    main.addClass(openClass);
-                }
-                comboBox.emit(e);
-            },
-            onAfterHide: function (e) {
-                if (openClass) {
-                    main.removeClass(openClass);
-                }
-                comboBox.emit(e);
-            }
-        });
-    }
 
 
     return ComboBox;

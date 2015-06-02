@@ -44,6 +44,9 @@ define(function (require, exports, module) {
 
         var eventGroup = { };
 
+        // [HACK] fix android 不支持 touchend
+        var touchEndTimer;
+
         eventGroup[ 'touchmove' + namespace ] = function (e) {
 
             var point = getPoint(e);
@@ -55,11 +58,28 @@ define(function (require, exports, module) {
                 if (event.isDefaultPrevented()) {
                     e.preventDefault();
                 }
+
+                if (touchEndTimer) {
+                    clearTimeout(touchEndTimer);
+                }
+
+                touchEndTimer = setTimeout(
+                    function () {
+                        eventGroup[ 'touchend' + namespace ](e);
+                    },
+                    200
+                );
+
             }
 
         };
 
         eventGroup[ 'touchend' + namespace ] = function (e) {
+
+            if (touchEndTimer) {
+                clearTimeout(touchEndTimer);
+                touchEndTimer = null;
+            }
 
             var point = getPoint(e);
 

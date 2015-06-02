@@ -40,6 +40,14 @@ define(function (require, exports, module) {
      * @property {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.openClass 菜单展开状态的 class
      *
+     * @property {Object=} options.show
+     * @property {number=} options.show.delay 显示延时
+     * @property {Function=} options.show.animation 显示动画
+     *
+     * @property {Object=} options.hide
+     * @property {number=} options.hide.delay 隐藏延时
+     * @property {Function=} options.hide.animation 隐藏动画
+     *
      * @property {Function=} options.setText 把选中的菜单项文本写入到按钮上
      * @property {Function=} options.onChange 选中菜单项触发
      */
@@ -79,6 +87,8 @@ define(function (require, exports, module) {
                 menu: element.find(me.menuSelector),
                 data: me.data,
                 value: me.value,
+                show: me.show,
+                hide: me.hide,
                 defaultText: me.defaultText,
                 template: me.template,
                 renderTemplate: me.renderTemplate,

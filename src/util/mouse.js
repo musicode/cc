@@ -10,8 +10,10 @@ define(function (require, exports, module) {
         return e.originalEvent.changedTouches[0];
     }
 
+    var element = document.createElement('div');
+
     var touch = {
-        support: 'ontouchend' in window,
+        support: 'ontouchend' in element,
         click: 'touchstart',
         mousedown: 'touchstart',
         mousemove: 'touchmove',
@@ -31,7 +33,7 @@ define(function (require, exports, module) {
     };
 
     var mouse = {
-        support: 'onclick' in window,
+        support: 'onclick' in element,
         click: 'click',
         mousedown: 'mousedown',
         mousemove: 'mousemove',
@@ -49,6 +51,8 @@ define(function (require, exports, module) {
             return e.clientY;
         }
     };
+
+    element = null;
 
     return {
         touch: touch,

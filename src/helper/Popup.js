@@ -65,6 +65,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var split = require('../function/split');
+    var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
@@ -154,7 +155,7 @@ define(function (require, exports, module) {
             }
 
             var hidden = me.hidden
-                       = me.layer.is(':hidden');
+                       = isHidden(me.layer);
 
             var action = hidden ? showEvent : hideEvent;
             action(me, 'on');
@@ -180,12 +181,14 @@ define(function (require, exports, module) {
                 return;
             }
 
+            var layer = me.layer;
+
             var animation = me.show.animation;
             if ($.isFunction(animation)) {
-                animation.call(me);
+                animation.call(me, layer);
             }
             else {
-                me.layer.show();
+                layer.show();
             }
 
             me.hidden = false;
@@ -217,12 +220,14 @@ define(function (require, exports, module) {
                 return;
             }
 
+            var layer = me.layer;
+
             var animation = me.hide.animation;
             if ($.isFunction(animation)) {
-                animation.call(me);
+                animation.call(me, layer);
             }
             else {
-                me.layer.hide();
+                layer.hide();
             }
 
             me.hidden = true;
@@ -373,7 +378,8 @@ define(function (require, exports, module) {
     }
 
     function getSourceElement(e) {
-        return e.currentTarget;
+        var element = e.currentTarget;
+        return element && element.tagName === 'HTML' ? null : element;
     }
 
     /**
@@ -455,8 +461,10 @@ define(function (require, exports, module) {
      * @return {number}
      */
     function getTimeStamp(e) {
-        e = e || { };
-        return e.timeStamp || +new Date();
+        // e.timeStamp 在火狐下取值是错的
+        // 为了避免碰到更多 SB 浏览器
+        // 这里就用 $.now
+        return $.now();
     }
 
     function getEventHandlerName(type) {
@@ -477,18 +485,8 @@ define(function (require, exports, module) {
         return !before || before(popup, e);
     }
 
-    function checkTimeInterval(popup, trigger, e) {
-
-        var eventTime = getTimeStamp(e);
-
-        if (eventTime - popup[ lastTriggerTimeKey ] < 50) {
-            return false;
-        }
-        else {
-            popup[ lastTriggerTimeKey ] = eventTime;
-            return true;
-        }
-
+    function checkTimeInterval(popup, eventTime) {
+        return eventTime - popup[ lastTriggerTimeKey ] > 50;
     }
 
     /**
@@ -504,13 +502,16 @@ define(function (require, exports, module) {
 
             var popup = e.data;
 
+            var eventTime = getTimeStamp(e);
+
             if (!checkTimer(popup, showTimerKey)
                 || !checkSourceElement(popup, e)
                 || !checkBeforeCondition(popup, before, e)
-                || !checkTimeInterval(popup, trigger, e)
             ) {
                 return;
             }
+
+            popup[ lastTriggerTimeKey ] = eventTime;
 
             /**
              * 难点是当 layer 处于显示状态时，另一个触发显示的 dom 事件也走进这里。
@@ -579,13 +580,16 @@ define(function (require, exports, module) {
 
             var popup = e.data;
 
+            var eventTime = getTimeStamp(e);
+
             if (!checkTimer(popup, hideTimerKey)
                 || !checkBeforeCondition(popup, before, e)
-                || !checkTimeInterval(popup, trigger, e)
+                || !checkTimeInterval(popup, eventTime)
             ) {
                 return;
             }
 
+            popup[ lastTriggerTimeKey ] = eventTime;
             popup[ hidePromiseKey ] = $.Deferred();
 
             delayExecute({
@@ -804,7 +808,7 @@ define(function (require, exports, module) {
                 type: 'click',
                 handler: function () {
                     return createHideHandler(
-                        'click',
+                        this.type,
                         function (popup, e) {
                             return !inLayer(popup, e.target);
                         }

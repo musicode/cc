@@ -65,6 +65,15 @@ define(function (require, exports, module) {
 
         size: function () {
             return this.list.length;
+        },
+
+        dispose: function () {
+
+            var me = this;
+
+            me.list =
+            me.callback = null;
+
         }
 
     };
