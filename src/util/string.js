@@ -135,10 +135,12 @@ define(function (require, exports, module) {
      */
     exports.decodeHTML = function (source) {
         var str = String(source)
-                    .replace(/&quot;/g, '"')
+                    .replace(/&amp;/g, '&')
                     .replace(/&lt;/g, '<')
                     .replace(/&gt;/g, '>')
-                    .replace(/&amp;/g, '&');
+                    .replace(/&quot;/g, '"')
+                    .replace(/&#39;/g, "'");
+
         // 处理转义的中文和实体字符
         return str.replace(
                     /&#([\d]+);/g,

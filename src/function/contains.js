@@ -23,6 +23,10 @@ define(function (require, exports, module) {
                 ? element[0]
                 : element;
 
+        if (!container || !element) {
+            return false;
+        }
+
         if (container === element) {
             return true;
         }
