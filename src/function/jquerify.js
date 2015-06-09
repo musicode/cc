@@ -29,6 +29,7 @@ define(function (require, exports, module) {
                 getElement(this),
                 arguments
             );
+            return this;
         },
 
         /**
@@ -39,6 +40,7 @@ define(function (require, exports, module) {
                 getElement(this),
                 arguments
             );
+            return this;
         },
 
         /**
