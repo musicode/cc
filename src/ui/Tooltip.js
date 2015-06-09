@@ -204,8 +204,6 @@ define(function (require, exports, module) {
                 hide.animation = $.proxy(animation, me);
             }
 
-            var width = element.data('width') || me.width || '';
-
             me.popup = new Popup({
                 element: element,
                 layer: layer,
@@ -274,6 +272,7 @@ define(function (require, exports, module) {
                     me.updateContent();
                     me.updatePlacement(placement);
 
+                    var width = sourceElement.data('width') || me.width;
                     if (width) {
                         layer.css('max-width', width);
                     }
