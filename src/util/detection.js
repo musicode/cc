@@ -102,4 +102,53 @@ define(function (require, exports, module) {
         return typeof window.WebSocket !== 'undefined';
     };
 
+    /**
+     * 是否支持 flexbox
+     *
+     * @return {boolean}
+     */
+    exports.supportFlexbox = function () {
+        return testCSS('flexWrap');
+    };
+
+    /**
+     * 是否支持 transform
+     *
+     * @return {boolean}
+     */
+    exports.supportTransform = function () {
+        return testCSS('transform');
+    };
+
+    /**
+     * 是否支持 flash
+     *
+     * @return {boolean}
+     */
+    exports.supportFlash = function () {
+
+        var swf;
+        var plugins = navigator.plugins;
+
+        if (plugins && plugins.length > 0) {
+            swf = plugins['Shockwave Flash'];
+        }
+        else if (document.all) {
+            swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+        }
+
+        return !!swf;
+
+    };
+
+    /**
+     * 是否支持 canvas
+     *
+     * @return {boolean}
+     */
+    exports.supportCanvas = function () {
+        var canvas = document.createElement('canvas');
+        return canvas && canvas.getContext;
+    };
+
 });

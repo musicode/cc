@@ -164,8 +164,16 @@ define(function (require, exports, module) {
                         e.preventDefault();
                     },
                     enter: function () {
-                        me.close();
+
+                        if (me.popup.hidden) {
+                            activeData = iteratorData[0].data;
+                        }
+                        else {
+                            me.close();
+                        }
+
                         me.emit('enter', activeData);
+
                     }
                 },
                 onChange: function () {
@@ -180,11 +188,16 @@ define(function (require, exports, module) {
 
             var itemSelector = me.itemSelector;
 
+            var isScrolling = false;
+            var scrollTimer;
+
             var bindMouseLeave = function () {
                 menu
                 .on('mouseleave' + namespace, itemSelector, function () {
 
-                    console.log(iterator.startIndex);
+                    if (isScrolling) {
+                        return;
+                    }
 
                     iterator.to(
                         iterator.startIndex
@@ -200,6 +213,23 @@ define(function (require, exports, module) {
             };
 
             menu
+            .on('scroll' + namespace, function () {
+
+                if (scrollTimer) {
+                    clearTimeout(scrollTimer);
+                }
+
+                isScrolling = true;
+
+                scrollTimer = setTimeout(
+                    function () {
+                        scrollTimer = null;
+                        isScrolling = false;
+                    },
+                    500
+                );
+
+            })
             .on('click' + namespace, itemSelector, function () {
 
                 unbindMouseLeave();
@@ -222,6 +252,10 @@ define(function (require, exports, module) {
 
             })
             .on('mouseenter' + namespace, itemSelector, function () {
+
+                if (isScrolling) {
+                    return;
+                }
 
                 if (activeElement) {
                     activeElement.removeClass(activeClass);

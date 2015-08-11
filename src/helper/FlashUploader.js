@@ -278,6 +278,12 @@ define(function (require, exports, module) {
             var uploader = this.customSettings.uploader;
 
             var percent = data.uploaded / (data.total || 1);
+
+            if (percent >= 0 && percent <= 1) { }
+            else {
+                percent = 0;
+            }
+
             data.percent = parseInt(100 * percent, 10) + '%';
 
             uploader.emit('uploadProgress', data);

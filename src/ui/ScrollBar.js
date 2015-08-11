@@ -44,10 +44,9 @@ define(function (require, exports, module) {
      * @property {jQuery} options.panel 滚动面板
      *
      * @property {number=} options.value 面板当前滚动的位置，不传则计算元素当前位置
-     * @property {number=} options.step 滑动滚轮产生的单位距离
-     * @property {boolean=} options.step4Panel step 是否是 panel 的滚动距离，默认为 false
      *
      * @property {string=} options.orientation 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
+     * @property {number=} options.scrollStep 滚动的单位像素，默认是 20
      * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation  为 horizontal 时生效
      * @property {number=} options.minHeight 滚动条的最小高度，当 orientation  为 vertical 时生效
      *
@@ -82,10 +81,11 @@ define(function (require, exports, module) {
 
             var scrollHandler = function (e, data) {
 
-                var offset = data.delta * me.scrollStep;
+                var offsetPixel = data.delta * me.scrollStep;
+                var offsetValue = me.panelPixelToValue(offsetPixel);
 
                 return !me.to(
-                    me.value + offset,
+                    me.value + offsetValue,
                     {
                         from: 'wheel'
                     }
@@ -186,21 +186,153 @@ define(function (require, exports, module) {
         refresh: function (data) {
 
             //
-            // [HACK]
+            // [建议]
+            //
             // 某些浏览器（测试时是火狐）
             // 在 js 执行期间获取到的 scrollHeight
             // 和 js 执行完之后获取的 scrollHeight 不一样
-            // 因此设置一个延时，确保刷新时是最新的 DOM 树
+            // 因此调用时最好设置一个延时，确保刷新时是最新的 DOM 树
             //
 
             var me = this;
 
-            setTimeout(
-                function () {
-                    delayRefresh(me, data);
-                }
-            );
+            var silence;
 
+            if ($.isPlainObject(data)) {
+                $.extend(me, data);
+            }
+
+            if (data === true || arguments[1] === true) {
+                silence = true;
+            }
+
+            var innerSizeName;
+            var outerSizeName;
+            var scrollSizeName;
+            var minSizeName;
+            var positionName;
+            var scrollName;
+
+            if (me.orientation === 'vertical') {
+                innerSizeName = 'innerHeight';
+                outerSizeName = 'outerHeight';
+                scrollSizeName = 'scrollHeight';
+                minSizeName = 'minHeight';
+                positionName = 'top';
+                scrollName = 'scrollTop';
+            }
+            else {
+                innerSizeName = 'innerWidth';
+                outerSizeName = 'outerWidth';
+                scrollSizeName = 'scrollWidth';
+                minSizeName = 'minWidth';
+                positionName = 'left';
+                scrollName = 'scrollLeft';
+            }
+
+            var panelElement = me.panel;
+
+            var viewportSize = panelElement[ innerSizeName ]();
+            var contentSize = panelElement.prop(scrollSizeName);
+
+            var ratio = contentSize > 0
+                      ? viewportSize / contentSize
+                      : 1;
+
+            if (ratio > 0 && ratio < 1) {
+
+                me.showAnimation();
+
+                var trackElement = me.element;
+                var thumbElement = me.thumb;
+
+                var trackSize = trackElement[ innerSizeName ]();
+                var thumbSize = multiply(ratio, trackSize);
+
+                var minThumbSize = me[ minSizeName ];
+                if (thumbSize < minThumbSize) {
+                    thumbSize = minThumbSize;
+                }
+
+                // 转成整数，为了避免结果是 0，这里使用向上取整
+                thumbSize = Math.ceil(thumbSize);
+
+                thumbElement[ outerSizeName ](thumbSize);
+
+                var panelMaxPixel = contentSize - viewportSize;
+                var barMaxPixel = trackSize - thumbSize;
+// console.log('====================')
+// console.log('panel: ', contentSize, viewportSize, panelMaxPixel);
+// console.log('bar: ', trackSize, thumbSize, barMaxPixel);
+                me.panelPixelToValue = function (pixel) {
+                    return multiply(
+                            maxValue,
+                            divide(pixel, panelMaxPixel)
+                        );
+                };
+
+                me.valueToPanelPixel = function (value) {
+                    return multiply(
+                            panelMaxPixel,
+                            divide(value, maxValue)
+                        );
+                };
+
+                me.barPixelToValue = function (pixel) {
+                    return multiply(
+                            maxValue,
+                            divide(pixel, barMaxPixel)
+                        );
+                };
+
+                me.valueToBarPixel = function (value) {
+                    return multiply(
+                            barMaxPixel,
+                            divide(value, maxValue)
+                        );
+                };
+
+                me.syncBar = function (value) {
+                    var pixel = me.valueToBarPixel(value);
+                    thumbElement.css(positionName, pixel);
+                };
+
+                me.syncPanel = function (value) {
+                    var pixel = me.valueToPanelPixel(value);
+                    panelElement[scrollName](pixel);
+                };
+
+                var from;
+                var value = data && data.value;
+
+                if (value >= minValue && value <= maxValue) { }
+                else {
+                    from = 'panel';
+                    value = me.panelPixelToValue(
+                        panelElement[ scrollName ]()
+                    );
+                }
+
+                me.to(
+                    value,
+                    {
+                        force: true,
+                        silence: silence,
+                        from: from
+                    }
+                );
+
+            }
+            else {
+                me.hideAnimation();
+
+                me.panelPixelToValue =
+                me.valueToPanelPixel =
+                me.barPixelToValue =
+                me.valueToBarPixel =
+                me.syncPanel =
+                me.syncBar = $.noop;
+            }
 
         },
 
@@ -286,7 +418,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ScrollBar.defaultOptions = {
-        scrollStep: 5,
+        scrollStep: 20,
         orientation: 'vertical',
         minWidth: 10,
         minHeight: 10,
@@ -299,143 +431,6 @@ define(function (require, exports, module) {
             this.element.hide();
         }
     };
-
-    function delayRefresh(me, data) {
-
-        var silence;
-
-        if ($.isPlainObject(data)) {
-            $.extend(me, data);
-        }
-
-        if (data === true || arguments[1] === true) {
-            silence = true;
-        }
-
-        var innerSizeName;
-        var outerSizeName;
-        var scrollSizeName;
-        var minSizeName;
-        var positionName;
-        var scrollName;
-
-        if (me.orientation === 'vertical') {
-            innerSizeName = 'innerHeight';
-            outerSizeName = 'outerHeight';
-            scrollSizeName = 'scrollHeight';
-            minSizeName = 'minHeight';
-            positionName = 'top';
-            scrollName = 'scrollTop';
-        }
-        else {
-            innerSizeName = 'innerWidth';
-            outerSizeName = 'outerWidth';
-            scrollSizeName = 'scrollWidth';
-            minSizeName = 'minWidth';
-            positionName = 'left';
-            scrollName = 'scrollLeft';
-        }
-
-        var panelElement = me.panel;
-
-        var viewportSize = panelElement[ innerSizeName ]();
-        var contentSize = panelElement.prop(scrollSizeName);
-
-        var ratio = contentSize > 0
-                  ? viewportSize / contentSize
-                  : 1;
-
-        if (ratio > 0 && ratio < 1) {
-
-            me.showAnimation();
-
-            var trackElement = me.element;
-            var thumbElement = me.thumb;
-
-            var trackSize = trackElement[ innerSizeName ]();
-            var thumbSize = multiply(ratio, trackSize);
-
-            var minThumbSize = me[ minSizeName ];
-            if (thumbSize < minThumbSize) {
-                thumbSize = minThumbSize;
-            }
-
-            // 转成整数，为了避免结果是 0，这里使用向上取整
-            thumbSize = Math.ceil(thumbSize);
-
-            thumbElement[ outerSizeName ](thumbSize);
-
-            var panelMaxPixel = contentSize - viewportSize;
-            var barMaxPixel = trackSize - thumbSize;
-// console.log('====================')
-// console.log('panel: ', contentSize, viewportSize, panelMaxPixel);
-// console.log('bar: ', trackSize, thumbSize, barMaxPixel);
-            me.panelPixelToValue = function (pixel) {
-                return multiply(
-                        maxValue,
-                        divide(pixel, panelMaxPixel)
-                    );
-            };
-
-            me.valueToPanelPixel = function (value) {
-                return multiply(
-                        panelMaxPixel,
-                        divide(value, maxValue)
-                    );
-            };
-
-            me.barPixelToValue = function (pixel) {
-                return multiply(
-                        maxValue,
-                        divide(pixel, barMaxPixel)
-                    );
-            };
-
-            me.valueToBarPixel = function (value) {
-                return multiply(
-                        barMaxPixel,
-                        divide(value, maxValue)
-                    );
-            };
-
-            me.syncBar = function (value) {
-                var pixel = me.valueToBarPixel(value);
-                thumbElement.css(positionName, pixel);
-            };
-
-            me.syncPanel = function (value) {
-                var pixel = me.valueToPanelPixel(value);
-                panelElement[scrollName](pixel);
-            };
-
-            var from;
-            var value = data && data.value;
-
-            if (value >= minValue && value <= maxValue) { }
-            else {
-                from = 'panel';
-                value = me.panelPixelToValue(
-                    panelElement[ scrollName ]()
-                );
-            }
-
-            me.to(
-                value,
-                {
-                    force: true,
-                    silence: silence,
-                    from: from
-                }
-            );
-
-        }
-        else {
-            me.hideAnimation();
-
-            me.syncPanel =
-            me.syncBar = $.noop;
-        }
-    }
 
 
     return ScrollBar;

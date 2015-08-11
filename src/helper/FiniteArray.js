@@ -111,6 +111,18 @@ define(function (require, exports, module) {
             );
         },
 
+        /**
+         * 获取数组的大小
+         *
+         * @return {number}
+         */
+        size: function () {
+            return this.list.length;
+        },
+
+        /**
+         * 清空数组
+         */
         clear: function () {
             this.list.length = 0;
         }

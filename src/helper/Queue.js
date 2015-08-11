@@ -55,7 +55,9 @@ define(function (require, exports, module) {
 
                 me.callback = function () {
                     me.callback = null;
-                    me.remove();
+                    if (me.list) {
+                        me.remove();
+                    }
                 };
 
                 me.process(item, callback);

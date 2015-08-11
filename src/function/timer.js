@@ -19,17 +19,24 @@ define(function (require, exports, module) {
 
         var timer;
 
+        var process = function () {
+
+            timer = setTimeout(process, delay);
+
+            fn();
+
+        };
+
         var switcher = {
 
-            start: function task() {
-
-                var hasTimer = timer;
+            start: function () {
 
                 switcher.stop();
 
-                fn();
-
-                timer = setTimeout(task, hasTimer ? delay : wait);
+                setTimeout(
+                    process,
+                    wait
+                );
 
             },
 

@@ -65,31 +65,7 @@ define(function (require, exports, module) {
         };
     }
 
-    else if (doc.msRequestFullscreen) {
-        enter = function () {
-            doc.msRequestFullscreen();
-        };
-        exit = function () {
-            document.msExitFullscreen();
-        };
-        change = function (handler) {
-            document.addEventListener(
-                'msfullscreenchange',
-                function () {
-                    handler(document.msFullscreenElement);
-                }
-            );
-        };
-    }
-    else if (typeof window.ActiveXObject !== 'undefined') {
-        enter = exit = function () {
-            var wscript = new ActiveXObject('WScript.Shell');
-            if (wscript !== null) {
-                wscript.SendKeys('{F11}');
-            }
-        };
-        change = noop;
-    }
+    // IE 实现有坑，不考虑支持
     else {
         enter = exit = change = noop;
     }

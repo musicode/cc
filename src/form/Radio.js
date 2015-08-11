@@ -152,7 +152,7 @@ define(function (require, exports, module) {
          * @return {string}
          */
         getValue: function () {
-            this.element.val();
+            return this.element.val();
         },
 
         /**

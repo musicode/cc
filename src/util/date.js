@@ -53,19 +53,10 @@ define(function (require, exports, module) {
 
         if (valid) {
 
-            if (month >= 0 && month <= 12
-                && date >= 0 && date <= 31
+            if (month >= 1 && month <= 12
+                && date >= 1 && date <= 31
             ) {
-
-                var result = new Date();
-
-                result.setFullYear(year);
-                // 必须先设置 Date 再设置 Month
-                // 不然碰到今天是 29 号的情况，再设置 month 为 1，结果是 3 月
-                result.setDate(date);
-                result.setMonth(month - 1);
-
-                return result;
+                return new Date(year, month - 1, date);
             }
 
         }

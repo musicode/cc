@@ -158,10 +158,6 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            var placementList = getPlacementList(
-                                    element.data('placement') || me.placement
-                                );
-
             var layer = me.layer;
             if (!layer) {
 
@@ -231,11 +227,15 @@ define(function (require, exports, module) {
                     var sourceElement = me.sourceElement;
 
                     if (sourceElement) {
-                        skinClass = sourceElement.data('skin');
+                        skinClass = sourceElement.attr('data-skin');
                     }
 
                     sourceElement =
                     me.sourceElement = $(e.currentTarget);
+
+                    var placementList = getPlacementList(
+                        sourceElement.attr('data-placement') || me.placement
+                    );
 
                     var placement = placementList.length === 1
                                  && placementList[0];
@@ -264,38 +264,50 @@ define(function (require, exports, module) {
                         layer.removeClass(skinClass);
                     }
 
-                    var skinClass = sourceElement.data('skin');
+                    skinClass = sourceElement.attr('data-skin');
                     if (skinClass) {
                         layer.addClass(skinClass);
                     }
 
-                    me.updateContent();
-                    me.updatePlacement(placement);
+                    var promise = me.updateContent();
+                    var update = function () {
 
-                    var width = sourceElement.data('width') || me.width;
-                    if (width) {
-                        layer.css('max-width', width);
+                        me.updatePlacement(placement);
+
+                        var width = sourceElement.data('width') || me.width;
+                        if (width) {
+                            layer.css('max-width', width);
+                        }
+
+                        me.emit(e);
+
+                        if (e.isDefaultPrevented()) {
+                            return false;
+                        }
+
+                        me.pin(placement);
+
+                        instance.window.resize(
+                            me.resizer =
+                            debounce(
+                                function () {
+                                    if (me.popup) {
+                                        me.pin(placement);
+                                    }
+                                },
+                                50
+                            )
+                        );
+
                     }
 
-                    me.emit(e);
-
-                    if (e.isDefaultPrevented()) {
-                        return false;
+                    if (promise && $.isFunction(promise.done)) {
+                        promise.done(update);
+                    }
+                    else {
+                        update();
                     }
 
-                    me.pin(placement);
-
-                    instance.window.resize(
-                        me.resizer =
-                        debounce(
-                            function () {
-                                if (me.popup) {
-                                    me.pin(placement);
-                                }
-                            },
-                            50
-                        )
-                    );
                 }
             });
         },
@@ -437,7 +449,7 @@ define(function (require, exports, module) {
             var layer = this.layer;
 
             layer.html(
-                this.getSourceElement().data('title')
+                this.getSourceElement().attr('data-title')
             );
 
         },

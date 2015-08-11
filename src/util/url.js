@@ -98,6 +98,17 @@ define(function (require, exports, module) {
             origin = RegExp.$1;
         }
 
+        // xp 下 http 可能会解析出 80 端口，实际是不需要的
+        var terms = origin.split(':');
+
+        if (origin.indexOf('http:') === 0
+            && terms.length === 3
+            && terms[2] == 80
+        ) {
+            terms.length = 2;
+            origin = terms.join(':');
+        }
+
         var pathname = link.pathname;
 
         if (pathname && pathname.charAt(0) !== '/') {

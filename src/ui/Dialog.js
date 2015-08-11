@@ -6,16 +6,16 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Draggable = require('../helper/Draggable');
     var instance = require('../util/instance');
     var dimension = require('../util/dimension');
 
-    var pin = require('../function/pin');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var viewport = require('../function/viewport');
     var offsetParent = require('../function/offsetParent');
     var debounce = require('../function/debounce');
+
+    var pinGlobal = require('../function/pinGlobal');
+    var dragGlobal = require('../function/dragGlobal');
 
     /**
      * 对话框
@@ -36,7 +36,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hidden 初始化时是否隐藏，默认为 false
      * @property {boolean=} options.fixed 是否 fixed 定位，默认为 false
      * @property {boolean=} options.modal 是否是窗口模态，默认为 true
-     * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 headerSelector 配置
+     * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableHandleSelector 和 draggableCancelSelector 配置
      * @property {boolean=} options.scrollable 是否可以滚动，默认为 false
      * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
@@ -58,15 +58,20 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.skinClass 皮肤
      * @property {string=} options.draggableClass 可拖拽时给 element 添加的 class
+     * @property {string=} options.draggingClass 拖拽时给 element 添加的 class
+     *
+     * @property {string=} options.draggableHandleSelector 可拖拽的元素
+     * @property {string=} options.draggableCancelSelector 不可拖拽的元素
+     *
      * @property {string=} options.headerSelector 可拖拽的元素（一般是头部）
      * @property {string=} options.titleSelector 填充 title 的元素
      * @property {string=} options.closeSelector 点击可关闭对话框的元素
      * @property {string=} options.bodySelector 填充 content 的元素
      *
      * @property {Function=} options.onBeforeShow 返回 false 可阻止显示
-     * @property {Function=} options.onAterShow
+     * @property {Function=} options.onAfterShow
      * @property {Function=} options.onBeforeHide 返回 false 可阻止隐藏
-     * @property {Function=} options.onAterHide
+     * @property {Function=} options.onAfterHide
      */
     function Dialog(options) {
         return lifeCycle.init(this, options);
@@ -212,26 +217,21 @@ define(function (require, exports, module) {
                 scrollable ? 'auto' : 'hidden'
             );
 
-            refresh(me);
-
             if (me.draggable) {
-                me.drager = new Draggable({
+                me.drager = dragGlobal({
                     element: element,
-                    container: offsetParent(element),
-                    handleSelector: me.headerSelector,
-                    cancelSelector: [ me.titleSelector, me.closeSelector ],
-                    rect: function () {
-                        var fixed = me.fixed;
-
-                        return {
-                            x: (fixed || scrollable) ? 0 : dimension.getPageScrollLeft(),
-                            y: (fixed || scrollable) ? 0 : dimension.getPageScrollTop(),
-                            width: (fixed || !scrollable) ? dimension.getViewportWidth() : dimension.getPageWidth(),
-                            height: (fixed || !scrollable) ? dimension.getViewportHeight() : dimension.getPageHeight()
-                        };
-                    }
+                    handleSelector: me.draggableHandleSelector,
+                    cancelSelector: me.draggableCancelSelector,
+                    draggingClass: me.draggingClass,
+                    fixed: me.fixed,
+                    scrollable: scrollable
                 });
             }
+
+            // 因为 refresh 会设置 left top
+            // 但是某些浏览器无法及时刷新 DOM，导致 Draggable 读出来的依然是 0 0
+            // 所以这里换到 Draggable 后面调用
+            me.refresh();
 
             me.showAnimation();
 
@@ -246,7 +246,7 @@ define(function (require, exports, module) {
                         me.resizer =
                         debounce(
                             function () {
-                                refresh(me, true);
+                                me.refresh(true);
                             },
                             50
                         )
@@ -298,6 +298,41 @@ define(function (require, exports, module) {
             if (me.disposeOnHide) {
                 me.dispose();
             }
+        },
+
+        refresh: function () {
+
+            var me = this;
+
+            var isResize = arguments[0];
+
+            if (!isResize || me.positionOnResize) {
+
+                var dialogElement = me.element;
+                var dialogStyle = pinGlobal({
+                    element: dialogElement,
+                    x: me.x,
+                    y: me.y,
+                    fixed: me.fixed
+                });
+
+                if (isResize) {
+                    me.resizeAnimation(dialogStyle);
+                }
+                else {
+                    dialogElement.css(dialogStyle);
+                }
+
+            }
+
+            var maskElement = me.mask;
+            if (maskElement) {
+                maskElement.css({
+                    width: dimension.getPageWidth(),
+                    height: dimension.getPageHeight()
+                });
+            }
+
         },
 
         /**
@@ -360,6 +395,10 @@ define(function (require, exports, module) {
         positionOnResize: true,
 
         draggableClass: 'draggable',
+
+        draggableHandleSelector: '.dialog-header',
+        draggableCancelSelector: [ '.dialog-header h1', '.dialog-close' ],
+
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',
         closeSelector: '.dialog-close',
@@ -415,58 +454,6 @@ define(function (require, exports, module) {
         instance.html.css('overflow', html);
         instance.body.css('overflow', body);
     }
-
-    /**
-     * 定位对话框 + 更新遮罩大小
-     *
-     * @inner
-     * @param {Dialog} dialog
-     * @param {boolean=} isResize 是否是 resize 触发刷新
-     */
-    function refresh(dialog, isResize) {
-
-        if (!isResize || dialog.positionOnResize) {
-
-            var element = dialog.element;
-
-            var pinOptions = {
-
-                silence: true,
-
-                element: element,
-                x: dialog.x === '50%' ? '50%' : 0,
-                y: dialog.y === '50%' ? '50%' : 0,
-
-                attachment: {
-                    element: viewport(),
-                    width: dimension.getViewportWidth(),
-                    height: dimension.getViewportHeight(),
-                    x: dialog.x,
-                    y: dialog.y
-                }
-            };
-
-            if (!dialog.fixed) {
-                pinOptions.offset = {
-                    x: dimension.getPageScrollLeft(),
-                    y: dimension.getPageScrollTop()
-                };
-            }
-
-            dialog.resizeAnimation(
-                pin(pinOptions)
-            );
-        }
-
-        var mask = dialog.mask;
-        if (mask) {
-            mask.css({
-                width: dimension.getPageWidth(),
-                height: dimension.getPageHeight()
-            });
-        }
-    }
-
 
     return Dialog;
 

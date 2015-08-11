@@ -617,6 +617,12 @@ define(function (require, exports, module) {
                 }
 
                 var percent = uploaded / (total || 1);
+
+                if (percent >= 0 && percent <= 1) { }
+                else {
+                    percent = 0;
+                }
+
                 percent = parseInt(100 * percent, 10) + '%';
 
                 uploader.emit(

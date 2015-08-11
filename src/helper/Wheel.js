@@ -5,7 +5,6 @@
 define(function (require, exports, module) {
 
     /**
-     * @description
      *
      * 火狐支持 DOMMouseScroll 事件，事件属性为 event.detail
      * 其他浏览器支持 mousewheel 事件，事件属性为 event.wheelDelta
@@ -22,7 +21,6 @@ define(function (require, exports, module) {
 
     var lifeCycle = require('../function/lifeCycle');
     var jquerify = require('../function/jquerify');
-    var offsetParent = require('../function/offsetParent');
 
     var instance = require('../util/instance');
 
@@ -52,15 +50,31 @@ define(function (require, exports, module) {
         init: function () {
 
             var me = this;
-            var element = me.element;
 
-            me.lineHeight = getLineHeight(element);
-            me.pageHeight = element.height();
-
-            element.on(
+            me.element.on(
                 support + namespace,
-                me,
-                support === 'wheel' ? onWheel : onMouseWheel
+                function (e) {
+
+                    var delta = 0;
+
+                    var event = e.originalEvent;
+                    if (support === 'mousewheel') {
+                        delta = - event.wheelDelta / 120;
+                    }
+                    else {
+                        delta = event.detail / 3;
+                    }
+
+                    e.type = 'scroll';
+
+                    me.emit(
+                        e,
+                        {
+                            delta: delta
+                        }
+                    );
+
+                }
             );
         },
 
@@ -98,123 +112,15 @@ define(function (require, exports, module) {
      */
     var namespace = '.cobble_helper_wheel';
 
-    var element = $('<div></div>')[0];
-
     /**
      * 支持的滚轮事件名称
      *
      * @inner
      * @type {string}
      */
-    var support = 'onwheel' in element
-                ? 'wheel'
-                : 'onmousewheel' in element
-                  ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
-                  : 'DOMMouseScroll';          // 火狐的老版本
-
-
-    element = null;
-
-
-    /**
-     * 最新标准滚轮事件
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onWheel(e) {
-
-        var wheel = e.data;
-
-        var event = e.originalEvent;
-
-        // deltaMode 0 is by pixels, nothing to do
-        // deltaMode 1 is by lines
-        // deltaMode 2 is by pages
-        // 统一转成行
-
-        var factor = 1;
-
-        switch (event.deltaMode) {
-            case 0:
-                factor = wheel.lineHeight;
-                break;
-            case 2:
-                factor = wheel.pageHeight;
-                break;
-        }
-
-        var data = {
-            delta: Math.round(
-                        (event.deltaY || event.deltaX) / (3 * factor)
-                    )
-        };
-
-        e.type = 'scroll';
-
-        wheel.emit(e, data);
-
-    }
-
-
-    /**
-     * 兼容以前的滚动事件，封装成标准的 wheel 事件
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onMouseWheel(e) {
-
-        if (e.type !== 'wheel') {
-
-            e.type = 'wheel';
-
-            var event = e.originalEvent;
-
-            if (event.type !== 'wheel') {
-
-                var deltaX;
-                var deltaY;
-
-                if (support === 'mousewheel') {
-                    deltaY = - (1 / 40) * event.wheelDelta;
-                    if (event.wheelDeltaX) {
-                        deltaX = - (1 / 40) * event.wheelDeltaX;
-                    }
-                }
-                else {
-                    deltaY = event.detail;
-                }
-
-                e.originalEvent = {
-                    deltaMode: 1,
-                    deltaX: deltaX,
-                    deltaY: deltaY
-                };
-
-            }
-        }
-
-        onWheel(e);
-
-    }
-
-    /**
-     * 获得元素的行高
-     * 根据 wheel 事件规范描述，行高要取自 font-size ...
-     *
-     * @inner
-     * @param {jQuery} element
-     * @return {number}
-     */
-    function getLineHeight(element) {
-        var parent = offsetParent(element);
-        if (!parent.length) {
-            parent = instance.body;
-        }
-        return parseInt(parent.css('font-size'), 10);
-    }
-
+    var support = 'onmousewheel' in instance.body[0]
+                ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
+                : 'DOMMouseScroll';          // 火狐的老版本
 
     return Wheel;
 

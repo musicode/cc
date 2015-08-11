@@ -46,6 +46,7 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 需要拖拽的元素
      * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
+     * @property {string=} options.draggingClass 拖拽时的 className
      *
      * @property {string=} options.axis 限制方向，可选值包括 x y
      * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
@@ -403,6 +404,12 @@ define(function (require, exports, module) {
         // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
         // 只有坐标发生变动才算
         if (++counter === 1) {
+
+            var draggingClass = draggable.draggingClass;
+            if (draggingClass) {
+                draggable.element.addClass(draggingClass);
+            }
+
             draggable.emit('beforeDrag');
         }
 
@@ -427,6 +434,11 @@ define(function (require, exports, module) {
         instance.document.off(namespace);
 
         var draggable = e.data;
+
+        var draggingClass = draggable.draggingClass;
+        if (draggingClass) {
+            draggable.element.removeClass(draggingClass);
+        }
 
         if (counter > 0) {
             draggable.emit('afterDrag', point);

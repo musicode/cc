@@ -154,11 +154,13 @@ define(function (require, exports, module) {
                 );
             }
 
-            var hidden = me.hidden
-                       = isHidden(me.layer);
+            if (me.hidden = isHidden(me.layer)) {
+                showEvent(me, 'on');
+            }
+            else {
+                hideEvent(me, 'on');
+            }
 
-            var action = hidden ? showEvent : hideEvent;
-            action(me, 'on');
         },
 
         /**
@@ -320,28 +322,12 @@ define(function (require, exports, module) {
     var showTimerKey = '__showTimer__';
 
     /**
-     * 显示延时的处理函数名称
-     *
-     * @inner
-     * @type {string}
-     */
-    var showTimerHandlerKey = '__showTimerHandler__';
-
-    /**
      * 隐藏延时的定时器名称
      *
      * @inner
      * @type {string}
      */
     var hideTimerKey = '__hideTimer__';
-
-    /**
-     * 隐藏延时的处理函数名称
-     *
-     * @inner
-     * @type {string}
-     */
-    var hideTimerHandlerKey = '__hideTimerHandler__';
 
     /**
      * 上一次的 trigger 时间戳名称
@@ -420,7 +406,7 @@ define(function (require, exports, module) {
      * 隐藏之前要确保元素是显示状态的
      *
      * @inner
-     * @param {Popop} popup
+     * @param {Popup} popup
      * @param {Event=} event
      */
     function onBeforeHide(popup, event) {
@@ -544,7 +530,6 @@ define(function (require, exports, module) {
                 delay: popup.show.delay,
                 toggle: Popup.trigger.show[ trigger ].delay,
                 timer: showTimerKey,
-                timerHandler: showTimerHandlerKey,
                 success: function () {
 
                     var fn = function () {
@@ -597,7 +582,6 @@ define(function (require, exports, module) {
                 delay: popup.hide.delay,
                 toggle: Popup.trigger.hide[ trigger ].delay,
                 timer: hideTimerKey,
-                timerHandler: hideTimerHandlerKey,
                 success: function () {
 
                     popup.close(e);
@@ -621,7 +605,6 @@ define(function (require, exports, module) {
      * @property {Popup} popup 实例对象
      * @property {number} delay 延时时间
      * @property {string} timer 定时器名称
-     * @property {string} timerHandler 定时器执行函数名称
      * @property {Object} toggle
      * @property {Function} success
      * @property {Function} fail
@@ -635,7 +618,6 @@ define(function (require, exports, module) {
 
             var popup = options.popup;
             var timer = options.timer;
-            var timerHandler = options.timerHandler;
 
             var toggle = options.toggle || { };
             var on = toggle.on || $.noop;
@@ -645,10 +627,9 @@ define(function (require, exports, module) {
             var clearTimer = function () {
 
                 clearTimeout(popup[ timer ]);
-                off(popup, popup[ timerHandler ]);
+                off(popup, fn);
 
-                popup[ timer ] =
-                popup[ timerHandler ] = null;
+                popup[ timer ] = null;
 
             };
 
@@ -670,7 +651,7 @@ define(function (require, exports, module) {
             };
 
 
-            popup[ timerHandler ] = on(popup, fn);
+            on(popup, fn);
 
             popup[ timer ] = setTimeout(
                 function () {
@@ -716,32 +697,6 @@ define(function (require, exports, module) {
 
     }
 
-    var inElement = function (popup, target) {
-
-        if (!target) {
-            return false;
-        }
-
-        var selector = popup.selector;
-        if (selector) {
-
-            var element = popup.layer.data(sourceElementKey);
-            if (element) {
-                return contains(element, target);
-            }
-
-            if (!target.jquery) {
-                target = $(target);
-            }
-
-            var tagName = target.prop('tagName').toLowerCase();
-            return target.is(selector)
-                || target.is(selector + ' ' + tagName);
-        }
-        else {
-            return contains(popup.element, target);
-        }
-    };
 
     var inLayer = function (popup, target) {
         if (!target) {
@@ -773,16 +728,7 @@ define(function (require, exports, module) {
                 off: off,
                 delay: {
                     on: function (popup, fn) {
-
-                        var handler = function (e) {
-                            if (!inElement(popup, e.toElement)) {
-                                fn();
-                            }
-                        };
-
-                        popup.element.on('mouseleave', popup.selector, handler);
-
-                        return handler;
+                        popup.element.on('mouseleave', popup.selector, fn);
                     },
                     off: function (popup, fn) {
                         popup.element.off('mouseleave', fn);
@@ -831,20 +777,7 @@ define(function (require, exports, module) {
             },
             out: {
                 type: 'mouseleave',
-                handler: createHideHandler(
-                    'out',
-                    function (popup, e) {
-
-                        var target = e.toElement;
-
-                        // 用 jasmine 测试时，target 可能为 null
-                        if (!target) {
-                            return true;
-                        }
-
-                        return !inElement(popup, target) && !inLayer(popup, target);
-                    }
-                ),
+                handler: createHideHandler('out'),
                 on: function (popup) {
 
                     var type = this.type;
@@ -855,26 +788,18 @@ define(function (require, exports, module) {
 
                 },
                 off: function (popup) {
+
                     var type = this.type;
                     var handler = this.handler;
+
                     popup.element.off(type, handler);
                     popup.layer.off(type, handler);
+
                 },
                 delay: {
                     on: function (popup, fn) {
-
-                        var handler = function (e) {
-                            var target = e.toElement;
-                            if (inElement(popup, target) || inLayer(popup, target)) {
-                                fn();
-                            }
-                        };
-
-                        popup.element.on('mouseenter', popup.selector, handler);
-                        popup.layer.on('mouseenter', handler);
-
-                        return handler;
-
+                        popup.element.on('mouseenter', popup.selector, fn);
+                        popup.layer.on('mouseenter', fn);
                     },
                     off: function (popup, fn) {
                         popup.element.off('mouseenter', fn);
@@ -903,7 +828,7 @@ define(function (require, exports, module) {
                     );
                 },
                 off: function (popup) {
-                    instance.document.off(this.type, popop.contextHandler);
+                    instance.document.off(this.type, popup.contextHandler);
                 }
             }
         }

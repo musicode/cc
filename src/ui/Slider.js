@@ -72,7 +72,7 @@ define(function (require, exports, module) {
      * @property {string=} options.draggingClass 滑块正在拖拽时的 class
      *
      * @property {Function=} options.onChange 当 value 变化时触发
-     * @property {Funciton=} options.onOptimizedChange 拖拽时不触发 change
+     * @property {Function=} options.onOptimizedChange 拖拽时不触发 change
      *
      */
     function Slider(options) {

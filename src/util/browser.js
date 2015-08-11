@@ -13,6 +13,7 @@ define(function (require, exports, module) {
      *    name: 'ie',     // 判断多个浏览器时，便于用 name 去 switch
      *    ie: true,       // 判断某一个浏览器时，便于 if (ie) { ... }
      *    version: '8.0'  // 版本号，string 类型
+     *    os: 'windows'   // 操作系统，可选值包括 windows mac linux
      * }
      *
      */
@@ -44,9 +45,30 @@ define(function (require, exports, module) {
                  || operaExpr.exec(ua)
                  || [ ];
 
+        var os;
+
+        // android 要在 linux 前面尝试
+        // 因为安卓机这两个字符串都有
+        if (/Android/i.test(ua)) {
+            os = 'android';
+        }
+        else if (/iPhone/i.test(ua) || /iPad/i.test(ua) || /iTouch/i.test(ua)) {
+            os = 'ios';
+        }
+        else if (/Windows/i.test(ua)) {
+            os = 'windows';
+        }
+        else if (/Macintosh/i.test(ua)) {
+            os = 'mac';
+        }
+        else if (/Linux/i.test(ua)) {
+            os = 'linux';
+        }
+
         return {
             name: match[1] || '',
-            version: match[2] || '0'
+            version: match[2] || '0',
+            os: os || ''
         };
     }
 

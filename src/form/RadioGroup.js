@@ -20,7 +20,7 @@ define(function (require, exports, module) {
      * @property {string=} options.template
      * @property {string=} options.checkedClass
      * @property {string=} options.disabledClass
-     * @property {Funciton=} options.onChange
+     * @property {Function=} options.onChange
      */
     function RadioGroup(options) {
         return lifeCycle.init(this, options);
@@ -83,8 +83,6 @@ define(function (require, exports, module) {
 
                 }
             );
-
-            console.log(this);
 
         },
 
