@@ -9,7 +9,7 @@ define(function (require, exports, module) {
     var parser = {
         int: parseInt,
         float: parseFloat
-    }
+    };
 
     /**
      * 转成 number 类型
