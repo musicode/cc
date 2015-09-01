@@ -1,6 +1,6 @@
 /**
  * @file 节流函数
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

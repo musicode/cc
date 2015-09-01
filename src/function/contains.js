@@ -1,6 +1,6 @@
 /**
  * @file 包含
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

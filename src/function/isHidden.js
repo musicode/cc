@@ -1,6 +1,6 @@
 /**
  * @file 元素是否隐藏
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

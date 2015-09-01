@@ -1,6 +1,6 @@
 /**
  * @file 相对于 scrollTop，设置和获取 scrollBottom 也是一种常见需求
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

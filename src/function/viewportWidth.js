@@ -1,6 +1,6 @@
 /**
  * @file 获得视窗宽度
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

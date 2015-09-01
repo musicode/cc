@@ -1,6 +1,6 @@
 /**
  * @file 可滑动组件
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 
@@ -71,8 +71,10 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.draggingClass 滑块正在拖拽时的 class
      *
+     * @property {Function=} options.onBeforeDrag
+     * @property {Function=} options.onAfterDrag
+     *
      * @property {Function=} options.onChange 当 value 变化时触发
-     * @property {Function=} options.onOptimizedChange 拖拽时不触发 change
      *
      */
     function Slider(options) {
@@ -131,6 +133,7 @@ define(function (require, exports, module) {
                     if ($.type(draggingClass) === 'string') {
                         track.addClass(draggingClass);
                     }
+                    me.emit('beforeDrag');
                 },
                 onDrag: function (e, data) {
                     me.setValue(
@@ -144,7 +147,7 @@ define(function (require, exports, module) {
                     if ($.type(draggingClass) === 'string') {
                         track.removeClass(draggingClass);
                     }
-                    me.emit('optimizedChange');
+                    me.emit('afterDrag');
                 }
             });
 
@@ -443,13 +446,7 @@ define(function (require, exports, module) {
                 me.syncBar(pixel);
 
                 if (!options.silence) {
-
                     me.emit('change');
-
-                    if (options.from !== 'drag') {
-                        me.emit('optimizedChange');
-                    }
-
                 }
 
                 return true;

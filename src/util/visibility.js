@@ -1,6 +1,6 @@
 /**
  * @file 封装 visibility api
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file 封装 jq 的 offset 方法，类似 width 和 outerWidth 的关系
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

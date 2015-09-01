@@ -1,6 +1,6 @@
 /**
  * @file 兼容的 input 事件处理
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

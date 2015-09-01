@@ -1,6 +1,6 @@
 /**
  * @file localStorage 本地存储
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

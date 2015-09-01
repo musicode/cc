@@ -1,6 +1,6 @@
 /**
  * @file 获取图片大小
- * @author zhujl
+ * @author musicode
  */
  define(function (require, exports, module) {
 

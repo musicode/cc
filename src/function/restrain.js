@@ -1,6 +1,6 @@
 /**
  * @file 约束值
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

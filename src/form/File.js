@@ -1,6 +1,6 @@
 /**
  * @file 模拟 <input type="file" />
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

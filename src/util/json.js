@@ -1,6 +1,6 @@
 /**
  * @file json
- * @author zhujl copy from json2
+ * @author musicode copy from json2
  */
 define(function (require, exports, module) {
 

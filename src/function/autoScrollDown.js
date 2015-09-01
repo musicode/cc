@@ -1,6 +1,6 @@
 /**
  * @file 列表向下滚动时，保持当前列表项的可见性
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file 转成 number 类型
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

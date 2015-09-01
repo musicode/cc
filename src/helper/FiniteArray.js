@@ -1,6 +1,6 @@
 /**
  * @file 有限数组
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

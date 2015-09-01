@@ -1,6 +1,6 @@
 /**
  * @file 调用对象的某个方法
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

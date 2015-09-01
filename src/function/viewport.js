@@ -1,6 +1,6 @@
 /**
  * @file 获得视窗元素
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

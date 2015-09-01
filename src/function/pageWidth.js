@@ -1,6 +1,6 @@
 /**
  * @file 获得网页可滚动宽度
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file advice
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

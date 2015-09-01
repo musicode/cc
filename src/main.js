@@ -1,6 +1,6 @@
 /**
  * @file 用于打包模块
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

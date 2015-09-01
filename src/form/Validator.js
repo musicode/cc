@@ -1,6 +1,6 @@
 /**
  * @file 表单验证器
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

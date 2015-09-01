@@ -1,6 +1,6 @@
 /**
  * @file 键名和键值映射表
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

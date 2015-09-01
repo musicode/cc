@@ -1,6 +1,6 @@
 /**
  * @file 文本输入框
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports) {
 

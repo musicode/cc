@@ -1,6 +1,6 @@
 /**
  * @file 获得小数的位数
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

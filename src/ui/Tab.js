@@ -1,6 +1,6 @@
 /**
  * @file Tab
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

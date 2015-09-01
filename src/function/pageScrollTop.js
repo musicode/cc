@@ -1,6 +1,6 @@
 /**
  * @file 获得网页垂直滚动距离
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

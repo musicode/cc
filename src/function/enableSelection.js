@@ -1,6 +1,6 @@
 /**
  * @file 启用选中元素文本
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

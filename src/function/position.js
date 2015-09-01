@@ -1,6 +1,6 @@
 /**
  * @file 获得元素的 left top
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file 解析百分比
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

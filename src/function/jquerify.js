@@ -1,6 +1,6 @@
 /**
  * @file 通过扩展原型，实现 jQuery 的几个常用方法
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

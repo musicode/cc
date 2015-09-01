@@ -1,6 +1,6 @@
 /**
  * @file 放大镜
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

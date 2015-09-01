@@ -1,6 +1,6 @@
 /**
  * @file 把小数转成整数，避免小数计算的精度问题
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

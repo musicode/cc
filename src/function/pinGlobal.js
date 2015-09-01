@@ -1,6 +1,6 @@
 /**
  * @file 全局定位
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

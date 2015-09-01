@@ -1,6 +1,6 @@
 /**
  * @file HTML5 全屏 API
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

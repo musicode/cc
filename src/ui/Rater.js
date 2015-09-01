@@ -1,6 +1,6 @@
 /**
  * @file 星级评分
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

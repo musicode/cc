@@ -1,6 +1,6 @@
 /**
  * @file 解析时间（时分秒）
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

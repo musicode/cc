@@ -1,6 +1,6 @@
 /**
  * @file 下拉菜单
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

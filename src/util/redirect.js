@@ -1,6 +1,6 @@
 /**
  * @file 使用 js 触发的跳转
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file Range
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

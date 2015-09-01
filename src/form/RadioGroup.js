@@ -1,6 +1,6 @@
 /**
  * @file radio 必须成组使用，单个是没意义的
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

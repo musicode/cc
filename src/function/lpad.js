@@ -1,6 +1,6 @@
 /**
  * @file 数字左边补零到两位
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

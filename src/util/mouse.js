@@ -1,6 +1,6 @@
 /**
  * @file 鼠标事件，如果是移动平台，换为 touch 事件
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

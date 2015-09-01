@@ -1,6 +1,6 @@
 /**
  * @file 处理日期工具
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

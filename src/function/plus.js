@@ -1,6 +1,6 @@
 /**
  * @file 加法
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

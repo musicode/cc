@@ -1,6 +1,6 @@
 /**
  * @file 简单的 flash 上传实现(simple upload....)
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

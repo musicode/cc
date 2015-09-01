@@ -1,6 +1,6 @@
 /**
  * @file 向上寻找最近的非 static 定位元素
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

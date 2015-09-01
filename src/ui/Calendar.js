@@ -1,6 +1,6 @@
 /**
  * @file 日历
- * @author zhujl
+ * @author musicode
  */
 define(function (require) {
 

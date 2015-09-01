@@ -1,6 +1,6 @@
 /**
  * @file 获得事件的 offsetX/offsetY
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

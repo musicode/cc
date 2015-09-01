@@ -1,6 +1,6 @@
 /**
  * @file jq 的 replaceWith 会解绑所有事件，太坑了..
- * @author zhujl
+ * @author musicode
  */
 define(function (require) {
 

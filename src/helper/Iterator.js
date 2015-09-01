@@ -1,6 +1,6 @@
 /**
  * @file DOM 遍历器
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file 可切换组件
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

@@ -1,6 +1,6 @@
 /**
  * @file 特性检测
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

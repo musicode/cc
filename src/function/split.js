@@ -1,6 +1,6 @@
 /**
  * @file 拆解字符串，并 trim 每个部分
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports, module) {
 

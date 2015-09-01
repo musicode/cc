@@ -1,6 +1,6 @@
 /**
  * @file 组件生命周期管理
- * @author zhujl
+ * @author musicode
  */
 define(function (require, exports) {
 
