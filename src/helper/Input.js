@@ -50,8 +50,6 @@ define(function (require, exports, module) {
      * @property {boolean=} options.smart 是否能够聪明的在长按时不触发 change 事件，默认为 true
      *                                    因为长按产生的一般是无效输入
      *
-     * @property {boolean=} options.longPress 配置的 action 事件是否支持长按连续触发，默认为 false
-     *
      * @property {Function=} options.onKeyDown 按下键位触发
      * @argument {Event} options.onKeyDown.event
      *
@@ -105,73 +103,64 @@ define(function (require, exports, module) {
 
             input.init(element);
 
-            var action = me.action;
-            if (action) {
-                $.each(
-                    action,
-                    function (key, handler) {
-                        action[key] = $.proxy(handler, me);
-                    }
-                );
-            }
-
-            var oldValue;
-            var isLongPressing;
-
             me.keyboard = new Keyboard({
                 element: element,
-                action: action,
-                longPress: me.longPress,
-                onKeyDown: function (e) {
-                    me.emit(e);
-                },
-                onKeyUp: function (e) {
-                    me.emit(e);
-                },
-                onBeforeLongPress: function () {
+                action: me.action,
+                context: me
+            });
 
-                    oldValue = element.val();
+            var valueBeforeLongPress;
 
-                    isLongPressing = true;
-                    me.emit('beforeLongPress');
+            me
+            .on(
+                'beforeLongPress' + namespace,
+                function () {
+                    valueBeforeLongPress = element.val();
+                }
+            )
+            .on(
+                'afterLongPress' + namespace,
+                function (e) {
 
-                },
-                onAfterLongPress: function (e) {
+                    valueBeforeLongPress = null;
 
-                    isLongPressing = false;
-                    me.emit('afterLongPress');
-
-                    if (oldValue !== element.val()
+                    if (valueBeforeLongPress !== element.val()
                         && (keyboard.isCharKey(e.keyCode) || keyboard.isDeleteKey())
                     ) {
                         me.emit('change');
                     }
-                }
-            });
 
-            element.on('input' + namespace, function () {
-                if (!isLongPressing || !me.smart) {
-                    me.emit('change');
                 }
-            });
+            );
+
+            element
+            .on(
+                inputType,
+                function () {
+                    if (valueBeforeLongPress == null || !me.smart) {
+                        me.emit('change');
+                    }
+                }
+            );
 
         },
 
+        /**
+         * 自动变宽
+         */
         autoWidth: function () {
 
             var me = this;
             var element = me.element;
 
-            me.on(
-                'change',
+            element.on(
+                inputType,
                 function () {
-
                     if (element.scrollLeft() > 0) {
                         element.width(
                             element.prop('scrollWidth')
                         );
                     }
-
                 }
             );
 
@@ -198,8 +187,8 @@ define(function (require, exports, module) {
             var lineHeight = parseInt(element.css('font-size'), 10);
             var padding = element.innerHeight() - originHeight;
 
-            me.on(
-                'change',
+            element.on(
+                inputType,
                 function () {
 
                     // 把高度重置为原始值才能取到正确的 newHeight
@@ -250,8 +239,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Input.defaultOptions = {
-        smart: true,
-        longPress: false
+        smart: true
     };
 
     /**
@@ -261,6 +249,14 @@ define(function (require, exports, module) {
      * @type {string}
      */
     var namespace = '.cobble_helper_input';
+
+    /**
+     * input 事件
+     *
+     * @inner
+     * @type {string}
+     */
+    var inputType = 'input' + namespace;
 
 
     return Input;

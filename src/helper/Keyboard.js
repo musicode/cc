@@ -5,8 +5,6 @@
 define(function (require, exports, module) {
 
     /**
-     * @description
-     *
      * 处理键盘事件:
      *
      * 组合键
@@ -19,6 +17,14 @@ define(function (require, exports, module) {
      *    或多个辅助键，如
      *
      *    shift + ctrl + alt + x
+     *
+     * ## 事件列表
+     *
+     * 1. keyDown
+     * 2. keyUp
+     * 3. beforeLongPress
+     * 4. afterLongPress
+     *
      */
 
     'use strict';
@@ -35,25 +41,13 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.element 需要监听键盘事件的元素
      *
-     * @property {boolean=} options.longPress 配置的 action 事件是否支持长按，默认为 false
-     *                                        如配置了 enter，当用户长按回车时，是否连续触发
-     *
      * @property {Object} options.action 配置键盘事件，action 事件会在 onKeyDown 之前触发
      *                                   组合键使用 + 连接，如 'ctrl+c',
      *                                   支持键可看 Keyboard.map
      *                                   小键盘键统一加 $ 前缀，如 $+ 表示加号按键
      *
-     * @property {Function=} options.onKeyDown 按下键位触发
-     * @argument {Event} options.onKeyDown.event
+     * @property {Object=} options.context 事件处理函数和 action 的 this 指向
      *
-     * @property {Function=} options.onKeyUp 松开键位触发
-     * @argument {Event} options.onKeyUp.event
-     *
-     * @property {Function=} options.onBeforeLongPress 长按开始
-     * @argument {Event} options.onBeforeLongPress.event
-     *
-     * @property {Function=} options.onAfterLongPress 长按结束
-     * @argument {Event} options.onAfterLongPress.event
      *
      * @example
      *
@@ -94,13 +88,12 @@ define(function (require, exports, module) {
             var me = this;
 
             me.cache = {
-                counter: 0,
                 action: parseAction(me.action || { })
             };
 
             me.element
-            .on('keydown' + namespace, me, onKeyDown)
-            .on('keyup' + namespace, me, onKeyUp);
+                .on('keydown' + namespace, me, onKeyDown)
+                .on('keyup' + namespace, me, onKeyUp);
 
         },
 
@@ -115,6 +108,7 @@ define(function (require, exports, module) {
 
             me.element =
             me.cache = null;
+
         }
     };
 
@@ -127,7 +121,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Keyboard.defaultOptions = {
-        longPress: false
+
     };
 
     /**
@@ -234,11 +228,13 @@ define(function (require, exports, module) {
         var keyCode = e.keyCode;
         var cache = keyboard.cache;
 
-        var counter = cache.counter;
+        var context = keyboard.context || keyboard;
+
+        var counter = cache.counter || 0;
 
         if (cache.keyCode === keyCode && counter > 0) {
             if (counter === 1) {
-                keyboard.emit({
+                context.emit({
                     type: 'beforeLongPress',
                     keyCode: keyCode
                 });
@@ -252,20 +248,20 @@ define(function (require, exports, module) {
 
         cache.counter = counter;
 
-        if (keyboard.longPress || counter === 1) {
-            $.each(
-                cache.action,
-                function (index, item) {
-                    if (item.test(e)) {
-                        call(item.handler, keyboard, e);
-                    }
+        var args = [ e, counter > 1 ];
+
+        $.each(
+            cache.action,
+            function (index, item) {
+                if (item.test(e)) {
+                    call(item.handler, context, args);
                 }
-            );
-        }
+            }
+        );
 
         e.type = 'keyDown';
 
-        keyboard.emit(e);
+        context.emit(e);
     }
 
     /**
@@ -279,10 +275,12 @@ define(function (require, exports, module) {
         var keyboard = e.data;
         var cache = keyboard.cache;
 
+        var context = keyboard.context || keyboard;
+
         cache.keyCode = null;
 
         if (cache.counter > 1) {
-            keyboard.emit({
+            context.emit({
                 type: 'afterLongPress',
                 keyCode: e.keyCode
             });
@@ -291,7 +289,7 @@ define(function (require, exports, module) {
 
         e.type = 'keyUp';
 
-        keyboard.emit(e);
+        context.emit(e);
     }
 
 

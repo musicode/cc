@@ -10,14 +10,14 @@ define(function (require, exports, module) {
      * 调用对象的某个方法
      *
      * @param {Function=} fn
-     * @param {Object} scope 方法执行的 this
+     * @param {Object} context 方法执行的 this
      * @param {*} args 方法执行参数
      * @return {*}
      */
-    return function (fn, scope, args) {
+    return function (fn, context, args) {
         if ($.isFunction(fn)) {
             var name = $.isArray(args) ? 'apply' : 'call';
-            return fn[name](scope, args);
+            return fn[name](context, args);
         }
     };
 

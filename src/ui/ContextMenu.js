@@ -10,6 +10,7 @@ define(function (require, exports, module) {
     var instance = require('../util/instance');
 
     var pin = require('../function/pin');
+    var isHidden = require('../function/isHidden');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var offsetParent = require('../function/offsetParent');
@@ -194,7 +195,7 @@ define(function (require, exports, module) {
         var element = contextMenu.element;
 
         // 默认隐藏
-        if (element.is(':visible')) {
+        if (!isHidden(element)) {
             element.hide();
         }
 

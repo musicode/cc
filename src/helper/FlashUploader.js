@@ -20,6 +20,9 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
+    var percent = require('../function/percent');
+    var formatFile = require('../function/formatFile');
+
     /**
      * 使用 flash 上传
      *
@@ -277,14 +280,7 @@ define(function (require, exports, module) {
 
             var uploader = this.customSettings.uploader;
 
-            var percent = data.uploaded / (data.total || 1);
-
-            if (percent >= 0 && percent <= 1) { }
-            else {
-                percent = 0;
-            }
-
-            data.percent = parseInt(100 * percent, 10) + '%';
+            data.percent = percent(data.uploaded, data.total);
 
             uploader.emit('uploadProgress', data);
 

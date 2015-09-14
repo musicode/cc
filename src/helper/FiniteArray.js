@@ -38,11 +38,14 @@ define(function (require, exports, module) {
     FiniteArray.prototype = {
 
         init: function () {
-
             this.list = [ ];
-
         },
 
+        /**
+         * 往数组尾部添加一项
+         *
+         * @param {*} item
+         */
         push: function (item) {
 
             var me = this;
@@ -71,21 +74,21 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 获取最后一个元素
-         *
-         * @return {*}
-         */
-        last: function () {
-            return this.get(this.list.length - 1);
-        },
-
-        /**
          * 获取第一个元素
          *
          * @return {*}
          */
         first: function () {
             return this.get(0);
+        },
+
+        /**
+         * 获取最后一个元素
+         *
+         * @return {*}
+         */
+        last: function () {
+            return this.get(this.list.length - 1);
         },
 
         /**
@@ -134,7 +137,6 @@ define(function (require, exports, module) {
             return true;
         }
     };
-
 
     return FiniteArray;
 

@@ -26,18 +26,18 @@
 
                 var input1 = new Input({
                     element: $('input'),
-                    longPress: false,
-                    smart: true,
+                    smart: false,
 
                     action: {
-                        enter: function () {
-                            console.log('onEnter', this);
+                        enter: function (e, longPress) {
+                            if (!longPress) {
+                                console.log('onEnter', this);
+                            }
                         },
                         left: function () {
                             console.log('onLeft', this);
                         }
                     },
-
 
                     onChange: function () {
                         console.log('change', this);
@@ -46,8 +46,7 @@
 
                 var input2 = new Input({
                     element: $('textarea'),
-                    longPress: true,
-                    smart: false,
+                    smart: true,
 
                     action: {
                         enter: function () {
