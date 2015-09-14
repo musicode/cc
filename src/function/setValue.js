@@ -27,6 +27,9 @@ define(function (require, exports, module) {
                 target.emit('change', data);
 
             }
+
+            return true;
+
         }
     };
 

@@ -354,6 +354,8 @@ define(function (require, exports, module) {
     proto.render = function (data) {
 
         var me = this;
+        me.data = data;
+
         var iterator = me.iterator;
 
         var iteratorData = iterator.getData();
@@ -446,7 +448,6 @@ define(function (require, exports, module) {
         me.element =
         me.menu =
         me.data =
-        me.items =
         me.cache = null;
 
     };

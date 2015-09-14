@@ -10,8 +10,17 @@ define(function (require) {
      * 90%
      *
      * 只有具有 data-value 属性的元素才支持点击选中
+     *
+     * 事件列表：
+     *
+     * 1. change
+     * 2. prev - 点击 上月/上周 元素触发
+     * 3. next - 点击 下月/下周 元素触发
+     * 4. beforeRender - 渲染开始前触发，可用于调整数据
+     * 5. afterRender - 渲染完成后触发，可用于初始化逻辑
      */
 
+    var setValue = require('../function/setValue');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var dateUtil = require('../util/date');
@@ -27,6 +36,7 @@ define(function (require) {
      * @property {number=} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否 toggle 选中
+     * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      *
      * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {string} options.activeClass 日期被选中的 className
@@ -36,300 +46,288 @@ define(function (require) {
      *
      * @property {string} options.template
      * @property {Function} options.renderTemplate
-     * @property {Function=} options.onBeforeRender 渲染开始前触发，可用于调整数据
-     * @property {Function=} options.onAfterRender 渲染完成后触发，可用于初始化逻辑
      *
-     * @property {Function} options.onPrev 点击 上月/上周 元素触发
-     * @argument {Event} options.onPrev.event 事件对象
-     * @argument {Object} options.onPrev.data 事件数据
-     *
-     * @property {Function} options.onNext 点击 下月/下周 元素触发
-     * @argument {Event} options.onNext.event 事件对象
-     * @argument {Object} options.onNext.data 事件数据
-     *
-     * @property {Function=} options.onChange
-     * @argument {Event} options.onChange.event 事件对象
      */
     function Calendar(options) {
         return lifeCycle.init(this, options);
     }
 
-    Calendar.prototype = {
+    var proto = Calendar.prototype;
 
-        constructor: Calendar,
 
-        type: 'Calendar',
+    proto.type = 'Calendar';
 
-        /**
-         * 初始化
-         */
-        init: function () {
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-            var me = this;
+        var me = this;
 
-            var today = me.today || new Date();
-            // 转成 00:00:00 便于比较大小
-            me.today = today.setHours(0, 0, 0, 0);
+        me.today = me.today || new Date();
 
-            me.render(
-                me.date || new Date()
-            );
+        me.render(
+            me.date || new Date()
+        );
 
-            if (me.value) {
-                me.setValue(
-                    me.value,
-                    {
-                        force: true,
-                        silence: true
-                    }
-                );
-            }
-
-            var clickType = 'click' + namespace;
-            var element = me.element;
-
-            element.on(
-                clickType,
-                '[data-value]',
-                function () {
-
-                    var target = $(this);
-
-                    var activeClass = me.activeClass;
-                    var isActive = target.hasClass(activeClass);
-
-                    var value;
-
-                    if (isActive) {
-                        if (me.toggle) {
-                            value = '';
-                            target.removeClass(activeClass);
-                        }
-                        else {
-                            return;
-                        }
-                    }
-                    else {
-                        value = target.data('value');
-                    }
-
-                    me.setValue(value);
+        if (me.value) {
+            me.setValue(
+                me.value,
+                {
+                    force: true,
+                    silence: true
                 }
             );
+        }
 
-            var prevSelector = me.prevSelector;
-            if (prevSelector) {
-                element.on(
-                    clickType,
-                    prevSelector,
-                    $.proxy(me.prev, me)
-                );
-            }
+        var clickType = 'click' + namespace;
+        var element = me.element;
 
-            var nextSelector = me.nextSelector;
-            if (nextSelector) {
-                element.on(
-                    clickType,
-                    nextSelector,
-                    $.proxy(me.next, me)
-                );
-            }
+        element.on(
+            clickType,
+            '[data-value]',
+            function () {
 
-        },
-
-        /**
-         * 获得选中的日期
-         *
-         * @returns {string|*}
-         */
-        getValue: function () {
-            return this.value;
-        },
-
-        /**
-         * 设置选中的日期（只能设置当前视图内的日期）
-         *
-         * @param {string} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         */
-        setValue: function (value, options) {
-
-            var me = this;
-
-            var element = me.element;
-            var target = element.find('[data-value="' + value + '"]');
-
-            if (target.length !== 1) {
-                value = '';
-            }
-
-            options = options || { };
-
-            if (options.force || me.value != value) {
-
-                me.value = value;
+                var target = $(this);
 
                 var activeClass = me.activeClass;
-                var activeElement = element.find('.' + activeClass);
+                var isActive = target.hasClass(activeClass);
 
-                if (value) {
-                    if (!me.multiple) {
-                        activeElement.removeClass(activeClass);
+                var value;
+
+                if (isActive) {
+                    if (me.toggle) {
+                        value = '';
+                        target.removeClass(activeClass);
                     }
-                    target.addClass(activeClass);
+                    else {
+                        return;
+                    }
                 }
                 else {
+                    value = target.data('value');
+                }
+
+                me.setValue(value);
+            }
+        );
+
+        var prevSelector = me.prevSelector;
+        if (prevSelector) {
+            element.on(
+                clickType,
+                prevSelector,
+                $.proxy(me.prev, me)
+            );
+        }
+
+        var nextSelector = me.nextSelector;
+        if (nextSelector) {
+            element.on(
+                clickType,
+                nextSelector,
+                $.proxy(me.next, me)
+            );
+        }
+
+    };
+
+    /**
+     * 获得选中的日期
+     *
+     * @returns {string|*}
+     */
+    proto.getValue = function () {
+        return this.value;
+    };
+
+    /**
+     * 设置选中的日期（只能设置当前视图内的日期）
+     *
+     * @param {string} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        var element = me.element;
+        var target = element.find('[data-value="' + value + '"]');
+
+        if (target.length !== 1) {
+            value = '';
+        }
+
+        if (setValue(me, 'value', value, options)) {
+
+            var activeClass = me.activeClass;
+            var activeElement = element.find('.' + activeClass);
+
+            if (value) {
+                if (!me.multiple) {
                     activeElement.removeClass(activeClass);
                 }
-
-                if (!options.silence) {
-                    me.emit('change');
-                }
-            }
-
-        },
-
-        /**
-         * 上月/周
-         */
-        prev: function () {
-
-            var me = this;
-            var date = me.date;
-
-            date = me.mode === 'week'
-                 ? dateUtil.prevWeek(date)
-                 : dateUtil.prevMonth(date);
-
-            me.render(date);
-
-            me.emit('prev');
-
-        },
-
-        /**
-         * 下月/周
-         */
-        next: function () {
-
-            var me = this;
-            var date = me.date;
-
-            date = me.mode === 'week'
-                 ? dateUtil.nextWeek(date)
-                 : dateUtil.nextMonth(date);
-
-            me.render(date);
-
-            me.emit('next');
-
-        },
-
-        /**
-         * date 是否在当前视图的数据区间内
-         *
-         * @param {Date} date
-         * @return {boolean}
-         */
-        inRange: function (date) {
-
-            var data = this.data;
-
-            var start = dateUtil.parse(data.start);
-            var end = dateUtil.parse(data.end);
-
-            return date >= start && date <= end;
-
-        },
-
-        /**
-         * 创建渲染日历需要的数据
-         *
-         * @param {Date} date
-         * @return {Object}
-         */
-        createData: function (date) {
-
-            var me = this;
-            var firstDay = me.firstDay;
-
-            // 转成 00:00:00 便于和 today 比较大小
-            date = date.setHours(0, 0, 0, 0);
-
-            var weekFirstDay;
-            var weekLastDay;
-
-            if (me.mode === 'week') {
-                weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
-                weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
+                target.addClass(activeClass);
             }
             else {
-                var monthFirstDay = dateUtil.getMonthFirstDay(date);
-                var monthLastDay = dateUtil.getMonthLastDay(date);
-
-                weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
-                weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+                activeElement.removeClass(activeClass);
             }
-
-            var list = getDatasource(
-                + weekFirstDay,
-                + weekLastDay,
-                me.today
-            );
-
-            return $.extend(
-                dateUtil.simplify(date),
-                {
-                    start: list[0],
-                    end: list[ list.length - 1 ],
-                    list: list
-                }
-            );
-
-        },
-
-        /**
-         * 渲染日历
-         *
-         * @param {Date} date
-         */
-        render: function (date) {
-
-            var me = this;
-
-            me.date = date;
-
-            var data = me.data = me.createData(date);
-
-            me.emit('beforeRender', data);
-
-            me.element.html(
-                me.renderTemplate(data, me.template)
-            );
-
-            me.emit('afterRender', data);
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.element.off(namespace);
-            me.element = null;
 
         }
 
     };
 
-    jquerify(Calendar.prototype);
+    /**
+     * 上月/周
+     */
+    proto.prev = function () {
+
+        var me = this;
+        var date = me.date;
+
+        date = me.mode === 'week'
+             ? dateUtil.prevWeek(date)
+             : dateUtil.prevMonth(date);
+
+        me.render(date);
+
+        me.emit('prev');
+
+    };
+
+    /**
+     * 下月/周
+     */
+    proto.next = function () {
+
+        var me = this;
+        var date = me.date;
+
+        date = me.mode === 'week'
+             ? dateUtil.nextWeek(date)
+             : dateUtil.nextMonth(date);
+
+        me.render(date);
+
+        me.emit('next');
+
+    };
+
+    /**
+     * date 是否在当前视图的数据区间内
+     *
+     * @param {Date} date
+     * @return {boolean}
+     */
+    proto.inRange = function (date) {
+
+        var data = this.data;
+
+        return date >= dateUtil.parse(data.start)
+            && date <= dateUtil.parse(data.end);
+
+    };
+
+    /**
+     * 创建渲染日历需要的数据
+     *
+     * @param {Date} date
+     * @return {Object}
+     */
+    proto.createData = function (date) {
+
+        var me = this;
+        var firstDay = me.firstDay;
+
+        // 转成 00:00:00 便于比较大小
+        date = date.setHours(0, 0, 0, 0);
+
+        var weekFirstDay;
+        var weekLastDay;
+
+        var isMonthMode = me.mode === 'month';
+
+        if (isMonthMode) {
+            var monthFirstDay = dateUtil.getMonthFirstDay(date);
+            var monthLastDay = dateUtil.getMonthLastDay(date);
+
+            weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
+            weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+        }
+        else {
+            weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
+            weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
+        }
+
+        weekFirstDay = + weekFirstDay;
+        weekLastDay = + weekLastDay;
+
+        if (isMonthMode && me.stable) {
+            var duration = weekLastDay - weekFirstDay;
+            var offset = stableTime - duration;
+            if (offset > 0) {
+                weekLastDay += offset;
+            }
+        }
+
+        var list = getDatasource(
+            weekFirstDay,
+            weekLastDay,
+            me.today.setHours(0, 0, 0, 0)
+        );
+
+        return $.extend(
+            dateUtil.simplify(date),
+            {
+                start: list[0],
+                end: list[ list.length - 1 ],
+                list: list
+            }
+        );
+
+    };
+
+    /**
+     * 渲染日历
+     *
+     * @param {Date} date
+     */
+    proto.render = function (date) {
+
+        var me = this;
+
+        me.date = date;
+
+        var data =
+        me.data = me.createData(date);
+
+        me.emit('beforeRender', data);
+
+        me.element.html(
+            me.renderTemplate(data, me.template)
+        );
+
+        me.emit('afterRender', data);
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -342,6 +340,7 @@ define(function (require) {
         mode: 'month',
         toggle: false,
         multiple: false,
+        stable: true,
         activeClass: 'active'
     };
 
@@ -349,6 +348,14 @@ define(function (require) {
      * jquery 事件命名空间
      */
     var namespace = '.cobble_ui_calendar';
+
+    /**
+     * 6 周，也就是 6 行才能稳定（跨度需要减一天，所以是 41 天）
+     *
+     * @inner
+     * @type {number}
+     */
+    var stableTime = 41 * dateUtil.DAY;
 
     /**
      * 获得渲染模板的数据
