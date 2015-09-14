@@ -6,9 +6,17 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * 事件列表：
+     *
+     * 1. change
+     */
+
     var Keyboard = require('./Keyboard');
+
     var timer = require('../function/timer');
     var jquerify = require('../function/jquerify');
+    var setValue = require('../function/setValue');
 
     /**
      *
@@ -23,7 +31,6 @@ define(function (require, exports, module) {
      * @property {string=} options.nextKey 下一个键名，默认是方向键下（down）
      * @property {boolean=} options.loop 是否可循环遍历
      * @property {number=} options.delay 遍历时间间隔，值越小速度越快
-     * @property {Function=} options.onChange
      *
      */
     function Iterator(options) {
@@ -41,14 +48,10 @@ define(function (require, exports, module) {
 
             me.setData(me.data);
 
-            var prev = function () {
-                me.prev();
-                me.timer = prevTimer;
-            };
-            var next = function () {
-                me.next();
-                me.timer = nextTimer;
-            };
+            var prev = $.proxy(me.prev, me);
+            var next = $.proxy(me.next, me);
+            var start = $.proxy(me.start, me);
+            var pause = $.proxy(me.pause, me);
 
             var delay = me.delay;
             var prevTimer = timer(prev, delay, delay);
@@ -56,15 +59,24 @@ define(function (require, exports, module) {
 
             var action = { };
 
-            action[me.prevKey] = prev;
-            action[me.nextKey] = next;
+            action[ me.prevKey ] = function (e, longPress) {
+                if (!longPress) {
+                    prev();
+                    me.timer = prevTimer;
+                }
+            };
+            action[ me.nextKey ] = function (e, longPress) {
+                if (!longPress) {
+                    next();
+                    me.timer = nextTimer;
+                }
+            };
 
             me.keyboard = new Keyboard({
                 element: me.element,
-                longPress: false,
-                onBeforeLongPress: $.proxy(me.start, me),
-                onAfterLongPress: $.proxy(me.pause, me),
-                action: action
+                action: action,
+                onBeforeLongPress: start,
+                onAfterLongPress: pause
             });
 
         },
@@ -108,14 +120,16 @@ define(function (require, exports, module) {
 
         setData: function (data) {
 
+            if (!$.isArray(data)) {
+                return;
+            }
+
             var me = this;
 
             me.stop();
 
-            if ($.isArray(data)) {
-                me.data = data;
-                me.maxIndex = data.length - 1;
-            }
+            me.data = data;
+            me.maxIndex = data.length - 1;
 
         },
 
@@ -129,26 +143,20 @@ define(function (require, exports, module) {
          */
         to: function (index, options) {
 
-            var me = this;
-            var from = me.index;
-
-            options = options || { };
-
-            if (options.force || from !== index) {
-
-                me.index = index;
-
-                if (!options.silence) {
-                    me.emit(
-                        'change',
-                        {
-                            from: from,
-                            to: index,
-                            action: options.action || 'to'
-                        }
-                    );
+            setValue(
+                this,
+                'index',
+                index,
+                options,
+                function (newValue, oldValue, options) {
+                    return {
+                        from: oldValue,
+                        to: newValue,
+                        action: options.action || 'to'
+                    };
                 }
-            }
+            );
+
         },
 
         prev: function () {
@@ -208,14 +216,12 @@ define(function (require, exports, module) {
 
 
     Iterator.defaultOptions = {
-
         delay: 60,
         loop: true,
         minIndex: 0,
         startIndex: -1,
         prevKey: 'up',
         nextKey: 'down'
-
     };
 
 

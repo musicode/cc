@@ -158,12 +158,15 @@ define(function (require, exports, module) {
             me.input = new Input({
                 element: element,
                 smart: true,
-                longPress: false,
                 action: {
                     up: function (e) {
                         e.preventDefault();
                     },
-                    enter: function () {
+                    enter: function (e, longPress) {
+
+                        if (longPress) {
+                            return;
+                        }
 
                         if (me.popup.hidden) {
                             activeData = iteratorData[0].data;
