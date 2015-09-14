@@ -144,7 +144,7 @@ define(function (require, exports, module) {
 
                 activeData = target.data;
 
-                if (action !== 'render') {
+                if (action !== ACTION_RENDER) {
                     element.val(
                         activeData.text
                     );
@@ -397,7 +397,7 @@ define(function (require, exports, module) {
                 iterator.to(
                     index,
                     {
-                        action: 'render'
+                        action: ACTION_RENDER
                     }
                 );
             }
@@ -483,6 +483,8 @@ define(function (require, exports, module) {
     var namespace = '.cobble_ui_autocomplete';
 
     var indexKey = '__index__';
+
+    var ACTION_RENDER = 'render';
 
     /**
      * 渲染并显示数据

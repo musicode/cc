@@ -266,7 +266,7 @@ define(function (require) {
 
         if (isMonthMode && me.stable) {
             var duration = weekLastDay - weekFirstDay;
-            var offset = stableTime - duration;
+            var offset = stableDuration - duration;
             if (offset > 0) {
                 weekLastDay += offset;
             }
@@ -350,12 +350,12 @@ define(function (require) {
     var namespace = '.cobble_ui_calendar';
 
     /**
-     * 6 周，也就是 6 行才能稳定（跨度需要减一天，所以是 41 天）
+     * 6 周才能稳定（跨度需要减一天，所以是 41 天）
      *
      * @inner
      * @type {number}
      */
-    var stableTime = 41 * dateUtil.DAY;
+    var stableDuration = 41 * dateUtil.DAY;
 
     /**
      * 获得渲染模板的数据
