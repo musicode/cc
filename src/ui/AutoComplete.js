@@ -11,9 +11,23 @@ define(function (require, exports, module) {
      *
      * 鼠标点击菜单项不能触发 select，否则会导致 input.select()，从而触发 focus 事件
      * 因此改名为 itemClick
+     *
+     * 事件列表：
+     *
+     * 1. itemClick - 用户点击选中某个菜单项触发
+     * 2. beforeRender - 渲染菜单之前触发
+     * 3. afterRender - 渲染菜单之后触发
+     * 4. beforeOpen - 打开菜单之前触发
+     * 5. afterOpen - 打开菜单之后触发
+     * 6. beforeClose - 关闭菜单之前触发
+     * 7. afterClose - 关闭菜单之后触发
+     * 8. enter - 用户按下回车触发
+     * 9. change - 当遍历导致输入框值变化时触发
+     *
      */
 
     var timer = require('../function/timer');
+    var aspect = require('../function/aspect');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var autoScrollUp = require('../function/autoScrollUp');
@@ -54,353 +68,392 @@ define(function (require, exports, module) {
      * @argument {string} options.load.text 用户输入的文本
      * @argument {Function} options.load.callback 拉取完数据后的回调
      *
-     * @property {Function=} options.onItemClick 用户点击选中某个菜单项触发
-     * @property {Function=} options.onEnter 用户按下回车触发
-     * @property {Function=} options.onChange 当遍历导致输入框值变化时触发
-     * @property {Function=} options.onBeforeRender 渲染菜单之前触发
-     * @property {Function=} options.onAfterRender 渲染菜单之后触发
      */
     function AutoComplete(options) {
         return lifeCycle.init(this, options);
     }
 
-    AutoComplete.prototype = {
+    var proto = AutoComplete.prototype;
 
-        constructor: AutoComplete,
+    proto.type = 'AutoComplete';
 
-        type: 'AutoComplete',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
-            var me = this;
+        var menu = me.menu;
+        var element = me.element;
+        var activeClass = me.activeClass;
 
-            var menu = me.menu;
-            var element = me.element;
-            var activeClass = me.activeClass;
+        // 当前选中数据
+        var activeData;
 
-            // 当前选中数据
-            var activeData;
+        // 当前选中的元素
+        var activeElement;
 
-            // 当前选中的元素
-            var activeElement;
+        // 缓存结果
+        me.cache = { };
 
-            // 缓存结果
-            me.cache = { };
-
-            // 可遍历的数据
-            var iteratorData = [
-                {
-                    element: element,
-                    data: {
-                        text: element.val()
-                    }
-                }
-            ];
-
-            var iterator =
-            me.iterator = new Iterator({
+        // 可遍历的数据
+        var iteratorData = [
+            {
                 element: element,
-                startIndex: 0,
-                minIndex: me.includeInput ? 0 : 1,
-                data: iteratorData,
-                delay: me.delay,
-                onChange: function (e, data) {
-
-                    var to = data.to;
-                    var from = data.from;
-                    var action = data.action;
-
-                    var target = this.data[to];
-
-                    if (activeElement) {
-                        activeElement.removeClass(activeClass);
-                    }
-
-                    activeElement = target.element;
-
-                    if (me.autoScroll) {
-
-                        var fn = action === 'prev'
-                               ? autoScrollUp
-                               : autoScrollDown;
-
-                        fn(menu, activeElement);
-
-                    }
-
-                    if (to > 0) {
-                        activeElement.addClass(activeClass);
-                    }
-
-                    activeData = target.data;
-
-                    if (action !== 'render') {
-                        element.val(
-                            activeData.text
-                        );
-                    }
-
-                    me.emit(
-                        'change',
-                        {
-                            // 对外界使用来说，要隐藏 input 为 0 的实现
-                            index: to - 1,
-                            data: activeData
-                        }
-                    );
-
+                data: {
+                    text: element.val()
                 }
-            });
+            }
+        ];
 
-            me.input = new Input({
-                element: element,
-                smart: true,
-                action: {
-                    up: function (e) {
-                        e.preventDefault();
-                    },
-                    enter: function (e, longPress) {
+        var iterator =
+        me.iterator = new Iterator({
+            element: element,
+            startIndex: 0,
+            minIndex: me.includeInput ? 0 : 1,
+            data: iteratorData,
+            delay: me.delay,
+            onChange: function (e, data) {
 
-                        if (longPress) {
-                            return;
-                        }
+                var to = data.to;
+                var from = data.from;
+                var action = data.action;
 
-                        if (me.popup.hidden) {
-                            activeData = iteratorData[0].data;
-                        }
-                        else {
-                            me.close();
-                        }
-
-                        me.emit('enter', activeData);
-
-                    }
-                },
-                onChange: function () {
-
-                    iteratorData[0].data.text = element.val();
-                    suggest(me);
-
-                }
-            });
-
-            me.popup = createPopup(me);
-
-            var itemSelector = me.itemSelector;
-
-            var isScrolling = false;
-            var scrollTimer;
-
-            var bindMouseLeave = function () {
-                menu
-                .on('mouseleave' + namespace, itemSelector, function () {
-
-                    if (isScrolling) {
-                        return;
-                    }
-
-                    iterator.to(
-                        iterator.startIndex
-                    );
-
-                    unbindMouseLeave();
-
-                });
-            };
-
-            var unbindMouseLeave = function () {
-                menu.off('mouseleave' + namespace);
-            };
-
-            menu
-            .on('scroll' + namespace, function () {
-
-                if (scrollTimer) {
-                    clearTimeout(scrollTimer);
-                }
-
-                isScrolling = true;
-
-                scrollTimer = setTimeout(
-                    function () {
-                        scrollTimer = null;
-                        isScrolling = false;
-                    },
-                    500
-                );
-
-            })
-            .on('click' + namespace, itemSelector, function () {
-
-                unbindMouseLeave();
-
-                var index = $(this).data(indexKey);
-
-                iterator.to(
-                    index,
-                    {
-                        force: true
-                    }
-                );
-
-                me.close();
-
-                me.emit(
-                    'itemClick',
-                    activeData
-                );
-
-            })
-            .on('mouseenter' + namespace, itemSelector, function () {
-
-                if (isScrolling) {
-                    return;
-                }
+                var target = this.data[to];
 
                 if (activeElement) {
                     activeElement.removeClass(activeClass);
                 }
 
-                activeElement = $(this);
-                activeElement.addClass(activeClass);
+                activeElement = target.element;
 
-                iterator.index = activeElement.data(indexKey);
+                if (me.autoScroll) {
 
-                bindMouseLeave();
+                    var fn = action === 'prev'
+                           ? autoScrollUp
+                           : autoScrollDown;
 
-            });
+                    fn(menu, activeElement);
 
-        },
+                }
 
-        /**
-         * 渲染数据
-         *
-         * @param {Array} data
-         */
-        render: function (data) {
+                if (to > 0) {
+                    activeElement.addClass(activeClass);
+                }
 
-            var me = this;
+                activeData = target.data;
 
-            if ($.isArray(data) && data.length > 0) {
+                if (action !== 'render') {
+                    element.val(
+                        activeData.text
+                    );
+                }
 
-                me.emit('beforeRender');
-
-                var iterator = me.iterator;
-                iterator.stop();
-
-                var iteratorData = iterator.getData();
-                iteratorData.length = 1;
-
-                var menu = me.menu;
-                menu.html(
-                    me.renderTemplate(data, me.template)
+                me.emit(
+                    'change',
+                    {
+                        // 对外界使用来说，要隐藏 input 为 0 的实现
+                        index: to - 1,
+                        data: activeData
+                    }
                 );
 
-                menu
-                .find(me.itemSelector)
-                .each(function (index) {
+            }
+        });
 
-                    var item = $(this);
+        me.input = new Input({
+            element: element,
+            smart: true,
+            action: {
+                up: function (e) {
+                    e.preventDefault();
+                },
+                enter: function (e, longPress) {
 
-                    var data = item.data();
-                    if (data.text == null) {
-                        data.text = item.html();
+                    if (longPress) {
+                        return;
                     }
 
-                    var nextIndex =
-                    iteratorData.push({
-                        element: item,
-                        data: data
-                    });
+                    if (popup.hidden) {
+                        activeData = iteratorData[0].data;
+                    }
+                    else {
+                        me.close();
+                    }
 
-                    item.data(indexKey, nextIndex - 1);
+                    me.emit('enter', activeData);
 
-                });
+                }
+            },
+            onChange: function () {
 
-                iterator.maxIndex = iteratorData.length - 1;
+                iteratorData[0].data.text = element.val();
 
+                suggest(me);
 
-                // 可以在 renderTemplate 时设置某一项选中
-                var activeItem = menu.find('.' + me.activeClass);
+            }
+        });
 
-                if (activeItem.length === 1) {
-                    var index = activeItem.data(indexKey);
-                    if ($.type(index) === 'number') {
-                        iterator.to(
-                            index,
-                            {
-                                action: 'render'
-                            }
-                        );
+        var popup =
+        me.popup = new Popup({
+            element: element,
+            layer: me.menu,
+            show: me.show,
+            hide: me.hide,
+            context: me
+        });
+
+        me
+        .on(
+            'beforeShow',
+            function (e) {
+
+                if (e.target === element[0]) {
+                    suggest(me);
+                    e.stopPropagation();
+                    return false;
+                }
+
+                me.emit('beforeOpen');
+
+            }
+        )
+        .on(
+            'afterShow',
+            function () {
+
+                iterator.enable();
+
+                me.emit('afterOpen');
+
+            }
+        )
+        .on(
+            'beforeHide',
+            function (e) {
+
+                var target = e.target;
+
+                // 交互触发
+                if (target && target.tagName) {
+                    // 点击输入框，不需要隐藏
+                    if (target === element[0]) {
+                        e.stopPropagation();
+                        return false;
                     }
                 }
 
-                me.emit('afterRender');
-
-                me.open();
-
-            }
-            else {
-                me.close();
-            }
-        },
-
-        /**
-         * 显示下拉菜单
-         */
-        open: function () {
-
-            var me = this;
-            var popup = me.popup;
-
-            if (popup.hidden) {
-                me.emit('beforeOpen');
-                popup.open();
-                me.emit('afterOpen');
-            }
-        },
-
-        /**
-         * 隐藏下拉菜单
-         */
-        close: function () {
-
-            var me = this;
-            var popup = me.popup;
-
-            if (!popup.hidden) {
                 me.emit('beforeClose');
-                popup.close();
-                me.emit('afterClose');
+
             }
-        },
+        )
+        .on(
+            'afterHide',
+            function () {
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+                iterator.stop();
+                iterator.disable();
 
-            var me = this;
+                me.emit('afterClose');
 
-            lifeCycle.dispose(me);
+            }
+        );
 
-            me.menu.off(namespace);
+        var itemSelector = me.itemSelector;
 
-            me.input.dispose();
-            me.popup.dispose();
+        var isScrolling = false;
+        var scrollTimer;
 
-            me.element =
-            me.menu =
-            me.data =
-            me.items =
-            me.cache = null;
-        }
+        var bindMouseLeave = function () {
+            menu
+            .on('mouseleave' + namespace, itemSelector, function () {
+
+                if (isScrolling) {
+                    return;
+                }
+
+                iterator.to(
+                    iterator.startIndex
+                );
+
+                unbindMouseLeave();
+
+            });
+        };
+
+        var unbindMouseLeave = function () {
+            menu.off('mouseleave' + namespace);
+        };
+
+        menu
+        .on('scroll' + namespace, function () {
+
+            if (scrollTimer) {
+                clearTimeout(scrollTimer);
+            }
+
+            isScrolling = true;
+
+            scrollTimer = setTimeout(
+                function () {
+                    scrollTimer = null;
+                    isScrolling = false;
+                },
+                500
+            );
+
+        })
+        .on('click' + namespace, itemSelector, function () {
+
+            unbindMouseLeave();
+
+            var index = $(this).data(indexKey);
+
+            iterator.to(
+                index,
+                {
+                    force: true
+                }
+            );
+
+            me.close();
+
+            me.emit(
+                'itemClick',
+                activeData
+            );
+
+        })
+        .on('mouseenter' + namespace, itemSelector, function () {
+
+            if (isScrolling) {
+                return;
+            }
+
+            if (activeElement) {
+                activeElement.removeClass(activeClass);
+            }
+
+            activeElement = $(this);
+            activeElement.addClass(activeClass);
+
+            iterator.index = activeElement.data(indexKey);
+
+            bindMouseLeave();
+
+        });
+
     };
 
-    jquerify(AutoComplete.prototype);
+    /**
+     * 渲染数据
+     *
+     * @param {Array} data
+     */
+    proto.render = function (data) {
+
+        var me = this;
+        var iterator = me.iterator;
+
+        var iteratorData = iterator.getData();
+        iteratorData.length = 1;
+
+        var menu = me.menu;
+        var html = me.renderTemplate(data, me.template);
+
+        menu
+        .html(html)
+        .find(me.itemSelector)
+        .each(function (index) {
+
+            var item = $(this);
+
+            var data = item.data();
+            if (data.text == null) {
+                data.text = item.html();
+            }
+
+            var nextIndex =
+            iteratorData.push({
+                element: item,
+                data: data
+            });
+
+            item.data(indexKey, nextIndex - 1);
+
+        });
+
+        iterator.setData(iteratorData);
+
+        // 可以在 renderTemplate 时设置某一项选中
+        var activeItem = menu.find('.' + me.activeClass);
+
+        if (activeItem.length === 1) {
+            var index = activeItem.data(indexKey);
+            if ($.type(index) === 'number') {
+                iterator.to(
+                    index,
+                    {
+                        action: 'render'
+                    }
+                );
+            }
+        }
+
+    };
+
+    /**
+     * 显示下拉菜单
+     */
+    proto.open = function () {
+
+        var popup = this.popup;
+
+        if (popup.hidden) {
+            popup.open();
+        }
+
+    };
+
+    /**
+     * 隐藏下拉菜单
+     */
+    proto.close = function () {
+
+        var popup = this.popup;
+
+        if (!popup.hidden) {
+            popup.close();
+        }
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.menu.off(namespace);
+
+        me.input.dispose();
+        me.popup.dispose();
+
+        me.element =
+        me.menu =
+        me.data =
+        me.items =
+        me.cache = null;
+
+    };
+
+    jquerify(proto);
+
+    aspect(proto, 'render');
 
     /**
      * 默认配置
@@ -412,8 +465,12 @@ define(function (require, exports, module) {
         delay: 60,
         includeInput: true,
         itemSelector: 'li',
-        show: { },
-        hide: { }
+        show: {
+            trigger: 'focus'
+        },
+        hide: {
+            trigger: 'click'
+        }
     };
 
     /**
@@ -427,64 +484,20 @@ define(function (require, exports, module) {
     var indexKey = '__index__';
 
     /**
-     * 用 Popup 处理提示层的显示隐藏逻辑
+     * 渲染并显示数据
      *
      * @inner
      * @param {AutoComplete} autoComplete
-     * @return {Popup}
+     * @param {Array} data
      */
-    function createPopup(autoComplete) {
-
-        var element = autoComplete.element;
-
-        var show = autoComplete.show;
-        var hide = autoComplete.hide;
-
-        if (!show.trigger) {
-            show.trigger = 'focus';
+    function renderData(autoComplete, data) {
+        if (data && data.length > 0) {
+            autoComplete.render(data);
+            autoComplete.open();
         }
-        if (!hide.trigger) {
-            hide.trigger = 'click';
+        else {
+            autoComplete.close();
         }
-
-        var animation = show.animation;
-        if ($.isFunction(animation)) {
-            show.animation = $.proxy(animation, autoComplete);
-        }
-
-        animation = hide.animation;
-        if ($.isFunction(animation)) {
-            hide.animation = $.proxy(animation, autoComplete);
-        }
-
-        return new Popup({
-            element: element,
-            layer: autoComplete.menu,
-            show: show,
-            hide: hide,
-            onBeforeShow: function (e) {
-                // 通过元素 focus 触发
-                if ('eventPhase' in e) {
-                    suggest(autoComplete);
-                    return false;
-                }
-            },
-            onBeforeHide: function (e) {
-
-                var result;
-
-                // 点击 input 不触发失焦隐藏
-                if ('eventPhase' in e) {
-                    result = e.target !== element[0];
-                }
-
-                if (result) {
-                    autoComplete.iterator.stop();
-                }
-
-                return result;
-            }
-        });
     }
 
     /**
@@ -499,15 +512,15 @@ define(function (require, exports, module) {
         var query = $.trim(autoComplete.element.val());
         var data = cache[query];
 
-        if (data) {
-            autoComplete.render(data);
+        if (data && data.length > 0) {
+            renderData(autoComplete, data);
         }
         else {
             autoComplete.load(
                 query,
                 function (data) {
                     cache[query] = data;
-                    autoComplete.render(data);
+                    renderData(autoComplete, data);
                 }
             );
         }

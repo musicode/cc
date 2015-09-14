@@ -31,6 +31,7 @@ define(function (require, exports, module) {
 
     var call = require('../function/call');
     var split = require('../function/split');
+    var lifeCycle = require('../function/lifeCycle');
     var jquerify = require('../function/jquerify');
     var keyboard = require('../util/keyboard');
 
@@ -70,8 +71,7 @@ define(function (require, exports, module) {
      * });
      */
     function Keyboard(options) {
-        $.extend(this, Keyboard.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Keyboard.prototype = {

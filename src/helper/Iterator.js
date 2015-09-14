@@ -15,6 +15,7 @@ define(function (require, exports, module) {
     var Keyboard = require('./Keyboard');
 
     var timer = require('../function/timer');
+    var lifeCycle = require('../function/lifeCycle');
     var jquerify = require('../function/jquerify');
     var setValue = require('../function/setValue');
 
@@ -34,8 +35,7 @@ define(function (require, exports, module) {
      *
      */
     function Iterator(options) {
-        $.extend(this, Iterator.defaultOptions, options);
-        this.init();
+        return lifeCycle.init(this, options);
     }
 
     Iterator.prototype = {
@@ -60,16 +60,19 @@ define(function (require, exports, module) {
             var action = { };
 
             action[ me.prevKey ] = function (e, longPress) {
-                if (!longPress) {
-                    prev();
-                    me.timer = prevTimer;
+                if (!me.enabled || longPress) {
+                    return;
                 }
+                prev();
+                me.timer = prevTimer;
             };
+
             action[ me.nextKey ] = function (e, longPress) {
-                if (!longPress) {
-                    next();
-                    me.timer = nextTimer;
+                if (!me.enabled || longPress) {
+                    return;
                 }
+                next();
+                me.timer = nextTimer;
             };
 
             me.keyboard = new Keyboard({
@@ -109,6 +112,18 @@ define(function (require, exports, module) {
             me.pause();
 
             me.index = me.startIndex;
+
+        },
+
+        enable: function () {
+
+            this.enabled = true;
+
+        },
+
+        disable: function () {
+
+            this.enabled = false;
 
         },
 

@@ -17,23 +17,9 @@ define(function (require, exports) {
 
         var constructor = instance.constructor;
 
-        var dataKey = '__cobble__' + constructor.prototype.type;
-
-        // 避免重复初始化
-        var element = options.element;
-
-        if (element && element.data(dataKey)) {
-            instance = element.data(dataKey);
-        }
-        else {
-
-            $.extend(instance, constructor.defaultOptions, options);
-            instance.init();
-
-            if (element) {
-                element.data(dataKey, instance);
-            }
-        }
+        $.extend(instance, constructor.defaultOptions, options);
+        instance.$ = $({});
+        instance.init();
 
         return instance;
 
@@ -45,12 +31,8 @@ define(function (require, exports) {
      * @param {*} instance 组件实例
      */
     exports.dispose = function (instance) {
-
-        var dataKey = '__cobble__' + instance.constructor.prototype.type;
-
-        var element = instance.element;
-        if (element) {
-            element.removeData(dataKey);
+        if (instance.$) {
+            instance.$ = null;
         }
     };
 

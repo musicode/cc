@@ -8,7 +8,7 @@ define(function (require, exports, module) {
 
     var around = require('./around');
 
-    return function (target, name) {
+    return function (target, name, validate) {
 
         var ucFirst = name.charAt(0).toUpperCase()
                     + name.slice(1);
@@ -17,10 +17,18 @@ define(function (require, exports, module) {
             target,
             name,
             function () {
-                target.emit('before' + ucFirst);
+
+                if ($.type(validate) === 'function'
+                    && validate.call(this) === false
+                ) {
+                    return false;
+                }
+
+                this.emit('before' + ucFirst);
+
             },
             function () {
-                target.emit('after' + ucFirst);
+                this.emit('after' + ucFirst);
             }
         );
 

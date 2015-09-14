@@ -98,10 +98,18 @@
                     onEnter: function (event, data) {
                         console.log('enter', data);
                     },
-                    onSelect: function (event, data) {
-                        this.dispose();
+                    onItemClick: function (event, data) {
                         console.log('select', data);
                     },
+
+                    onBeforeOpen: function () {
+                        console.log('onBeforeOpen', this)
+                    },
+
+                    onAfterOpen: function () {
+                        console.log('onAfterOpen', this)
+                    },
+
                     load: function (value, callback) {
 
                         if (!value) {

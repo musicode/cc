@@ -26,7 +26,7 @@ define(function (require, exports, module) {
          */
         on: function () {
             jqPrototype.on.apply(
-                getElement(this),
+                this.$,
                 arguments
             );
             return this;
@@ -37,7 +37,7 @@ define(function (require, exports, module) {
          */
         off: function () {
             jqPrototype.off.apply(
-                getElement(this),
+                this.$,
                 arguments
             );
             return this;
@@ -53,11 +53,6 @@ define(function (require, exports, module) {
         emit: function (event, data) {
 
             var me = this;
-            var element = getElement(me);
-
-            if (!element) {
-                return;
-            }
 
             // 确保是 jQuery 事件对象
             if (!event[$.expando]) {
@@ -69,22 +64,15 @@ define(function (require, exports, module) {
             // 设置当前实例对象，便于在未知的地方拿到组件实例
             event.cobble = me;
 
-            var args = [event];
+            var args = [ event ];
             if (data) {
                 args.push(data);
             }
 
-            // 首先执行 this.onXXX 函数
             var fn = me[$.camelCase('on-' + event.type)];
 
-            if ($.isFunction(fn)
-                && fn.apply(me, args) === false
-            ) {
-                event.preventDefault();
-            }
-
-            if (!event.isPropagationStopped()) {
-                jqPrototype.trigger.apply(element, args);
+            if (!$.isFunction(fn) || fn.apply(me, args) !== false) {
+                jqPrototype.trigger.apply(me.$, args);
             }
 
             return event;
