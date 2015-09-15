@@ -32,6 +32,7 @@ define(function (require, exports) {
      */
     exports.dispose = function (instance) {
         if (instance.$) {
+            instance.$.off();
             instance.$ = null;
         }
     };

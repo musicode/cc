@@ -24,7 +24,11 @@ define(function (require, exports, module) {
                     return false;
                 }
 
-                this.emit('before' + ucFirst);
+                var event = this.emit('before' + ucFirst);
+
+                if (event.isDefaultPrevented()) {
+                    return false;
+                }
 
             },
             function () {

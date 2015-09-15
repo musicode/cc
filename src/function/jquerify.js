@@ -71,7 +71,14 @@ define(function (require, exports, module) {
 
             var fn = me[$.camelCase('on-' + event.type)];
 
-            if (!$.isFunction(fn) || fn.apply(me, args) !== false) {
+            if ($.isFunction(fn)
+                && fn.apply(me, args) === false
+                && !event.isDefaultPrevented()
+            ) {
+                event.preventDefault();
+            }
+
+            if (!event.isDefaultPrevented()) {
                 jqPrototype.trigger.apply(me.$, args);
             }
 

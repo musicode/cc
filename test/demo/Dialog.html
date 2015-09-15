@@ -44,7 +44,8 @@
                     content: '内容',
                     hidden: false,
                     modal: true,
-                    disposeOnHide: false,
+                    draggable: true,
+                    disposeOnHide: true,
                     hideOnClickMask: true,
                     fixed: true,
                     x: '20%',
@@ -53,6 +54,8 @@
                     titleSelector: '.modal-title',
                     bodySelector: '.modal-body',
                     closeSelector: '.close',
+
+                    draggableHandleSelector: '.modal-header',
 
                     maskTemplate: '<div class="modal"></div>',
 
@@ -90,13 +93,13 @@
                     },
 
                     onBeforeShow: function (event) {
-
+                        return true
                     },
                     onAfterShow: function (event) {
 
                     },
                     onBeforeHide: function (event) {
-
+                        return true;
                     },
                     onAfterHide: function (event) {
 
