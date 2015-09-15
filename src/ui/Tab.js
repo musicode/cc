@@ -8,6 +8,10 @@ define(function (require, exports, module) {
 
     /**
      * 90%
+     *
+     * # 事件列表
+     *
+     * 1. change - 切换 tab 触发
      */
 
     var jquerify = require('../function/jquerify');
@@ -35,104 +39,95 @@ define(function (require, exports, module) {
      * @property {number} options.animation.data.from
      * @property {number} options.animation.data.to
      *
-     * @property {Function=} options.onChange 切换 tab 触发
-     * @argument {Event} options.onChange.event 事件对象
-     * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.data.from
-     * @property {number} options.onChange.data.to
      */
     function Tab(options) {
         return lifeCycle.init(this, options);
     }
 
-    Tab.prototype = {
+    var proto = Tab.prototype;
 
-        constructor: Tab,
+    proto.type = 'Tab';
 
-        type: 'Tab',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        me.switcher = new Switchable({
+            element: element,
+            index: me.index,
+            trigger: me.trigger,
+            selector: me.navSelector,
+            activeClass: me.navActiveClass,
+            change: function (data) {
 
-            me.switcher = new Switchable({
-                element: element,
-                index: me.index,
-                trigger: me.trigger,
-                selector: me.navSelector,
-                activeClass: me.navActiveClass,
-                change: function (data) {
+                var from = data.from;
+                var to = data.to;
 
-                    var from = data.from;
-                    var to = data.to;
+                // 切换 content，优先使用动画
+                if ($.isFunction(me.animation)) {
+                    me.animation(data);
+                }
+                else {
 
-                    // 切换 content，优先使用动画
-                    if ($.isFunction(me.animation)) {
-                        me.animation(data);
-                    }
-                    else {
+                    var contents = element.find(me.contentSelector);
 
-                        var contents = element.find(me.contentSelector);
+                    // 单个 content 表示不需要切换，每次都是刷新这块内容区
+                    if (contents.length !== 1) {
 
-                        // 单个 content 表示不需要切换，每次都是刷新这块内容区
-                        if (contents.length !== 1) {
+                        var activeClass = me.contentActiveClass;
 
-                            var activeClass = me.contentActiveClass;
-
-                            if (activeClass) {
-                                contents.eq(from).removeClass(activeClass);
-                                contents.eq(to).addClass(activeClass);
-                            }
-                            else {
-                                contents.eq(from).hide();
-                                contents.eq(to).show();
-                            }
+                        if (activeClass) {
+                            contents.eq(from).removeClass(activeClass);
+                            contents.eq(to).addClass(activeClass);
+                        }
+                        else {
+                            contents.eq(from).hide();
+                            contents.eq(to).show();
                         }
                     }
-
-                    me.index = to;
-
-                    if (from !== to) {
-                        me.emit('change', data);
-                    }
-
                 }
-            });
 
-        },
+                me.index = to;
 
-        /**
-         * 激活 tab
-         *
-         * @param {number} index
-         */
-        to: function (index) {
-            this.switcher.to(index);
-        },
+                if (from !== to) {
+                    me.emit('change', data);
+                }
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.switcher.dispose();
-
-            me.element =
-            me.switcher = null;
-
-        }
+            }
+        });
 
     };
 
-    jquerify(Tab.prototype);
+    /**
+     * 激活 tab
+     *
+     * @param {number} index
+     */
+    proto.to = function (index) {
+        this.switcher.to(index);
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.switcher.dispose();
+
+        me.element =
+        me.switcher = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

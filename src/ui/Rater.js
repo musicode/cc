@@ -6,6 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    /**
+     * # 事件列表
+     *
+     * 1. change - 选中星星触发
+     */
+
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
@@ -42,10 +48,6 @@ define(function (require, exports, module) {
      *
      * @property {string} options.itemSelector
      * @property {string} options.itemTemplate
-     *
-     * @property {Function=} options.onChange 选中星星触发
-     * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.data.value
      *
      * @example
      * var rater = new Rater({

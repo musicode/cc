@@ -52,13 +52,15 @@
                     element: $('#main'),
                     index: 1,
 
+                    trigger: 'over',
+
                     navSelector: '.nav-tabs li',
                     contentSelector: '.tab-pane',
 
                     navActiveClass: 'active',
                     contentActiveClass: 'active in',
 
-                    animation12: function (data) {
+                    animation: function (data) {
                         var contents = this.element.find(this.contentSelector);
                         contents.eq(data.from).removeClass('active in');
                         contents.eq(data.to).addClass('active in');
