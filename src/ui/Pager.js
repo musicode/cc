@@ -19,6 +19,10 @@ define(function (require, exports, module) {
      * 如果非要翻页为 0，那初始化和刷新时，+ 1 处理吧
      *
      * 希望点击触发翻页的元素，必须具有 data-page 属性，属性值为希望翻到的页码
+     *
+     * # 事件列表
+     *
+     * 1. change - 页码变化时触发
      */
 
     /**
@@ -42,245 +46,246 @@ define(function (require, exports, module) {
      * @property {string=} options.activeTemplate 页码选中状态的模板
      * @property {Function=} options.renderTemplate 渲染方法
      *
-     * @property {Function} options.onChange
-     * @argument {Object} options.onChange.data
-     * @property {number} options.onChange.page
      */
     function Pager(options) {
         return lifeCycle.init(this, options);
     }
 
-    Pager.prototype = {
+    var proto = Pager.prototype;
 
-        constructor: Pager,
+    proto.type = 'Pager';
 
-        type: 'Pager',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
-            var me = this;
+        me.render();
 
-            me.render();
+        me.element
+        .on(
+            'click' + namespace,
+            '[data-page]',
+            function () {
 
-            me
-            .element
-            .on(
-                'click' + namespace,
-                '[data-page]',
-                me,
-                function (e) {
+                var page = $(this).data('page');
 
-                    var page = $(this).data('page');
+                if ($.type(page) === 'number') {
+                    me.to(page);
+                }
 
-                    if ($.type(page) === 'number') {
-                        me.to(page);
-                    }
+            }
+        );
+
+    };
+
+    /**
+     * 渲染翻页
+     *
+     * @param {Object=} data 翻页数据
+     * @property {number} data.page 当前页
+     * @property {number} data.count 总页数
+     */
+    proto.render = function (data) {
+
+        var me = this;
+
+        if ($.isPlainObject(data)) {
+            $.extend(me, data);
+        }
+
+        var count = me.count;
+        var element = me.element;
+
+        if (count < 2 && me.autoHide) {
+            element.html('');
+            me.hideAnimation();
+            return;
+        }
+
+        var page = Math.min(me.page, count);
+
+        var showCount = me.showCount;
+        var startCount = me.startCount;
+        var endCount = me.endCount;
+
+        var datasource = [ ];
+
+        var pageTemplate = me.pageTemplate;
+        var ellipsisTemplate = me.ellipsisTemplate;
+
+        // 上一页
+        if (page > 1) {
+            datasource.push({
+                page: [ page - 1, page - 1 ],
+                tpl: me.prevTemplate
+            });
+        }
+
+        var start = Math.max(1, page - Math.ceil(showCount / 2));
+        if (startCount > 0 && start < startCount + 2) {
+            startCount = 0;
+        }
+
+        var end = Math.min(count, start + showCount - 1);
+        if (endCount > 0 && count - end < endCount + 2) {
+            endCount = 0;
+        }
+
+        if (startCount > 0) {
+            datasource.push(
+                {
+                    page: [ 1, startCount ],
+                    tpl: pageTemplate
+                },
+                {
+                    tpl: ellipsisTemplate
                 }
             );
-        },
+        }
 
-        /**
-         * 渲染（刷新）翻页
-         *
-         * @param {Object=} data 翻页数据
-         * @property {number} data.page 当前页
-         * @property {number} data.count 总页数
-         */
-        render: function (data) {
+        // 中间的页码部分，需要用 activePage 进行分割
+        if (start < page) {
+            datasource.push({
+                page: [ start, page - 1 ],
+                tpl: pageTemplate
+            });
+        }
 
-            var me = this;
+        // 选中页码
+        datasource.push({
+            page: [ page, page ],
+            tpl: me.activeTemplate
+        });
 
-            if ($.isPlainObject(data)) {
-                $.extend(me, data);
-            }
+        if (end > page) {
+            datasource.push({
+                page: [ page + 1, end ],
+                tpl: pageTemplate
+            });
+        }
 
-            var count = me.count;
-            var element = me.element;
+        // 结束部分的页码，方便跳到最后一页
+        if (endCount > 0) {
+            datasource.push(
+                {
+                    tpl: ellipsisTemplate
+                },
+                {
+                    page: [ count - endCount + 1, count ],
+                    tpl: pageTemplate
+                }
+            );
+        }
 
-            if (count < 2 && me.autoHide) {
-                element.hide().html('');
-            }
-            else {
+        // 下一页
+        if (page < count) {
+            datasource.push({
+                page: [ page + 1, page + 1 ],
+                tpl: me.nextTemplate
+            });
+        }
 
-                var page = Math.min(me.page, count);
+        var html = $.map(
+            datasource,
+            function (item, index) {
 
-                var showCount = me.showCount;
-                var startCount = me.startCount;
-                var endCount = me.endCount;
-
-                var datasource = [ ];
-
-                // 上一页
-                if (page > 1) {
-                    datasource.push({
-                        page: [ page - 1, page - 1 ],
-                        tpl: me.prevTemplate
-                    });
+                var tpl = item.tpl;
+                if (!tpl) {
+                    return;
                 }
 
-                var start = Math.max(1, page - Math.ceil(showCount / 2));
-                if (startCount > 0 && start < startCount + 2) {
-                    startCount = 0;
+                if (item.page == null) {
+                    return tpl;
                 }
+                else {
 
-                var end = Math.min(count, start + showCount - 1);
-                if (endCount > 0 && count - end < endCount + 2) {
-                    endCount = 0;
-                }
+                    var html = '';
+                    var page = item.page;
 
-                if (startCount > 0) {
-                    datasource.push(
-                        {
-                            page: [ 1, startCount ],
-                            tpl: me.pageTemplate
-                        },
-                        {
-                            tpl: me.ellipsisTemplate
-                        }
-                    );
-                }
-
-                // 中间的页码部分，需要用 activePage 进行分割
-                if (start < page) {
-                    datasource.push({
-                        page: [ start, page - 1 ],
-                        tpl: me.pageTemplate
-                    });
-                }
-
-                // 选中页码
-                datasource.push({
-                    page: [ page, page ],
-                    tpl: me.activeTemplate
-                });
-
-                if (end > page) {
-                    datasource.push({
-                        page: [ page + 1, end ],
-                        tpl: me.pageTemplate
-                    });
-                }
-
-                // 结束部分的页码，方便跳到最后一页
-                if (endCount > 0) {
-                    datasource.push(
-                        {
-                            tpl: me.ellipsisTemplate
-                        },
-                        {
-                            page: [ count - endCount + 1, count ],
-                            tpl: me.pageTemplate
-                        }
-                    );
-                }
-
-                // 下一页
-                if (page < count) {
-                    datasource.push({
-                        page: [ page + 1, page + 1 ],
-                        tpl: me.nextTemplate
-                    });
-                }
-
-                var html = $.map(
-                    datasource,
-                    function (item, index) {
-
-                        var tpl = item.tpl;
-                        if (!tpl) {
-                            return;
-                        }
-
-                        if (item.page == null) {
-                            return tpl;
-                        }
-                        else {
-
-                            var html = '';
-                            var page = item.page;
-
-                            for (var i = page[0], end = page[1]; i <= end; i++) {
-                                html += me.renderTemplate({ page: i }, tpl);
-                            }
-
-                            return html;
-                        }
+                    for (var i = page[0], end = page[1]; i <= end; i++) {
+                        html += me.renderTemplate({ page: i }, tpl);
                     }
-                ).join('');
 
-                element.html(html).show();
+                    return html;
+                }
             }
-        },
+        ).join('');
 
-        /**
-         * 上一页
-         */
-        prev: function () {
+        element.html(html);
 
-            var me = this;
-            var page = me.page;
+        me.showAnimation();
 
-            if (page > 1) {
-                me.to(page - 1);
-            }
+    };
 
-        },
+    /**
+     * 上一页
+     */
+    proto.prev = function () {
 
-        /**
-         * 下一页
-         */
-        next: function () {
+        var me = this;
+        var page = me.page;
 
-            var me = this;
-            var page = me.page;
-
-            if (page < me.count) {
-                me.to(page + 1);
-            }
-        },
-
-        /**
-         * 翻到第 page 页
-         *
-         * @param {number} page
-         */
-        to: function (page) {
-
-            var me = this;
-            var isChange = page !== me.page;
-
-            me.page = page;
-
-            if (isChange) {
-                me.emit(
-                    'change',
-                    {
-                        page: page
-                    }
-                );
-            }
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.element.off(namespace);
-            me.element = null;
+        if (page > 1) {
+            me.to(page - 1);
         }
 
     };
 
-    jquerify(Pager.prototype);
+    /**
+     * 下一页
+     */
+    proto.next = function () {
+
+        var me = this;
+        var page = me.page;
+
+        if (page < me.count) {
+            me.to(page + 1);
+        }
+
+    };
+
+    /**
+     * 翻到第 page 页
+     *
+     * @param {number} page
+     */
+    proto.to = function (page) {
+
+        var me = this;
+        var hasChange = page !== me.page;
+
+        me.page = page;
+
+        if (hasChange) {
+            me.emit(
+                'change',
+                {
+                    page: page
+                }
+            );
+        }
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -306,7 +311,16 @@ define(function (require, exports, module) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] != null ? data[$1] : '';
             });
+        },
+
+        showAnimation: function () {
+            this.element.show();
+        },
+
+        hideAnimation: function () {
+            this.element.hide();
         }
+
     };
 
     /**
