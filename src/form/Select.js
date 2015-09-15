@@ -15,6 +15,11 @@ define(function (require, exports, module) {
      *
      * 菜单项 value: data-value="1"
      * 菜单项 text:  date-text="xxx" 或 innerHTML，优先使用 data-text
+     *
+     * # 事件列表
+     *
+     * 1. change
+     *
      */
 
     var ComboBox = require('../ui/ComboBox');
@@ -49,143 +54,147 @@ define(function (require, exports, module) {
      * @property {Function=} options.hide.animation 隐藏动画
      *
      * @property {Function=} options.setText 把选中的菜单项文本写入到按钮上
-     * @property {Function=} options.onChange 选中菜单项触发
      */
     function Select(options) {
         return lifeCycle.init(this, options);
     }
 
-    Select.prototype = {
+    var proto = Select.prototype;
 
-        constructor: Select,
+    proto.type = 'Select';
 
-        type: 'Select',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
 
-            var html = '<input type="hidden" name="' + me.name + '"';
-            if (me.value != null) {
-                html += ' value="' + me.value + '"';
-            }
-            if (element.attr('required')) {
-                html += ' required';
-            }
-            html += ' />';
+        var html = '<input type="hidden" name="' + me.name + '"';
+        if (me.value != null) {
+            html += ' value="' + me.value + '"';
+        }
+        if (element.attr('required')) {
+            html += ' required';
+        }
+        html += ' />';
 
-            var input = me.input = $(html);
-            element.append(input);
+        var input =
+        me.input = $(html);
 
-            me.comboBox = new ComboBox({
-                element: element,
-                button: element.find(me.buttonSelector),
-                menu: element.find(me.menuSelector),
-                data: me.data,
-                value: me.value,
-                show: me.show,
-                hide: me.hide,
-                defaultText: me.defaultText,
-                template: me.template,
-                renderTemplate: me.renderTemplate,
-                activeClass: me.activeClass,
-                openClass: me.openClass,
-                setText: $.proxy(me.setText, me),
-                onChange: function (e, data) {
+        element.append(input);
 
-                    me.setValue(
-                        data.value
-                    );
 
-                    if (!me.silence) {
-                        me.emit('change', data);
+        me.comboBox = new ComboBox({
+            element: element,
+            button: element.find(me.buttonSelector),
+            menu: element.find(me.menuSelector),
+            data: me.data,
+            value: me.value,
+            show: me.show,
+            hide: me.hide,
+            defaultText: me.defaultText,
+            template: me.template,
+            renderTemplate: me.renderTemplate,
+            activeClass: me.activeClass,
+            openClass: me.openClass,
+            setText: $.proxy(me.setText, me),
+            onChange: function (e, data) {
+
+                me.setValue(
+                    data.value,
+                    {
+                        data: data,
+                        from: FROM_CALENDAR
                     }
-
-                },
-                onAfterShow: function () {
-                    element.trigger('focusin');
-                },
-                onAfterHide: function () {
-                    element.trigger('focusout');
-                }
-            });
-
-        },
-
-        /**
-         * 获取当前选中的值
-         *
-         * @return {string}
-         */
-        getValue: function () {
-            return this.value;
-        },
-
-        /**
-         * 设置当前选中的值
-         *
-         * @param {string} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         */
-        setValue: function (value, options) {
-
-            var me = this;
-
-            options = options || { };
-
-            if (options.force || value != me.value) {
-
-                me.value = value;
-
-                me.input.val(
-                    value == null ? '' : value
                 );
 
-                me.silence = options.silence;
-
-                me.comboBox.setValue(value);
-
-                delete me.silence;
-
+            },
+            onAfterShow: function () {
+                element.trigger('focusin');
+            },
+            onAfterHide: function () {
+                element.trigger('focusout');
             }
+        });
 
-        },
-
-        /**
-         * 刷新数据
-         *
-         * @param {Object} options
-         * @property {Array} options.data 数据
-         * @property {index=} options.value 选中的值
-         */
-        refresh: function (options) {
-            this.comboBox.refresh(options);
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.comboBox.dispose();
-
-            me.input =
-            me.element =
-            me.comboBox = null;
-        }
     };
 
-    jquerify(Select.prototype);
+    /**
+     * 获取当前选中的值
+     *
+     * @return {string}
+     */
+    proto.getValue = function () {
+        return this.value;
+    };
+
+    /**
+     * 设置当前选中的值
+     *
+     * @param {string} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        options = options || { };
+
+        if (setValue(me, 'value', value, options, options.data)) {
+
+            me.input.val(
+                value == null ? '' : value
+            );
+
+            if (options.from !== FROM_CALENDAR) {
+                me.comboBox.setValue(
+                    value,
+                    {
+                        silence: true
+                    }
+                );
+            }
+
+        }
+
+    };
+
+    /**
+     * 刷新数据
+     *
+     * @param {Object} options
+     * @property {Array} options.data 数据
+     * @property {index=} options.value 选中的值
+     */
+    proto.refresh = function (options) {
+        this.comboBox.refresh(options);
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.comboBox.dispose();
+
+        me.input =
+        me.element =
+        me.comboBox = null;
+
+    };
+
+    jquerify(proto);
+
+    var FROM_CALENDAR = 'calendar';
 
     /**
      * 默认配置
