@@ -8,10 +8,12 @@ define(function (require, exports, module) {
 
     var init = require('../function/init');
     var timer = require('../function/timer');
+    var setValue = require('../function/setValue');
     var toNumber = require('../function/toNumber');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var replaceWith = require('../function/replaceWith');
+    var isActiveElement = require('../function/isActiveElement');
 
     var plus = require('../function/plus');
     var minus = require('../function/minus');
@@ -36,226 +38,222 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Number.prototype = {
+    var proto = Number.prototype;
 
-        constructor: Number,
+    proto.type = 'Number';
 
-        type: 'Number',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
+        var upSelector = me.upSelector;
+        var downSelector = me.downSelector;
 
-            var me = this;
-            var element = me.element;
-            var upSelector = me.upSelector;
-            var downSelector = me.downSelector;
+        var mainElement;
 
-            var faker;
+        // 如果结构完整，不需要初始化模板
+        if (element.find(upSelector).length === 1) {
 
-            // 如果结构完整，不需要初始化模板
-            if (element.find(upSelector).length === 1) {
-                faker = element;
-                element = me.element = faker.find(':text');
+            mainElement = element;
+
+            element =
+            me.element = mainElement.find(':text');
+
+        }
+        else {
+
+            mainElement = $(me.template);
+
+            replaceWith(element, mainElement);
+            replaceWith(mainElement.find(':text'), element);
+
+        }
+
+        me.main = mainElement;
+
+        me.step = toNumber(element.attr('step'), 1);
+        me.min = toNumber(element.attr('min'));
+        me.max = toNumber(element.attr('max'));
+
+        me.value = toNumber(element.val(), '');
+
+        var upHandler = function () {
+
+            var value = me.getValue();
+
+            if ($.type(value) === 'number') {
+                value = plus(value, me.step);
+                if (me.max != null) {
+                    value = Math.min(me.max, value);
+                }
             }
             else {
-                faker = $(me.template);
-                replaceWith(element, faker);
-                replaceWith(faker.find(':text'), element);
+                value = me.min || 0;
             }
 
-            me.faker = faker;
+            me.setValue(value);
 
-            me.step = toNumber(element.attr('step'), 1);
-            me.min = toNumber(element.attr('min'));
-            me.max = toNumber(element.attr('max'));
+        };
+        var downHandler = function () {
 
-            me.value = toNumber(element.val(), '');
+            var value = me.getValue();
 
-            var upHandler = function () {
-
-                var value = me.getValue();
-
-                if ($.type(value) === 'number') {
-                    value = plus(value, me.step);
-                    if (me.max != null) {
-                        value = Math.min(me.max, value);
-                    }
+            if ($.type(value) === 'number') {
+                value = minus(value, me.step);
+                if (me.min != null) {
+                    value = Math.max(me.min, value);
                 }
-                else {
-                    value = me.min || 0;
-                }
+            }
+            else {
+                value = me.min || 0;
+            }
 
-                me.setValue(value);
+            me.setValue(value);
 
-            };
-            var downHandler = function () {
+        };
 
-                var value = me.getValue();
+        me.input = new Input({
+            element: element,
+            action: {
+                up: upHandler,
+                down: downHandler
+            }
+        });
 
-                if ($.type(value) === 'number') {
-                    value = minus(value, me.step);
-                    if (me.min != null) {
-                        value = Math.max(me.min, value);
-                    }
-                }
-                else {
-                    value = me.min || 0;
-                }
+        var delay = 100;
+        var upTimer = timer(upHandler, delay, delay);
+        var downTimer = timer(downHandler, delay, delay);
 
-                me.setValue(value);
+        var mouseup = 'mouseup' + namespace;
+        var mousedown = 'mousedown' + namespace;
+        var blur = 'focusout' + namespace;
 
-            };
-
-            me.input = new Input({
-                element: element,
-                longPress: true,
-                action: {
-                    up: upHandler,
-                    down: downHandler
-                }
+        mainElement
+            .on(mousedown, upSelector, upTimer.start)
+            .on(mousedown, downSelector, downTimer.start)
+            .on(blur, ':text', function () {
+                me.setValue(
+                    element.val()
+                );
             });
 
-            var upTimer = timer(upHandler, 40, 400);
-            var downTimer = timer(downHandler, 40, 400);
-
-            var mouseup = 'mouseup' + namespace;
-            var mousedown = 'mousedown' + namespace;
-            var blur = 'focusout' + namespace;
-
-            faker
-                .on(mousedown, upSelector, upTimer.start)
-                .on(mousedown, downSelector, downTimer.start)
-                .on(blur, ':text', function () {
-                    me.setValue(
-                        element.val()
-                    );
-                });
-
-            instance.document.on(
-                mouseup,
-                function () {
-                    upTimer.stop();
-                    downTimer.stop();
-                }
-            );
-        },
-
-        /**
-         * 获取合法值
-         *
-         * @param {*} value
-         * @returns {number|string}
-         */
-        getLegalValue: function (value) {
-
-            var me = this;
-
-            if ($.type(value) === 'string') {
-                value = $.trim(value);
+        instance.document.on(
+            mouseup,
+            function () {
+                upTimer.stop();
+                downTimer.stop();
             }
+        );
 
-            value = me.validate(value)
-                  ? toNumber(value)
-                  : me.defaultValue;
+    };
 
-            return $.type(value) === 'number' ? value : '';
+    /**
+     * 获取合法值
+     *
+     * @param {*} value
+     * @returns {number|string}
+     */
+    proto.getLegalValue = function (value) {
 
-        },
+        var me = this;
 
-        /**
-         * 取值
-         *
-         * @return {number}
-         */
-        getValue: function () {
+        if ($.type(value) === 'string') {
+            value = $.trim(value);
+        }
 
-            var me = this;
-            var element = me.element;
+        value = me.validate(value)
+              ? toNumber(value)
+              : me.defaultValue;
 
-            return document.activeElement === element[0]
-                ? me.getLegalValue(element.val())
-                : me.value;
+        return $.type(value) === 'number' ? value : '';
 
-        },
+    };
 
-        /**
-         * 设值
-         *
-         * @param {string|number} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         */
-        setValue: function (value, options) {
+    /**
+     * 取值
+     *
+     * @return {number}
+     */
+    proto.getValue = function () {
 
-            var me = this;
-            var element = me.element;
+        var me = this;
+        var element = me.element;
 
-            value = me.getLegalValue(value);
+        return isActiveElement(element)
+            ? me.getLegalValue(element.val())
+            : me.value;
 
-            options = options || { };
+    };
 
-            if (options.force || value !== element.val()) {
+    /**
+     * 设值
+     *
+     * @param {string|number} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
 
-                me.value = value;
-                element.val(value);
+        var me = this;
 
-                if (!options.silence) {
-                    me.emit('change');
-                }
-            }
+        value = me.getLegalValue(value);
 
-        },
-
-        /**
-         * 验证
-         *
-         * @param {string=} value 验证值，不传默认读取输入框当前的值
-         * @return {boolean} 是否验证通过
-         */
-        validate: function (value) {
-
-            var me = this;
-
-            if (value == null) {
-                value = me.getValue();
-            }
-
-            value = toNumber(value, '');
-
-            if (value === '' || (value < me.min || value > me.max)) {
-                return false;
-            }
-
-            var result = divide(minus(value, me.min), me.step);
-
-            return result === Math.floor(result);
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.faker.off(namespace);
-            instance.document.off(namespace);
-            me.input.dispose();
-
-            me.element =
-            me.faker =
-            me.input = null;
+        if (setValue(me, 'value', value, options)) {
+            me.element.val(value);
         }
 
     };
 
-    jquerify(Number.prototype);
+    /**
+     * 验证
+     *
+     * @param {string=} value 验证值，不传默认读取输入框当前的值
+     * @return {boolean} 是否验证通过
+     */
+    proto.validate = function (value) {
+
+        var me = this;
+
+        if (value == null) {
+            value = me.getValue();
+        }
+
+        value = toNumber(value, '');
+
+        if (value === '' || (value < me.min || value > me.max)) {
+            return false;
+        }
+
+        var result = divide(minus(value, me.min), me.step);
+
+        return result === Math.floor(result);
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        instance.document.off(namespace);
+        me.main.off(namespace);
+        me.input.dispose();
+
+        me.element =
+        me.main =
+        me.input = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

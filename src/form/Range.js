@@ -26,94 +26,105 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Range.prototype = {
+    var proto = Range.prototype;
 
-        constructor: Range,
+    proto.type = 'Range';
 
-        type: 'Range',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
-            me.value = + element.val();
+        me.value = + element.val();
 
-            var faker = me.faker = $(me.template);
+        var mainElement =
+        me.main = $(me.template);
 
-            element.hide().before(faker);
+        element.hide().before(mainElement);
 
-            var min = element.attr('min');
-            var max = element.attr('max');
-            var step = element.attr('step');
+        var min = element.attr('min');
+        var max = element.attr('max');
+        var step = element.attr('step');
 
-            me.slider = new Slider({
-                element: faker,
-                min: min != null ? + min : min,
-                max: max != null ? + max : max,
-                step: step != null ? + step : 1,
-                scrollable: false,
-                orientation: 'horizontal',
-                thumbSelector: me.thumbSelector,
-                trackSelector: me.trackSelector,
-                onChange: function () {
-                    me.setValue(+ this.value);
-                }
-            });
+        me.slider = new Slider({
+            element: mainElement,
+            min: min != null ? + min : min,
+            max: max != null ? + max : max,
+            step: step != null ? + step : 1,
+            scrollable: false,
+            orientation: 'horizontal',
+            thumbSelector: me.thumbSelector,
+            trackSelector: me.trackSelector,
+            onChange: function () {
 
-        },
+                var value = + this.value;
 
-        /**
-         * 取值
-         *
-         * @return {number}
-         */
-        getValue: function () {
-            return this.value || 0;
-        },
+                me.setValue(
+                    value,
+                    {
+                        from: FROM_SLIDER
+                    }
+                );
 
-        /**
-         * 设值
-         *
-         * @param {number} value
-         */
-        setValue: function (value) {
-
-            var me = this;
-
-            if (value !== me.value) {
-
-                me.value = value;
-                me.element.val(value);
-
-                if (me.slider) {
-                    me.slider.setValue(value);
-                }
-
-                me.emit('change');
             }
-        },
+        });
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.slider.dispose();
-
-            me.faker =
-            me.slider =
-            me.element = null;
-        }
     };
 
-    jquerify(Range.prototype);
+    /**
+     * 取值
+     *
+     * @return {number}
+     */
+    proto.getValue = function () {
+        return this.value || 0;
+    };
+
+    /**
+     * 设值
+     *
+     * @param {number} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        if (setValue(me, 'value', value, options)) {
+
+            me.element.val(value);
+
+            if (!options || options.from !== FROM_SLIDER) {
+                me.slider.setValue(value);
+            }
+
+        }
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.slider.dispose();
+
+        me.main =
+        me.slider =
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -134,6 +145,9 @@ define(function (require, exports, module) {
      * @return {Array.<Range>}
      */
     Range.init = init(Range);
+
+
+    var FROM_SLIDER = 'slider';
 
 
     return Range;

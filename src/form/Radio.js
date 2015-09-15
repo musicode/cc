@@ -58,144 +58,155 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Radio.prototype = {
+    var proto = Radio.prototype;
 
-        constructor: Radio,
 
-        type: 'Radio',
+    proto.type = 'Radio';
 
-        /**
-         * 初始化
-         */
-        init: function () {
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-            var me = this;
+        var me = this;
 
-            var element = me.element;
+        var element = me.element;
 
-            if (me.template) {
-                element.hide().before(me.template);
-            }
+        if (me.template) {
+            element.hide().before(me.template);
+        }
 
-            if (element.prop('checked')) {
-                me.check();
-            }
+        if (element.prop('checked')) {
+            me.check();
+        }
 
-            if (element.prop('disabled')) {
-                me.disable();
-            }
+        if (element.prop('disabled')) {
+            me.disable();
+        }
 
-            element.on(
-                'click' + namespace,
-                $.proxy(me.check, me)
-            );
-        },
+        element.on(
+            'click' + namespace,
+            function () {
 
-        /**
-         * 选中单选框
-         */
-        check: function () {
-            var me = this;
-            me.element.prop('checked', true);
-            me.setClass('add', me.checkedClass);
-        },
-
-        /**
-         * 取消选中单选框
-         */
-        uncheck: function () {
-            var me = this;
-            if (!me.element.prop('checked')) {
-                me.setClass('remove', me.checkedClass);
-            }
-        },
-
-        /**
-         * 启用单选框
-         */
-        enable: function () {
-            var me = this;
-            me.element.prop('disabled', false);
-            me.setClass('remove', me.disabledClass);
-        },
-
-        /**
-         * 禁用单选框
-         */
-        disable: function () {
-            var me = this;
-            me.element.prop('disabled', true);
-            me.setClass('add', me.disabledClass);
-        },
-
-        /**
-         * 是否选中
-         *
-         * @returns {boolean}
-         */
-        isChecked: function () {
-            return this.element.prop('checked');
-        },
-
-        /**
-         * 是否禁用
-         *
-         * @returns {boolean}
-         */
-        isDisabled: function () {
-            return this.element.prop('disabled');
-        },
-
-        /**
-         * 获取值
-         *
-         * @return {string}
-         */
-        getValue: function () {
-            return this.element.val();
-        },
-
-        /**
-         * 设置值
-         *
-         * @param {string|number} value
-         */
-        setValue: function (value) {
-            this.element.val(value);
-        },
-
-        /**
-         * 为 wrapper 元素设置 className
-         *
-         * @param {string} type 动作类型，可选值有 add remove
-         * @param {string} className
-         */
-        setClass: function (type, className) {
-            if (className) {
-                var me = this;
-                var wrapper = me.element.closest(me.wrapperSelector);
-                if (wrapper.length === 1) {
-                    wrapper[type + 'Class'](className);
+                if (me.isDisabled()) {
+                    return;
                 }
+
+                me.check();
+
             }
-        },
+        );
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+    };
 
-            var me = this;
+    /**
+     * 选中单选框
+     */
+    proto.check = function () {
+        var me = this;
+        me.element.prop('checked', true);
+        me.setClass('add', me.checkedClass);
+    };
 
-            lifeCycle.dispose(me);
-
-            me.element.off(namespace);
-            me.element = null;
-
+    /**
+     * 取消选中单选框
+     */
+    proto.uncheck = function () {
+        var me = this;
+        if (!me.element.prop('checked')) {
+            me.setClass('remove', me.checkedClass);
         }
     };
 
-    jquerify(Radio.prototype);
+    /**
+     * 启用单选框
+     */
+    proto.enable = function () {
+        var me = this;
+        me.element.prop('disabled', false);
+        me.setClass('remove', me.disabledClass);
+    };
+
+    /**
+     * 禁用单选框
+     */
+    proto.disable = function () {
+        var me = this;
+        me.element.prop('disabled', true);
+        me.setClass('add', me.disabledClass);
+    };
+
+    /**
+     * 是否选中
+     *
+     * @returns {boolean}
+     */
+    proto.isChecked = function () {
+        return this.element.prop('checked');
+    };
+
+    /**
+     * 是否禁用
+     *
+     * @returns {boolean}
+     */
+    proto.isDisabled = function () {
+        return this.element.prop('disabled');
+    };
+
+    /**
+     * 获取值
+     *
+     * @return {string}
+     */
+    proto.getValue = function () {
+        return this.element.val();
+    };
+
+    /**
+     * 设置值
+     *
+     * @param {string|number} value
+     */
+    proto.setValue = function (value) {
+        this.element.val(value);
+    };
+
+    /**
+     * 为 wrapper 元素设置 className
+     *
+     * @param {string} type 动作类型，可选值有 add remove
+     * @param {string} className
+     */
+    proto.setClass = function (type, className) {
+
+        if (!className) {
+            return;
+        }
+
+        var me = this;
+        var wrapper = me.element.closest(me.wrapperSelector);
+        if (wrapper.length === 1) {
+            wrapper[type + 'Class'](className);
+        }
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

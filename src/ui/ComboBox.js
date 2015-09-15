@@ -77,12 +77,14 @@ define(function (require, exports, module) {
         var button = me.button;
         var menu = me.menu;
 
+        var context = me.context || me;
+
         me.popup = new Popup({
             element: button,
             layer: menu,
             show: me.show,
             hide: me.hide,
-            context: me
+            context: context
         });
 
         var openClass = me.openClass;
@@ -90,7 +92,7 @@ define(function (require, exports, module) {
 
             var mainElement = me.element || button;
 
-            me
+            context
             .on(
                 'afterShow' + namespace,
                 function () {
@@ -206,7 +208,8 @@ define(function (require, exports, module) {
         }
 
         if ($.isFunction(me.setText)) {
-            me.setText(
+            me.setText.call(
+                me.context || me,
                 data.text || me.defaultText
             );
         }
@@ -234,7 +237,13 @@ define(function (require, exports, module) {
             if (data) {
 
                 me.menu.html(
-                    me.renderTemplate(data, me.template)
+
+                    me.renderTemplate.call(
+                        me.context || me,
+                        data,
+                        me.template
+                    )
+
                 );
 
             }

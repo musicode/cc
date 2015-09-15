@@ -100,15 +100,17 @@ define(function (require, exports, module) {
 
         input.init(element);
 
+        var context = me.context || me;
+
         me.keyboard = new Keyboard({
             element: element,
             action: me.action,
-            context: me
+            context: context
         });
 
         var valueBeforeLongPress;
 
-        me
+        context
         .on(
             'beforeLongPress' + namespace,
             function () {

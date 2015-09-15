@@ -6,10 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var jquerify = require('../function/jquerify');
-    var lifeCycle = require('../function/lifeCycle');
-    var Uploader = require('../ui/Uploader');
-
     /**
      *
      * ## 格式说明
@@ -26,7 +22,12 @@ define(function (require, exports, module) {
      *
      * 可以直接传入 <input type="file" />
      * 或传入包含 <input type="file" /> 的、具有完整模板的容器元素
+     *
      */
+
+    var jquerify = require('../function/jquerify');
+    var lifeCycle = require('../function/lifeCycle');
+    var Uploader = require('../ui/Uploader');
 
     /**
      *
@@ -42,70 +43,69 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    File.prototype = {
+    var proto = File.prototype;
 
-        constructor: File,
+    proto.type = 'File';
 
-        type: 'File',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
+        var browseSelector = me.browseSelector;
 
-            var me = this;
-            var element = me.element;
-            var browseSelector = me.browseSelector;
+        var mainElement;
 
-            var faker;
-
-            if (element.find(browseSelector).length === 1) {
-                faker = element;
-                element = faker.find(':file');
-            }
-            else {
-                faker = $(me.template);
-                element.before(faker);
-                faker.find(browseSelector).append(element);
-            }
-
-            me.faker = faker;
-            me.element = element;
-
-            var accept = element.data('accept');
-
-            me.uploader = new Uploader({
-                element: element,
-                action: element.data('action'),
-                accept: accept && accept.split(','),
-                multiple: element.attr('multiple') === 'multiple'
-            });
-
-            faker
-            .on('click' + namespace, me.uploadSelector, function () {
-                me.uploader.upload();
-            });
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.faker.off(namespace);
-            me.uploader.dispose();
-
-            me.faker =
-            me.element =
-            me.uploader = null;
+        if (element.find(browseSelector).length === 1) {
+            mainElement = element;
+            element = mainElement.find(':file');
         }
+        else {
+            mainElement = $(me.template);
+            element.before(mainElement);
+            mainElement.find(browseSelector).append(element);
+        }
+
+        me.main = mainElement;
+        me.element = element;
+
+        var accept = element.data('accept');
+
+        me.uploader = new Uploader({
+            element: element,
+            action: element.data('action'),
+            accept: accept && accept.split(','),
+            multiple: element.attr('multiple') === 'multiple'
+        });
+
+        mainElement
+        .on('click' + namespace, me.uploadSelector, function () {
+            me.uploader.upload();
+        });
+
     };
 
-    jquerify(File.prototype);
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.main.off(namespace);
+        me.uploader.dispose();
+
+        me.main =
+        me.element =
+        me.uploader = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

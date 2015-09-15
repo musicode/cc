@@ -34,6 +34,7 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var replaceWith = require('../function/replaceWith');
+    var isActiveElement = require('../function/isActiveElement');
 
     var input = require('../util/input');
 
@@ -211,7 +212,7 @@ define(function (require, exports, module) {
                 var me = this;
                 var element = me.element;
 
-                if (document.activeElement === element[0]) {
+                if (isActiveElement(element)) {
                     if (element.hasClass(me.simpleClass)) {
                         me.hide();
                     }

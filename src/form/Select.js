@@ -86,7 +86,6 @@ define(function (require, exports, module) {
 
         element.append(input);
 
-
         me.comboBox = new ComboBox({
             element: element,
             button: element.find(me.buttonSelector),
@@ -100,7 +99,8 @@ define(function (require, exports, module) {
             renderTemplate: me.renderTemplate,
             activeClass: me.activeClass,
             openClass: me.openClass,
-            setText: $.proxy(me.setText, me),
+            setText: me.setText,
+            context: me,
             onChange: function (e, data) {
 
                 me.setValue(

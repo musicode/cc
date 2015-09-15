@@ -26,142 +26,141 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    RadioGroup.prototype = {
+    var proto = RadioGroup.prototype;
 
-        constructor: RadioGroup,
+    proto.type = 'RadioGroup';
 
-        type: 'RadioGroup',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        var radios = me.radios = element.find(':radio');
+        var group = me.group = [ ];
 
-            var radios = me.radios = element.find(':radio');
-            var group = me.group = [ ];
+        radios.each(
+            function () {
 
-            radios.each(
-                function () {
+                var options = {
+                    element: $(this)
+                };
 
-                    var options = {
-                        element: $(this)
-                    };
+                var props = [
+                    'checkedClass',
+                    'disabledClass',
+                    'template',
+                    'wrapperSelector'
+                ];
 
-                    var props = [
-                        'checkedClass', 'disabledClass',
-                        'template', 'wrapperSelector'
-                    ];
-
-                    $.each(
-                        props,
-                        function (index, name) {
-                            if (me[name]) {
-                                options[name] = me[name];
-                            }
+                $.each(
+                    props,
+                    function (index, name) {
+                        if (me[name]) {
+                            options[name] = me[name];
                         }
-                    );
-
-                    var instance = new Radio(options);
-
-                    if (this.checked) {
-                        me.checkedRadio = instance;
                     }
+                );
 
-                    group.push(instance);
+                var instance = new Radio(options);
+
+                if (this.checked) {
+                    me.checkedRadio = instance;
                 }
-            );
 
-            element.on(
-                'change',
-                ':radio',
-                function (e) {
+                group.push(instance);
 
-                    me.setValue(this.value);
+            }
+        );
 
-                }
-            );
+        element.on(
+            'change',
+            ':radio',
+            function () {
+                me.setValue(this.value);
+            }
+        );
 
-        },
+    };
 
-        /**
-         * 获取当前选中值
-         *
-         * @return {string}
-         */
-        getValue: function () {
+    /**
+     * 获取当前选中值
+     *
+     * @return {string}
+     */
+    proto.getValue = function () {
 
-            var me = this;
+        var me = this;
 
-            return me.checkedRadio
-                 ? me.checkedRadio.getValue()
-                 : '';
-        },
+        return me.checkedRadio
+             ? me.checkedRadio.getValue()
+             : '';
+    };
 
-        /**
-         * 设置当前选中值
-         *
-         * @param {string|number} value
-         */
-        setValue: function (value) {
+    /**
+     * 设置当前选中值
+     *
+     * @param {string|number} value
+     */
+    proto.setValue = function (value) {
 
-            var me = this;
-            var radio = me.element.find('[value="' + value + '"]');
+        var me = this;
+        var radio = me.element.find('[value="' + value + '"]');
 
-            if (radio.length === 1 && radio) {
+        if (radio.length === 1) {
 
-                var index = me.radios.index(radio);
-                var instance = me.group[index];
+            var index = me.radios.index(radio);
+            var instance = me.group[index];
 
-                if (instance.isDisabled()) {
+            if (instance.isDisabled()) {
+                return;
+            }
+
+            if (me.checkedRadio) {
+
+                if (me.checkedRadio === instance) {
                     return;
                 }
 
-                if (me.checkedRadio) {
+                instance.check();
 
-                    if (me.checkedRadio === instance) {
-                        return;
-                    }
-
-                    instance.check();
-
-                    me.checkedRadio.uncheck();
-                }
-                else {
-                    instance.check();
-                }
-
-                me.checkedRadio = instance;
-
-                me.emit('change');
+                me.checkedRadio.uncheck();
+            }
+            else {
+                instance.check();
             }
 
-        },
+            me.checkedRadio = instance;
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            $.each(
-                me.group,
-                function (index, radio) {
-                    radio.dispose();
-                }
-            );
-
-            me.element =
-            me.group = null;
+            me.emit('change');
         }
+
     };
 
-    jquerify(RadioGroup.prototype);
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        $.each(
+            me.group,
+            function (index, radio) {
+                radio.dispose();
+            }
+        );
+
+        me.element =
+        me.group = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
