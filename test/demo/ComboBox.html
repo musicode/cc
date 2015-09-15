@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select</title>
+    <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
+</head>
+<body>
+
+    <div class="dropdown">
+        <div class="btn-default">
+            <span>选择</span>
+            <i class="caret"></i>
+        </div>
+        <ul class="dropdown-menu">
+            <li data-value="1" data-id="222"><span>123</span>Action</li>
+            <li data-value="2">Another action</li>
+            <li data-value="3">Something else here</li>
+            <li class="divider"></li>
+            <li data-value="4">Separated link</li>
+        </ul>
+    </div>
+
+
+    <script src="./js/jquery.js"></script>
+    <script src="./js/esl.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+
+        require(
+
+            [ 'cobble/ui/ComboBox' ],
+
+            function (ComboBox) {
+
+                var comboBox = new ComboBox({
+                    element: $('.dropdown'),
+                    button: $('.dropdown .btn-default'),
+                    menu: $('.dropdown-menu'),
+                    openClass: 'opened',
+                    //value: '2',
+
+                    defaultText: 'hahah',
+
+                    onBeforeShow: function () {
+                        return true;
+                    },
+                    onBeforeHide: function () {
+                        return true;
+                    },
+
+                    setText: function (text) {
+                        this.button.find('span').html(text);
+                    },
+
+                    onChange: function (event, data) {
+                        console.log(data);
+                    }
+                });
+
+            }
+        );
+    </script>
+</body>
+</html>

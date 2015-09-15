@@ -12,10 +12,20 @@ define(function (require, exports, module) {
      * 元素自定义属性使用 data-text 和 data-value
      * 如果需要在点击菜单项获得其他数据，可在元素任意绑定 data-xxx
      * 当 onChange 事件触发时，会把所有 data 通过参数传入
+     *
+     * # 事件列表
+     *
+     * 1. beforeShow - 返回 false 可阻止打开
+     * 2. afterShow
+     * 3. beforeHide - 返回 false 可阻止关闭
+     * 4. afterHide
+     * 5. change - 选中菜单项触发
      */
 
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var setValue = require('../function/setValue');
+
     var Popup = require('../helper/Popup');
 
     /**
@@ -47,271 +57,237 @@ define(function (require, exports, module) {
      * @property {number=} options.hide.delay 隐藏延时
      * @property {Function=} options.hide.animation 隐藏动画
      *
-     * @property {Function=} options.onBeforeShow 菜单展开前触发，返回 false 可阻止打开
-     * @property {Function=} options.onAfterShow 菜单展开后触发
-     * @property {Function=} options.onBeforeHide 菜单关闭前触发，返回 false 可阻止关闭
-     * @property {Function=} options.onAfterHide 菜单关闭后触发
-     *
      * @property {Function} options.setText 设置选中菜单项文本
      * @argument {string} options.onText.text
-     *
-     * @property {Function=} options.onChange 选中菜单项触发
      */
     function ComboBox(options) {
         return lifeCycle.init(this, options);
     }
 
-    ComboBox.prototype = {
+    var proto = ComboBox.prototype;
 
-        constructor: ComboBox,
+    proto.type = 'ComboBox';
 
-        type: 'ComboBox',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var button = me.button;
+        var menu = me.menu;
 
-            var me = this;
-            var button = me.button;
-            var menu = me.menu;
+        me.popup = new Popup({
+            element: button,
+            layer: menu,
+            show: me.show,
+            hide: me.hide,
+            context: me
+        });
 
-            var main = me.element || button;
-            var openClass = me.openClass;
+        var openClass = me.openClass;
+        if (openClass) {
 
-            var show = me.show;
-            var hide = me.hide;
+            var mainElement = me.element || button;
 
-            var animation = show.animation;
-            if ($.isFunction(animation)) {
-                show.animation = $.proxy(animation, me);
-            }
-
-            animation = hide.animation;
-            if ($.isFunction(animation)) {
-                hide.animation = $.proxy(animation, me);
-            }
-
-            me.popup = new Popup({
-                element: button,
-                layer: menu,
-                show: show,
-                hide: hide,
-                onBeforeShow: function (e) {
-                    me.emit(e);
-                },
-                onBeforeHide: function (e) {
-                    me.emit(e);
-                },
-                onAfterShow: function (e) {
-                    if (openClass) {
-                        main.addClass(openClass);
-                    }
-                    me.emit(e);
-                },
-                onAfterHide: function (e) {
-                    if (openClass) {
-                        main.removeClass(openClass);
-                    }
-                    me.emit(e);
+            me
+            .on(
+                'afterShow' + namespace,
+                function () {
+                    mainElement.addClass(openClass);
                 }
-            });
-
-
-            // 通过 DOM 取值
-            if (me.value == null) {
-                var item = menu.find('.' + me.activeClass);
-                if (item.length === 1) {
-                    me.value = item.data('value');
-                }
-            }
-
-            // 不论是直接传入 value 或是通过 DOM 获取的 value
-            // 都不需要触发 onChange 事件
-            // 因为初始化触发事件会带来同步问题
-            // 如果非要触发，可以在初始化后调用 setValue() 手动触发
-
-            if (me.data) {
-                menu.html(
-                    me.renderTemplate(me.data, me.template)
-                );
-            }
-
-            if (me.value != null) {
-                me.setValue(
-                    me.value,
-                    {
-                        force: true,
-                        silence: true
-                    }
-                );
-            }
-
-            menu.on(
-                'click' + namespace,
-                '[data-value]',
-                function (e) {
-
-                    me.setValue(
-                        $(this).data('value')
-                    );
-
-                    me.close();
-
+            )
+            .on(
+                'afterHide' + namespace,
+                function () {
+                    mainElement.removeClass(openClass);
                 }
             );
-        },
 
-        /**
-         * 获取当前选中的值
-         *
-         * @return {string}
-         */
-        getValue: function () {
-            return this.value;
-        },
-
-        /**
-         * 设置当前选中的值
-         *
-         * @param {string} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         */
-        setValue: function (value, options) {
-
-            var me = this;
-            var data;
-
-            var menu = me.menu;
-            var target = menu.find('[data-value="' + value + '"]');
-            if (target.length === 1) {
-
-                data = target.data();
-
-                if (data.text == null) {
-                    data.text = target.html();
-                }
-
-            }
-            else {
-                data = { };
-            }
-
-            options = options || { };
-
-            if (options.force || value != me.value) {
-
-                var activeClass = me.activeClass;
-
-                if (activeClass) {
-                    menu
-                        .find('.' + activeClass)
-                        .removeClass(activeClass);
-                }
-
-                if (target.length === 1) {
-
-                    me.value = value;
-
-                    if (activeClass) {
-                        target.addClass(activeClass);
-                    }
-                }
-                else {
-                    me.value = null;
-                }
-
-                if (!options.silence) {
-                    me.emit('change', data);
-                }
-
-            }
-
-            if ($.isFunction(me.setText)) {
-                me.setText(
-                    data.text || me.defaultText
-                );
-            }
-
-        },
-
-        /**
-         * 刷新数据
-         *
-         * @param {Object=} options
-         * @property {Array=} options.data 数据
-         * @property {string=} options.value 选中的值
-         */
-        refresh: function (options) {
-
-            var me = this;
-            var value = me.value;
-
-            var setOptions = { };
-
-            if (options) {
-
-                var data = options.data;
-
-                if (data) {
-
-                    me.menu.html(
-                        me.renderTemplate(data, me.template)
-                    );
-
-                }
-
-                // 传了值表示必须强制触发 change 事件
-                if ('value' in options) {
-
-                    value = options.value;
-
-                    setOptions.force = true;
-
-                }
-
-            }
-
-            me.setValue(value, setOptions);
-
-        },
-
-        /**
-         * 显示菜单
-         */
-        open: function () {
-            this.popup.open();
-        },
-
-        /**
-         * 隐藏菜单
-         */
-        close: function () {
-            this.popup.close();
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.menu.off(namespace);
-            me.popup.dispose();
-
-            me.popup =
-            me.element =
-            me.button =
-            me.menu = null;
         }
+
+        var value = me.value;
+
+        if (value == null) {
+            // 通过 DOM 取值
+            var item = menu.find('.' + me.activeClass);
+            if (item.length === 1) {
+                value = item.data('value');
+            }
+        }
+
+        // 不论是直接传入 value 或是通过 DOM 获取的 value
+        // 都不需要触发 onChange 事件
+        // 因为初始化触发事件会带来同步问题
+        // 如果非要触发，可以在初始化后调用 setValue() 手动触发
+
+        me.refresh(
+            {
+                data: me.data,
+                value: value
+            },
+            {
+                silence: true
+            }
+        );
+
+        menu.on(
+            'click' + namespace,
+            '[data-value]',
+            function (e) {
+
+                me.setValue(
+                    $(this).data('value')
+                );
+
+                me.close();
+
+            }
+        );
+
     };
 
-    jquerify(ComboBox.prototype);
+    /**
+     * 获取当前选中的值
+     *
+     * @return {string}
+     */
+    proto.getValue = function () {
+        return this.value;
+    };
+
+    /**
+     * 设置当前选中的值
+     *
+     * @param {string} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        var data = { };
+
+        // 检查 value 有效性
+        var menu = me.menu;
+        var target = menu.find('[data-value="' + value + '"]');
+
+        if (target.length === 1) {
+
+            data = target.data();
+
+            if (data.text == null) {
+                data.text = target.html();
+            }
+
+        }
+        else {
+            value = null;
+        }
+
+        if (setValue(me, 'value', value, data)) {
+
+            var activeClass = me.activeClass;
+
+            if (activeClass) {
+
+                menu
+                .find('.' + activeClass)
+                .removeClass(activeClass);
+
+                if (value != null) {
+                    target.addClass(activeClass);
+                }
+
+            }
+
+        }
+
+        if ($.isFunction(me.setText)) {
+            me.setText(
+                data.text || me.defaultText
+            );
+        }
+
+    };
+
+    /**
+     * 刷新数据
+     *
+     * @param {Object=} options
+     * @property {Array=} options.data 数据
+     * @property {string=} options.value 选中的值
+     */
+    proto.refresh = function (options) {
+
+        var me = this;
+        var value = me.value;
+
+        var setOptions = arguments[1] || { };
+
+        if (options) {
+
+            var data = options.data;
+
+            if (data) {
+
+                me.menu.html(
+                    me.renderTemplate(data, me.template)
+                );
+
+            }
+
+            // 传了值表示必须强制触发 change 事件
+            if ('value' in options) {
+
+                value = options.value;
+
+                setOptions.force = true;
+
+            }
+
+        }
+
+        me.setValue(value, setOptions);
+
+    };
+
+    /**
+     * 显示菜单
+     */
+    proto.open = function () {
+        this.popup.open();
+    };
+
+    /**
+     * 隐藏菜单
+     */
+    proto.close = function () {
+        this.popup.close();
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.menu.off(namespace);
+        me.popup.dispose();
+
+        me.popup =
+        me.element =
+        me.button =
+        me.menu = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
