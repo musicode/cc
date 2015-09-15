@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 鼠标悬浮元素，弹出提示浮层
      *
@@ -81,8 +83,6 @@ define(function (require, exports, module) {
      *
      * 2. 为了减少元素数量，同一个模板改为元素共享
      */
-
-    'use strict';
 
     var init = require('../function/init');
     var split = require('../function/split');

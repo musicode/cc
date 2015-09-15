@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Zoom</title>
+    <style>
+
+        body {
+            height: 1000px
+        }
+
+        #finder {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255,0,0,0.3);
+        }
+
+        #viewport {
+            width: 500px;
+            height: 500px;
+            position: absolute;
+            left: 200px;
+            top: 40px;
+        }
+
+    </style>
+</head>
+<body>
+
+
+<img id="zoom" src="http://img.gsxservice.com/2805014_lo7yjler.jpeg@1e_180w_134h_1c_0i_1o_90Q_1x" />
+
+<div id="finder"></div>
+<div id="viewport"></div>
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+
+    require(
+
+    [ 'cobble/ui/Zoom' ],
+
+    function (Zoom) {
+
+        var Zoom = new Zoom({
+            element: $('#zoom'),
+            finder: $('#finder'),
+            viewport: $('#viewport'),
+            url: 'http://img.gsxservice.com/2805014_lo7yjler.jpeg',
+            onScroll: function (event, data) {
+                console.log('onScroll', event.cobble, data);
+
+            }
+        });
+
+    }
+    );
+</script>
+</body>
+</html>

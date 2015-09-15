@@ -81,407 +81,403 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Slider.prototype = {
+    var proto = Slider.prototype;
 
-        constructor: Slider,
+    proto.type = 'Slider';
 
-        type: 'Slider',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        var thumbSelector = me.thumbSelector;
+        var thumb;
 
-            var thumbSelector = me.thumbSelector;
-            var thumb;
+        if ($.type(thumbSelector) === 'string') {
 
-            if ($.type(thumbSelector) === 'string') {
+            thumb = element.find(thumbSelector);
 
+            if (!thumb.length && me.template) {
+                element.html(me.template);
                 thumb = element.find(thumbSelector);
-
-                if (!thumb.length && me.template) {
-                    element.html(me.template);
-                    thumb = element.find(thumbSelector);
-                }
-
             }
-
-            var trackSelector = me.trackSelector;
-            var track = $.type(trackSelector) === 'string'
-                      ? element.find(trackSelector)
-                      : element;
-
-            var barSelector = me.barSelector;
-            if ($.type(barSelector) === 'string') {
-                me.bar = element.find(barSelector);
-            }
-
-            me.track = track;
-            me.thumb = thumb;
-
-            var draggingClass = me.draggingClass;
-
-            me.draggable = new Draggable({
-                element: thumb,
-                container: track,
-                silence: true,
-                axis: me.axis,
-                onBeforeDrag: function () {
-                    if ($.type(draggingClass) === 'string') {
-                        track.addClass(draggingClass);
-                    }
-                    me.emit('beforeDrag');
-                },
-                onDrag: function (e, data) {
-                    me.setValue(
-                        me.positionToValue(data),
-                        {
-                            from: 'drag'
-                        }
-                    );
-                },
-                onAfterDrag: function () {
-                    if ($.type(draggingClass) === 'string') {
-                        track.removeClass(draggingClass);
-                    }
-                    me.emit('afterDrag');
-                }
-            });
-
-            track.on(
-                'click' + namespace,
-                function (e) {
-
-                    if (contains(thumb, e.target)) {
-                        return;
-                    }
-
-                    var value = me.positionToValue(
-                        eventOffset(e)
-                    );
-
-                    me.setValue(
-                        value,
-                        {
-                            from: 'click'
-                        }
-                    );
-
-                }
-            );
-
-            if (me.scrollStep > 0) {
-
-                var scrollStep = me.scrollStep;
-
-                me.wheel = new Wheel({
-                    element: track,
-                    onScroll: function (e, data) {
-
-                        var offset = data.delta * scrollStep;
-
-                        if (me.reverse) {
-                            offset *= -1;
-                        }
-
-                        var value = me.value + offset;
-
-                        return !me.setValue(
-                            value,
-                            {
-                                from: 'wheel'
-                            }
-                        );
-
-                    }
-                });
-
-            }
-
-            me.refresh(true);
-
-        },
-
-        /**
-         * 根据当前视图刷新相关计算数值
-         *
-         * @param {Object=} data
-         * @property {number} data.value
-         */
-        refresh: function (data) {
-
-            var me = this;
-
-            // 初始化时不需要触发 change 事件
-            var silence;
-
-            if ($.isPlainObject(data)) {
-                $.extend(me, data);
-            }
-
-            if (data === true || arguments[1] === true) {
-                silence = true;
-            }
-
-            /**
-             *
-             * 此处的核心逻辑是怎么把 value 转换为 pixel
-             *
-             * min 和 max 是必定有值的
-             *
-             * 当传了 step 时，可以计算出总步数，以及每步的像素长度
-             *
-             *     pixel = (value - min) * stepPixel
-             *     value = min + pixel / stepPixel
-             *
-             * 当未传 step 时
-             *
-             *     value = min + (max - min) * pixel / maxPixel
-             *     pixel = (value - min) * maxPixel / (max - min)
-             */
-
-            var draggableRect = me.draggable.getRectange(true);
-            var thumb = me.thumb;
-
-            var axis;
-            var position;
-            var maxPixel;
-            var thumbSize;
-
-            var isVertical = me.orientation === 'vertical';
-
-            if (isVertical) {
-                axis = 'y';
-                position = 'top';
-                maxPixel = draggableRect.height;
-                thumbSize = thumb.outerHeight();
-            }
-            else {
-                axis = 'x';
-                position = 'left';
-                maxPixel = draggableRect.width;
-                thumbSize = thumb.outerWidth();
-            }
-
-            var thumbHalfSize = thumbSize / 2;
-
-            var min = me.min;
-            var max = me.max;
-            var step = me.step;
-
-            var pixelToValue;
-            var valueToPixel;
-
-            if ($.type(step) === 'number') {
-
-                var stepPixel = divide(
-                                    maxPixel,
-                                    divide(
-                                        minus(max, min),
-                                        step
-                                    )
-                                );
-
-                pixelToValue = function (pixel) {
-                    return plus(
-                        min,
-                        Math.floor(
-                            divide(
-                                pixel,
-                                stepPixel
-                            )
-                        )
-                    );
-                };
-                valueToPixel = function (value) {
-                    return multiply(
-                        minus(value, min),
-                        stepPixel
-                    );
-                };
-
-            }
-            else {
-
-                pixelToValue = function (pixel) {
-                    return plus(
-                        min,
-                        multiply(
-                            minus(max, min),
-                            divide(pixel, maxPixel)
-                        )
-                    );
-                };
-                valueToPixel = function (value) {
-                    return multiply(
-                        minus(value, min),
-                        divide(
-                            maxPixel,
-                            minus(max, min)
-                        )
-                    );
-                };
-
-            }
-
-            var reverse = me.reverse;
-
-            me.pixelToValue = function (pixel) {
-
-                pixel = restrain(pixel, 0, maxPixel);
-
-                if (reverse) {
-                    pixel = maxPixel - pixel;
-                }
-
-                return pixelToValue(pixel);
-
-            };
-
-            me.valueToPixel = function (value) {
-
-                value = restrain(value, min, max);
-
-                var pixel = valueToPixel(value);
-
-                if (reverse) {
-                    pixel = maxPixel - pixel;
-                }
-
-                return pixel;
-
-            };
-
-            me.positionToValue = function (data) {
-
-                var pixel = data[position];
-
-                if (pixel == null) {
-                    pixel = data[axis];
-                }
-
-                return me.pixelToValue(pixel);
-
-            };
-
-            me.syncBar = function (pixel) {
-
-                var bar = me.bar;
-
-                if (bar) {
-                    if (reverse) {
-                        pixel = maxPixel - pixel;
-                    }
-
-                    if (isVertical) {
-                        bar.height(pixel);
-                    }
-                    else {
-                        bar.width(pixel);
-                    }
-                }
-            };
-
-            var value = me.value;
-
-            if ($.type(value) !== 'number') {
-                value = me.positionToValue(
-                    getPosition(thumb)
-                );
-            }
-
-            me.setValue(
-                value,
-                {
-                    force: true,
-                    silence: silence
-                }
-            );
-
-        },
-
-        /**
-         * 获取当前值
-         *
-         * @return {number}
-         */
-        getValue: function () {
-            return this.value;
-        },
-
-        /**
-         * 设置当前值
-         *
-         * @param {number} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         * @return {boolean} 是否更新成功
-         */
-        setValue: function (value, options) {
-
-            var me = this;
-
-            var min = me.min;
-            var max = me.max;
-
-            value = restrain(value, min, max);
-
-            options = options || { };
-
-            if (options.force || value !== me.value) {
-
-                me.value = value;
-
-                var isVertical = me.orientation === 'vertical';
-
-                var name = isVertical ? 'top' : 'left';
-                var pixel = me.valueToPixel(value);
-
-                me.thumb.css(name, pixel);
-
-                me.syncBar(pixel);
-
-                if (!options.silence) {
-                    me.emit('change');
-                }
-
-                return true;
-
-            }
-
-            return false;
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.track.off(namespace);
-            me.draggable.dispose();
-
-            if (me.wheel) {
-                me.wheel.dispose();
-                me.wheel = null;
-            }
-
-            me.element =
-            me.draggable = null;
 
         }
 
+        var trackSelector = me.trackSelector;
+        var track = $.type(trackSelector) === 'string'
+                  ? element.find(trackSelector)
+                  : element;
+
+        var barSelector = me.barSelector;
+        if ($.type(barSelector) === 'string') {
+            me.bar = element.find(barSelector);
+        }
+
+        me.track = track;
+        me.thumb = thumb;
+
+        var draggingClass = me.draggingClass;
+
+        me.draggable = new Draggable({
+            element: thumb,
+            container: track,
+            silence: true,
+            axis: me.axis,
+            onBeforeDrag: function () {
+                if ($.type(draggingClass) === 'string') {
+                    track.addClass(draggingClass);
+                }
+                me.emit('beforeDrag');
+            },
+            onDrag: function (e, data) {
+                me.setValue(
+                    me.positionToValue(data),
+                    {
+                        from: 'drag'
+                    }
+                );
+            },
+            onAfterDrag: function () {
+                if ($.type(draggingClass) === 'string') {
+                    track.removeClass(draggingClass);
+                }
+                me.emit('afterDrag');
+            }
+        });
+
+        track.on(
+            'click' + namespace,
+            function (e) {
+
+                if (contains(thumb, e.target)) {
+                    return;
+                }
+
+                var value = me.positionToValue(
+                    eventOffset(e)
+                );
+
+                me.setValue(
+                    value,
+                    {
+                        from: 'click'
+                    }
+                );
+
+            }
+        );
+
+        if (me.scrollStep > 0) {
+
+            var scrollStep = me.scrollStep;
+
+            me.wheel = new Wheel({
+                element: track,
+                onScroll: function (e, data) {
+
+                    var offset = data.delta * scrollStep;
+
+                    if (me.reverse) {
+                        offset *= -1;
+                    }
+
+                    var value = me.value + offset;
+
+                    return !me.setValue(
+                        value,
+                        {
+                            from: 'wheel'
+                        }
+                    );
+
+                }
+            });
+
+        }
+
+        me.refresh(true);
+
     };
 
-    jquerify(Slider.prototype);
+    /**
+     * 根据当前视图刷新相关计算数值
+     *
+     * @param {Object=} data
+     * @property {number} data.value
+     */
+    proto.refresh = function (data) {
+
+        var me = this;
+
+        // 初始化时不需要触发 change 事件
+        var silence;
+
+        if ($.isPlainObject(data)) {
+            $.extend(me, data);
+        }
+
+        if (data === true || arguments[1] === true) {
+            silence = true;
+        }
+
+        /**
+         *
+         * 此处的核心逻辑是怎么把 value 转换为 pixel
+         *
+         * min 和 max 是必定有值的
+         *
+         * 当传了 step 时，可以计算出总步数，以及每步的像素长度
+         *
+         *     pixel = (value - min) * stepPixel
+         *     value = min + pixel / stepPixel
+         *
+         * 当未传 step 时
+         *
+         *     value = min + (max - min) * pixel / maxPixel
+         *     pixel = (value - min) * maxPixel / (max - min)
+         */
+
+        var draggableRect = me.draggable.getRectange(true);
+        var thumb = me.thumb;
+
+        var axis;
+        var position;
+        var maxPixel;
+        var thumbSize;
+
+        var isVertical = me.orientation === 'vertical';
+
+        if (isVertical) {
+            axis = 'y';
+            position = 'top';
+            maxPixel = draggableRect.height;
+            thumbSize = thumb.outerHeight();
+        }
+        else {
+            axis = 'x';
+            position = 'left';
+            maxPixel = draggableRect.width;
+            thumbSize = thumb.outerWidth();
+        }
+
+        var thumbHalfSize = thumbSize / 2;
+
+        var min = me.min;
+        var max = me.max;
+        var step = me.step;
+
+        var pixelToValue;
+        var valueToPixel;
+
+        if ($.type(step) === 'number') {
+
+            var stepPixel = divide(
+                                maxPixel,
+                                divide(
+                                    minus(max, min),
+                                    step
+                                )
+                            );
+
+            pixelToValue = function (pixel) {
+                return plus(
+                    min,
+                    Math.floor(
+                        divide(
+                            pixel,
+                            stepPixel
+                        )
+                    )
+                );
+            };
+            valueToPixel = function (value) {
+                return multiply(
+                    minus(value, min),
+                    stepPixel
+                );
+            };
+
+        }
+        else {
+
+            pixelToValue = function (pixel) {
+                return plus(
+                    min,
+                    multiply(
+                        minus(max, min),
+                        divide(pixel, maxPixel)
+                    )
+                );
+            };
+            valueToPixel = function (value) {
+                return multiply(
+                    minus(value, min),
+                    divide(
+                        maxPixel,
+                        minus(max, min)
+                    )
+                );
+            };
+
+        }
+
+        var reverse = me.reverse;
+
+        me.pixelToValue = function (pixel) {
+
+            pixel = restrain(pixel, 0, maxPixel);
+
+            if (reverse) {
+                pixel = maxPixel - pixel;
+            }
+
+            return pixelToValue(pixel);
+
+        };
+
+        me.valueToPixel = function (value) {
+
+            value = restrain(value, min, max);
+
+            var pixel = valueToPixel(value);
+
+            if (reverse) {
+                pixel = maxPixel - pixel;
+            }
+
+            return pixel;
+
+        };
+
+        me.positionToValue = function (data) {
+
+            var pixel = data[position];
+
+            if (pixel == null) {
+                pixel = data[axis];
+            }
+
+            return me.pixelToValue(pixel);
+
+        };
+
+        me.syncBar = function (pixel) {
+
+            var bar = me.bar;
+
+            if (bar) {
+                if (reverse) {
+                    pixel = maxPixel - pixel;
+                }
+
+                if (isVertical) {
+                    bar.height(pixel);
+                }
+                else {
+                    bar.width(pixel);
+                }
+            }
+        };
+
+        var value = me.value;
+
+        if ($.type(value) !== 'number') {
+            value = me.positionToValue(
+                getPosition(thumb)
+            );
+        }
+
+        me.setValue(
+            value,
+            {
+                force: true,
+                silence: silence
+            }
+        );
+
+    };
+
+    /**
+     * 获取当前值
+     *
+     * @return {number}
+     */
+    proto.getValue = function () {
+        return this.value;
+    };
+
+    /**
+     * 设置当前值
+     *
+     * @param {number} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     * @return {boolean} 是否更新成功
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        var min = me.min;
+        var max = me.max;
+
+        value = restrain(value, min, max);
+
+        options = options || { };
+
+        if (options.force || value !== me.value) {
+
+            me.value = value;
+
+            var isVertical = me.orientation === 'vertical';
+
+            var name = isVertical ? 'top' : 'left';
+            var pixel = me.valueToPixel(value);
+
+            me.thumb.css(name, pixel);
+
+            me.syncBar(pixel);
+
+            if (!options.silence) {
+                me.emit('change');
+            }
+
+            return true;
+
+        }
+
+        return false;
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.track.off(namespace);
+        me.draggable.dispose();
+
+        if (me.wheel) {
+            me.wheel.dispose();
+            me.wheel = null;
+        }
+
+        me.element =
+        me.draggable = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

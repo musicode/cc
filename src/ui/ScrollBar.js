@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      *
      * 通过隐藏原生滚动条，控制元素的 scrollTop/scrollLeft 实现滚动
@@ -19,8 +21,6 @@ define(function (require, exports, module) {
      *    在滚动距离非常大时，这个问题会非常明显
      *
      */
-
-    'use strict';
 
     var divide = require('../function/divide');
     var multiply = require('../function/multiply');
@@ -65,345 +65,341 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    ScrollBar.prototype = {
+    var proto = ScrollBar.prototype;
 
-        constructor: ScrollBar,
+    proto.type = 'ScrollBar';
 
-        type: 'ScrollBar',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        var scrollHandler = function (e, data) {
 
-            var scrollHandler = function (e, data) {
+            var offsetPixel = data.delta * me.scrollStep;
+            var offsetValue = me.panelPixelToValue(offsetPixel);
 
-                var offsetPixel = data.delta * me.scrollStep;
-                var offsetValue = me.panelPixelToValue(offsetPixel);
-
-                return !me.to(
-                    me.value + offsetValue,
-                    {
-                        from: 'wheel'
-                    }
-                );
-
-            };
-
-            me.panelWheel = new Wheel({
-                element: me.panel,
-                onScroll: scrollHandler
-            });
-
-            me.barWheel = new Wheel({
-                element: element,
-                onScroll: scrollHandler
-            });
-
-
-            var thumbSelector = me.thumbSelector;
-            var thumbElement = element.find(thumbSelector);
-            if (thumbElement.length === 0) {
-                element.html(me.template);
-                thumbElement = element.find(thumbSelector);
-            }
-
-            me.thumb = thumbElement;
-
-
-            var axisName;
-            var positionName;
-
-            if (me.orientation === 'vertical') {
-                axisName = 'y';
-                positionName = 'top';
-            }
-            else {
-                axisName = 'x';
-                positionName = 'left';
-            }
-
-            var to = function (pixel, from) {
-                me.to(
-                    me.barPixelToValue(pixel),
-                    {
-                        from: from
-                    }
-                );
-            };
-
-            var draggingClass = me.draggingClass;
-
-            me.draggable = new Draggable({
-                element: thumbElement,
-                container: element,
-                axis: axisName,
-                onBeforeDrag: function () {
-                    if ($.type(draggingClass) === 'string') {
-                        element.addClass(draggingClass);
-                    }
-                },
-                onDrag: function (e, data) {
-                    to(data[ positionName ], 'bar');
-                },
-                onAfterDrag: function () {
-                    if ($.type(draggingClass) === 'string') {
-                        element.removeClass(draggingClass);
-                    }
-                }
-            });
-
-            element.on(
-                'click' + namespace,
-                function (e) {
-                    if (contains(thumbElement, e.target)) {
-                        return;
-                    }
-                    to(eventOffset(e)[ axisName ], 'click');
-                }
-            );
-
-            me.refresh(
+            return !me.to(
+                me.value + offsetValue,
                 {
-                    value: me.value
-                },
-                true
+                    from: 'wheel'
+                }
             );
 
-        },
+        };
 
-        /**
-         * 刷新滚动条
-         *
-         * 如果没有传入 value，则根据 DOM 位置自动算出 value
-         *
-         * @param {Object=} data
-         * @property {number} data.value
-         */
-        refresh: function (data) {
+        me.panelWheel = new Wheel({
+            element: me.panel,
+            onScroll: scrollHandler
+        });
 
-            //
-            // [建议]
-            //
-            // 某些浏览器（测试时是火狐）
-            // 在 js 执行期间获取到的 scrollHeight
-            // 和 js 执行完之后获取的 scrollHeight 不一样
-            // 因此调用时最好设置一个延时，确保刷新时是最新的 DOM 树
-            //
+        me.barWheel = new Wheel({
+            element: element,
+            onScroll: scrollHandler
+        });
 
-            var me = this;
 
-            var silence;
+        var thumbSelector = me.thumbSelector;
+        var thumbElement = element.find(thumbSelector);
+        if (thumbElement.length === 0) {
+            element.html(me.template);
+            thumbElement = element.find(thumbSelector);
+        }
 
-            if ($.isPlainObject(data)) {
-                $.extend(me, data);
-            }
+        me.thumb = thumbElement;
 
-            if (data === true || arguments[1] === true) {
-                silence = true;
-            }
 
-            var innerSizeName;
-            var outerSizeName;
-            var scrollSizeName;
-            var minSizeName;
-            var positionName;
-            var scrollName;
+        var axisName;
+        var positionName;
 
-            if (me.orientation === 'vertical') {
-                innerSizeName = 'innerHeight';
-                outerSizeName = 'outerHeight';
-                scrollSizeName = 'scrollHeight';
-                minSizeName = 'minHeight';
-                positionName = 'top';
-                scrollName = 'scrollTop';
-            }
-            else {
-                innerSizeName = 'innerWidth';
-                outerSizeName = 'outerWidth';
-                scrollSizeName = 'scrollWidth';
-                minSizeName = 'minWidth';
-                positionName = 'left';
-                scrollName = 'scrollLeft';
-            }
+        if (me.orientation === 'vertical') {
+            axisName = 'y';
+            positionName = 'top';
+        }
+        else {
+            axisName = 'x';
+            positionName = 'left';
+        }
 
-            var panelElement = me.panel;
-
-            var viewportSize = panelElement[ innerSizeName ]();
-            var contentSize = panelElement.prop(scrollSizeName);
-
-            var ratio = contentSize > 0
-                      ? viewportSize / contentSize
-                      : 1;
-
-            if (ratio > 0 && ratio < 1) {
-
-                me.showAnimation();
-
-                var trackElement = me.element;
-                var thumbElement = me.thumb;
-
-                var trackSize = trackElement[ innerSizeName ]();
-                var thumbSize = multiply(ratio, trackSize);
-
-                var minThumbSize = me[ minSizeName ];
-                if (thumbSize < minThumbSize) {
-                    thumbSize = minThumbSize;
+        var to = function (pixel, from) {
+            me.to(
+                me.barPixelToValue(pixel),
+                {
+                    from: from
                 }
+            );
+        };
 
-                // 转成整数，为了避免结果是 0，这里使用向上取整
-                thumbSize = Math.ceil(thumbSize);
+        var draggingClass = me.draggingClass;
 
-                thumbElement[ outerSizeName ](thumbSize);
+        me.draggable = new Draggable({
+            element: thumbElement,
+            container: element,
+            axis: axisName,
+            onBeforeDrag: function () {
+                if ($.type(draggingClass) === 'string') {
+                    element.addClass(draggingClass);
+                }
+            },
+            onDrag: function (e, data) {
+                to(data[ positionName ], 'bar');
+            },
+            onAfterDrag: function () {
+                if ($.type(draggingClass) === 'string') {
+                    element.removeClass(draggingClass);
+                }
+            }
+        });
 
-                var panelMaxPixel = contentSize - viewportSize;
-                var barMaxPixel = trackSize - thumbSize;
+        element.on(
+            'click' + namespace,
+            function (e) {
+                if (contains(thumbElement, e.target)) {
+                    return;
+                }
+                to(eventOffset(e)[ axisName ], 'click');
+            }
+        );
+
+        me.refresh(
+            {
+                value: me.value
+            },
+            true
+        );
+
+    };
+
+    /**
+     * 刷新滚动条
+     *
+     * 如果没有传入 value，则根据 DOM 位置自动算出 value
+     *
+     * @param {Object=} data
+     * @property {number} data.value
+     */
+    proto.refresh = function (data) {
+
+        //
+        // [建议]
+        //
+        // 某些浏览器（测试时是火狐）
+        // 在 js 执行期间获取到的 scrollHeight
+        // 和 js 执行完之后获取的 scrollHeight 不一样
+        // 因此调用时最好设置一个延时，确保刷新时是最新的 DOM 树
+        //
+
+        var me = this;
+
+        var silence;
+
+        if ($.isPlainObject(data)) {
+            $.extend(me, data);
+        }
+
+        if (data === true || arguments[1] === true) {
+            silence = true;
+        }
+
+        var innerSizeName;
+        var outerSizeName;
+        var scrollSizeName;
+        var minSizeName;
+        var positionName;
+        var scrollName;
+
+        if (me.orientation === 'vertical') {
+            innerSizeName = 'innerHeight';
+            outerSizeName = 'outerHeight';
+            scrollSizeName = 'scrollHeight';
+            minSizeName = 'minHeight';
+            positionName = 'top';
+            scrollName = 'scrollTop';
+        }
+        else {
+            innerSizeName = 'innerWidth';
+            outerSizeName = 'outerWidth';
+            scrollSizeName = 'scrollWidth';
+            minSizeName = 'minWidth';
+            positionName = 'left';
+            scrollName = 'scrollLeft';
+        }
+
+        var panelElement = me.panel;
+
+        var viewportSize = panelElement[ innerSizeName ]();
+        var contentSize = panelElement.prop(scrollSizeName);
+
+        var ratio = contentSize > 0
+                  ? viewportSize / contentSize
+                  : 1;
+
+        if (ratio > 0 && ratio < 1) {
+
+            me.showAnimation();
+
+            var trackElement = me.element;
+            var thumbElement = me.thumb;
+
+            var trackSize = trackElement[ innerSizeName ]();
+            var thumbSize = multiply(ratio, trackSize);
+
+            var minThumbSize = me[ minSizeName ];
+            if (thumbSize < minThumbSize) {
+                thumbSize = minThumbSize;
+            }
+
+            // 转成整数，为了避免结果是 0，这里使用向上取整
+            thumbSize = Math.ceil(thumbSize);
+
+            thumbElement[ outerSizeName ](thumbSize);
+
+            var panelMaxPixel = contentSize - viewportSize;
+            var barMaxPixel = trackSize - thumbSize;
 // console.log('====================')
 // console.log('panel: ', contentSize, viewportSize, panelMaxPixel);
 // console.log('bar: ', trackSize, thumbSize, barMaxPixel);
-                me.panelPixelToValue = function (pixel) {
-                    return multiply(
-                            maxValue,
-                            divide(pixel, panelMaxPixel)
-                        );
-                };
-
-                me.valueToPanelPixel = function (value) {
-                    return multiply(
-                            panelMaxPixel,
-                            divide(value, maxValue)
-                        );
-                };
-
-                me.barPixelToValue = function (pixel) {
-                    return multiply(
-                            maxValue,
-                            divide(pixel, barMaxPixel)
-                        );
-                };
-
-                me.valueToBarPixel = function (value) {
-                    return multiply(
-                            barMaxPixel,
-                            divide(value, maxValue)
-                        );
-                };
-
-                me.syncBar = function (value) {
-                    var pixel = me.valueToBarPixel(value);
-                    thumbElement.css(positionName, pixel);
-                };
-
-                me.syncPanel = function (value) {
-                    var pixel = me.valueToPanelPixel(value);
-                    panelElement[scrollName](pixel);
-                };
-
-                var from;
-                var value = data && data.value;
-
-                if (value >= minValue && value <= maxValue) { }
-                else {
-                    from = 'panel';
-                    value = me.panelPixelToValue(
-                        panelElement[ scrollName ]()
+            me.panelPixelToValue = function (pixel) {
+                return multiply(
+                        maxValue,
+                        divide(pixel, panelMaxPixel)
                     );
-                }
+            };
 
-                me.to(
-                    value,
-                    {
-                        force: true,
-                        silence: silence,
-                        from: from
-                    }
-                );
+            me.valueToPanelPixel = function (value) {
+                return multiply(
+                        panelMaxPixel,
+                        divide(value, maxValue)
+                    );
+            };
 
-            }
+            me.barPixelToValue = function (pixel) {
+                return multiply(
+                        maxValue,
+                        divide(pixel, barMaxPixel)
+                    );
+            };
+
+            me.valueToBarPixel = function (value) {
+                return multiply(
+                        barMaxPixel,
+                        divide(value, maxValue)
+                    );
+            };
+
+            me.syncBar = function (value) {
+                var pixel = me.valueToBarPixel(value);
+                thumbElement.css(positionName, pixel);
+            };
+
+            me.syncPanel = function (value) {
+                var pixel = me.valueToPanelPixel(value);
+                panelElement[scrollName](pixel);
+            };
+
+            var from;
+            var value = data && data.value;
+
+            if (value >= minValue && value <= maxValue) { }
             else {
-                me.hideAnimation();
-
-                me.panelPixelToValue =
-                me.valueToPanelPixel =
-                me.barPixelToValue =
-                me.valueToBarPixel =
-                me.syncPanel =
-                me.syncBar = $.noop;
+                from = 'panel';
+                value = me.panelPixelToValue(
+                    panelElement[ scrollName ]()
+                );
             }
 
-        },
-
-        /**
-         * 设置滚动条的位置
-         *
-         * @param {number} value 0 到 100，0 表示起点， 100 表示终点
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         * @return {boolean} 是否滚动成功
-         */
-        to: function (value, options) {
-
-            var me = this;
-
-            options = options || { };
-
-            value = restrain(value, minValue, maxValue);
-
-            if (options.force || value != me.value) {
-
-                me.value = value;
-
-                var from = options.from;
-
-                if (from !== 'panel') {
-                    me.syncPanel(value);
+            me.to(
+                value,
+                {
+                    force: true,
+                    silence: silence,
+                    from: from
                 }
+            );
 
-                if (from !== 'bar') {
-                    me.syncBar(value);
-                }
+        }
+        else {
+            me.hideAnimation();
 
-                if (!options.silence) {
-                    me.emit('scroll');
-                }
-
-                return true;
-
-            }
-
-            return false;
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.element.off(namespace);
-            me.panelWheel.dispose();
-            me.barWheel.dispose();
-            me.draggable.dispose();
-
-            me.element =
-            me.panelWheel =
-            me.barWheel =
-            me.draggable =
-            me.thumb = null;
-
+            me.panelPixelToValue =
+            me.valueToPanelPixel =
+            me.barPixelToValue =
+            me.valueToBarPixel =
+            me.syncPanel =
+            me.syncBar = $.noop;
         }
 
     };
 
-    jquerify(ScrollBar.prototype);
+    /**
+     * 设置滚动条的位置
+     *
+     * @param {number} value 0 到 100，0 表示起点， 100 表示终点
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     * @return {boolean} 是否滚动成功
+     */
+    proto.to = function (value, options) {
+
+        var me = this;
+
+        options = options || { };
+
+        value = restrain(value, minValue, maxValue);
+
+        if (options.force || value != me.value) {
+
+            me.value = value;
+
+            var from = options.from;
+
+            if (from !== 'panel') {
+                me.syncPanel(value);
+            }
+
+            if (from !== 'bar') {
+                me.syncBar(value);
+            }
+
+            if (!options.silence) {
+                me.emit('scroll');
+            }
+
+            return true;
+
+        }
+
+        return false;
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.panelWheel.dispose();
+        me.barWheel.dispose();
+        me.draggable.dispose();
+
+        me.element =
+        me.panelWheel =
+        me.barWheel =
+        me.draggable =
+        me.thumb = null;
+
+    };
+
+    jquerify(proto);
 
     var minValue = 0;
 
