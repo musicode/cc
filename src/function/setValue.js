@@ -23,6 +23,9 @@ define(function (require, exports, module) {
                 if ($.type(creator) === 'function') {
                     data = creator(newValue, oldValue, options);
                 }
+                else if ($.isPlainObject(creator)) {
+                    data = creator;
+                }
 
                 target.emit('change', data);
 

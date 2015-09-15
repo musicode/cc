@@ -9,6 +9,8 @@ define(function (require, exports, module) {
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
+    var setValue = require('../function/setValue');
+    var restrain = require('../function/restrain');
     var eventOffset = require('../function/eventOffset');
 
     /**
@@ -61,124 +63,184 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Rater.prototype = {
+    var proto = Rater.prototype;
 
-        constructor: Rater,
+    proto.type = 'Rater';
 
-        type: 'Rater',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var count = me.count;
 
-            var me = this;
-            var count = me.count;
+        if ($.type(me.max) !== 'number') {
+            me.max = count;
+        }
 
-            if ($.type(me.max) !== 'number') {
-                me.max = count;
+        var html = '';
+        var hint = me.hint || { };
+
+        traverse(
+            me.value,
+            count,
+            function (index, className) {
+
+                index++;
+
+                html += me.renderTemplate(
+                            {
+                                'class': me[className],
+                                'value': index,
+                                'hint': hint[index]
+                            },
+                            me.itemTemplate
+                        );
             }
+        );
 
-            var html = '';
-            var hint = me.hint || { };
+        var element = me.element;
+        element.html(html);
 
-            traverse(
-                me.value,
-                count,
-                function (index, className) {
+        if (!me.readOnly) {
 
-                    index++;
+            var supportHalf = me.half;
+            var itemSelector = me.itemSelector;
+            var itemElement;
 
-                    html += me.renderTemplate(
-                                {
-                                    'class': me[className],
-                                    'value': index,
-                                    'hint': hint[index]
-                                },
-                                me.itemTemplate
-                            );
+            var pickValue = function (e, target) {
+
+                var value = target.data('value');
+
+                if (supportHalf) {
+                    if (eventOffset(e).x / target.width() < 0.5) {
+                        value -= 0.5;
+                    }
                 }
-            );
 
-            var element = me.element;
-            element.html(html);
+                return restrain(value, me.min, me.max);
 
-            if (!me.readOnly) {
+            };
 
-                var itemSelector = me.itemSelector;
+            var moveHandler = function (e) {
 
-                element
-                .on('mouseenter' + namespace, itemSelector, me, previewValue)
-                .on('mouseleave' + namespace, itemSelector, me, restoreValue)
-                .on('click' + namespace, itemSelector, me, changeValue);
-            }
+                // 防止 debounce 在 mouseleave 之后执行最后一次
+                if (!itemElement) {
+                    return;
+                }
 
-        },
+                var value = pickValue(e, itemElement);
 
-        /**
-         * 获得当前星级
-         *
-         * @return {number}
-         */
-        getValue: function () {
-            return this.value || 0;
-        },
+                if (value !== me._value) {
+                    me.previewValue(value);
+                }
 
-        /**
-         * 设置当前星级
-         *
-         * @param {number} value
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         */
-        setValue: function (value, options) {
+            };
 
-            var me = this;
+            element
+            .on('mouseenter' + namespace, itemSelector, function (e) {
 
-            if (me.readOnly) {
-                return;
-            }
+                itemElement = $(this);
 
-            options = options || { };
-
-            if (options.force || value !== me.value) {
-
-                me.value = value;
-
-                refresh(me, value);
-
-                if (!options.silence) {
-                    me.emit(
-                        'change',
-                        {
-                            value: value
-                        }
+                if (supportHalf) {
+                    itemElement.on(
+                        'mousemove' + namespace,
+                        debounce(moveHandler, 50)
                     );
                 }
-            }
 
+                me.previewValue(
+                    pickValue(e, itemElement)
+                );
 
-        },
+            })
+            .on('mouseleave' + namespace, itemSelector, function (e) {
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+                if (supportHalf) {
+                    itemElement.off(namespace);
+                }
 
-            var me = this;
+                itemElement = null;
 
-            lifeCycle.dispose(me);
+                me.previewValue();
 
-            if (!me.readOnly) {
-                me.element.off(namespace);
-            }
+            })
+            .on('click' + namespace, itemSelector, function (e) {
+                me.setValue(
+                    pickValue(e, itemElement || $(this))
+                );
+            });
 
-            me.element = null;
         }
+
     };
 
-    jquerify(Rater.prototype);
+    /**
+     * 获得当前星级
+     *
+     * @return {number}
+     */
+    proto.getValue = function () {
+        return this.value || 0;
+    };
+
+    /**
+     * 设置当前星级
+     *
+     * @param {number} value
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     */
+    proto.setValue = function (value, options) {
+
+        var me = this;
+
+        if (me.readOnly) {
+            return;
+        }
+
+        if (setValue(me, 'value', value, options)) {
+            refresh(me, value);
+        }
+
+    };
+
+    /**
+     * 预览值
+     *
+     * @param {number} value
+     */
+    proto.previewValue = function (value) {
+
+        var me = this;
+
+        me._value = value;
+
+        if ($.type(value) !== 'number') {
+            value = me.value;
+        }
+
+        refresh(me, value);
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认参数
@@ -208,93 +270,6 @@ define(function (require, exports, module) {
     var namespace = '.cobble_ui_rater';
 
     /**
-     * 鼠标移入
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function previewValue(e) {
-
-        var rater = e.data;
-
-        var isMouseEnter = e.type === 'mouseenter';
-        if (isMouseEnter) {
-            rater.leave = false;
-        }
-        // 防止 debounce 在 mouseleave 之后执行最后一次
-        else if (rater.leave) {
-            rater.leave = null;
-            return;
-        }
-
-        var target = $(e.target);
-        var value = target.data('value');
-        var half = rater.half;
-
-        if (half) {
-            if (eventOffset(e).x / target.width() <= 0.5) {
-                value -= 0.5;
-            }
-        }
-
-        var min = rater.min;
-        var max = rater.max;
-
-        if (value < min) {
-            value = min;
-        }
-        else if (value > max) {
-            value = max;
-        }
-
-        if (value === rater.previewValue) {
-            return;
-        }
-
-        if (half && isMouseEnter) {
-            target.on(
-                'mousemove' + namespace,
-                rater,
-                debounce(previewValue, 50)
-            );
-        }
-
-        rater.previewValue = value;
-
-        refresh(rater, value);
-    }
-
-    /**
-     * 鼠标移出
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function restoreValue(e) {
-
-        var rater = e.data;
-        rater.previewValue = null;
-
-        if (rater.half) {
-            rater.leave = true;
-            $(e.target).off(namespace);
-        }
-
-        refresh(rater, rater.value);
-    }
-
-    /**
-     * 鼠标点击
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function changeValue(e) {
-        var rater = e.data;
-        rater.setValue(rater.previewValue);
-    }
-
-    /**
      * 刷新星星的状态
      *
      * @inner
@@ -312,6 +287,7 @@ define(function (require, exports, module) {
                 items[index].className = rater[className];
             }
         );
+
     }
 
     /**
@@ -339,7 +315,9 @@ define(function (require, exports, module) {
             }
 
             callback(i, className);
+
         }
+
     }
 
 
