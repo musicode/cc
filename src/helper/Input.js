@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 90%
      *
@@ -27,10 +29,7 @@ define(function (require, exports, module) {
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      *
-     *
      */
-
-    'use strict';
 
     var around = require('../function/around');
     var jquerify = require('../function/jquerify');
@@ -87,150 +86,148 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Input.prototype = {
+    var proto = Input.prototype;
 
-        constructor: Input,
+    proto.type = 'Input';
 
-        type: 'Input',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        input.init(element);
 
-            input.init(element);
+        me.keyboard = new Keyboard({
+            element: element,
+            action: me.action,
+            context: me
+        });
 
-            me.keyboard = new Keyboard({
-                element: element,
-                action: me.action,
-                context: me
-            });
+        var valueBeforeLongPress;
 
-            var valueBeforeLongPress;
-
-            me
-            .on(
-                'beforeLongPress' + namespace,
-                function () {
-                    valueBeforeLongPress = element.val();
-                }
-            )
-            .on(
-                'afterLongPress' + namespace,
-                function (e) {
-
-                    valueBeforeLongPress = null;
-
-                    if (valueBeforeLongPress !== element.val()
-                        && (keyboard.isCharKey(e.keyCode) || keyboard.isDeleteKey())
-                    ) {
-                        me.emit('change');
-                    }
-
-                }
-            );
-
-            element
-            .on(
-                inputType,
-                function () {
-                    if (valueBeforeLongPress == null || !me.smart) {
-                        me.emit('change');
-                    }
-                }
-            );
-
-        },
-
-        /**
-         * 自动变宽
-         */
-        autoWidth: function () {
-
-            var me = this;
-            var element = me.element;
-
-            element.on(
-                inputType,
-                function () {
-                    if (element.scrollLeft() > 0) {
-                        element.width(
-                            element.prop('scrollWidth')
-                        );
-                    }
-                }
-            );
-
-        },
-
-        /**
-         * 自动变高
-         */
-        autoHeight: function () {
-
-            var me = this;
-            var element = me.element;
-
-            // 自动变高必须设置 overflow-y: hidden
-            if (element.css('overflow-y') !== 'hidden') {
-                element.css('overflow-y', 'hidden');
+        me
+        .on(
+            'beforeLongPress' + namespace,
+            function () {
+                valueBeforeLongPress = element.val();
             }
+        )
+        .on(
+            'afterLongPress' + namespace,
+            function (e) {
 
-            var originHeight = element.height();
+                valueBeforeLongPress = null;
 
-            var oldHeight = originHeight;
-            var newHeight;
-
-            var lineHeight = parseInt(element.css('font-size'), 10);
-            var padding = element.innerHeight() - originHeight;
-
-            element.on(
-                inputType,
-                function () {
-
-                    // 把高度重置为原始值才能取到正确的 newHeight
-                    if (oldHeight !== originHeight) {
-                        oldHeight = originHeight;
-                        element.height(originHeight);
-                    }
-
-                    // scrollHeight 包含上下 padding 和 height
-                    newHeight = element.prop('scrollHeight') - padding;
-
-                    if (Math.abs(newHeight - oldHeight) > lineHeight) {
-                        element.height(newHeight);
-                        oldHeight = newHeight;
-                    }
-
+                if (valueBeforeLongPress !== element.val()
+                    && (keyboard.isCharKey(e.keyCode) || keyboard.isDeleteKey())
+                ) {
+                    me.emit('change');
                 }
-            );
 
-        },
+            }
+        );
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+        element
+        .on(
+            inputType,
+            function () {
+                if (valueBeforeLongPress == null || !me.smart) {
+                    me.emit('change');
+                }
+            }
+        );
 
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            var element = me.element;
-            input.dispose(element);
-            element.off(namespace);
-
-            me.keyboard.dispose();
-
-            me.element =
-            me.keyboard = null;
-        }
     };
 
-    jquerify(Input.prototype);
+    /**
+     * 自动变宽
+     */
+    proto.autoWidth = function () {
+
+        var me = this;
+        var element = me.element;
+
+        element.on(
+            inputType,
+            function () {
+                if (element.scrollLeft() > 0) {
+                    element.width(
+                        element.prop('scrollWidth')
+                    );
+                }
+            }
+        );
+
+    };
+
+    /**
+     * 自动变高
+     */
+    proto.autoHeight = function () {
+
+        var me = this;
+        var element = me.element;
+
+        // 自动变高必须设置 overflow-y: hidden
+        if (element.css('overflow-y') !== 'hidden') {
+            element.css('overflow-y', 'hidden');
+        }
+
+        var originHeight = element.height();
+
+        var oldHeight = originHeight;
+        var newHeight;
+
+        var lineHeight = parseInt(element.css('font-size'), 10);
+        var padding = element.innerHeight() - originHeight;
+
+        element.on(
+            inputType,
+            function () {
+
+                // 把高度重置为原始值才能取到正确的 newHeight
+                if (oldHeight !== originHeight) {
+                    oldHeight = originHeight;
+                    element.height(originHeight);
+                }
+
+                // scrollHeight 包含上下 padding 和 height
+                newHeight = element.prop('scrollHeight') - padding;
+
+                if (Math.abs(newHeight - oldHeight) > lineHeight) {
+                    element.height(newHeight);
+                    oldHeight = newHeight;
+                }
+
+            }
+        );
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        var element = me.element;
+        input.dispose(element);
+        element.off(namespace);
+
+        me.keyboard.dispose();
+
+        me.element =
+        me.keyboard = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

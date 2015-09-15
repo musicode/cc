@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * @description
      *
@@ -43,10 +45,7 @@ define(function (require, exports, module) {
      *     不用再次判断是否支持 postMessage 了
      */
 
-    'use strict';
-
     var timer = require('../function/timer');
-    var lifeCycle = require('../function/lifeCycle');
 
     var urlUtil = require('../util/url');
 
@@ -60,79 +59,78 @@ define(function (require, exports, module) {
      * @property {Function():Object} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
-        return lifeCycle.init(this, options);
+        $.extend(this, Message.defaultOptions, options);
+        this.init();
     }
 
-    Message.prototype = {
+    var proto = Message.prototype;
 
-        constructor: Message,
+    proto.type = 'Message';
 
-        type: 'Message',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
+        me.id = getGuid();
+        me.origin = urlUtil.getOrigin(me.agentUrl);
+
+        me.timer = timer(
+            function () {
+                me.send(me.reader() || { });
+            },
+            me.delay,
+            me.delay
+        );
+
+        me.timer.start();
+
+    };
+
+    /**
+     * 发送信息
+     */
+    proto.send = $.isFunction(window.postMessage)
+        && 'onmessage' in window
+
+        ? function (data) {
+            // postMessage 可以完美跨域
+            window.top.postMessage(
+                data,
+                this.origin
+            );
+        }
+
+        : function (data) {
+
+            // 创建同域代理 iframe，同域才能通信
             var me = this;
 
-            me.id = getGuid();
-            me.origin = urlUtil.getOrigin(me.agentUrl);
-
-            me.timer = timer(
-                function () {
-                    me.send(me.reader() || { });
-                },
-                me.delay,
-                me.delay
-            );
-
-            me.timer.start();
-        },
-
-        /**
-         * 发送信息
-         */
-        send: $.isFunction(window.postMessage)
-           && 'onmessage' in window
-
-            ? function (data) {
-                // postMessage 可以完美跨域
-                window.top.postMessage(
-                    data,
-                    this.origin
-                );
+            var iframe = $('#' + me.id);
+            if (iframe.length === 0) {
+                iframe = $('<iframe id="' + me.id  + '"></iframe>')
+                iframe.hide().appendTo('body');
             }
 
-            : function (data) {
+            iframe.prop(
+                'src',
+                me.agentUrl + '#' + $.param(data)
+            );
 
-                // 创建同域代理 iframe，同域才能通信
-                var me = this;
+        };
 
-                var iframe = $('#' + me.id);
-                if (iframe.length === 0) {
-                    iframe = $('<iframe id="' + me.id  + '"></iframe>')
-                    iframe.hide().appendTo('body');
-                }
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
 
-                iframe.prop(
-                    'src',
-                    me.agentUrl + '#' + $.param(data)
-                );
-            },
+        var me = this;
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+        me.timer.stop();
+        me.timer = null;
 
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.timer.stop();
-            me.timer = null;
-        }
     };
 
     /**

@@ -4,20 +4,30 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
-     * #多文件上传#
+     * ## 多文件上传
      *
      *     实质是文件多选，最终还是一个一个上传文件的，并非同时上传
      *
-     * #文件格式#
+     * ## 文件格式
      *
      *     html 的规范是 MIME type，如 audio/*, video/*
      *     具体可见 http://www.iana.org/assignments/media-types
      *
      *     但鉴于这种方式不直观(小白可能都没听过 MIME type)，还是用扩展名好了
+     *
+     * ## 事件列表
+     *
+     * 1. fileChange
+     * 2. uploadStart
+     * 3. uploadProgress
+     * 4. uploadSuccess
+     * 5. uploadChunkSuccess
+     * 6. uploadError
+     * 7. uploadComplete
      */
-
-    'use strict';
 
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
@@ -43,217 +53,209 @@ define(function (require, exports, module) {
      * @property {boolean=} options.useChunk 是否使用分片上传，默认为 false
      * @property {number=} options.chunkSize 分片大小
      *
-     * @property {Function=} options.onFileChange
-     * @property {Function(Object)=} options.onUploadStart
-     * @property {Function(Object)=} options.onUploadProgress
-     * @property {Function(Object)=} options.onUploadSuccess
-     * @property {Function(Object)=} options.onChunkUploadSuccess
-     * @property {Function(Object)=} options.onUploadError
-     * @property {Function(Object)=} options.onUploadComplete
      */
     function AjaxUploader(options) {
         return lifeCycle.init(this, options);
     }
 
-    AjaxUploader.prototype = {
+    var proto = AjaxUploader.prototype;
 
-        constructor: AjaxUploader,
 
-        type: 'AjaxUploader',
+    proto.type = 'AjaxUploader';
 
-        /**
-         * 初始化元素和事件
-         */
-        init: function () {
+    /**
+     * 初始化元素和事件
+     */
+    proto.init = function () {
 
-            var me = this;
-
-            /**
-             * 文件队列，格式如下：
-             * {
-             *     index: 0,  // 当前上传文件的索引
-             *     files: [], // 上传文件列表
-             * }
-             *
-             * @type {Object}
-             */
-            me.fileQueue = { };
-
-            var element = me.element;
-
-            // 确保是文件上传控件
-            if (!element.is(':file')) {
-                throw new Error('AjaxUploader element must be <input type="file" />');
-            }
-
-            // 用一个 form 元素包着，便于重置
-            var faker = me.faker = $('<form></form>');
-            element.replaceWith(faker);
-            faker.append(element);
-
-            // 完善元素属性
-            var properties = { };
-
-            if (me.accept) {
-                properties.accept = formatAccept(me.accept);
-            }
-
-            if (me.multiple) {
-                properties.multiple = true;
-            }
-
-            element.prop(properties);
-
-            element.on(
-                'change' + namespace,
-                function () {
-
-                    setFiles(me, element.prop('files'));
-
-                    me.emit('fileChange');
-
-                }
-            );
-
-            me.emit('ready');
-
-        },
+        var me = this;
 
         /**
-         * 获取选择的文件
+         * 文件队列，格式如下：
+         * {
+         *     index: 0,  // 当前上传文件的索引
+         *     files: [], // 上传文件列表
+         * }
          *
-         * @return {Array.<Object>} 对象格式为
-         *                          {
-         *                              index: 0,         // 文件索引
-         *                              file: { },        // 标准文件对象
-         *                              nativeFile: File, // 原生文件对象
-         *                              status: 0         // 文件状态：等待上传，上传中，上传成功，上传失败等
-         *                          }
-         *
+         * @type {Object}
          */
-        getFiles: function () {
-            return this.fileQueue.files || [ ];
-        },
+        me.fileQueue = { };
 
-        /**
-         * 设置上传地址
-         *
-         * @param {string} action
-         */
-        setAction: function (action) {
-            this.action = action;
-        },
+        var element = me.element;
 
-        /**
-         * 设置上传数据
-         *
-         * @param {Object} data 需要一起上传的数据
-         */
-        setData: function (data) {
-            $.extend(this.data, data);
-        },
-
-        /**
-         * 重置
-         */
-        reset: function () {
-            // 避免出现停止后选择相同文件，不触发 change 事件的问题
-            this.faker[0].reset();
-        },
-
-        /**
-         * 上传文件
-         */
-        upload: function (fileItem) {
-
-            var me = this;
-
-            var validStatus = me.useChunk
-                            ? AjaxUploader.STATUS_UPLOADING
-                            : AjaxUploader.STATUS_WAITING;
-
-            fileItem = fileItem || getCurrentFileItem(me);
-            if (!fileItem || fileItem.status > validStatus) {
-                return;
-            }
-
-            var xhr = new XMLHttpRequest();
-            fileItem.xhr = xhr;
-
-            $.each(
-                xhrEventHandler,
-                function (index, item) {
-                    xhr['on' + item.type] = function (e) {
-                        item.handler(me, e);
-                    };
-                }
-            );
-
-            $.each(
-                uploadEventHandler,
-                function (index, item) {
-                    xhr.upload['on' + item.type] = function (e) {
-                        item.handler(me, e);
-                    };
-                }
-            );
-
-            xhr.open('post', me.action, true);
-
-            var upload = me.useChunk ? uploadChunk : uploadFile;
-
-            upload(me, fileItem);
-
-        },
-
-        /**
-         * 停止上传
-         */
-        stop: function () {
-
-            var me = this;
-            var fileItem = getCurrentFileItem(me);
-            if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
-                fileItem.xhr.abort();
-            }
-
-            me.reset();
-        },
-
-        /**
-         * 启用
-         */
-        enable: function () {
-            this.element.prop('disabled', false);
-        },
-
-        /**
-         * 禁用
-         */
-        disable: function () {
-            this.element.prop('disabled', true);
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.stop();
-            me.element.off(namespace);
-
-            me.faker =
-            me.element =
-            me.fileQueue = null;
-
+        // 确保是文件上传控件
+        if (!element.is(':file')) {
+            throw new Error('AjaxUploader element must be <input type="file" />');
         }
+
+        // 用一个 form 元素包着，便于重置
+        var faker = me.faker = $('<form></form>');
+        element.replaceWith(faker);
+        faker.append(element);
+
+        // 完善元素属性
+        var properties = { };
+
+        if (me.accept) {
+            properties.accept = formatAccept(me.accept);
+        }
+
+        if (me.multiple) {
+            properties.multiple = true;
+        }
+
+        element.prop(properties);
+
+        element.on(
+            'change' + namespace,
+            function () {
+
+                setFiles(me, element.prop('files'));
+
+                me.emit('fileChange');
+
+            }
+        );
+
+        me.emit('ready');
+
     };
 
-    jquerify(AjaxUploader.prototype);
+    /**
+     * 获取选择的文件
+     *
+     * @return {Array.<Object>} 对象格式为
+     *                          {
+     *                              index: 0,         // 文件索引
+     *                              file: { },        // 标准文件对象
+     *                              nativeFile: File, // 原生文件对象
+     *                              status: 0         // 文件状态：等待上传，上传中，上传成功，上传失败等
+     *                          }
+     *
+     */
+    proto.getFiles = function () {
+        return this.fileQueue.files || [ ];
+    };
+
+    /**
+     * 设置上传地址
+     *
+     * @param {string} action
+     */
+    proto.setAction = function (action) {
+        this.action = action;
+    };
+
+    /**
+     * 设置上传数据
+     *
+     * @param {Object} data 需要一起上传的数据
+     */
+    proto.setData = function (data) {
+        $.extend(this.data, data);
+    };
+
+    /**
+     * 重置
+     */
+    proto.reset = function () {
+        // 避免出现停止后选择相同文件，不触发 change 事件的问题
+        this.faker[0].reset();
+    };
+
+    /**
+     * 上传文件
+     */
+    proto.upload = function (fileItem) {
+
+        var me = this;
+
+        var validStatus = me.useChunk
+                        ? AjaxUploader.STATUS_UPLOADING
+                        : AjaxUploader.STATUS_WAITING;
+
+        fileItem = fileItem || getCurrentFileItem(me);
+        if (!fileItem || fileItem.status > validStatus) {
+            return;
+        }
+
+        var xhr = new XMLHttpRequest();
+        fileItem.xhr = xhr;
+
+        $.each(
+            xhrEventHandler,
+            function (index, item) {
+                xhr['on' + item.type] = function (e) {
+                    item.handler(me, e);
+                };
+            }
+        );
+
+        $.each(
+            uploadEventHandler,
+            function (index, item) {
+                xhr.upload['on' + item.type] = function (e) {
+                    item.handler(me, e);
+                };
+            }
+        );
+
+        xhr.open('post', me.action, true);
+
+        var upload = me.useChunk ? uploadChunk : uploadFile;
+
+        upload(me, fileItem);
+
+    };
+
+    /**
+     * 停止上传
+     */
+    proto.stop = function () {
+
+        var me = this;
+        var fileItem = getCurrentFileItem(me);
+        if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
+            fileItem.xhr.abort();
+        }
+
+        me.reset();
+
+    };
+
+    /**
+     * 启用
+     */
+    proto.enable = function () {
+        this.element.prop('disabled', false);
+    };
+
+    /**
+     * 禁用
+     */
+    proto.disable = function () {
+        this.element.prop('disabled', true);
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.stop();
+        me.element.off(namespace);
+
+        me.faker =
+        me.element =
+        me.fileQueue = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

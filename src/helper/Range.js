@@ -31,57 +31,56 @@ define(function (require, exports, module) {
         this.element = element;
     }
 
-    Range.prototype = {
+    var proto = Range.prototype;
 
-        constructor: Range,
+    /**
+     * 获取选区开始结束位置
+     *
+     * @return {Object}
+     */
+    proto.getRange = isOldIE ? getIERange : getRange;
 
-        /**
-         * 获取选区开始结束位置
-         *
-         * @return {Object}
-         */
-        getRange: isOldIE ? getIERange : getRange,
+    /**
+     * 设置选区开始结束位置
+     *
+     * @param {number} start 开始位置
+     * @param {number} end 结束位置
+     */
+    proto.setRange = isOldIE ? setIERange : setRange;
 
-        /**
-         * 设置选区开始结束位置
-         *
-         * @param {number} start 开始位置
-         * @param {number} end 结束位置
-         */
-        setRange: isOldIE ? setIERange : setRange,
-
-        /**
-         * 获取选区文本
-         *
-         * @return {string}
-         */
-        getText: function () {
-            var value = this.element.value;
-            var range = this.getRange();
-            return value.substring(range.start, range.end);
-        },
-
-        /**
-         * 设置选区文本
-         *
-         * @param {string} text
-         */
-        setText: function (text) {
-            var element = this.element;
-            var value = element.value;
-            var range = this.getRange();
-            element.value = value.substring(0, range.start)
-                          + text
-                          + value.substr(range.end);
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-            this.element = null;
-        }
+    /**
+     * 获取选区文本
+     *
+     * @return {string}
+     */
+    proto.getText = function () {
+        var value = this.element.value;
+        var range = this.getRange();
+        return value.substring(range.start, range.end);
     };
+
+    /**
+     * 设置选区文本
+     *
+     * @param {string} text
+     */
+    proto.setText = function (text) {
+        var element = this.element;
+        var value = element.value;
+        var range = this.getRange();
+        element.value = value.substring(0, range.start)
+                      + text
+                      + value.substr(range.end);
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+        this.element = null;
+    };
+
+
 
     isOldIE = null;
 
@@ -106,6 +105,7 @@ define(function (require, exports, module) {
      * IE 的实现
      */
     function getIERange() {
+
         var element = this.element;
         element.focus();
 
@@ -127,6 +127,7 @@ define(function (require, exports, module) {
             start: i,
             end: i + textRange.text.length
         };
+
     }
 
     function setIERange(start, end) {
@@ -144,6 +145,7 @@ define(function (require, exports, module) {
         range.moveStart('character', start);
         range.moveEnd('character', end - 1);
         range.select();
+
     }
 
 

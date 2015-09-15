@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 80%
      *
@@ -27,8 +29,6 @@ define(function (require, exports, module) {
      * 1. 简单模式：通过 simpleClass 和 value 来实现（取值需要判断 input.hasClass(simpleClass)）
      * 2. 复杂模式：通过包装输入框元素，用新的元素飘在输入框元素上来实现（取值不受影响）
      */
-
-    'use strict';
 
     var init = require('../function/init');
     var jquerify = require('../function/jquerify');
@@ -56,58 +56,54 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Placeholder.prototype = {
+    var proto = Placeholder.prototype;
 
-        constructor: Placeholder,
+    proto.type = 'Placeholder';
 
-        type: 'Placeholder',
+    proto.init = function () {
 
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        var placeholder = element.attr('placeholder');
 
-            var placeholder = element.attr('placeholder');
+        // 在 removeAttr 之前取值
+        if (me.value == null) {
+            me.value = placeholder || '';
+        }
 
-            // 在 removeAttr 之前取值
-            if (me.value == null) {
-                me.value = placeholder || '';
+        var conf;
+
+        if (supportPlaceholder) {
+
+            if (me.nativeFirst) {
+                conf = 'native';
             }
-
-            var conf;
-
-            if (supportPlaceholder) {
-
-                if (me.nativeFirst) {
-                    conf = 'native';
-                }
-                // 避免原生 placeholder 影响效果
-                else if (placeholder) {
-                    element.removeAttr('placeholder');
-                }
+            // 避免原生 placeholder 影响效果
+            else if (placeholder) {
+                element.removeAttr('placeholder');
             }
+        }
 
-            if (!conf) {
-                conf = me.simple ? 'simple' : 'complex';
-            }
+        if (!conf) {
+            conf = me.simple ? 'simple' : 'complex';
+        }
 
-            conf = modeConf[conf];
+        conf = modeConf[conf];
 
-            $.extend(me, conf);
+        $.extend(me, conf);
 
-            if (conf.init) {
-                me.init();
-            }
+        if (conf.init) {
+            me.init();
+        }
 
-            if (me.refresh) {
-                me.refresh();
-            }
-
+        if (me.refresh) {
+            me.refresh();
         }
 
     };
 
-    jquerify(Placeholder.prototype);
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -281,6 +277,7 @@ define(function (require, exports, module) {
                 else {
                     me.show();
                 }
+
             },
             dispose: function () {
 

@@ -35,101 +35,99 @@ define(function (require, exports, module) {
         this.init();
     }
 
-    FiniteArray.prototype = {
+    var proto = FiniteArray.prototype;
 
-        init: function () {
-            this.list = [ ];
-        },
+    proto.init = function () {
+        this.list = [ ];
+    };
 
-        /**
-         * 往数组尾部添加一项
-         *
-         * @param {*} item
-         */
-        push: function (item) {
+    /**
+     * 往数组尾部添加一项
+     *
+     * @param {*} item
+     */
+    proto.push = function (item) {
 
-            var me = this;
-            var list = me.list;
+        var me = this;
+        var list = me.list;
 
-            if (me.isFull()) {
-                if (me.validate(item, list[0])) {
-                    list.shift();
-                }
+        if (me.isFull()) {
+            if (me.validate(item, list[0])) {
+                list.shift();
             }
-
-            if (list.length < me.max) {
-                list.push(item);
-            }
-
-        },
-
-        /**
-         * 获取第 index 个元素
-         *
-         * @param {number} index
-         * @return {*}
-         */
-        get: function (index) {
-            return this.list[index];
-        },
-
-        /**
-         * 获取第一个元素
-         *
-         * @return {*}
-         */
-        first: function () {
-            return this.get(0);
-        },
-
-        /**
-         * 获取最后一个元素
-         *
-         * @return {*}
-         */
-        last: function () {
-            return this.get(this.list.length - 1);
-        },
-
-        /**
-         * 数组是否已满
-         *
-         * @return {boolean}
-         */
-        isFull: function () {
-            return this.list.length === this.max;
-        },
-
-        /**
-         * 遍历数组
-         *
-         * @param {Function} fn
-         */
-        each: function (fn) {
-            $.each(
-                this.list,
-                function (index, item) {
-                    return fn(item, index);
-                }
-            );
-        },
-
-        /**
-         * 获取数组的大小
-         *
-         * @return {number}
-         */
-        size: function () {
-            return this.list.length;
-        },
-
-        /**
-         * 清空数组
-         */
-        clear: function () {
-            this.list.length = 0;
         }
 
+        if (list.length < me.max) {
+            list.push(item);
+        }
+
+    };
+
+    /**
+     * 获取第 index 个元素
+     *
+     * @param {number} index
+     * @return {*}
+     */
+    proto.get = function (index) {
+        return this.list[index];
+    };
+
+    /**
+     * 获取第一个元素
+     *
+     * @return {*}
+     */
+    proto.first = function () {
+        return this.get(0);
+    };
+
+    /**
+     * 获取最后一个元素
+     *
+     * @return {*}
+     */
+    proto.last = function () {
+        return this.get(this.list.length - 1);
+    };
+
+    /**
+     * 数组是否已满
+     *
+     * @return {boolean}
+     */
+    proto.isFull = function () {
+        return this.list.length === this.max;
+    };
+
+    /**
+     * 遍历数组
+     *
+     * @param {Function} fn
+     */
+    proto.each = function (fn) {
+        $.each(
+            this.list,
+            function (index, item) {
+                return fn(item, index);
+            }
+        );
+    };
+
+    /**
+     * 获取数组的大小
+     *
+     * @return {number}
+     */
+    proto.size = function () {
+        return this.list.length;
+    };
+
+    /**
+     * 清空数组
+     */
+    proto.clear = function () {
+        this.list.length = 0;
     };
 
     FiniteArray.defaultOptions = {

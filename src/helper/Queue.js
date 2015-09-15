@@ -24,59 +24,57 @@ define(function (require, exports, module) {
         this.init();
     }
 
-    Queue.prototype = {
+    var proto = Queue.prototype;
 
-        init: function () {
+    proto.init = function () {
 
-            this.list = [ ];
+        this.list = [ ];
 
-        },
+    };
 
-        add: function (item) {
+    proto.add = function (item) {
 
-            var me = this;
+        var me = this;
 
-            me.list.push(item);
+        me.list.push(item);
 
-            if (!$.isFunction(me.callback)) {
-                me.remove();
-            }
-
-        },
-
-        remove: function () {
-
-            var me = this;
-            var item = me.list.shift();
-
-            if (item) {
-
-                var callback =
-
-                me.callback = function () {
-                    me.callback = null;
-                    if (me.list) {
-                        me.remove();
-                    }
-                };
-
-                me.process(item, callback);
-            }
-
-        },
-
-        size: function () {
-            return this.list.length;
-        },
-
-        dispose: function () {
-
-            var me = this;
-
-            me.list =
-            me.callback = null;
-
+        if (!$.isFunction(me.waiting)) {
+            me.remove();
         }
+
+    };
+
+    proto.remove = function () {
+
+        var me = this;
+        var item = me.list.shift();
+
+        if (item) {
+
+            var waiting =
+
+            me.waiting = function () {
+                me.waiting = null;
+                if (me.list) {
+                    me.remove();
+                }
+            };
+
+            me.process(item, waiting);
+        }
+
+    };
+
+    proto.size = function () {
+        return this.list.length;
+    };
+
+    proto.dispose = function () {
+
+        var me = this;
+
+        me.list =
+        me.waiting = null;
 
     };
 

@@ -74,45 +74,42 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Keyboard.prototype = {
+    var proto = Keyboard.prototype;
 
-        constructor: Keyboard,
+    proto.type = 'Keyboard';
 
-        type: 'Keyboard',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
-            var me = this;
+        me.cache = {
+            action: parseAction(me.action || { })
+        };
 
-            me.cache = {
-                action: parseAction(me.action || { })
-            };
+        me.element
+            .on('keydown' + namespace, me, onKeyDown)
+            .on('keyup' + namespace, me, onKeyUp);
 
-            me.element
-                .on('keydown' + namespace, me, onKeyDown)
-                .on('keyup' + namespace, me, onKeyUp);
-
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            me.element.off(namespace);
-
-            me.element =
-            me.cache = null;
-
-        }
     };
 
-    jquerify(Keyboard.prototype);
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        me.element.off(namespace);
+
+        me.element =
+        me.cache = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

@@ -38,196 +38,192 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Iterator.prototype = {
+    var proto = Iterator.prototype;
 
-        constructor: Iterator,
+    proto.init = function () {
 
-        init: function () {
+        var me = this;
 
-            var me = this;
+        me.setData(me.data);
 
-            me.setData(me.data);
+        var prev = $.proxy(me.prev, me);
+        var next = $.proxy(me.next, me);
+        var start = $.proxy(me.start, me);
+        var pause = $.proxy(me.pause, me);
 
-            var prev = $.proxy(me.prev, me);
-            var next = $.proxy(me.next, me);
-            var start = $.proxy(me.start, me);
-            var pause = $.proxy(me.pause, me);
+        var delay = me.delay;
+        var prevTimer = timer(prev, delay, delay);
+        var nextTimer = timer(next, delay, delay);
 
-            var delay = me.delay;
-            var prevTimer = timer(prev, delay, delay);
-            var nextTimer = timer(next, delay, delay);
+        var action = { };
 
-            var action = { };
-
-            action[ me.prevKey ] = function (e, longPress) {
-                if (!me.enabled || longPress) {
-                    return;
-                }
-                prev();
-                me.timer = prevTimer;
-            };
-
-            action[ me.nextKey ] = function (e, longPress) {
-                if (!me.enabled || longPress) {
-                    return;
-                }
-                next();
-                me.timer = nextTimer;
-            };
-
-            me.keyboard = new Keyboard({
-                element: me.element,
-                action: action,
-                onBeforeLongPress: start,
-                onAfterLongPress: pause
-            });
-
-        },
-
-        start: function () {
-
-            var timer = this.timer;
-
-            if (timer) {
-                timer.start();
-            }
-
-        },
-
-        pause: function () {
-
-            var timer = this.timer;
-
-            if (timer) {
-                timer.stop();
-                this.timer = null;
-            }
-
-        },
-
-        stop: function () {
-
-            var me = this;
-
-            me.pause();
-
-            me.index = me.startIndex;
-
-        },
-
-        enable: function () {
-
-            this.enabled = true;
-
-        },
-
-        disable: function () {
-
-            this.enabled = false;
-
-        },
-
-        getData: function () {
-
-            return this.data;
-
-        },
-
-        setData: function (data) {
-
-            if (!$.isArray(data)) {
+        action[ me.prevKey ] = function (e, longPress) {
+            if (!me.enabled || longPress) {
                 return;
             }
+            prev();
+            me.timer = prevTimer;
+        };
 
-            var me = this;
-
-            me.stop();
-
-            me.data = data;
-            me.maxIndex = data.length - 1;
-
-        },
-
-        /**
-         *
-         * @param {number} index
-         * @param {Object=} options 选项
-         * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-         * @property {boolean=} options.silence 是否不触发 change 事件
-         * @property {string=} options.action 动作类型
-         */
-        to: function (index, options) {
-
-            setValue(
-                this,
-                'index',
-                index,
-                options,
-                function (newValue, oldValue, options) {
-                    return {
-                        from: oldValue,
-                        to: newValue,
-                        action: options.action || 'to'
-                    };
-                }
-            );
-
-        },
-
-        prev: function () {
-
-            var me = this;
-
-            var index = me.index - 1;
-
-            if (index < me.minIndex) {
-                index = me.loop ? me.maxIndex : me.minIndex;
+        action[ me.nextKey ] = function (e, longPress) {
+            if (!me.enabled || longPress) {
+                return;
             }
+            next();
+            me.timer = nextTimer;
+        };
 
-            me.to(
-                index,
-                {
-                    action: 'prev'
-                }
-            );
+        me.keyboard = new Keyboard({
+            element: me.element,
+            action: action,
+            onBeforeLongPress: start,
+            onAfterLongPress: pause
+        });
 
-        },
+    };
 
-        next: function () {
+    proto.start = function () {
 
-            var me = this;
+        var timer = this.timer;
 
-            var index = me.index + 1;
-
-            if (index > me.maxIndex) {
-                index = me.loop ? me.minIndex : me.maxIndex;
-            }
-
-            me.to(
-                index,
-                {
-                    action: 'next'
-                }
-            );
-
-        },
-
-        dispose: function () {
-
-            var me = this;
-
-            me.stop();
-
-            me.keyboard.dispose();
-
-            me.element =
-            me.keyboard = null;
-
+        if (timer) {
+            timer.start();
         }
 
     };
 
-    jquerify(Iterator.prototype);
+    proto.pause = function () {
+
+        var timer = this.timer;
+
+        if (timer) {
+            timer.stop();
+            this.timer = null;
+        }
+
+    };
+
+    proto.stop = function () {
+
+        var me = this;
+
+        me.pause();
+
+        me.index = me.startIndex;
+
+    };
+
+    proto.enable = function () {
+
+        this.enabled = true;
+
+    };
+
+    proto.disable = function () {
+
+        this.enabled = false;
+
+    };
+
+    proto.getData = function () {
+
+        return this.data;
+
+    };
+
+    proto.setData = function (data) {
+
+        if (!$.isArray(data)) {
+            return;
+        }
+
+        var me = this;
+
+        me.stop();
+
+        me.data = data;
+        me.maxIndex = data.length - 1;
+
+    };
+
+    /**
+     *
+     * @param {number} index
+     * @param {Object=} options 选项
+     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
+     * @property {boolean=} options.silence 是否不触发 change 事件
+     * @property {string=} options.action 动作类型
+     */
+    proto.to = function (index, options) {
+
+        setValue(
+            this,
+            'index',
+            index,
+            options,
+            function (newValue, oldValue, options) {
+                return {
+                    from: oldValue,
+                    to: newValue,
+                    action: options.action || 'to'
+                };
+            }
+        );
+
+    };
+
+    proto.prev = function () {
+
+        var me = this;
+
+        var index = me.index - 1;
+
+        if (index < me.minIndex) {
+            index = me.loop ? me.maxIndex : me.minIndex;
+        }
+
+        me.to(
+            index,
+            {
+                action: 'prev'
+            }
+        );
+
+    };
+
+    proto.next = function () {
+
+        var me = this;
+
+        var index = me.index + 1;
+
+        if (index > me.maxIndex) {
+            index = me.loop ? me.minIndex : me.maxIndex;
+        }
+
+        me.to(
+            index,
+            {
+                action: 'next'
+            }
+        );
+
+    };
+
+    proto.dispose = function () {
+
+        var me = this;
+
+        me.stop();
+
+        me.keyboard.dispose();
+
+        me.element =
+        me.keyboard = null;
+
+    };
+
+    jquerify(proto);
 
 
     Iterator.defaultOptions = {

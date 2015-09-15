@@ -4,14 +4,26 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 如果出现 flash 跨域问题，有两种解决办法：
      *
      * 1. 可把 supload.swf 放到自己的域下，修改 FlashUploader.defaultOptions.flashUrl
      * 2. 放一个 crossdomain.xml 跨域配置文件
+     *
+     * # 事件列表
+     *
+     * 1. fileChange
+     * 2. uploadStart
+     * 3. uploadProgress
+     * 4. uploadSuccess
+     * 5. uploadChunkSuccess
+     * 6. uploadError
+     * 7. uploadComplete
+     *
      */
 
-    'use strict';
 
     require('../util/supload/supload');
 
@@ -38,135 +50,127 @@ define(function (require, exports, module) {
      * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                            [ 'jpg', 'png' ]
-     *
-     * @property {Function=} options.onFileChange
-     * @property {Function(Object)=} options.onUploadStart
-     * @property {Function(Object)=} options.onUploadProgress
-     * @property {Function(Object)=} options.onUploadSuccess
-     * @property {Function(Object)=} options.onUploadError
-     * @property {Function(Object)=} options.onUploadComplete
      */
     function FlashUploader(options) {
         return lifeCycle.init(this, options);
     }
 
-    FlashUploader.prototype = {
+    var proto = FlashUploader.prototype;
 
-        constructor: FlashUploader,
+    proto.type = 'FlashUploader';
 
-        type: 'FlashUploader',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
-            var me = this;
+        var swfOptions = {
+            flashUrl: me.flashUrl,
+            element: me.element[0],
+            action: me.action,
+            accept: me.accept,
+            multiple: me.multiple,
+            data: me.data,
+            fileName: me.fileName,
+            ignoreError: me.ignoreError,
+            customSettings: {
+                uploader: me
+            }
+        };
 
-            var swfOptions = {
-                flashUrl: me.flashUrl,
-                element: me.element[0],
-                action: me.action,
-                accept: me.accept,
-                multiple: me.multiple,
-                data: me.data,
-                fileName: me.fileName,
-                ignoreError: me.ignoreError,
-                customSettings: {
-                    uploader: me
-                }
-            };
+        $.each(
+            eventHandler,
+            function (type, handler) {
+                type = $.camelCase('on-' + type);
+                swfOptions[type] = handler;
+            }
+        );
 
-            $.each(
-                eventHandler,
-                function (type, handler) {
-                    type = $.camelCase('on-' + type);
-                    swfOptions[type] = handler;
-                }
-            );
+        me.supload = new Supload(swfOptions);
 
-            me.supload = new Supload(swfOptions);
-        },
-
-        /**
-         * 获取当前选择的文件
-         *
-         * @return {Array.<Object>}
-         */
-        getFiles: function () {
-            return this.supload.getFiles();
-        },
-
-        /**
-         * 设置上传地址
-         *
-         * @param {string} action
-         */
-        setAction: function (action) {
-            this.supload.setAction(action);
-        },
-
-        /**
-         * 设置上传数据
-         *
-         * @param {Object} data 需要一起上传的数据
-         */
-        setData: function (data) {
-            this.supload.setData(data);
-        },
-
-        /**
-         * 重置
-         */
-        reset: function () {
-            this.supload.reset();
-        },
-
-        /**
-         * 上传文件
-         */
-        upload: function () {
-            this.supload.upload();
-        },
-
-        /**
-         * 停止上传
-         */
-        stop: function () {
-            this.supload.cancel();
-        },
-
-        /**
-         * 启用
-         */
-        enable: function () {
-            this.supload.enable();
-        },
-
-        /**
-         * 禁用
-         */
-        disable: function () {
-            this.supload.disable();
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.supload.dispose();
-
-            me.supload =
-            me.element = null;
-        }
     };
 
-    jquerify(FlashUploader.prototype);
+    /**
+     * 获取当前选择的文件
+     *
+     * @return {Array.<Object>}
+     */
+    proto.getFiles = function () {
+        return this.supload.getFiles();
+    };
+
+    /**
+     * 设置上传地址
+     *
+     * @param {string} action
+     */
+    proto.setAction = function (action) {
+        this.supload.setAction(action);
+    };
+
+    /**
+     * 设置上传数据
+     *
+     * @param {Object} data 需要一起上传的数据
+     */
+    proto.setData = function (data) {
+        this.supload.setData(data);
+    };
+
+    /**
+     * 重置
+     */
+    proto.reset = function () {
+        this.supload.reset();
+    };
+
+    /**
+     * 上传文件
+     */
+    proto.upload = function () {
+        this.supload.upload();
+    };
+
+    /**
+     * 停止上传
+     */
+    proto.stop = function () {
+        this.supload.cancel();
+    };
+
+    /**
+     * 启用
+     */
+    proto.enable = function () {
+        this.supload.enable();
+    };
+
+    /**
+     * 禁用
+     */
+    proto.disable = function () {
+        this.supload.disable();
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.supload.dispose();
+
+        me.supload =
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置

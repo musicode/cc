@@ -38,61 +38,60 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    Wheel.prototype = {
+    var proto = Wheel.prototype;
 
-        constructor: Wheel,
+    proto.type = 'Wheel';
 
-        type: 'Wheel',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
 
-            var me = this;
+        me.element.on(
+            support + namespace,
+            function (e) {
 
-            me.element.on(
-                support + namespace,
-                function (e) {
+                var delta = 0;
 
-                    var delta = 0;
-
-                    var event = e.originalEvent;
-                    if (support === 'mousewheel') {
-                        delta = - event.wheelDelta / 120;
-                    }
-                    else {
-                        delta = event.detail / 3;
-                    }
-
-                    e.type = 'scroll';
-
-                    me.emit(
-                        e,
-                        {
-                            delta: delta
-                        }
-                    );
-
+                var event = e.originalEvent;
+                if (support === 'mousewheel') {
+                    delta = - event.wheelDelta / 120;
                 }
-            );
-        },
+                else {
+                    delta = event.detail / 3;
+                }
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+                e.type = 'scroll';
 
-            var me = this;
+                me.emit(
+                    e,
+                    {
+                        delta: delta
+                    }
+                );
 
-            lifeCycle.dispose(me);
+            }
+        );
 
-            me.element.off(namespace);
-            me.element = null;
-        }
     };
 
-    jquerify(Wheel.prototype);
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.element.off(namespace);
+        me.element = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
