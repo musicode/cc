@@ -34,7 +34,9 @@
 </head>
 <body>
 
-    <i id="icon1" class="icon" title="提示内容" data-dir="bottom">?</i>
+    <span title="123123123">
+        <i id="icon1" class="icon" data-dir="bottom">?</i>
+    </span>
 
     <i id="icon2" class="icon" title="提示内容111111111111" data-dir="right">?</i>
 
@@ -75,7 +77,7 @@
                     y: 0
                 };
 
-                config.update = function () {
+                config.updateContent = function () {
                     this.layer.find('.tooltip-inner').html(
                         this.element.attr('title')
                     );

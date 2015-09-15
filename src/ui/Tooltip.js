@@ -66,6 +66,12 @@ define(function (require, exports, module) {
      *
      * 如果想控制提示浮层的最大宽度，可以在触发元素上加 data-width="100px"
      *
+     * # 事件列表
+     *
+     * 1. beforeShow
+     * 2. afterShow
+     * 3. beforeHide
+     * 4. afterHide
      */
 
     /**
@@ -81,6 +87,7 @@ define(function (require, exports, module) {
     var init = require('../function/init');
     var split = require('../function/split');
     var position = require('../util/position');
+    var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
@@ -135,283 +142,281 @@ define(function (require, exports, module) {
      * @property {Object=} options.offset.bottomLeft 设置左下侧偏移量
      * @property {Object=} options.offset.bottomRight 设置右下侧偏移量
      *
-     * @property {Function=} options.onBeforeShow 返回 false 可阻止 tip 显示
-     * @property {Function=} options.onAfterShow
-     * @property {Function=} options.onBeforeHide 返回 false 可阻止 tip 隐藏
-     * @property {Function=} options.onAfterHide
      */
     function Tooltip(options) {
         return lifeCycle.init(this, options);
     }
 
-    Tooltip.prototype = {
+    var proto = Tooltip.prototype;
 
-        constructor: Tooltip,
+    proto.type = 'Tooltip';
 
-        type: 'Tooltip',
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-        /**
-         * 初始化
-         */
-        init: function () {
+        var me = this;
+        var element = me.element;
 
-            var me = this;
-            var element = me.element;
+        var layer = me.layer;
+        if (!layer) {
 
-            var layer = me.layer;
+            var template = me.template;
+
+            layer = templateElementMap[ template ];
+
             if (!layer) {
+                layer =
+                templateElementMap[ template ] = $(template);
+            }
 
-                var template = me.template;
+            me.layer = layer;
 
-                layer = templateElementMap[ template ];
+        }
 
-                if (!layer) {
-                    layer = templateElementMap[ template ] = $(template);
+        if (!isHidden(layer)) {
+            layer.hide();
+        }
+
+        if (!offsetParent(layer).is('body')) {
+            instance.body.append(layer);
+        }
+
+        me.popup = new Popup({
+            element: element,
+            layer: layer,
+            selector: me.selector,
+            show: me.show,
+            hide: me.hide,
+            context: me
+        });
+
+        me
+        .on(
+            'beforeShow' + namespace,
+            function (e) {
+
+                var currentElement = e.currentElement;
+
+                if (!currentElement || !currentElement.tagName) {
+                    return;
                 }
 
-                me.layer = layer;
+                var skinClass;
+                var sourceElement = me.sourceElement;
 
-            }
+                if (sourceElement) {
 
-            // 为了第三方做动画，这里最好不要隐藏，而是让第三方用样式自由控制
-            // layer.hide();
-
-            if (!offsetParent(layer).is('body')) {
-                instance.body.append(layer);
-            }
-
-            var show = me.show;
-            var hide = me.hide;
-
-            if (!show.trigger) {
-                show.trigger = 'over';
-            }
-            if (!hide.trigger) {
-                hide.trigger = 'out,click';
-            }
-
-            var animation = show.animation;
-            if ($.isFunction(animation)) {
-                show.animation = $.proxy(animation, me);
-            }
-
-            animation = hide.animation;
-            if ($.isFunction(animation)) {
-                hide.animation = $.proxy(animation, me);
-            }
-
-            me.popup = new Popup({
-                element: element,
-                layer: layer,
-                selector: me.selector,
-                show: show,
-                hide: hide,
-                onAfterShow: function (e) {
-                    me.emit(e);
-                },
-                onBeforeHide: function (e) {
-                    me.emit(e);
-                },
-                onAfterHide: function (e) {
-
-                    if (me.resizer) {
-                        instance.window.off('resize', me.resizer);
-                        me.resizer = null;
-                    }
-
-                    me.emit(e);
-                },
-                onBeforeShow: function (e) {
-
-                    var skinClass;
-                    var sourceElement = me.sourceElement;
-
-                    if (sourceElement) {
-                        skinClass = sourceElement.attr('data-skin');
-                    }
-
-                    sourceElement =
-                    me.sourceElement = $(e.currentTarget);
-
-                    var placementList = getPlacementList(
-                        sourceElement.attr('data-placement') || me.placement
-                    );
-
-                    var placement = placementList.length === 1
-                                 && placementList[0];
-
-                    if (!placement) {
-                        $.each(
-                            placementList,
-                            function (index, name) {
-                                var tests = placementMap[name].test;
-                                for (var i = 0, len = tests.length; i < len; i++) {
-                                    if (!tests[i].call(me)) {
-                                        return;
-                                    }
-                                }
-                                placement = name;
-                                return false;
-                            }
-                        );
-
-                        if (!placement) {
-                            return false;
-                        }
-                    }
+                    skinClass = sourceElement.attr('data-skin');
 
                     if (skinClass) {
                         layer.removeClass(skinClass);
                     }
 
-                    skinClass = sourceElement.attr('data-skin');
-                    if (skinClass) {
-                        layer.addClass(skinClass);
-                    }
+                }
 
-                    var promise = me.updateContent();
-                    var update = function () {
+                sourceElement =
+                me.sourceElement = $(currentElement);
 
-                        me.updatePlacement(placement);
 
-                        var width = sourceElement.data('width') || me.width;
-                        if (width) {
-                            layer.css('max-width', width);
-                        }
 
-                        me.emit(e);
 
-                        if (e.isDefaultPrevented()) {
+
+
+                var placementList = getPlacementList(
+                    sourceElement.attr('data-placement') || me.placement
+                );
+
+                var placement = placementList.length === 1
+                             && placementList[0];
+
+                if (!placement) {
+
+                    $.each(
+                        placementList,
+                        function (index, name) {
+                            var tests = placementMap[name].test;
+                            for (var i = 0, len = tests.length; i < len; i++) {
+                                if (!tests[i].call(me)) {
+                                    return;
+                                }
+                            }
+                            placement = name;
                             return false;
                         }
+                    );
 
-                        me.pin(placement);
-
-                        instance.window.resize(
-                            me.resizer =
-                            debounce(
-                                function () {
-                                    if (me.popup) {
-                                        me.pin(placement);
-                                    }
-                                },
-                                50
-                            )
-                        );
-
-                    }
-
-                    if (promise && $.isFunction(promise.done)) {
-                        promise.done(update);
-                    }
-                    else {
-                        update();
+                    if (!placement) {
+                        e.stopPropagation();
+                        return;
                     }
 
                 }
-            });
-        },
 
-        /**
-         * 显示提示浮层
-         */
-        open: function () {
-            this.popup.open();
-        },
 
-        /**
-         * 隐藏提示浮层
-         */
-        close: function () {
-            this.popup.close();
-        },
 
-        /**
-         * 获得触发源元素
-         *
-         * @return {jQuery}
-         */
-        getSourceElement: function () {
-            return this.sourceElement;
-        },
 
-        /**
-         * 定位
-         *
-         * @param {string} placement 方位，可选值有 topLeft     top    topRight
-         *                                        left               right
-         *                                        bottomLeft bottom  bottomRight
-         *
-         */
-        pin: function (placement) {
 
-            var me = this;
-            var layer = me.layer;
+                skinClass = sourceElement.attr('data-skin');
 
-            // 先设置好样式，再定位
-            // 这样才能保证定位计算不会出问题
-
-            var placementClass = layer.data(placementClassKey);
-            if (placementClass) {
-                layer.removeClass(placementClass);
-                layer.removeData(placementClassKey);
-            }
-
-            placementClass = me.placementClass;
-            if (placementClass
-                && (placementClass = placementClass[placement])
-            ) {
-                layer.addClass(placementClass);
-                layer.data(placementClassKey, placementClass);
-            }
-
-            // 定位条件
-            var gap = me.gap;
-            var options = {
-                element: me.layer,
-                attachment: me.sourceElement,
-                offsetX: $.type(gap.x) === 'number' ? gap.x : 0,
-                offsetY: $.type(gap.y) === 'number' ? gap.y : 0
-            };
-
-            var target = placementMap[placement];
-
-            if ($.isFunction(target.gap)) {
-                target.gap(options);
-            }
-
-            var offset = me.offset[placement];
-            if (offset) {
-                if ($.type(offset.x) === 'number') {
-                    options.offsetX += offset.x;
+                if (skinClass) {
+                    layer.addClass(skinClass);
                 }
-                if ($.type(offset.y) === 'number') {
-                    options.offsetY += offset.y;
+
+
+
+                var update = function () {
+
+                    me.updatePlacement(placement);
+
+                    var width = sourceElement.attr('data-width') || me.width;
+                    if (width) {
+                        layer.css('max-width', width);
+                    }
+
+                    me.pin(placement);
+
+                    instance.window.resize(
+                        me.resizer =
+                        debounce(
+                            function () {
+                                if (me.popup) {
+                                    me.pin(placement);
+                                }
+                            },
+                            50
+                        )
+                    );
+
+                };
+
+                var promise = me.updateContent();
+
+                if (promise && $.isFunction(promise.then)) {
+                    promise.then(update);
                 }
+                else {
+                    update();
+                }
+
             }
+        )
+        .on(
+            'afterHide' + namespace,
+            function (e) {
 
-            position[target.name](options);
-        },
+                if (me.resizer) {
+                    instance.window.off('resize', me.resizer);
+                    me.resizer = null;
+                }
 
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
+            }
+        );
 
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            me.popup.dispose();
-
-            me.element =
-            me.sourceElement =
-            me.layer =
-            me.popup = null;
-        }
     };
 
-    jquerify(Tooltip.prototype);
+    /**
+     * 显示提示浮层
+     */
+    proto.open = function () {
+        this.popup.open();
+    };
+
+    /**
+     * 隐藏提示浮层
+     */
+    proto.close = function () {
+        this.popup.close();
+    };
+
+    /**
+     * 获得触发源元素
+     *
+     * @return {jQuery}
+     */
+    proto.getSourceElement = function () {
+        return this.sourceElement;
+    };
+
+    /**
+     * 定位
+     *
+     * @param {string} placement 方位，可选值有 topLeft     top    topRight
+     *                                        left               right
+     *                                        bottomLeft bottom  bottomRight
+     *
+     */
+    proto.pin = function (placement) {
+
+        var me = this;
+        var layer = me.layer;
+
+        // 先设置好样式，再定位
+        // 这样才能保证定位计算不会出问题
+
+        var placementClass = layer.data(placementClassKey);
+        if (placementClass) {
+            layer.removeClass(placementClass);
+            layer.removeData(placementClassKey);
+        }
+
+        placementClass = me.placementClass;
+        if (placementClass
+            && (placementClass = placementClass[placement])
+        ) {
+            layer.addClass(placementClass);
+            layer.data(placementClassKey, placementClass);
+        }
+
+        // 定位条件
+        var gap = me.gap;
+        var options = {
+            element: me.layer,
+            attachment: me.sourceElement,
+            offsetX: $.type(gap.x) === 'number' ? gap.x : 0,
+            offsetY: $.type(gap.y) === 'number' ? gap.y : 0
+        };
+
+        var target = placementMap[placement];
+
+        if ($.isFunction(target.gap)) {
+            target.gap(options);
+        }
+
+        var offset = me.offset[placement];
+        if (offset) {
+            if ($.type(offset.x) === 'number') {
+                options.offsetX += offset.x;
+            }
+            if ($.type(offset.y) === 'number') {
+                options.offsetY += offset.y;
+            }
+        }
+
+        position[target.name](options);
+
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.popup.dispose();
+
+        me.element =
+        me.sourceElement =
+        me.layer =
+        me.popup = null;
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -438,7 +443,7 @@ define(function (require, exports, module) {
             delay: 100
         },
         hide: {
-            trigger: 'out',
+            trigger: 'out,click',
             delay: 100
         },
         gap: { x: 10, y: 10 },
@@ -457,6 +462,14 @@ define(function (require, exports, module) {
         updatePlacement: $.noop
 
     };
+
+    /**
+     * jquery 事件命名空间
+     *
+     * @inner
+     * @type {string}
+     */
+    var namespace = '.cobble_ui_tooltip';
 
     /**
      * 批量初始化
@@ -611,6 +624,7 @@ define(function (require, exports, module) {
      * placement 可能包含 auto
      * 解析方法是把 auto 之前的方位依次放入结果，再把 auto 转成剩余的方位
      *
+     * @inner
      * @param {string} placement
      * @return {Array.<string>}
      */

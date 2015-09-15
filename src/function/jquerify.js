@@ -64,6 +64,11 @@ define(function (require, exports, module) {
             // 设置当前实例对象，便于在未知的地方拿到组件实例
             event.cobble = me;
 
+            var currentTarget = event.currentTarget;
+            if (currentTarget && currentTarget.tagName) {
+                event.currentElement = currentTarget;
+            }
+
             var args = [ event ];
             if (data) {
                 args.push(data);

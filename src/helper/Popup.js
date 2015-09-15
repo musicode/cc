@@ -548,7 +548,7 @@ define(function (require, exports, module) {
                     var promise = popup[ hidePromiseKey ];
 
                     if (promise) {
-                        promise.done(fn);
+                        promise.then(fn);
                     }
                     else {
                         fn();
