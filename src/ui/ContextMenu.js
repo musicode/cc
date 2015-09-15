@@ -7,12 +7,13 @@ define(function (require, exports, module) {
     'use strict';
 
     var Popup = require('../helper/Popup');
-    var instance = require('../util/instance');
+    var body = require('../util/instance').body;
 
     var pin = require('../function/pin');
     var isHidden = require('../function/isHidden');
     var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var eventPage = require('../function/eventPage');
     var offsetParent = require('../function/offsetParent');
 
     /**
@@ -44,73 +45,157 @@ define(function (require, exports, module) {
         return lifeCycle.init(this, options);
     }
 
-    ContextMenu.prototype = {
+    var proto = ContextMenu.prototype;
 
-        constructor: ContextMenu,
 
-        type: 'ContextMenu',
+    proto.type = 'ContextMenu';
 
-        /**
-         * 初始化
-         */
-        init: function () {
+    /**
+     * 初始化
+     */
+    proto.init = function () {
 
-            var me = this;
+        var me = this;
+        var element = me.element;
+        var container = me.container;
 
-            if (me.element) {
-                initMenu(me);
+        var contextEvent;
+
+        var initMenu = function (element) {
+
+            me.element = element;
+
+            // 默认隐藏
+            if (!isHidden(element)) {
+                element.hide();
             }
 
-            me
-            .container
-            .on('contextmenu' + namespace, me, popupMenu);
-        },
-
-        /**
-         * 显示菜单
-         */
-        open: function () {
-            this.popup.open();
-        },
-
-        /**
-         * 隐藏菜单
-         */
-        close: function () {
-            this.popup.close();
-        },
-
-        /**
-         * 销毁对象
-         */
-        dispose: function () {
-
-            var me = this;
-
-            lifeCycle.dispose(me);
-
-            if (currentMenu === me) {
-                currentMenu = null;
+            // body 必须是定位容器
+            if (!offsetParent(element).is('body')) {
+                body.append(element);
             }
 
-            var popup = me.popup;
-            if (popup) {
-                popup.dispose();
-                me.popup = null;
+            // 绑定点击事件
+            var action = me.action;
+            if (action) {
+                $.each(
+                    action,
+                    function (selector, handler) {
+                        element.on(
+                            'click' + namespace,
+                            selector,
+                            function () {
+                                handler.call(
+                                    me,
+                                    contextEvent
+                                );
+                            }
+                        );
+                    }
+                );
             }
 
-            var element = me.element;
-            if (element) {
-                element.remove();
-                me.element = null;
-            }
+            me.popup = new Popup({
+                layer: element,
+                show: me.show,
+                hide: me.hide,
+                context: me
+            });
 
-            me.container.off(namespace);
-            me.container = null;
+        };
+
+        if (element) {
+            initMenu(element);
         }
+
+        container
+        .on('contextmenu' + namespace, function (e) {
+
+            var template = me.template;
+
+            // 惰性初始化
+            if (!element && template) {
+                element = $(template);
+                initMenu(element);
+            }
+
+            if (activeMenu && activeMenu !== me) {
+                activeMenu.close();
+            }
+
+            contextEvent = e;
+
+            activeMenu = me;
+            activeMenu.open();
+
+            var pos = eventPage(e);
+
+            pin({
+                element: element,
+                x: 0,
+                y: 0,
+                attachment: {
+                    element: body,
+                    x: pos.x,
+                    y: pos.y
+                }
+            });
+
+            // 禁掉默认菜单
+            e.preventDefault();
+
+            // 防止被外层响应
+            e.stopPropagation();
+
+        });
+
     };
 
-    jquerify(ContextMenu.prototype);
+    /**
+     * 显示菜单
+     */
+    proto.open = function () {
+        this.popup.open();
+    };
+
+    /**
+     * 隐藏菜单
+     */
+    proto.close = function () {
+        this.popup.close();
+    };
+
+    /**
+     * 销毁对象
+     */
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        var popup = me.popup;
+        if (popup) {
+            popup.dispose();
+            me.popup = null;
+        }
+
+        var element = me.element;
+        if (element) {
+            element.remove();
+            me.element = null;
+        }
+
+        me.container.off(namespace);
+        me.container = null;
+
+        if (activeMenu === me) {
+            activeMenu = null;
+        }
+
+    };
+
+    jquerify(proto);
 
     /**
      * 默认配置
@@ -119,18 +204,11 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ContextMenu.defaultOptions = {
-        container: instance.body,
-        hide: { }
+        container: body,
+        hide: {
+            trigger: 'click,context'
+        }
     };
-
-    /**
-     * 当前正在显示的菜单
-     * 同一时刻只能显示一个菜单
-     *
-     * @inner
-     * @type {ContextMenu}
-     */
-    var currentMenu;
 
     /**
      * jquery 事件命名空间
@@ -141,112 +219,13 @@ define(function (require, exports, module) {
     var namespace = '.cobble_ui_contextmenu';
 
     /**
-     * contextmenu 事件处理器
+     * 当前正在显示的菜单
+     * 同一时刻只能显示一个菜单
      *
      * @inner
-     * @param {Event} e
+     * @type {ContextMenu}
      */
-    function popupMenu(e) {
-
-        var contextMenu = e.data;
-        var element = contextMenu.element;
-        var template = contextMenu.template;
-
-        if (!element && template) {
-            element = contextMenu.element = $(template);
-            initMenu(contextMenu);
-        }
-
-        if (currentMenu && currentMenu !== contextMenu) {
-            currentMenu.close();
-        }
-
-        // 记录当前事件
-        contextMenu.contextEvent = e;
-
-        currentMenu = contextMenu;
-        currentMenu.open();
-
-        pin({
-            element: element,
-            x: 0,
-            y: 0,
-            attachment: {
-                element: instance.body,
-                x: e.pageX,
-                y: e.pageY
-            }
-        });
-
-        // 防止被外层响应
-        e.stopPropagation();
-        // 禁掉默认菜单
-        e.preventDefault();
-    }
-
-    /**
-     * 简单的初始化菜单元素
-     *
-     * @inner
-     * @param {ContextMenu} contextMenu
-     */
-    function initMenu(contextMenu) {
-
-        var element = contextMenu.element;
-
-        // 默认隐藏
-        if (!isHidden(element)) {
-            element.hide();
-        }
-
-        // body 必须是定位容器
-        if (!offsetParent(element).is('body')) {
-            instance.body.append(element);
-        }
-
-        // 绑定点击事件
-        var action = contextMenu.action;
-        if (action) {
-            $.each(
-                action,
-                function (selector, handler) {
-                    element.on(
-                        'click',
-                        selector,
-                        function () {
-                            handler.call(
-                                contextMenu,
-                                contextMenu.contextEvent
-                            );
-                        }
-                    );
-                }
-            );
-        }
-
-        var show = contextMenu.show;
-        var hide = contextMenu.hide;
-
-        if (!hide.trigger) {
-            hide.trigger = 'click,context';
-        }
-
-        var animation = show.animation;
-        if ($.isFunction(animation)) {
-            show.animation = $.proxy(animation, contextMenu);
-        }
-
-        animation = hide.animation;
-        if ($.isFunction(animation)) {
-            hide.animation = $.proxy(animation, contextMenu);
-        }
-
-        contextMenu.popup = new Popup({
-            layer: element,
-            show: show,
-            hide: hide
-        });
-    }
+    var activeMenu;
 
 
     return ContextMenu;

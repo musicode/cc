@@ -17,8 +17,8 @@ define(function (require, exports, module) {
         var x = event.offsetX;
         var y = event.offsetY;
 
-        // Firefox 不支持 offset
-        if (typeof x !== 'number') {
+        // Firefox 不支持 offsetX/offsetY
+        if ($.type(x) !== 'number') {
             var rect = event.target.getBoundingClientRect();
             x = event.clientX - rect.left;
             y = event.clientY - rect.top;
