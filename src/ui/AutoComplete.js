@@ -50,9 +50,7 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
      *
-     * @property {Function} options.load 加载数据，可以是远程或本地数据
-     * @argument {string} options.load.text 用户输入的文本
-     * @argument {Function} options.load.callback 拉取完数据后的回调
+     * @property {Function} options.loadData 加载数据，可以是远程或本地数据
      *
      */
     function AutoComplete(options) {
@@ -185,10 +183,10 @@ define(function (require, exports, module) {
 
             if (!cache || !cache[ query ]) {
                 me.execute(
-                    'load',
+                    'loadData',
                     [
                         query,
-                        function (data) {
+                        function (error, data) {
 
                             if (data) {
                                 me.set('data', data);

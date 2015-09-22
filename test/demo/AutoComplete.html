@@ -112,7 +112,7 @@
                         console.log('onAfterOpen', this)
                     },
 
-                    load: function (value, callback) {
+                    loadData: function (value, callback) {
 
                         if (!value) {
                             return;
@@ -133,7 +133,7 @@
                             if (response.status === 0) {
                                 data = response.data;
                             }
-                            callback(data);
+                            callback(null, data);
                         });
 
 

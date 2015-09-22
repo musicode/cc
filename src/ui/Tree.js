@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var lifeCycle = require('../function/lifeCycle');
+
     /**
      * 树形组件的特点如下：
      *
@@ -14,17 +16,39 @@ define(function (require, exports, module) {
      * 3. 节点可以无限深入，当然实际场景中通常只有三层
      * 4. 子节点数据懒加载，否则数据量大了之后系统会扛不住
      *
+     * 常见交互如下：
+     *
+     * 1. 节点数据是否已加载
+     * 2. 判断节点当前是已展开或已收起状态
+     * 3. 节点点击后的反应，比如展开收起
+     * 4. 刷新子树
+     *
+     * 需要注意的是，至少要在节点元素上加上 data-id，否则无法进行 DOM 查找
+     *
+     * 节点元素指的是包含 文本和子树 的的元素，这点一定要注意，它对应着节点的数据结构：
+     *
+     * ```
+     * {
+     *     id: '',
+     *     text: '',
+     *     children: []
+     * }
+     * ```
+     *
      * new Tree({
-     *     nodes: [
+     *     data: [
      *         {
      *             id: '',
      *             text: '',
      *             children: [
-     *
+     *                 {
+     *                     id: '',
+     *                     text: ''
+     *                 }
      *             ]
      *         }
      *     ],
-     *     onselect: function () {
+     *     onselect: function (node) {
      *
      *     }
      * })
@@ -33,7 +57,19 @@ define(function (require, exports, module) {
     /**
      *
      * @param {Object} options
-     * @param {Object} options.nodes
+     *
+     * @property {string} options.value 选中的节点，值是节点 id
+     * @property {Object} options.data 节点数据
+     *
+     * @property {string} options.nodeSelector 节点选择器，如果以每个节点都是一棵子树来看，叫做 treeSelector 似乎也可以
+     * @property {string} options.labelSelector 节点文本的选择器
+     * @property {string} options.toggleSelector 节点展开收起开关选择器
+     *
+     * @property {string} options.activeClass
+     * @property {string} options.expandedClass
+     * @property {string} options.collapsedClass
+     * @property {string} options.loadingClass
+     *
      * @property {string} options.nodeTemplate
      * @property {string} options.renderTemplate
      */
@@ -45,17 +81,388 @@ define(function (require, exports, module) {
 
     proto.type = 'Tree';
 
-    proto.render = function (subTree) {
+    proto.init = function () {
+
+        var me = this;
+
+
+        var mainElement = me.option('mainElement');
+        var namespace = me.namespace();
+        var clickType = 'click' + namespace;
+
+        var labelSelector = me.option('labelSelector');
+        if (labelSelector) {
+            mainElement.on(clickType, labelSelector, function (e) {
+                var nodeElement = findNodeElement(me, $(this));
+                me.set('value', nodeElement.data('id'));
+            });
+        }
+
+        var toggleSelector = me.option('toggleSelector');
+        var nodeSelector = me.option('nodeSelector');
+        if (toggleSelector) {
+
+            var expandedClass = me.option('expandedClass');
+
+            mainElement.on(clickType, toggleSelector, function (e) {
+
+                var nodeElement = findNodeElement(me, $(this));
+                if (nodeElement) {
+                    var id = nodeElement.data('id');
+                    if (nodeElement.hasClass(expandedClass)) {
+                        me.collapse(id);
+                    }
+                    else {
+                        me.expand(id);
+                    }
+                }
+
+            });
+        }
+
+
+
+        me.inner({
+            main: mainElement
+        });
+
+        me.set({
+            data: me.option('data'),
+            value: me.option('value')
+        });
 
     };
 
+    /**
+     * 渲染整棵树
+     */
+    proto.render = function () {
+
+        var me = this;
+
+        var html = '';
+
+        me.walk({
+            leave: function (node, cache) {
+
+                var childrenView = '';
+
+                if (node.children) {
+                    $.each(
+                        node.children,
+                        function (index, node) {
+                            childrenView += cache[ node.id ].view;
+                        }
+                    );
+                }
+
+                var nodeCache = cache[ node.id ];
+
+                nodeCache.view = me.execute(
+                    'renderTemplate',
+                    [
+                        {
+                            node: node,
+                            cache: nodeCache,
+                            childrenView: childrenView
+                        },
+                        me.option('nodeTemplate')
+                    ]
+                );
+
+
+                if (!nodeCache.level) {
+                    html += nodeCache.view;
+                }
+
+            }
+        });
+
+        me.inner('main').html(html);
+
+    };
+
+
+    /**
+     * 加载 id 节点的数据
+     *
+     * @param {string} id
+     * @return {Promise}
+     */
+    proto.load = function (id) {
+
+        var me = this;
+
+        var deferred = $.Deferred();
+
+        var target;
+        var level;
+
+        me.walk({
+            enter: function (node, cache) {
+                if (node.id === id) {
+                    target = node;
+                    level = cache[ id ].level;
+                    return false;
+                }
+            }
+        });
+
+        if (target) {
+            me.execute(
+                'loadData',
+                [
+                    target,
+                    function (error, data) {
+
+                        if (error) {
+                            deferred.reject(error);
+                        }
+                        else {
+                            deferred.resolve(data);
+                        }
+
+                    }
+                ]
+            );
+        }
+        else {
+            deferred.reject();
+        }
+
+
+        return deferred;
+
+    };
+
+    /**
+     * 遍历树
+     *
+     * 为了方便存储一些临时数据，enter leave 第二个参数是 cache
+     * cache 的 key 是 node id，值是 node 相关的数据，本方法只记录了 parent 和 level，调用可扩展
+     *
+     * @param {Array|Object} data 遍历数据，如果不传，写法为 walk(options)，遍历的是实例的数据
+     * @param {Function} options
+     * @property {Function} options.enter 返回 false 可停止遍历
+     * @property {Function} options.leave
+     */
+    proto.walk = function (data, options) {
+
+        var me = this;
+
+        if (arguments.length === 1) {
+            options = data;
+            data = me.get('data');
+        }
+
+        if (!$.isArray(data)) {
+            data = [ data ];
+        }
+
+        var enter = options.enter || $.noop;
+        var leave = options.leave || $.noop;
+
+        var cache = { };
+
+        $.each(
+            data,
+            function (index, node) {
+                walkTree(
+                    node,
+                    null,
+                    function (node, parent) {
+
+                        var level = parent
+                                  ? (cache[ parent.id ].level + 1)
+                                  : 0;
+
+                        cache[ node.id ] = {
+                            level: level,
+                            parent: parent
+                        };
+
+                        return enter(node, cache);
+
+                    },
+                    function (node, parent) {
+                        return leave(node, cache);
+                    }
+                );
+            }
+        );
+
+    };
+
+    /**
+     * 展开节点
+     *
+     * @param {string} id
+     */
     proto.expand = function (id) {
 
+        var me = this;
+
+        findNodeElement(me, id)
+            .removeClass(
+                me.option('collapsedClass')
+            )
+            .addClass(
+                me.option('expandedClass')
+            );
+
     };
 
+    /**
+     * 收起节点
+     *
+     * @param {string} id
+     */
     proto.collapse = function (id) {
 
+        var me = this;
+
+        findNodeElement(me, id)
+            .removeClass(
+                me.option('expandedClass')
+            )
+            .addClass(
+                me.option('collapsedClass')
+            );
+
     };
+
+    proto._expand =
+    proto._collapse = function (id) {
+
+        if (findNodeElement(this, id)) {
+            return {
+                id: id
+            };
+        }
+        else {
+            return false;
+        }
+
+    };
+
+    proto.expand_ =
+    proto.collapse_ = function (id) {
+
+        return {
+            id: id
+        };
+
+    };
+
+    lifeCycle.extend(proto);
+
+
+    Tree.propertyUpdater = {
+
+        data: function (data) {
+            this.render();
+        },
+
+        value: function (newValue, oldValue) {
+
+            var me = this;
+
+            var activeClass = me.option('activeClass');
+            if (!activeClass) {
+                return;
+            }
+
+            var nodeElement;
+
+            if (oldValue) {
+                nodeElement = findNodeElement(me, oldValue);
+                if (nodeElement) {
+                    nodeElement.removeClass(activeClass);
+                }
+            }
+
+            if (newValue) {
+                nodeElement = findNodeElement(me, newValue);
+                if (nodeElement) {
+                    nodeElement.addClass(activeClass);
+                }
+            }
+
+
+        }
+
+    };
+
+    Tree.propertyValidator = {
+
+        data: function (data) {
+            return $.isArray(data) ? data : [ ];
+        },
+
+        value: function (value) {
+            switch ($.type(value)) {
+                case 'string':
+                case 'number':
+                    return value;
+            }
+            return '';
+        }
+
+    };
+
+    /**
+     * 通过节点 id 找节点元素
+     *
+     * @inner
+     * @param {Tree} instance
+     * @param {string} id
+     * @return {jQuery?}
+     */
+    function findNodeElement(instance, id) {
+
+        var mainElement = instance.inner('main');
+
+        var nodeSelector = instance.option('nodeSelector');
+        var nodeElement = id.jquery
+                        ? id
+                        : mainElement.find('[data-id="' + id + '"]');
+
+        if (nodeElement.length === 1) {
+            nodeElement = nodeElement.closest(nodeSelector);
+            if (nodeElement.length === 1) {
+                return nodeElement;
+            }
+        }
+
+    }
+
+    /**
+     * 遍历节点
+     *
+     * @inner
+     * @param {Object} node
+     * @param {Object} parent
+     * @param {Function} enter
+     * @param {Function} leave
+     */
+    function walkTree(node, parent, enter, leave) {
+
+        if (enter(node, parent) === false) {
+            return false;
+        }
+
+        if ($.isArray(node.children)) {
+            $.each(
+                node.children,
+                function (index, child) {
+                    return walkTree(child, node, enter, leave);
+                }
+            );
+        }
+
+        return leave(node, parent);
+
+    }
 
 
     return Tree;

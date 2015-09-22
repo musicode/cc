@@ -367,6 +367,16 @@ define(function (require, exports, module) {
 
     };
 
+    function parseAspect(result) {
+        if ($.isPlainObject(result)) {
+            if (result.validate === false) {
+                return false;
+            }
+            return result.data || result;
+        }
+        return result;
+    }
+
     /**
      * 扩展原型
      *
@@ -378,9 +388,16 @@ define(function (require, exports, module) {
         // 为了实现统一拦截，必须规定一些用法：
 
         // 方法如果有前置校验，比如判断参数不合法直接返回，应该不用触发 before 事件
-        // 我们规定，方法的前置校验方法叫做 methodValidate
-        // 比如 setValue 方法的前置校验方法叫做 setValueValidate
+        // 我们规定，方法的前置校验方法叫做 _method
+        // 比如 setValue 方法的前置校验方法叫做 _setValue（后置方法是不是叫 setValue_ 比较对此...）
         //
+        // 前置方法除了做校验，还可以返回一个事件数据，便于通知外部，返回的结构如下：
+        // {
+        //     validate: true,
+        //     data: { }
+        // }
+
+        // 如果不需要带事件数据，也可以返回一个布尔值
 
         $.each(
             proto,
@@ -392,18 +409,26 @@ define(function (require, exports, module) {
                     function (event) {
 
                         var me = this;
-                        var validate = proto[ name + 'Validate' ];
 
-                        if ($.isFunction(validate)
-                            && !validate.call(me, arguments)
-                        ) {
-                            return false;
+                        var eventData;
+
+                        var preMethod = proto[ '_' + name ];
+                        if ($.isFunction(preMethod)) {
+
+                            eventData = parseAspect(
+                                preMethod.apply(me, arguments)
+                            );
+
+                            if (eventData === false) {
+                                return false;
+                            }
+
                         }
 
                         event = createEvent(event);
                         event.type = 'before' + name;
 
-                        event = this.emit(event);
+                        event = this.emit(event, eventData);
 
                         // 阻止默认行为也就不在执行后续的方法
                         if (event.isDefaultPrevented()) {
@@ -414,20 +439,35 @@ define(function (require, exports, module) {
                     function (event) {
 
                         var me = this;
+                        var args = arguments;
 
                         var emitAfterEvent = function () {
+
+                            var eventData;
+
+                            var postMethod = proto[ name + '_' ];
+                            if ($.isFunction(postMethod)) {
+
+                                eventData = parseAspect(
+                                    postMethod.apply(me, args)
+                                );
+
+                                if (eventData === false) {
+                                    return;
+                                }
+                            }
 
                             event = createEvent(event);
                             event.type = 'after' + name;
 
-                            me.emit(event);
+                            me.emit(event, eventData);
 
                         };
 
-                        var result = arguments[ arguments.length - 1 ];
+                        var executeResult = args[ args.length - 1 ];
 
-                        if (result && result.then) {
-                            result.then(emitAfterEvent);
+                        if (executeResult && executeResult.then) {
+                            executeResult.then(emitAfterEvent);
                         }
                         else {
                             emitAfterEvent();

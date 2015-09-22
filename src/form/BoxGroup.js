@@ -69,9 +69,11 @@ define(function (require, exports, module) {
                     change: {
                         checked: function (checked) {
 
-                            if (multiple) {
+                           // [TODO]
 
-                            }
+
+                            me.set('value', value);
+
                         }
                     }
                 });
@@ -111,6 +113,8 @@ define(function (require, exports, module) {
     };
 
     lifeCycle.extend(proto);
+
+
 
 
     return BoxGroup;

@@ -302,8 +302,6 @@ define(function (require) {
     var MODE_MONTH = 'month';
     var MODE_WEEK = 'week';
 
-    var SEPARATE = ',';
-
     var ATTR_VALUE = 'data-value';
 
     /**
@@ -406,6 +404,14 @@ define(function (require) {
     var stableDuration = 41 * dateUtil.DAY;
 
     /**
+     * 多选值分隔符
+     *
+     * @inner
+     * @type {string}
+     */
+    var VALUE_SEPARATE = ',';
+
+    /**
      * 按 , 拆分 value
      *
      * @inner
@@ -413,7 +419,7 @@ define(function (require) {
      * @return {Array}
      */
     function splitValue(value) {
-        return split(value, SEPARATE);
+        return split(value, VALUE_SEPARATE);
     }
 
     /**
@@ -442,7 +448,7 @@ define(function (require) {
             }
         });
 
-        return values.join(SEPARATE);
+        return values.join(VALUE_SEPARATE);
 
     }
 

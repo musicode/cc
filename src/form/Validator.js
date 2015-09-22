@@ -86,17 +86,21 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement 表单元素
      * @property {boolean=} options.realtime 是否实时验证（元素失焦验证），默认为 false
      *
-     * @property {number=} options.scrollGap 开启 autoScroll 时，为了避免顶部贴边，最好加上一些间距
+     * @property {number=} options.scrollOffset 使用 autoScroll 时，为了避免顶部贴边，最好加上一些间距
      *
      * @property {string=} options.successClass 验证通过的 className
+     *
      * @property {string=} options.errorClass 验证失败的 className
+     * @property {string=} options.errorSelector 显示错误文本的元素选择器，如 .error
+     * @property {string=} options.errorTemplate 错误模板
      *
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
      *
-     * @property {string=} options.errorSelector 显示错误文本的元素选择器，如 .error
      *
      * @property {Object=} options.fields 配置字段
+     *
+     * @property {Function} options.renderTemplate
      *
      */
     function Validator(options) {
@@ -123,58 +127,14 @@ define(function (require, exports, module) {
                         ? mainElement
                         : mainElement.find('form');
 
-        if (element.length > 0) {
-            element
+        if (formElement.length > 0) {
+            formElement
                 // 禁用原生表单验证
                 .attr('novalidate', 'novalidate')
                 // 拦截 submit
                 .on('submit' + namespace, $.proxy(me.validate, me));
         }
 
-
-
-
-
-        $.each(
-            me.fields,
-            function (name, conf) {
-
-                var field = mainElement.find('[name="' + name + '"]');
-
-                var type = conf.type;
-
-                if (!type) {
-                    // 不用 field.prop，因为不合法的 type，浏览器会纠正为 text
-                    type = conf.type = field.attr('type') || 'text';
-                }
-
-                var rules = conf.rules;
-
-                if (!rules) {
-                    rules = conf.rules = { };
-                }
-
-                var ruleList = Validator.type[type] || [ ];
-
-                $.each(
-                    ruleList,
-                    function (index, ruleName) {
-
-                        if (rules[ruleName] == null) {
-
-                            var parse = ruleParser[ruleName];
-
-                            if ($.isFunction(parse)) {
-                                rules[ruleName] = parse(field, conf);
-                            }
-
-                        }
-
-                    }
-                );
-
-            }
-        );
 
 
         mainElement.on(
@@ -188,22 +148,14 @@ define(function (require, exports, module) {
 
                 if (groupElement.length === 1) {
 
-                    var classList = [ ];
+                    var className = [
+                        me.option('successClass'),
+                        me.option('errorClass')
+                    ].join(' ');
 
-                    var successClass = me.option('successClass');
-                    if (successClass) {
-                        classList.push(successClass);
-                    }
-
-                    var errorClass = me.option('errorClass');
-                    if (errorClass) {
-                        classList.push(errorClass);
-                    }
-
-                    if (classList.length > 0) {
-                        groupElement.removeClass(
-                            classList.join(' ')
-                        );
+                    className = $.trim(className);
+                    if (className) {
+                        groupElement.removeClass(className);
                     }
 
                 }
@@ -218,12 +170,12 @@ define(function (require, exports, module) {
 
                     var target = $(e.target);
 
-                    var name = target.prop('name');
+                    var name = target.attr('name');
                     if (!name) {
                         // 便于封装组件
                         target = target.find('[name]');
                         if (target.length === 1) {
-                            name = target.prop('name');
+                            name = target.attr('name');
                         }
                     }
 
@@ -234,6 +186,13 @@ define(function (require, exports, module) {
                 }
             );
         }
+
+
+
+
+        me.inner({
+            main: mainElement
+        });
 
     };
 
@@ -257,92 +216,106 @@ define(function (require, exports, module) {
 
 
         // 找出需要验证的分组元素列表
-        var groupElement;
+        var groupElements;
 
         if ($.type(fields) === 'string') {
             fields = [ fields ];
         }
 
         if ($.isArray(fields)) {
-            groups = $.map(
-                        fields,
-                        function (name) {
-                            return mainElement
-                            .find('[name="' + name + '"]')
-                            .closest(groupSelector);
+
+            var elementArray = [ ];
+
+            $.each(
+                fields,
+                function (index, name) {
+
+                    var fieldElement = mainElement.find('[name="' + name + '"]');
+                    if (fieldElement.length === 1) {
+                        var groupElement = fieldElement.closest(groupSelector);
+                        if (groupElement.length === 1) {
+                            elementArray.push(groupElement[0]);
                         }
-                    );
+                    }
+                }
+            );
+
+            groupElements = $(
+                $.unique(elementArray)
+            );
+
         }
         else {
-            groupElement = mainElement.find(groupSelector);
+
+            groupElements = mainElement.find(groupSelector);
+
             if ($.type(fields) === 'boolean') {
                 autoScroll = fields;
             }
         }
 
         // 按组验证，每组里面只要有一个错了就算整组错了
-        var data = [ ];
-        var promises = [ ];
+        var validateResult = [ ];
+        var syncResult = [ ];
 
-        $.each(
-            groups,
-            function (index, group) {
+        for (var i = 0, len = groupElements.length; i < len; i++) {
 
-                var result = me.validateGroup($(group));
-
-                if (result) {
-                    if (result.promise) {
-                        promises.push(result);
-                        result = result.data;
-                    }
-                    $.merge(data, result);
-                }
-
+            var groupResult = me.validateGroup(
+                groupElements.eq(i)
+            );
+            if (groupResult.then) {
+                syncResult.push(groupResult);
+                groupResult = groupResult.result;
             }
-        );
+
+            $.merge(validateResult, groupResult);
+
+        }
 
         var fields = [ ];
         var errors = [ ];
 
-        /**
-         * 同步/异步 最后调用的函数
-         */
-        var afterValidate = function () {
+        var validateComplete = function () {
 
             $.each(
-                data,
+                validateResult,
                 function (index, item) {
                     if (item.error) {
                         errors.push(item);
                     }
-                    fields.push(
-                        item.element.prop('name')
+                    fields.push(item.name);
+                }
+            );
+
+            if (autoScroll && errors.length > 0) {
+                scrollToFirstError(
+                    errors,
+                    me.option('scrollOffset')
+                );
+            }
+
+            setTimeout(
+                function () {
+                    me.emit(
+                        'validatecomplete',
+                        {
+                            fields: fields,
+                            errors: errors
+                        }
                     );
                 }
             );
 
-            if (autoScroll) {
-                scrollToFirstError(errors, me.scrollGap);
-            }
-
-            me.emit(
-                'afterValidate',
-                // 转成对象的形式，才能用 jquery 的 trigger 传递数据
-                {
-                    fields: fields,
-                    errors: errors
-                }
-            );
         };
 
-        if (promises.length > 0) {
+        if (syncResult.length > 0) {
 
-            return resolvePromises(promises).done(afterValidate);
+            return resolvePromises(syncResult).then(validateComplete);
 
         }
         else {
 
-            afterValidate();
+            validateComplete();
 
             return errors.length === 0;
 
@@ -353,214 +326,194 @@ define(function (require, exports, module) {
     /**
      * 验证分组
      *
-     * @param {jQuery} group
+     * @param {jQuery} groupElement
      * @returns {Promise|Array}
      */
-    proto.validateGroup = function (group) {
+    proto.validateGroup = function (groupElement) {
 
         // 隐藏状态不需要验证
-        if (isHidden(group)) {
+        if (isHidden(groupElement)) {
             return;
         }
 
         var me = this;
 
-        var data = [ ];
-        var promises = [ ];
-        var indexs = [ ];
+        var validateResult = [ ];
 
-        // 一个 group 最好只有一个 field，否则不好显示 error
+        var syncResult = [ ];
+        var syncIndex = [ ];
+
+        // 一个 groupElement 最好只有一个 fieldElement，否则不好显示 error
         // 如果真的需要多个 field，依次匹配 error 元素
-        group
+        groupElement
             .find('[name]')
             .each(function (index) {
 
                 var target = this;
+                var fieldElement = $(target);
 
-                var name = target.name;
-                var value = target.value;
-                var disabled = target.disabled;
 
-                var field = $(target);
 
-                var hasConf;
-                var error;
+                var disabled = $.type(target.disabled) === 'boolean'
+                             ? target.disabled
+                             : fieldElement.attr('disabled') === 'disabled';
 
-                if (!disabled) {
-
-                    // 字段配置信息
-                    var conf = me.fields[name];
-
-                    if (conf) {
-
-                        hasConf = true;
-
-                        // 因为要改值，所以复制一份
-                        conf = $.extend(true, { }, conf);
-
-                        conf.form = me.inner('form');
-                        conf.value = $.trim(value);
-
-                        // 验证失败的属性名称，如 max
-                        var errorAttr;
-
-                        $.each(
-                            Validator.type[conf.type] || [ ],
-                            function (index, name) {
-
-                                var result = Validator.rule[name](conf);
-
-                                if (result === false) {
-                                    errorAttr = name;
-                                    return false;
-                                }
-                                // 如果不是强制字段，为空时避免后续属性的检测
-                                else if (conf.value === '' && name === 'required') {
-                                    return false;
-                                }
-
-                            }
-                        );
-
-                        if (errorAttr) {
-
-                            var errors = conf.errors;
-
-                            if (errors) {
-                                error = errors[errorAttr];
-                            }
-
-                            if (!error) {
-                               throw new Error(name + ' 字段 ' + errorAttr + ' 类型错误信息未定义');
-                            }
-
-                        }
-                        else if ($.isFunction(conf.custom)) {
-
-                            var promise = $.Deferred();
-
-                            var result = conf.custom(
-                                field,
-                                function (error) {
-                                    promise.resolve(error);
-                                }
-                            );
-
-                            error = (result == null || result.done)
-                                  ? promise
-                                  : result;
-                        }
-
-                    }
+                if (disabled) {
+                    return;
                 }
 
-                if (hasConf) {
 
-                    index = data.push({
-                        element: field,
-                        error: error
-                    });
 
-                    if (error && error.promise) {
-                        promises.push(error);
-                        indexs.push(index - 1);
-                    }
+                var name = $.type(target.name) === 'string'
+                         ? target.name
+                         : fieldElement.attr('name');
+
+                var fieldConfig = me.option('fields')[ name ];
+
+                if (!fieldConfig) {
+                    return;
                 }
 
-            });
 
-        if (promises.length > 0) {
 
-            var promise = resolvePromises(promises).done(
-                        function (errors) {
+                var rules = me.inner(name + 'Rules');
 
-                            $.each(
-                                errors,
-                                function (index, error) {
-                                    data[indexs[index]].error = error;
-                                }
+                if (rules == null) {
+                    rules = compileRules(fieldElement, fieldConfig);
+                    me.inner(
+                        name + 'Rules',
+                        rules || false
+                    );
+                }
+
+
+
+                // 验证失败的属性名称，如 max
+                var failRule;
+                var failError;
+
+                if (rules) {
+
+                    var ruleMap = { };
+
+                    $.each(
+                        rules,
+                        function (index, rule) {
+                            ruleMap[ rule.name ] = rule.value;
+                        }
+                    );
+
+                    var value = $.type(target.value) === 'string'
+                              ? target.value
+                              : fieldElement.attr('value');
+
+                    value = $.trim(value);
+
+
+                    var validateData = {
+                        rules: ruleMap,
+                        value: value
+                    };
+
+
+
+
+
+                    $.each(
+                        rules,
+                        function (index, rule) {
+
+                            var result = me.execute(
+                                Validator.rule[ rule.name ],
+                                validateData
                             );
 
-                            me.refreshGroup(group, data);
+                            if (result === false) {
+                                failRule = rule;
+                                return false;
+                            }
+                            // 如果不是强制字段，为空时避免后续属性的检测
+                            else if (value === '' && rule.name === 'required') {
+                                return false;
+                            }
 
                         }
                     );
 
-            promise.data = data;
+                }
+
+                if (failRule) {
+
+                    var errors = fieldConfig.errors;
+                    if (errors) {
+                        failError = errors[ failRule.name ];
+                    }
+
+                }
+                else if ($.isFunction(fieldConfig.custom)) {
+
+                    var deferred = $.Deferred();
+
+                    var customResult = fieldConfig.custom(
+                        fieldElement,
+                        function (error) {
+                            deferred.resolve(error);
+                        }
+                    );
+
+                    failError = (customResult == null || customResult.then)
+                              ? deferred
+                              : customResult;
+
+                }
+
+                var validateItem = {
+                    name: name,
+                    element: fieldElement,
+                    error: failError
+                };
+
+                if (failRule) {
+                    validateItem.rule = failRule.name;
+                }
+
+                var index = validateResult.push(validateItem);
+
+                if (failError && failError.then) {
+                    syncResult.push(failError);
+                    syncIndex.push(index - 1);
+                }
+
+            });
+
+        if (syncResult.length > 0) {
+
+            var promise = resolvePromises(syncResult).then(
+                function (errors) {
+
+                    $.each(
+                        errors,
+                        function (index, error) {
+                            validateResult[ syncIndex[ index ] ].error = error;
+                        }
+                    );
+
+                    refreshGroup(me, groupElement, validateResult);
+
+                }
+            );
+
+            promise.result = validateResult;
 
             return promise;
 
         }
         else {
-            me.refreshGroup(group, data);
-            return data;
+
+            refreshGroup(me, groupElement, validateResult);
+
+            return validateResult;
         }
-
-    };
-
-    /**
-     * 刷新分组的显示状态
-     *
-     * @param {jQuery} group 分组元素
-     * @param {Array} data 验证结果数据
-     */
-    proto.refreshGroup = function (group, data) {
-
-        var me = this;
-        var successClass = me.successClass;
-        var errorClass = me.errorClass;
-
-        $.each(
-            data,
-            function (index, item) {
-
-                var element = item.element;
-                var error = item.error;
-
-                // 错误的唯一格式
-                if (error && $.type(error) === 'string') {
-
-                    group
-                        .removeClass(successClass)
-                        .addClass(errorClass);
-
-                    var errorSelector = me.errorSelector;
-                    if (errorSelector) {
-
-                        var renderTemplate = me.renderTemplate;
-                        if ($.isFunction(renderTemplate)) {
-                            error = renderTemplate(
-                                {
-                                    text: error
-                                },
-                                me.errorTemplate
-                            );
-                        }
-
-                        var errorElement = group.find(errorSelector).eq(index);
-                        errorElement.html(error);
-
-                        var errorPlacement = me.errorPlacement;
-                        if ($.isFunction(errorPlacement)) {
-                            errorPlacement(
-                                element,
-                                errorElement
-                            );
-                        }
-                    }
-                }
-                else {
-
-                    // 纠正一下
-                    item.error = '';
-
-                    group
-                        .removeClass(errorClass)
-                        .addClass(successClass);
-                }
-
-            }
-        );
 
     };
 
@@ -581,65 +534,17 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Validator.defaultOptions = {
         realtime: false,
-        scrollGap: 100,
+        scrollOffset: -100,
         groupSelector: '.form-group',
         successClass: 'has-success',
-
         errorClass: 'has-error',
         errorSelector: '.error',
-        errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${text}',
-
-        requiredClass: 'has-required',
-        requiredSelector: '.required',
-        requiredTemplate: '${text}',
-
         renderTemplate: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] || '';
             });
-        },
-        errorPlacement: function (field, error) {
-
-            if (field.prop('type') === 'hidden') {
-                field = field.parent();
-            }
-
-            // 把 position 清空才能取到正确的宽度
-            error.css({
-                position: 'static',
-                width: 'auto'
-            });
-
-            // 先取宽度，取完宽度要再绝对定位，避免影响原来的布局
-            // 产生位置偏差
-            var width = error.outerWidth(true) + 5;
-
-            error.css({
-                position: 'absolute',
-                width: width
-            });
-
-            var parent = field.parent();
-
-            if (parent.is('.placeholder-wrapper')) {
-                field = parent;
-            }
-
-            var position = field.position();
-
-            error.css({
-                left: position.left + field.outerWidth() - 37,
-                top: position.top - error.outerHeight() + 8
-            });
-
         }
     };
 
@@ -696,7 +601,7 @@ define(function (require, exports, module) {
     Validator.rule = {
 
         required: function (data) {
-            if (data.value.length > 0) {
+            if (data.value) {
                 return true;
             }
             else if (data.rules.required) {
@@ -706,29 +611,28 @@ define(function (require, exports, module) {
 
         pattern: function (data) {
             var pattern = data.rules.pattern;
-            if (pattern) {
+            if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
             }
         },
 
         minlength: function (data) {
-            var len = data.rules.minlength;
-            if ($.isNumeric(len)) {
-                return data.value.length >= + len;
+            var minlength = data.rules.minlength;
+            if ($.isNumeric(minlength)) {
+                return data.value.length >= + minlength;
             }
         },
 
         maxlength: function (data) {
-            var len = data.rules.maxlength;
-            if ($.isNumeric(len)) {
-                return data.value.length <= + len;
+            var maxlength = data.rules.maxlength;
+            if ($.isNumeric(maxlength)) {
+                return data.value.length <= + maxlength;
             }
         },
 
         min: function (data) {
             var min = data.rules.min;
             if ($.isNumeric(min)) {
-                // min 转成数字进行比较
                 return data.value >= + min;
             }
         },
@@ -736,15 +640,14 @@ define(function (require, exports, module) {
         max: function (data) {
             var max = data.rules.max;
             if ($.isNumeric(max)) {
-                // max 转成数字进行比较
                 return data.value <= + max;
             }
         },
 
         step: function (data) {
+            var min = data.rules.min;
             var step = data.rules.step;
-            if ($.isNumeric(step)) {
-                var min = data.rules.min || 1;
+            if ($.isNumeric(min) && $.isNumeric(step)) {
                 return (data.value - min) % step === 0;
             }
         },
@@ -760,7 +663,7 @@ define(function (require, exports, module) {
         equals: function (data) {
             var equals = data.rules.equals;
             if (equals) {
-                var target = data.form.find('[name="' + equals + '"]');
+                var target = this.inner('main').find('[name="' + equals + '"]');
                 return data.value === $.trim(target.val());
             }
         }
@@ -786,11 +689,11 @@ define(function (require, exports, module) {
     };
 
     var ruleParser = {
-        required: function (element, conf) {
+        required: function (element) {
             return element.attr('required') === 'required';
         },
-        pattern: function (element, conf) {
-            var pattern = element.attr('pattern') || Validator.pattern[conf.type];
+        pattern: function (element, type) {
+            var pattern = element.attr('pattern') || Validator.pattern[ type ];
             if ($.type(pattern) === 'string') {
                 pattern = new RegExp(pattern);
             }
@@ -800,8 +703,7 @@ define(function (require, exports, module) {
             return element.attr('minlength');
         },
         maxlength: function (element) {
-            return element.
-attr('maxlength');
+            return element.attr('maxlength');
         },
         min: function (element) {
             return element.attr('min');
@@ -818,17 +720,155 @@ attr('maxlength');
     };
 
     /**
+     * 编译验证规则
+     *
+     * @inner
+     * @param {jQuery} fieldElement
+     * @param {Object} fieldConfig
+     * @return {Array?}
+     */
+    function compileRules(fieldElement, fieldConfig) {
+
+        // 获取 type
+        var type = fieldConfig.type;
+        if (!type) {
+            // 不用 prop(name) 是因为不合法的 type 浏览器会纠正为 text
+            type = fieldElement.attr('type') || 'text';
+        }
+
+        var ruleOrders = Validator.type[ type ];
+        if (!$.isArray(ruleOrders)) {
+            return;
+        }
+
+
+
+        var result = [ ];
+
+        // 获取 rules
+        var rules = fieldConfig.rules || { };
+
+        $.each(
+            ruleOrders,
+            function (index, ruleName) {
+
+                var ruleValue = rules[ ruleName ];
+                if (ruleValue == null) {
+                    var parse = ruleParser[ ruleName ];
+                    if ($.isFunction(parse)) {
+                        ruleValue = parse(fieldElement, type);
+                    }
+                }
+
+                if (ruleValue != null) {
+                    result.push({
+                        name: ruleName,
+                        value: ruleValue
+                    });
+                }
+
+            }
+        );
+
+        return result;
+
+    }
+
+    /**
+     * 刷新分组的验证状态
+     *
+     * @inner
+     * @param {Validator} validator
+     * @param {jQuery} groupElement
+     * @param {Array} validateResult
+     */
+    function refreshGroup(validator, groupElement, validateResult) {
+
+        var successClass = validator.option('successClass');
+        var errorClass = validator.option('errorClass');
+
+        var errorTemplate = validator.option('errorTemplate');
+        var errorPlacement = validator.option('errorPlacement');
+
+        var errorSelector = validator.option('errorSelector');
+        var errorElement;
+
+        if (errorSelector) {
+            errorElement = groupElement.find(errorSelector);
+        }
+
+
+        $.each(
+            validateResult,
+            function (index, item) {
+
+                var error = item.error;
+
+                // 错误只能是字符串类型
+                if ($.type(error) !== 'string') {
+                    error = item.error = '';
+                }
+
+                if (error) {
+
+                    if (successClass) {
+                        groupElement.removeClass(successClass);
+                    }
+                    if (errorClass) {
+                        groupElement.addClass(errorClass);
+                    }
+
+                    if (errorElement
+                        && errorElement.length > index
+                    ) {
+
+                        var html = validator.execute(
+                            'renderTemplate',
+                            [
+                                {
+                                    error: error
+                                },
+                                errorTemplate
+                            ]
+                        );
+
+                        errorElement.eq(index).html(html);
+
+                        if ($.isFunction(errorPlacement)) {
+                            errorPlacement(
+                                item.element,
+                                errorElement.eq(index)
+                            );
+                        }
+
+                    }
+                }
+                else {
+                    if (successClass) {
+                        groupElement.addClass(successClass);
+                    }
+                    if (errorClass) {
+                        groupElement.removeClass(errorClass);
+                    }
+                }
+
+            }
+        );
+
+    }
+
+    /**
      * 跳转到第一个错误的位置，用于提升用户体验
      *
      * @inner
      * @param {Array} errors
-     * @param {number} scrollGap
+     * @param {number} scrollOffset
      */
-    function scrollToFirstError(errors, scrollGap) {
+    function scrollToFirstError(errors, scrollOffset) {
 
         if (errors.length > 0) {
 
-            var element = errors[0].element;
+            var element = errors[ 0 ].element;
 
             if (element.is(':hidden')) {
                 element = element.parent();
@@ -836,20 +876,21 @@ attr('maxlength');
 
             var top = element.offset().top;
 
-            if (scrollGap > 0) {
-                top -= scrollGap;
+            if ($.type(scrollOffset) === 'number') {
+                top += scrollOffset;
             }
 
             window.scrollTo(
                 window.scrollX,
                 top
             );
+
         }
 
     }
 
     /**
-     * 解析一堆 promise
+     * 解析 promise 数组
      *
      * @inner
      * @param {Array.<Promise>} promises
@@ -857,17 +898,16 @@ attr('maxlength');
      */
     function resolvePromises(promises) {
 
-        var promise = $.Deferred();
+        var deferred = $.Deferred();
 
         $.when
         .apply($, promises)
         .done(function () {
-
-            promise.resolve(arguments);
-
+            deferred.resolve(arguments);
         });
 
-        return promise;
+        return deferred;
+
     }
 
 

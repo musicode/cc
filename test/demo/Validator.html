@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Validator</title>
-    <link rel="stylesheet" href="http://zhujl.baidu.com:8828/src/muse.styl"/>
+    <link rel="stylesheet" href="http://cdn.gsxservice.com/asset/css/main/main.css"/>
 
 </head>
 <body>
@@ -54,7 +54,7 @@
         function (Validator) {
 
             var validator = new Validator({
-                element: $('.form'),
+                mainElement: $('.form'),
                 realtime: true,
                 fields: {
                     mobile: {
@@ -89,12 +89,53 @@
                                 function () {
                                     callback('异步错误');
                                 },
-                                200
+                                2000
                             );
                         }
                     }
                 },
-                onAfterValidate: function (e, data) {
+                errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${error}',
+                errorPlacement: function (fieldElement, errorElement) {
+
+                    if (fieldElement.prop('type') === 'hidden') {
+                        fieldElement = fieldElement.parent();
+                    }
+
+                    // 把 position 清空才能取到正确的宽度
+                    errorElement.css({
+                        position: 'static',
+                        width: 'auto'
+                    });
+
+                    // 先取宽度，取完宽度要再绝对定位，避免影响原来的布局
+                    // 产生位置偏差
+                    var width = errorElement.outerWidth(true) + 5;
+
+                    errorElement.css({
+                        position: 'absolute',
+                        width: width
+                    });
+
+                    var parentElement = fieldElement.parent();
+                    if (parentElement.is('.placeholder-wrapper')) {
+                        fieldElement = parentElement;
+                    }
+
+                    var position = fieldElement.position();
+
+                    errorElement.css({
+                        left: position.left + fieldElement.outerWidth() - 37,
+                        top: position.top - errorElement.outerHeight() + 8
+                    });
+
+                },
+                onbeforevalidate: function (e) {
+                    console.log(data);
+                },
+                onaftervalidate: function (e) {
+                    console.log(data);
+                },
+                onvalidatecomplete: function (e, data) {
                     console.log(data);
                 }
             });
