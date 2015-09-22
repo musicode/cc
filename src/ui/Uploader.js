@@ -23,4 +23,5 @@ define(function (require, exports, module) {
     return supportFileAPI() && supportAjaxUploadProgressEvents()
          ? require('../helper/AjaxUploader')
          : require('../helper/FlashUploader');
+
 });

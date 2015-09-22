@@ -20,18 +20,18 @@
             function (Keyboard) {
 
                 var keyboard = new Keyboard({
-                    element: $(document.body),
-                    onLongPressStart: function (event, data) {
-                        console.log('---------------------longPress start: ', event, data);
+                    watchElement: $(document.body),
+                    onbeforelongpress: function (event, data) {
+                        console.log('>>>>>>>>>> longPress start: ', event, data);
                     },
-                    onLongPressEnd: function (event, data) {
-                        console.log('---------------------longPress end: ', event, data);
+                    onafterlongpress: function (event, data) {
+                        console.log('<<<<<<<<<< longPress end: ', event, data);
                     },
-                    onKeyDown: function (event, data) {
-                        console.log('keyDown', event, data);
+                    onkeydown: function (event, data) {
+                        console.log('onkeydown');
                     },
-                    onKeyUp: function (event, data) {
-                        console.log('keyUp', event, data);
+                    onkeyup: function (event, data) {
+                        console.log('onkeyup');
                     },
                     action: {
                         'ctrl+c': function () {
@@ -59,7 +59,7 @@
                             console.log('shift + ctrl + alt + c');
                         },
                         'enter': function () {
-                            console.log('keyEvents -> enter', this);
+                            console.log('enter', this);
                         },
                         '$+': function () {
                             console.log('+');
@@ -69,15 +69,13 @@
 
                 var handler = function (e, data) {
                     console.log('===============');
-                    console.log(e.target, e.type, data);
+                    console.log(e.target, e.type, data, this);
                 };
 
-                keyboard.on({
-                    longPressStart: handler,
-                    longPressEnd: handler,
-                    keyUp: handler,
-                    keyDown: handler
-                });
+                keyboard.on('keyup', handler);
+                keyboard.on('keydown', handler);
+                keyboard.before('longpress', handler);
+                keyboard.after('longpress', handler);
 
 
             }

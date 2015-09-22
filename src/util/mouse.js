@@ -6,6 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var eventPage = require('../function/eventPage');
+    var eventOffset = require('../function/eventOffset');
+
     function getTouchObject(e) {
         return e.originalEvent.changedTouches[0];
     }
@@ -15,40 +18,49 @@ define(function (require, exports, module) {
     var touch = {
         support: 'ontouchend' in element,
         click: 'touchstart',
-        mousedown: 'touchstart',
-        mousemove: 'touchmove',
-        mouseup: 'touchend',
-        pageX: function (e) {
-            return getTouchObject(e).pageX;
+        down: 'touchstart',
+        move: 'touchmove',
+        up: 'touchend',
+        page: function (e) {
+            var touch = getTouchObject(e);
+            return {
+                x: touch.pageX,
+                y: touch.pageY
+            };
         },
-        pageY: function (e) {
-            return getTouchObject(e).pageY;
+        client: function (e) {
+            var touch = getTouchObject(e);
+            return {
+                x: touch.clientX,
+                y: touch.clientY
+            };
         },
-        clientX: function (e) {
-            return getTouchObject(e).clientX;
-        },
-        clientY: function (e) {
-            return getTouchObject(e).clientY;
+        offset: function (e) {
+            var touch = getTouchObject(e);
+            return {
+                x: touch.offsetX,
+                y: touch.offsetY
+            };
         }
     };
 
     var mouse = {
         support: 'onclick' in element,
         click: 'click',
-        mousedown: 'mousedown',
-        mousemove: 'mousemove',
-        mouseup: 'mouseup',
-        pageX: function (e) {
-            return e.pageX;
+        down: 'mousedown',
+        move: 'mousemove',
+        up: 'mouseup',
+        page: function (e) {
+            return eventPage(e);
         },
-        pageY: function (e) {
-            return e.pageY;
+        client: function (e) {
+            return {
+                x: e.clientX,
+                y: e.clientY
+            };
         },
-        clientX: function (e) {
-            return e.clientX;
-        },
-        clientY: function (e) {
-            return e.clientY;
+        offset: function () {
+            return eventOffset(e);
         }
     };
 

@@ -6,9 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var toNumber = require('../function/toNumber');
+
+    var trigger = require('../util/trigger');
 
     /**
      * 可切换组件
@@ -18,15 +19,12 @@ define(function (require, exports, module) {
      * @property {jQuery} options.element
      * @property {number=} options.index 当前选中索引，默认是 0
      * @property {string=} options.trigger 触发方式，可选值有 over click，默认是 click
+     * @property {number=} options.delay 延时时间
      * @property {string} options.selector 触发器的选择器
      * @property {string=} options.activeClass 触发元素被激活时的 class
-     * @property {Function} options.change 切换动作
-     * @argument {Object} options.change.data
-     * @property {number} options.change.data.from
-     * @property {number} options.change.data.to
      */
     function Switchable(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Switchable.prototype;
@@ -39,103 +37,81 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
-        var selector = me.selector;
-        var items = me.items = element.find(selector);
 
-        var index = toNumber(me.index, defaultIndex);
-        var activeClass = me.activeClass;
+        var mainElement = me.option('element');
+
+        me.inner('main', mainElement);
+
+        var selector = me.option('selector');
+
+        var items = mainElement.find(selector);
+
+        var activeClass = me.option('activeClass');
+        var index = toNumber(
+            me.option('index'),
+            defaultIndex
+        );
 
         if (index === defaultIndex && activeClass) {
-            index = items.index(element.find('.' + activeClass));
+            index = items.index(
+                mainElement.find('.' + activeClass)
+            );
         }
+
 
         if (selector) {
 
-            var trigger = me.trigger;
+            var namespace = me.namespace();
 
-            if (trigger === 'click') {
+            var leaveType = trigger.leave.type + namespace;
 
-                element.on('click' + namespace, selector, function () {
-                    me.to(
-                        items.index(this)
-                    );
-                });
+            $.each(
+                trigger.parse(
+                    me.option('trigger'),
+                    function (trigger) {
 
-            }
-            else if (trigger === 'over') {
-
-                element.on('mouseenter' + namespace, selector, function () {
-
-                    var target = this;
-
-                    me.timer = setTimeout(
-                        function () {
-                            if (me.element) {
-                                me.to(
-                                    items.index(target)
-                                );
+                        var options = {
+                            handler: function () {
+                                me.set(
+                                    'index',
+                                    items.index(this)
+                                )
                             }
-                        },
-                        150
-                    );
-                });
+                        };
 
-                element.on('mouseleave' + namespace, selector, function () {
-                    if (me.timer) {
-                        clearTimeout(me.timer);
-                        me.timer = null;
+                        if (trigger === 'enter') {
+
+                            options.delay = me.option('delay');
+
+                            options.startDelay = function (fn) {
+                                mainElement.on(leaveType, selector, fn);
+                            };
+
+                            options.endDelay = function (fn) {
+                                mainElement.off(leaveType, fn);
+                            };
+
+                        }
+
+                        return options;
+
                     }
-                });
+                ),
+                function (name, config) {
 
-            }
+                    mainElement.on(
+                        config.type + namespace,
+                        selector,
+                        config.handler
+                    );
+
+                }
+            );
+
         }
-
-        me.index = defaultIndex;
 
         if (index >= 0) {
-            me.to(index);
-        }
-
-    };
-
-    /**
-     * 激活 tab
-     *
-     * @param {number} index
-     */
-    proto.to = function (index) {
-
-        var me = this;
-
-        index = toNumber(index, defaultIndex);
-
-        var fromIndex = me.index;
-
-        if (index !== fromIndex) {
-
-            var activeClass = me.activeClass;
-
-            var items = me.items;
-
-            if (activeClass) {
-
-                if (fromIndex >= 0) {
-                    items.eq(fromIndex).removeClass(activeClass);
-                }
-
-                if (index >= 0) {
-                    items.eq(index).addClass(activeClass);
-                }
-
-            }
-
-            me.index = index;
-
-            me.change({
-                from: fromIndex,
-                to: index
-            });
+            me.set('index', index);
         }
 
     };
@@ -149,14 +125,13 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-
-        me.element =
-        me.items = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -166,17 +141,16 @@ define(function (require, exports, module) {
      */
     Switchable.defaultOptions = {
         index: 0,
-        trigger: 'click'
+        trigger: 'click',
+        delay: 150
     };
 
     /**
-     * jquery 事件命名空间
+     * 默认的索引值
      *
      * @inner
-     * @type {string}
+     * @type {number}
      */
-    var namespace = '.cobble_helper_switchable';
-
     var defaultIndex = -1;
 
 

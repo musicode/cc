@@ -64,6 +64,7 @@
         position: absolute;
         top: 100px;
         left: 50%;
+        line-height: 0;
     }
     #textarea .scroll-bar-v {
         right: -10px;
@@ -139,57 +140,54 @@
 
 
                 var scrollHBar = new ScrollBar({
-                    element: track,
-                    panel: $('#scroll-panel'),
+                    mainElement: track,
+                    panelElement: $('#scroll-panel'),
                     orientation: 'horizontal',
                     value: 20,
-                    step: 10,
-                    step4Panel: true,
                     thumbSelector: '.scroll-thumb',
-                    animation: function (style) {
-                        var thumb = track.find('.scroll-thumb');
-                        thumb.animate(
-                            {
-                                left: style.left
-                            },
-                            1000
-                        );
+                    scrollAnimate: function (options) {
+
+                        var thumbElement = options.thumbElement;
+                        if (options.action === 'click') {
+                            thumbElement.animate(options.thumbStyle, 100);
+                        }
+                        else {
+                            thumbElement.css(options.thumbStyle);
+                        }
 
                     },
-                    onScroll: function (event, data) {
-                        //console.log(data);
+                    onscroll: function (event, data) {
+                        console.log(this.get('value'));
                     }
                 });
 
-                scrollHBar.to(50);
 
-return
                 var scrollVBar = new ScrollBar({
-                    panel: $('#scroll-panel'),
-                    element: $('#scroll-position .scroll-bar-v'),
-                    value: '20%',
+                    panelElement: $('#scroll-panel'),
+                    mainElement: $('#scroll-position .scroll-bar-v'),
+                    value: 20,
                     draggingClass: 'dragging',
-                    hoverClass: 'hover',
                     orientation: 'vertical',
                     thumbSelector: '.scroll-thumb'
                 });
 
+
                 var textarea = $('#textarea textarea');
                 new Input({
-                    element: textarea,
-                    onKeyDown: function () {
+                    mainElement: textarea,
+                    onkeydown: function () {
                         console.log('before: ' + textarea.prop('scrollTop'))
                         scrollBar.refresh();
                         console.log('after: ' + textarea.prop('scrollTop'))
                     },
-                    onChange: function () {
+                    onchange: function () {
                         scrollBar.refresh();
                     }
 
                 });
                 var scrollBar = new ScrollBar({
-                    panel: textarea,
-                    element: $('#textarea .scroll-bar-v'),
+                    panelElement: textarea,
+                    mainElement: $('#textarea .scroll-bar-v'),
                     orientation: 'vertical',
                     thumbSelector: '.scroll-thumb'
                 });

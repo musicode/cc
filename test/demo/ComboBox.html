@@ -33,27 +33,30 @@
 
             function (ComboBox) {
 
-                var comboBox = new ComboBox({
-                    element: $('.dropdown'),
-                    button: $('.dropdown .btn-default'),
-                    menu: $('.dropdown-menu'),
-                    openClass: 'opened',
-                    //value: '2',
+                window.comboBox = new ComboBox({
+                    mainElement: $('.dropdown'),
+                    buttonElement: $('.dropdown .btn-default'),
+                    menuElement: $('.dropdown-menu'),
+                    itemActiveClass: 'active',
+                    menuActiveClass: 'opened',
+                    value: '2',
 
                     defaultText: 'hahah',
 
-                    onBeforeShow: function () {
-                        return true;
+                    onbeforeopen: function () {
+                        console.log('before open');
+                        //return false;
                     },
-                    onBeforeHide: function () {
+                    onbeforeclose: function () {
+                        console.log('before close');
                         return true;
                     },
 
-                    setText: function (text) {
-                        this.button.find('span').html(text);
+                    setText: function (options) {
+                        options.buttonElement.find('span').html(options.text);
                     },
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

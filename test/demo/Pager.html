@@ -40,31 +40,39 @@
 
             function (Pager, etpl) {
 
-                var pager = new Pager({
-                    element: $('#pager'),
-                    page: 4,
+                window.pager = new Pager({
+
+                    mainElement: $('#pager'),
+                    page: 20,
                     count: 20,
 
                     showCount: 5,
                     startCount: 2,
-                    endCount: 3,
+                    endCount: 1,
 
                     autoHide: true,
 
                     // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
                     // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
-                    pageTemplate: '<a href="#" data-page="${page}" onclick="return false;">${page}</a>',
+                    prevTemplate: '<!-- if: ${active} > ${first} -->'
+                                + '<!-- var: prev = ${active} - 1 -->'
+                                + '<a href="#" data-page="${prev}" onclick="return false;">prev</a>'
+                                + '<!-- /if -->',
 
-                    prevTemplate: '<a class="pager-prev" href="#" data-page="${page}" onclick="return false;">上一页</a>',
-                    nextTemplate: '<a class="pager-next" href="#" data-page="${page}" onclick="return false;">下一页</a>',
+                    nextTemplate: '<!-- if: ${active} < ${last} -->'
+                                + '<!-- var: next = ${active} + 1 -->'
+                                + '<a href="#" data-page="${next}" onclick="return false;">next</a>'
+                                + '<!-- /if -->',
+
+                    pageTemplate: '<a class="pager-next" href="#" data-page="${page}" onclick="return false;">${page}</a>',
                     ellipsisTemplate: '<a class="pager-ellipsis">...</a>',
-                    activeTemplate: '<a class="pager-selected" href="#" onclick="return false;">${page}</a>',
+                    activeTemplate: '<a class="pager-selected" href="#" onclick="return false;">${active}</a>',
 
                     renderTemplate: function (data, tpl) {
                         return etpl.compile(tpl)(data);
                     },
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

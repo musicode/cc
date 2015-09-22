@@ -29,7 +29,9 @@
             top: 28px;
             left: 0;
             width: 100%;
+            height: 100px;
             box-sizing: border-box;
+            overflow-y: auto;
         }
         li {
             border-top: 1px solid #DDD;
@@ -71,9 +73,9 @@
                 var input = $('input');
                 var menu = $('#menu');
 
-                new AutoComplete({
-                    element: input,
-                    menu: menu,
+                window.autoComplete = new AutoComplete({
+                    inputElement: input,
+                    menuElement: menu,
 
                     renderTemplate: function (data) {
 
@@ -90,23 +92,23 @@
 
                         return html.join('');
                     },
+                    autoScroll: true,
                     itemSelector: 'li',
 
-                    hoverClass: 'item-hover',
-                    activeClass: 'item-active',
+                    itemActiveClass: 'item-active',
 
-                    onEnter: function (event, data) {
+                    onenter: function (event, data) {
                         console.log('enter', data);
                     },
-                    onItemClick: function (event, data) {
+                    onselect: function (event, data) {
                         console.log('select', data);
                     },
 
-                    onBeforeOpen: function () {
+                    onbeforeopen: function () {
                         console.log('onBeforeOpen', this)
                     },
 
-                    onAfterOpen: function () {
+                    onafteropen: function () {
                         console.log('onAfterOpen', this)
                     },
 

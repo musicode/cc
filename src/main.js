@@ -91,12 +91,10 @@ define(function (require, exports, module) {
     require('./ui/Uploader');
     require('./ui/Zoom');
 
-    require('./util/advice');
     require('./util/browser');
     require('./util/cookie');
     require('./util/date');
     require('./util/detection');
-    require('./util/dimension');
     require('./util/etpl');
     require('./util/fullScreen');
     require('./util/input');

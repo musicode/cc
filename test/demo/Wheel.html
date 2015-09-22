@@ -6,7 +6,8 @@
     <style>
 
         body {
-            height: 1000px
+            height: 1000px;
+            overflow: auto
         }
 
     </style>
@@ -28,10 +29,10 @@
         var element = $(document.body);
 
         var wheel = new Wheel({
-            element: element,
-            onScroll: function (event, data) {
-                console.log('onScroll', event.cobble, data);
-
+            watchElement: element,
+            onscroll: function (event) {
+                console.log('onScroll', event.delta);
+                return false;
             }
         });
 
@@ -39,7 +40,7 @@
 
             console.log(arguments);
             //event.preventDefault();
-            return false;
+            //return false;
         });
 
     }

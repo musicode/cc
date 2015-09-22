@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var jquerify = require('../function/jquerify');
+    var toNumber = require('../function/toNumber');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -19,10 +19,6 @@ define(function (require, exports, module) {
      * 如果非要翻页为 0，那初始化和刷新时，+ 1 处理吧
      *
      * 希望点击触发翻页的元素，必须具有 data-page 属性，属性值为希望翻到的页码
-     *
-     * # 事件列表
-     *
-     * 1. change - 页码变化时触发
      */
 
     /**
@@ -30,7 +26,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element
+     * @property {jQuery} options.mainElement
      * @property {number} options.page 当前页码，从 1 开始
      * @property {number} options.count 总页数
      * @property {number} options.showCount 中间显示的数量
@@ -44,11 +40,12 @@ define(function (require, exports, module) {
      * @property {string=} options.nextTemplate 下一页模板
      * @property {string=} options.ellipsisTemplate 省略号模板
      * @property {string=} options.activeTemplate 页码选中状态的模板
+     *
      * @property {Function=} options.renderTemplate 渲染方法
      *
      */
     function Pager(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Pager.prototype;
@@ -62,131 +59,168 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.render();
+        me.set({
+            page: me.option('page'),
+            count: me.option('count')
+        });
 
-        me.element
+        var mainElement = me.option('mainElement');
+
+        mainElement
         .on(
-            'click' + namespace,
-            '[data-page]',
+            'click' + me.namespace(),
+            '[' + ATTR_PAGE + ']',
             function () {
 
-                var page = $(this).data('page');
+                var page = toNumber(
+                    $(this).attr(ATTR_PAGE)
+                );
 
-                if ($.type(page) === 'number') {
-                    me.to(page);
+                if (page > 0) {
+                    me.set('page', page);
                 }
 
             }
         );
 
+        me.inner('main', mainElement);
+
     };
 
     /**
-     * 渲染翻页
-     *
-     * @param {Object=} data 翻页数据
-     * @property {number} data.page 当前页
-     * @property {number} data.count 总页数
+     * 渲染
      */
-    proto.render = function (data) {
+    proto.render = function () {
 
         var me = this;
 
-        if ($.isPlainObject(data)) {
-            $.extend(me, data);
-        }
+        var firstPage = 1;
+        var count = me.get('count');
+        var mainElement = me.inner('main');
 
-        var count = me.count;
-        var element = me.element;
-
-        if (count < 2 && me.autoHide) {
-            element.html('');
-            me.hideAnimation();
+        if (count < 2 && me.option('autoHide')) {
+            me.execute('hideAnimate');
+            mainElement.html('');
             return;
         }
 
-        var page = Math.min(me.page, count);
+        var page = Math.min(me.get('page'), count);
 
-        var showCount = me.showCount;
-        var startCount = me.startCount;
-        var endCount = me.endCount;
+        var showCount = me.option('showCount');
+        var startCount = me.option('startCount');
+        var endCount = me.option('endCount');
+
+        var pageTemplate = me.option('pageTemplate');
+        var prevTemplate = me.option('prevTemplate');
+        var nextTemplate = me.option('nextTemplate');
+        var activeTemplate = me.option('activeTemplate');
+        var ellipsisTemplate = me.option('ellipsisTemplate');
+
+
 
         var datasource = [ ];
 
-        var pageTemplate = me.pageTemplate;
-        var ellipsisTemplate = me.ellipsisTemplate;
 
-        // 上一页
-        if (page > 1) {
-            datasource.push({
-                page: [ page - 1, page - 1 ],
-                tpl: me.prevTemplate
-            });
-        }
 
-        var start = Math.max(1, page - Math.ceil(showCount / 2));
-        if (startCount > 0 && start < startCount + 2) {
-            startCount = 0;
-        }
 
+        // 以当前选中的页码为界，先处理左边的，再处理右边的
+        var start = Math.max(firstPage, page - Math.ceil(showCount / 2));
         var end = Math.min(count, start + showCount - 1);
-        if (endCount > 0 && count - end < endCount + 2) {
-            endCount = 0;
+
+        if (end === count && end - start < showCount) {
+            start = Math.max(firstPage, end - showCount + 1);
         }
 
-        if (startCount > 0) {
-            datasource.push(
-                {
-                    page: [ 1, startCount ],
-                    tpl: pageTemplate
-                },
-                {
-                    tpl: ellipsisTemplate
-                }
-            );
-        }
-
-        // 中间的页码部分，需要用 activePage 进行分割
+        // 选中页面左侧
         if (start < page) {
             datasource.push({
-                page: [ start, page - 1 ],
+                range: [ start, page - 1 ],
                 tpl: pageTemplate
             });
         }
 
         // 选中页码
         datasource.push({
-            page: [ page, page ],
-            tpl: me.activeTemplate
+            tpl: activeTemplate
         });
 
+        // 选中页面左侧
         if (end > page) {
             datasource.push({
-                page: [ page + 1, end ],
+                range: [ page + 1, end ],
                 tpl: pageTemplate
             });
         }
 
-        // 结束部分的页码，方便跳到最后一页
-        if (endCount > 0) {
-            datasource.push(
-                {
-                    tpl: ellipsisTemplate
-                },
-                {
-                    page: [ count - endCount + 1, count ],
+
+
+
+
+        // startCount
+        var offset;
+
+        if (startCount > 0 && start > firstPage) {
+
+            offset = start - startCount;
+
+            if (offset > 1) {
+                datasource.unshift(
+                    {
+                        range: [ firstPage, startCount ],
+                        tpl: pageTemplate
+                    },
+                    {
+                        tpl: ellipsisTemplate
+                    }
+                );
+            }
+            else {
+                datasource.unshift({
+                    range: [ firstPage, start - 1 ],
                     tpl: pageTemplate
-                }
-            );
+                });
+            }
+
         }
 
-        // 下一页
-        if (page < count) {
-            datasource.push({
-                page: [ page + 1, page + 1 ],
-                tpl: me.nextTemplate
-            });
+        if (endCount > 0 && end < count) {
+
+            offset = count - end - endCount;
+
+            if (offset > 1) {
+                datasource.push(
+                    {
+                        tpl: ellipsisTemplate
+                    },
+                    {
+                        range: [ count - endCount + 1, count ],
+                        tpl: pageTemplate
+                    }
+                );
+            }
+            else {
+                datasource.push({
+                    range: [ end + 1, count ],
+                    tpl: pageTemplate
+                });
+            }
+
         }
+
+
+
+
+        // 上一页
+        datasource.unshift({
+            tpl: prevTemplate
+        });
+
+        // 下一页
+        datasource.push({
+            tpl: nextTemplate
+        });
+
+
 
         var html = $.map(
             datasource,
@@ -197,26 +231,45 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                if (item.page == null) {
-                    return tpl;
+                var html = '';
+
+                var append = function () {
+                    html += me.execute(
+                        'renderTemplate',
+                        [ data, tpl ]
+                    );
+                };
+
+                var data = {
+                    first: firstPage,
+                    last: count,
+                    active: page
+                };
+
+                var range = item.range;
+                if (range) {
+                    for (var i = range[0], end = range[1]; i <= end; i++) {
+                        data.page = i;
+                        append();
+                    }
                 }
                 else {
-
-                    var html = '';
-                    var page = item.page;
-
-                    for (var i = page[0], end = page[1]; i <= end; i++) {
-                        html += me.renderTemplate({ page: i }, tpl);
-                    }
-
-                    return html;
+                    append();
                 }
+
+                return html;
+
             }
         ).join('');
 
-        element.html(html);
+        mainElement.html(html);
 
-        me.showAnimation();
+        me.execute(
+            'showAnimate',
+            {
+                mainElement: mainElement
+            }
+        );
 
     };
 
@@ -226,10 +279,10 @@ define(function (require, exports, module) {
     proto.prev = function () {
 
         var me = this;
-        var page = me.page;
+        var page = me.get('page');
 
         if (page > 1) {
-            me.to(page - 1);
+            me.set('page', page - 1);
         }
 
     };
@@ -240,33 +293,10 @@ define(function (require, exports, module) {
     proto.next = function () {
 
         var me = this;
-        var page = me.page;
+        var page = me.get('page');
 
-        if (page < me.count) {
-            me.to(page + 1);
-        }
-
-    };
-
-    /**
-     * 翻到第 page 页
-     *
-     * @param {number} page
-     */
-    proto.to = function (page) {
-
-        var me = this;
-        var hasChange = page !== me.page;
-
-        me.page = page;
-
-        if (hasChange) {
-            me.emit(
-                'change',
-                {
-                    page: page
-                }
-            );
+        if (page < me.get('count')) {
+            me.set('page', page + 1);
         }
 
     };
@@ -280,12 +310,13 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -301,35 +332,26 @@ define(function (require, exports, module) {
         startCount: 1,
         endCount: 2,
 
-        pageTemplate: '<button class="btn" data-page="${page}">${page}</button>',
-        prevTemplate: '<button class="btn" data-page="${page}">上一页</button>',
-        nextTemplate: '<button class="btn" data-page="${page}">下一页</button>',
-        ellipsisTemplate: '<button class="btn ellipsis">...</button>',
-        activeTemplate: '<button class="btn btn-primary" data-page="${page}">${page}</button>',
-
-        renderTemplate: function (data, tpl) {
-            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
-                return data[$1] != null ? data[$1] : '';
-            });
+        showAnimate: function (options) {
+            options.mainElement.show();
         },
 
-        showAnimation: function () {
-            this.element.show();
-        },
-
-        hideAnimation: function () {
-            this.element.hide();
+        hideAnimate: function (options) {
+            options.mainElement.hide();
         }
 
     };
 
-    /**
-     * jquery 命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_pager';
+
+    Pager.propertyUpdater = { };
+
+    Pager.propertyUpdater.page =
+    Pager.propertyUpdater.count = function () {
+        this.render();
+        return false;
+    };
+
+    var ATTR_PAGE = 'data-page';
 
 
     return Pager;

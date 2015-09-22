@@ -9,8 +9,6 @@ define(function (require, exports) {
     var Input = require('../helper/Input');
     var Placeholder = require('../helper/Placeholder');
 
-    var init = require('../function/init');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
 
@@ -18,19 +16,17 @@ define(function (require, exports) {
      * 文本输入框构造函数
      *
      * @param {Object} options
-     * @property {jQuery} options.element <input type="text" /> 或 <textarea> 元素
-     * @property {string} options.template
+     * @property {jQuery} options.mainElement
      *
+     * @property {string} options.placeholderTemplate
      * @property {string} options.placeholderSelector
      * @property {boolean=} options.placeholderNativeFirst
      * @property {boolean=} options.placeholderSimple
      *
-     * @property {Function=} options.onChange 文本值变化事件
-     * @property {Function=} options.onKeyDown 鼠标按下事件
      * @property {Object=} options.action 键盘事件
      */
     function Text(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Text.prototype;
@@ -43,62 +39,33 @@ define(function (require, exports) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        me.placeholder = new Placeholder({
-            element: element,
-            simple: me.placeholderSimple,
-            nativeFirst: me.placeholderNativeFirst,
-            placeholderSelector: me.placeholderSelector,
-            template: me.template
+        var mainElement = me.option('mainElement');
+
+        var placeholder = new Placeholder({
+            mainElement: mainElement,
+            simple: me.option('placeholderSimple'),
+            nativeFirst: me.option('placeholderNativeFirst'),
+            placeholderSelector: me.option('placeholderSelector'),
+            complexTemplate: me.option('placeholderTemplate')
         });
 
-        me.input = new Input({
-            element: element,
-            action: me.action,
-            context: me
+        var input = new Input({
+            mainElement: mainElement,
+            action: me.option('action'),
+            context: me,
+            change: {
+                value: function (value) {
+                    me.set('value', value);
+                }
+            }
         });
 
-    };
-
-    /**
-     * 获取输入框的值
-     *
-     * @return {string}
-     */
-    proto.getValue = function () {
-        return $.trim(
-            this.element.val()
-        );
-    };
-
-    /**
-     * 设置输入框的值
-     *
-     * @params {string} value
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
-
-        var me = this;
-
-        options = options || { };
-
-        if (options.force || me.getValue() !== value) {
-
-            me.element.val(value);
-
-            if (me.placeholder) {
-                me.placeholder.refresh();
-            }
-
-            if (!options.silence) {
-                me.emit('change');
-            }
-
-        }
+        me.inner({
+            main: mainElement,
+            input: input,
+            placeholder: placeholder
+        });
 
     };
 
@@ -111,41 +78,36 @@ define(function (require, exports) {
 
         lifeCycle.dispose(me);
 
-        me.input.dispose();
-        me.placeholder.dispose();
-
-        me.element =
-        me.input =
-        me.placeholder = null;
+        me.inner('input').dispose();
+        me.inner('placeholder').dispose();
 
     };
 
-    jquerify(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
+    lifeCycle.extend(proto);
+
+
     Text.defaultOptions = {
-        simple: false,
-        nativeFirst: true,
+        placeholderSimple: false,
+        placeholderNativeFirst: true,
         placeholderSelector: '.placeholder',
-        template: '<div class="placeholder-wrapper">'
-                +    '<div class="placeholder"></div>'
-                + '</div>'
+        placeholderTemplate: '<div class="placeholder-wrapper">'
+                           +    '<div class="placeholder"></div>'
+                           + '</div>'
     };
 
-    /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element
-     * @param {Object=} options
-     * @return {Array.<Text>}
-     */
-    Text.init = init(Text);
+
+    Text.propertyUpdater = {
+
+        value: function (value) {
+
+            var me = this;
+
+            me.inner('input').set('value', value);
+            me.inner('placeholder').refresh();
+
+        }
+    };
 
 
     return Text;

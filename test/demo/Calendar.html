@@ -180,11 +180,14 @@
 
         +                     '<!-- /if -->'
 
-        +                     '<td class="${item.phase} '
+        +                     '<td class="${item.phase}'
         +                     '<!-- if: ${item.month} != ${month} -->'
-        +                     'adjacency-month'
+        +                     ' adjacency-month'
         +                     '<!-- else -->'
-        +                     'current-month'
+        +                     ' current-month'
+        +                     '<!-- /if -->'
+        +                     '<!-- if: ${item.active} -->'
+        +                     ' active'
         +                     '<!-- /if -->'
         +                     '" data-value="${item.year}-${item.month}-${item.date}">${item.date}</td>'
 
@@ -208,15 +211,15 @@
 
         var monthRender = etpl.compile(monthTemplate);
 
-        new Calendar({
+        window.calendar = new Calendar({
 
-            element: $('#month-calendar'),
+            mainElement: $('#month-calendar'),
 
-            multiple: false,
+            multiple: true,
 
             firstDay: 1,
             activeClass: 'active',
-            value: '2015-1-20',
+            value: '2015-09-27,2015-09-28,2015-09-29',
 
             prevSelector: '.icon-prev',
             nextSelector: '.icon-next',
@@ -224,8 +227,8 @@
             renderTemplate: function (data) {
                 return monthRender(data);
             },
-            onChange: function (e) {
-                console.log('change');
+            onchange: function (e) {
+                console.log(this.get('value'));
             }
         });
 
@@ -289,7 +292,7 @@
 
         new Calendar({
 
-            element: $('#week-calendar'),
+            mainElement: $('#week-calendar'),
 
             multiple: true,
             mode: 'week',
@@ -302,6 +305,9 @@
 
             renderTemplate: function (data) {
                 return weekRender(data);
+            },
+            onchange: function () {
+                console.log(this.get('value'));
             }
         });
     }

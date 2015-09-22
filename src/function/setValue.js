@@ -6,26 +6,29 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    return function (target, name, newValue, options, creator) {
+    return function (newValue, options, getValue, setValue, update) {
 
         options = options || { };
 
-        var oldValue = target[ name ];
+        var oldValue = getValue();
 
         if (options.force || newValue !== oldValue) {
 
-            target[ name ] = newValue;
+            setValue(newValue);
+
+            var data;
+
+            if ($.isFunction(update)) {
+                data = update(newValue, oldValue, options);
+            }
 
             if (!options.silence) {
 
-                var data;
-
-                if ($.type(creator) === 'function') {
-                    data = creator(newValue, oldValue, options);
-                }
-                else if ($.isPlainObject(creator)) {
-                    data = creator;
-                }
+                var data = {
+                    prop: '',
+                    newValue: newValue,
+                    oldValue: oldValue
+                };
 
                 target.emit('change', data);
 

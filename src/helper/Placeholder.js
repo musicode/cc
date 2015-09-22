@@ -31,30 +31,34 @@ define(function (require, exports, module) {
      */
 
     var init = require('../function/init');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var replaceWith = require('../function/replaceWith');
     var isActiveElement = require('../function/isActiveElement');
 
     var input = require('../util/input');
+    var detection = require('../util/detection');
 
     /**
      * 使输入框元素具有 placeholder 功能
      *
      * @constructor
      * @param {Object} options 配置对象
-     * @property {jQuery} options.element 输入框元素，如文本框、密码框、文本域
+     * @property {jQuery} options.mainElement 输入框元素，如文本框、密码框、文本域
      * @property {string=} options.value 如果文字不写在元素属性上，也可以直接传值
+     *
      * @property {boolean=} options.simple 是否使用简单模式
      * @property {boolean=} options.nativeFirst 是否原生优先
      *
-     * @property {string=} options.placeholderSelector 复杂模式查找占位符元素的选择器
      * @property {string=} options.simpleClass 简单模式使用的 class
      *
-     * @property {string=} options.template 复杂模式使用的包装模版
+     * @property {string=} options.complexTemplate 复杂模式下，使用的包装模版
+     * @property {string=} options.placeholderSelector 复杂模式下，查找占位符元素的选择器
+     * @property {string=} options.inputSelector 复杂模式下，查找输入框元素的选择器
+     * @property {Function=} options.showAnimate 复杂模式下，使用的显示动画
+     * @property {Function=} options.hideAnimate 复杂模式下，使用的隐藏动画
      */
     function Placeholder(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Placeholder.prototype;
@@ -64,235 +68,276 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        var placeholder = element.attr('placeholder');
+        var mainElement = me.option('mainElement');
 
-        // 在 removeAttr 之前取值
-        if (me.value == null) {
-            me.value = placeholder || '';
+        var value = me.option('value');
+        if (value == null) {
+            value = mainElement.attr('placeholder') || '';
         }
 
-        var conf;
+        me.set('value', value);
 
-        if (supportPlaceholder) {
 
-            if (me.nativeFirst) {
-                conf = 'native';
-            }
-            // 避免原生 placeholder 影响效果
-            else if (placeholder) {
-                element.removeAttr('placeholder');
-            }
+
+
+        var proxy;
+
+        if (detection.supportPlaceholder()
+            && me.option('nativeFirst')
+        ) {
+            proxy = proxyMap.native;
+        }
+        else {
+            proxy = me.option('simple')
+                  ? proxyMap.simple
+                  : proxyMap.complex;
         }
 
-        if (!conf) {
-            conf = me.simple ? 'simple' : 'complex';
-        }
+        me.inner({
+            main: mainElement,
+            proxy: proxy
+        });
 
-        conf = modeConf[conf];
 
-        $.extend(me, conf);
-
-        if (conf.init) {
-            me.init();
-        }
-
-        if (me.refresh) {
-            me.refresh();
-        }
+        executeProxy(me, 'init');
 
     };
 
-    jquerify(proto);
+    proto.show = function () {
+        executeProxy(this, 'show');
+    };
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
+    proto.hide = function () {
+        executeProxy(this, 'hide');
+    };
+
+    proto.refresh = function () {
+        executeProxy(this, 'refresh');
+    };
+
+    proto.dispose = function () {
+
+        var me = this;
+
+        executeProxy(me, 'dispose');
+
+        lifeCycle.dispose(me);
+
+    };
+
+    lifeCycle.extend(proto);
+
     Placeholder.defaultOptions = {
         simple: false,
         nativeFirst: true,
         simpleClass: 'placeholder-active',
+
         placeholderSelector: '.placeholder',
-        template: '<div class="placeholder-wrapper">'
-                +    '<div class="placeholder"></div>'
-                + '</div>'
+        inputSelector: ':text',
+        complexTemplate: '<div class="placeholder-wrapper">'
+                       +    '<input type="text" />'
+                       +    '<div class="placeholder"></div>'
+                       + '</div>',
+
+        showAnimate: function (options) {
+            options.placeholderElement.fadeIn(500);
+        },
+        hideAnimate: function (options) {
+            options.placeholderElement.hide();
+        }
+    };
+
+    Placeholder.propertyUpdater = {
+
+        value: function (value) {
+            this.refresh();
+        }
+
+    };
+
+    Placeholder.propertyValidator = {
+
+        value: function (value) {
+
+            switch ($.type(value)) {
+
+                case 'string':
+                case 'number':
+                    return value;
+
+            }
+
+            return '';
+
+        }
+
     };
 
     /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element 需要初始化的元素
-     * @return {Array.<Placeholder>}
-     */
-    Placeholder.init = init(Placeholder);
-
-    /**
-     * jquery 事件命名空间
+     * 执行代理方法
      *
      * @inner
-     * @type {string}
+     * @param {Object} instance
+     * @param {string} method
      */
-    var namespace = '.cobble_helper_placeholder';
-
-    // 创建测试元素
-    var element = $('<input type="text" />')[0];
-
-    /**
-     * 特性检测浏览器是否支持 placeholder 特性
-     *
-     * @inner
-     * @type {boolean}
-     */
-    var supportPlaceholder = 'placeholder' in element;
-
-    // 删除变量
-    element = null;
+    function executeProxy(instance, method) {
+        var proxy = instance.inner('proxy');
+        if (proxy && proxy[ method ]) {
+            proxy[ method ](instance);
+        }
+    }
 
     /**
      * 模式配置
-     * @type
+     *
+     * @inner
+     * @type {Object}
      */
-    var modeConf = {
+    var proxyMap = {
 
         native: {
-
-            show: $.noop,
-            hide: $.noop,
-            refresh: $.noop,
-            dispose: function () {
-
-                var me = this;
-
-                lifeCycle.dispose(me);
-
-                me.element = null;
+            refresh: function (instance) {
+                instance.inner('main').attr(
+                    'placeholder',
+                    instance.get('value')
+                );
             }
-
         },
 
         simple: {
-            init: function () {
+            init: function (instance) {
 
-                var me = this;
-                var handler = $.proxy(me.refresh, me);
+                var namespace = instance.namespace();
+                var handler = $.proxy(instance.refresh, instance);
 
-                me
-                .element
+                instance
+                .inner('main')
                 .on('focus' + namespace, handler)
                 .on('blur' + namespace, handler);
 
             },
-            show: function () {
+            show: function (instance) {
 
-                var me = this;
-
-                me
-                .element
-                .addClass(me.simpleClass)
-                .val(me.value);
+                instance
+                .inner('main')
+                .addClass(instance.option('simpleClass'))
+                .val(instance.get('value'));
 
             },
-            hide: function () {
+            hide: function (instance) {
 
-                var me = this;
-
-                me
-                .element
-                .removeClass(me.simpleClass)
+                instance
+                .inner('main')
+                .removeClass(instance.option('simpleClass'))
                 .val('');
 
             },
-            refresh: function () {
+            refresh: function (instance) {
 
-                var me = this;
-                var element = me.element;
+                var mainElement = instance.inner('main');
+                mainElement.removeAttr('placeholder');
 
-                if (isActiveElement(element)) {
-                    if (element.hasClass(me.simpleClass)) {
-                        me.hide();
+                if (isActiveElement(mainElement)) {
+                    if (mainElement.hasClass(instance.option('simpleClass'))) {
+                        instance.hide();
+                        return;
                     }
                 }
-                else if (!element.val()) {
-                    me.show();
+                else if (!$.trim(mainElement.val())) {
+                    instance.show();
+                    return;
                 }
 
+                mainElement.val(instance.get('value'));
+
             },
-            dispose: function () {
+            dispose: function (instance) {
 
-                var me = this;
-
-                lifeCycle.dispose(me);
-
-                me.element.off(namespace);
-                me.element = null;
+                instance.inner('main').off(
+                    instance.namespace()
+                );
 
             }
         },
 
         complex: {
-            init: function () {
+            init: function (instance) {
 
-                var me = this;
-                var element = me.element;
-                var wrapper = $(me.template);
+                var inputElement = instance.option('mainElement');
+                var mainElement = $(instance.option('complexTemplate'));
 
-                replaceWith(element, wrapper);
-                wrapper.append(element);
+                replaceWith(inputElement, mainElement);
+                replaceWith(
+                    mainElement.find(
+                        instance.option('inputSelector')
+                    ),
+                    inputElement
+                );
 
-                me.faker = wrapper.find(me.placeholderSelector);
+                instance.inner({
+                    main: mainElement,
+                    input: inputElement,
+                    placeholder: mainElement.find(
+                        instance.option('placeholderSelector')
+                    )
+                });
 
-                // 必须放最后，jquery 某些 DOM 操作会解绑事件
-                var handler = $.proxy(me.refresh, me);
+                input.init(inputElement);
 
-                input.init(element);
+                var namespace = instance.namespace();
+                var handler = $.proxy(instance.refresh, instance);
 
-                element
+                inputElement
                     .on('focus' + namespace, handler)
                     .on('blur' + namespace, handler)
                     .on('input' + namespace, handler);
 
             },
-            show: function () {
+            show: function (instance) {
 
-                var me = this;
+                var placeholderElement = instance.inner('placeholder');
 
-                me.faker.html(me.value).show();
+                placeholderElement.html(instance.get('value'));
+                instance.execute(
+                    'showAnimate',
+                    {
+                        placeholderElement: placeholderElement
+                    }
+                );
 
             },
-            hide: function () {
-                this.faker.hide();
+            hide: function (instance) {
+
+                instance.execute(
+                    'hideAnimate',
+                    {
+                        placeholderElement: instance.inner('placeholder')
+                    }
+                );
+
             },
-            refresh: function () {
+            refresh: function (instance) {
 
-                var me = this;
-                var value = me.element.val();
+                var inputElement = instance.inner('input');
+                inputElement.removeAttr('placeholder');
 
-                if ($.trim(value)) {
-                    me.hide();
+                if ($.trim(inputElement.val())) {
+                    instance.hide();
                 }
                 else {
-                    me.show();
+                    instance.show();
                 }
 
             },
-            dispose: function () {
+            dispose: function (instance) {
 
-                var me = this;
+                var inputElement = instance.inner('input');
 
-                lifeCycle.dispose(me);
-
-                var element = me.element;
-
-                input.dispose(element);
-                element.off(namespace);
-
-                me.faker =
-                me.element = null;
+                input.dispose(inputElement);
+                inputElement.off(
+                    instance.namespace()
+                );
 
             }
         }

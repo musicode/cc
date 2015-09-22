@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var urlUtil = require('../util/url');
+    var urlUtil = require('./url');
 
     /**
      * 创建表单元素

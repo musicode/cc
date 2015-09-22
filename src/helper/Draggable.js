@@ -27,12 +27,13 @@ define(function (require, exports, module) {
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var innerOffset = require('../function/innerOffset');
     var outerOffset = require('../function/outerOffset');
     var pageScrollLeft = require('../function/pageScrollLeft');
     var pageScrollTop = require('../function/pageScrollTop');
+    var viewportWidth = require('../function/viewportWidth');
+    var viewportHeight = require('../function/viewportHeight');
     var enableSelection = require('../function/enableSelection');
     var disableSelection = require('../function/disableSelection');
 
@@ -44,27 +45,22 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 需要拖拽的元素
-     * @property {jQuery=} options.container 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
-     * @property {string=} options.draggingClass 拖拽时的 className
+     * @property {jQuery} options.mainElement 需要拖拽的元素
+     * @property {jQuery=} options.containerElement 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
+     * @property {string=} options.draggingClass 拖拽时给 mainElement 加上的 className
+     * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 加上的的 className
+     * @property {string=} options.bodyDraggingClass 拖拽时给 document.body 加上的 className，用样式避免出现选区
      *
      * @property {string=} options.axis 限制方向，可选值包括 x y
-     * @property {boolean=} options.silence 是否不产生位移，仅把当前坐标通过事件传出去
      *
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
-     * @property {Function=} options.onBeforeDrag 开始拖拽
-     * @argument {Object} options.onBeforeDrag.point 坐标点
+     * @property {Function=} options.dragAnimate
      *
-     * @property {Function=} options.onDrag 正在拖拽
-     * @argument {Object} options.onBeforeDrag.point 坐标点
-     *
-     * @property {Function=} options.onAfterDrag 结束拖拽
-     * @argument {Object} options.onAfterDrag.point 坐标点
      */
     function Draggable(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Draggable.prototype;
@@ -77,17 +73,17 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        if (!me.container) {
-            me.container = page();
-        }
+        var mainElement = me.option('mainElement');
+        me.inner('main', mainElement);
 
-        // 这里本想使用 not 选择器 来实现 cancal
-        // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
-        // 因为有这个问题，索性整个判断都放在 onBeforeDrag 中处理
+        var containerElement = me.option('containerElement') || page();
 
-        element.css(position(element));
+        mainElement.css(
+            position(mainElement)
+        );
+
+        var namespace = me.namespace();
 
         $.each(supportEvents, function (key, event) {
 
@@ -95,126 +91,202 @@ define(function (require, exports, module) {
                 return;
             }
 
-            element.on(
-                event.mousedown + namespace,
+            mainElement.on(
+                event.down + namespace,
                 function (e) {
+
+
+                    // 这里本想使用 not 选择器来实现 cancal
+                    // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
+                    // 因为有这个问题，索性整个判断都放在这里
+
+                    var handleSelector = me.option('handleSelector');
+                    var cancelSelector = me.option('cancelSelector');
 
                     var target = e.target;
 
-                    var handle = me.handleSelector;
-                    var cancel = me.cancelSelector;
-
-                    if (handle && !hitTarget(element, handle, target)
-                        || cancel && hitTarget(element, cancel, target)
+                    if (handleSelector && !hitTarget(mainElement, handleSelector, target)
+                        || cancelSelector && hitTarget(mainElement, cancelSelector, target)
                     ) {
                         return;
                     }
 
+
+
+
+                    // 重新取值比较靠谱
+                    var style = position(mainElement);
+
+
+
+
                     // =====================================================================
                     // 计算偏移量
-                    // 这样方便 onDrag 时作为当前全局坐标( client 坐标或 page 坐标)的减数，减少计算量
+                    // 这样方便 onDrag 时作为当前全局坐标的减数，减少计算量
                     // =====================================================================
 
-                    var coord = global[key];
-                    var elementOffset = outerOffset(element);
+                    var coord = globalCoord[ key ];
+
+                    var mainOuterOffset = outerOffset(mainElement);
+                    var containerInnerOffset = innerOffset(containerElement);
 
                     // 因为 offset() 包含 margin
                     // 所以减去 margin 才是真正的坐标值
-                    var offsetX = coord.absoluteX(e) - elementOffset.left;
-                    var offsetY = coord.absoluteY(e) - elementOffset.top;
+                    var offsetX = coord.absoluteX(e) - mainOuterOffset.x;
+                    var offsetY = coord.absoluteY(e) - mainOuterOffset.y;
 
-                    // 因为 onDrag 是用`全局坐标`减去偏移量
+                    // 因为 onDrag 是用`全局坐标`减去`偏移量`
                     // 所以偏移量应该是全局坐标的偏移量
-                    var container = me.container;
-                    if (contains(container, element)) {
-                        var containerOffset = innerOffset(container);
-                        offsetX += containerOffset.left;
-                        offsetY += containerOffset.top;
+                    var containerContainsElement = contains(containerElement, mainElement);
+                    if (containerContainsElement) {
+                        offsetX += containerInnerOffset.x;
+                        offsetY += containerInnerOffset.y;
                     }
 
+
+
+
+
+
                     // ====================================================
-                    // 取最新的坐标值比较靠谱
+                    // 全局坐标计算函数
                     // ====================================================
-                    var style = position(element);
-                    var pos = style.position;
+
                     point.left = style.left;
                     point.top = style.top;
 
-                    var axis = me.axis;
-                    var rect = me.getRectange(true);
+                    var isFixed = style.position === 'fixed';
+
+                    // 计算拖拽范围
+                    var rect = {
+                        x: containerContainsElement ? 0 : containerInnerOffset.x,
+                        y: containerContainsElement ? 0 : containerInnerOffset.y,
+                        width: isFixed ? viewportWidth() : containerElement.innerWidth(),
+                        height: isFixed ? viewportHeight() : containerElement.innerHeight()
+                    };
+
+                    rect.width = Math.max(0, rect.width - mainElement.outerWidth(true));
+                    rect.height = Math.max(0, rect.height - mainElement.outerHeight(true));
+
+                    var axis = me.option('axis');
 
                     xCalculator = axis === 'y'
-                                ? calculator.constant(point.left)
-                                : calculator.change(
-                                    coord[ pos + 'X' ],
+                                ? calculator.constant(style.left)
+                                : calculator.variable(
+                                    // 全局坐标
+                                    coord[ isFixed ? 'fixedX' : 'absoluteX' ],
+                                    // 偏移坐标
                                     offsetX,
+                                    // 约束坐标范围
                                     rect.x,
                                     rect.x + rect.width
                                 );
 
                     yCalculator = axis === 'x'
-                                ? calculator.constant(point.top)
-                                : calculator.change(
-                                    coord[ pos + 'Y' ],
+                                ? calculator.constant(style.top)
+                                : calculator.variable(
+                                    coord[ isFixed ? 'fixedY' : 'absoluteY' ],
                                     offsetY,
                                     rect.y,
                                     rect.y + rect.height
                                 );
 
+
+
+
+
                     counter = 0;
 
-                    disableSelection();
 
-                    instance
-                        .document
-                        .on(event.mousemove + namespace, me, onDrag)
-                        .on(event.mouseup + namespace, me, onAfterDrag);
+                    instance.document
+                        .off(namespace)
+                        .on(event.move + namespace, onDrag)
+                        .on(event.up + namespace, onAfterDrag);
+
+
                 }
             );
 
         });
-    };
 
-    /**
-     * 获得可移动范围的矩形信息
-     *
-     * @param {boolean=} forDrag 是否是拖拽元素可移动的范围
-     * @return {Object}
-     */
-    proto.getRectange = function (forDrag) {
+        var draggingClass = me.option('draggingClass');
+        var containerDraggingClass = me.option('containerDraggingClass');
+        var bodyDraggingClass = me.option('bodyDraggingClass');
 
-        var me = this;
-        var rect = me.rect;
+        var onDrag = function (e) {
 
-        if ($.isFunction(rect)) {
-            rect = me.rect();
-        }
+            var x = xCalculator(e);
+            var y = yCalculator(e);
 
-        if (forDrag) {
-            var element = me.element;
-            var width = rect.width - element.outerWidth(true);
-            var height = rect.height - element.outerHeight(true);
+            if (point.left === x && point.top === y) {
+                return;
+            }
 
-            // width/height 有可能比 outerWidth/outerHeight 小
-            rect.width = Math.max(0, width);
-            rect.height = Math.max(0, height);
-        }
+            point.left = x;
+            point.top = y;
 
-        return rect;
+            // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
+            // 只有坐标发生变动才算
+            if (++counter === 1) {
 
-    };
+                disableSelection();
 
-    /**
-     * 设置容器可移动范围的矩形信息
-     *
-     * @param {Object|Function} rect
-     * @property {number} rect.x 矩形的 x 坐标
-     * @property {number} rect.y 矩形的 y 坐标
-     * @proeprty {number} rect.width 矩形的宽度
-     * @property {number} rect.height 矩形的高度
-     */
-    proto.setRectange = function (rect) {
-        this.rect = rect;
+                if (draggingClass) {
+                    mainElement.addClass(draggingClass);
+                }
+
+                if (containerDraggingClass) {
+                    containerElement.addClass(containerDraggingClass);
+                }
+
+                if (bodyDraggingClass) {
+                    instance.body.addClass(bodyDraggingClass);
+                }
+
+                me.emit('beforedrag', point);
+
+            }
+
+            me.execute(
+                'dragAnimate',
+                {
+                    mainElement: mainElement,
+                    mainStyle: point
+                }
+            );
+
+            me.emit('drag', point);
+
+        };
+
+        var onAfterDrag = function (e) {
+
+            instance.document.off(namespace);
+
+            enableSelection();
+
+            if (draggingClass) {
+                mainElement.removeClass(draggingClass);
+            }
+
+            if (containerDraggingClass) {
+                containerElement.removeClass(containerDraggingClass);
+            }
+
+            if (bodyDraggingClass) {
+                instance.body.removeClass(bodyDraggingClass);
+            }
+
+            if (counter > 0) {
+                me.emit('afterdrag', point);
+            }
+
+            counter =
+            xCalculator =
+            yCalculator = null;
+
+        };
+
     };
 
     /**
@@ -226,14 +298,13 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-
-        me.element =
-        me.container = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -242,37 +313,11 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Draggable.defaultOptions = {
-
-        rect: function () {
-
-            var me = this;
-            var container = me.container;
-
-            var result = {
-                x: 0,
-                y: 0,
-                width: container.innerWidth(),
-                height: container.innerHeight()
-            };
-
-            // 如果不是父子元素关系，需要把容器的外围信息加上
-            if (!contains(container, me.element)) {
-                var containerOffset = innerOffset(container);
-                result.x = containerOffset.left;
-                result.y = containerOffset.top;
-            }
-
-            return result;
+        bodyDraggingClass: 'no-selection',
+        dragAnimate: function (options) {
+            options.mainElement.css(options.mainStyle);
         }
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_helper_draggable';
 
     //
     // =================================================
@@ -344,7 +389,7 @@ define(function (require, exports, module) {
          * @param {number} max 最大值
          * @return {Function}
          */
-        change: function (fn, offset, min, max) {
+        variable: function (fn, offset, min, max) {
             return function (e) {
                 return restrain(fn(e) - offset, min, max);
             };
@@ -358,105 +403,40 @@ define(function (require, exports, module) {
      * @inner
      * @type {Object}
      */
-    var global = { };
+    var globalCoord = { };
 
     $.each(supportEvents, function (key, event) {
-        if (event.support) {
-            global[key] = {
-                absoluteX: function (e) {
-                    return event.clientX(e) + pageScrollLeft();
-                },
-                absoluteY: function (e) {
-                    return event.clientY(e) + pageScrollTop();
-                },
-                fixedX: function (e) {
-                    return event.clientX(e);
-                },
-                fixedY: function (e) {
-                    return event.clientY(e);
-                }
-            };
-        }
-    });
 
-
-    /**
-     * 正在拖拽
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onDrag(e) {
-
-        var x = xCalculator(e);
-        var y = yCalculator(e);
-
-        if (point.left === x && point.top === y) {
+        if (!event.support) {
             return;
         }
 
-        point.left = x;
-        point.top = y;
-
-        var draggable = e.data;
-
-        // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
-        // 只有坐标发生变动才算
-        if (++counter === 1) {
-
-            var draggingClass = draggable.draggingClass;
-            if (draggingClass) {
-                draggable.element.addClass(draggingClass);
+        globalCoord[ key ] = {
+            absoluteX: function (e) {
+                return event.client(e).x + pageScrollLeft();
+            },
+            absoluteY: function (e) {
+                return event.client(e).y + pageScrollTop();
+            },
+            fixedX: function (e) {
+                return event.client(e).x;
+            },
+            fixedY: function (e) {
+                return event.client(e).y;
             }
+        };
 
-            draggable.emit('beforeDrag');
-        }
-
-        if (!draggable.silence) {
-            draggable.element.css(point);
-        }
-
-        draggable.emit('drag', point);
-
-    }
-
-    /**
-     * 停止拖拽
-     *
-     * @inner
-     * @param {Event} e
-     */
-    function onAfterDrag(e) {
-
-        enableSelection();
-
-        instance.document.off(namespace);
-
-        var draggable = e.data;
-
-        var draggingClass = draggable.draggingClass;
-        if (draggingClass) {
-            draggable.element.removeClass(draggingClass);
-        }
-
-        if (counter > 0) {
-            draggable.emit('afterDrag', point);
-        }
-
-        counter =
-        xCalculator =
-        yCalculator = null;
-    }
+    });
 
     /**
      * 是否命中目标
      *
-     * container 只要有一个命中就返回 true
+     * element 只要有一个命中就返回 true
      *
      * @inner
      * @param {jQuery} element
      * @param {string|Array.<string>} selector
-     * @param {HTMLElement} target
+     * @param {jQuery|HTMLElement} target
      * @return {boolean}
      */
     function hitTarget(element, selector, target) {

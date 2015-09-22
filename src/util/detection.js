@@ -151,4 +151,24 @@ define(function (require, exports, module) {
         return canvas && canvas.getContext;
     };
 
+    /**
+     * 是否支持 placeholder
+     *
+     * @return {boolean}
+     */
+    exports.supportPlaceholder = function () {
+        var element = $('<input type="text" />')[0];
+        return 'placeholder' in element;
+    };
+
+    /**
+     * 是否支持 input 事件
+     *
+     * @return {boolean}
+     */
+    exports.supportInput = function () {
+        var element = $('<input type="text" />')[0];
+        return 'oninput' in element;
+    };
+
 });

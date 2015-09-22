@@ -8,13 +8,8 @@ define(function (require, exports, module) {
 
     /**
      * 90%
-     *
-     * 事件列表：
-     *
-     * 1. change - 索引发生变化时触发
      */
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
@@ -24,33 +19,31 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 主元素
+     * @property {jQuery} options.mainElement 主元素
      *
      * @property {number=} options.index 从第几个开始播放，默认是 0
      * @property {number=} options.step 每次滚动几个，默认是 1
      * @property {number=} options.showCount 显示个数，默认是 1
      *
-     * @property {number=} options.delay 自动播放时，切换的等待时间，默认 5000
+     * @property {number=} options.interval 自动播放时，切换的时间间隔，默认 5000
      * @property {boolean=} options.autoPlay 是否自动播放，默认 true
      * @property {boolean=} options.loop 是否循环播放，默认为 true
      * @property {boolean=} options.pauseOnHover 是否鼠标 hover 时暂停播放，默认为 true
      *
-     * @property {string=} options.trigger 当有图标按钮时，触发改变的方式，可选值有 over click， 默认是 over
-     * @property {string=} options.activeClass 转场时会为 icon 切换这个 class
+     * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 over click， 默认是 over
+     * @property {string=} options.navActiveClass 转场时会为 icon 切换这个 class
+     * @property {string=} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
      *
      * @property {string=} options.prevSelector 上一页的选择器
      * @property {string=} options.nextSelector 下一页的选择器
-     * @property {string=} options.iconSelector 图标按钮选择器（一般会写序号的小按钮）
      * @property {string} options.itemSelector 幻灯片选择器
      *
-     * @property {Function} options.animation 切换动画，必传，否则不会动
-     * @argument {Object} options.animation.data
-     * @property {number} options.animation.data.to
-     * @property {number} options.animation.data.from
+     * @property {Function} options.navAnimate
+     * @property {Function} options.contentAnimate 切换动画，必传，否则不会动
      *
      */
     function Carousel(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Carousel.prototype;
@@ -64,52 +57,84 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
+        var mainElement = me.option('mainElement');
+
+        var namespace = me.namespace();
         var clickType = 'click' + namespace;
 
-        var prevSelector = me.prevSelector;
+        var prevSelector = me.option('prevSelector');
         if (prevSelector) {
-            element.on(clickType, prevSelector, $.proxy(me.prev, me));
+            mainElement
+                .on(clickType, prevSelector, $.proxy(me.prev, me));
         }
 
-        var nextSelector = me.nextSelector;
+        var nextSelector = me.option('nextSelector');
         if (nextSelector) {
-            element.on(clickType, nextSelector, $.proxy(me.next, me));
+            mainElement
+                .on(clickType, nextSelector, $.proxy(me.next, me));
         }
 
-        var autoPlay = me.autoPlay;
-        var itemSelector = me.itemSelector;
-        if (autoPlay && me.pauseOnHover) {
-            element
-                .on('mouseenter' + namespace, itemSelector, $.proxy(me.pause, me))
-                .on('mouseleave' + namespace, itemSelector, $.proxy(me.play, me));
+        var autoPlay = me.option('autoPlay');
+        var itemSelector = me.option('itemSelector');
+        if (autoPlay && me.option('pauseOnHover')) {
+            mainElement
+                .on(
+                    'mouseenter' + namespace,
+                    itemSelector,
+                    $.proxy(me.pause, me)
+                )
+                .on(
+                    'mouseleave' + namespace,
+                    itemSelector,
+                    $.proxy(me.play, me)
+                );
         }
 
-        me.minIndex = 0;
-        me.maxIndex = element.find(itemSelector).length - 1
-                    - (me.showCount - 1);
+        me.set({
+            minIndex: 0,
+            maxIndex: mainElement.find(itemSelector).length - 1
+                    - (me.option('showCount') - 1)
+        });
 
-        me.switcher = new Switchable({
-            element: element,
-            index: me.index,
-            trigger: me.trigger,
-            selector: me.iconSelector,
-            activeClass: me.activeClass,
-            change: function (data) {
+        var navSelector = me.option('navSelector');
+        var navActiveClass = me.option('navActiveClass');
 
-                me.index = data.to;
+        var switcher = new Switchable({
+            element: mainElement,
+            index: me.option('index'),
+            trigger: me.option('navTrigger'),
+            selector: navSelector,
+            activeClass: navActiveClass,
+            change: {
+                index: function (toIndex, fromIndex) {
 
-                me.animation(data);
+                    me.execute('navAnimate', {
+                        mainElement: mainElement,
+                        navSelector: navSelector,
+                        navActiveClass: navActiveClass,
+                        fromIndex: fromIndex,
+                        toIndex: toIndex
+                    });
 
-                me.emit('change', data);
+                    me.execute('contentAnimate', {
+                        mainElement: mainElement,
+                        contentSelector: me.option('contentSelector'),
+                        contentActiveClass: me.option('contentActiveClass'),
+                        fromIndex: fromIndex,
+                        toIndex: toIndex
+                    });
 
+                    me.set('index', toIndex);
+
+                }
             }
         });
 
-        if (autoPlay) {
-            me.play();
-        }
+        me.inner({
+            main: mainElement,
+            switcher: switcher
+        });
 
     };
 
@@ -120,17 +145,17 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.index - me.step;
-        if (index < me.minIndex) {
-            if (me.loop) {
-                index = me.maxIndex;
+        var index = me.get('index') - me.option('step');
+        if (index < me.get('minIndex')) {
+            if (me.option('loop')) {
+                index = me.get('maxIndex');
             }
             else {
                 return;
             }
         }
 
-        me.to(index);
+        me.set('index', index);
 
     };
 
@@ -141,79 +166,32 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.index + me.step;
-        if (index > me.maxIndex) {
-            if (me.loop) {
-                index = me.minIndex;
+        var index = me.get('index') + me.option('step');
+        if (index > me.get('maxIndex')) {
+            if (me.option('loop')) {
+                index = me.get('minIndex');
             }
             else {
                 return;
             }
         }
 
-        me.to(index);
-
-    };
-
-    /**
-     * 切到第 index 个
-     *
-     * @param {number} index
-     */
-    proto.to = function (index) {
-
-        var me = this;
-
-        if (me.autoPlay) {
-            me.play(index);
-        }
-        else {
-            me.switcher.to(index);
-        }
+        me.set('index', index);
 
     };
 
     /**
      * 开始自动播放
-     *
-     * @param {number} index
      */
-    proto.play = function (index) {
-
-        var me = this;
-
-        if (!me.autoPlay) {
-            return;
-        }
-
-        clearPlayTimer(me);
-
-        if (index !== me.index
-            && $.isNumeric(index)
-        ) {
-            me.switcher.to(index);
-        }
-
-        me.playing = true;
-
-        me.playTimer = setTimeout(
-            $.proxy(me.next, me),
-            me.delay
-        );
-
+    proto.play = function () {
+        this.set('playing', true);
     };
 
     /**
      * 暂停自动播放
      */
     proto.pause = function () {
-
-        var me = this;
-
-        me.playing = false;
-
-        clearPlayTimer(me);
-
+        this.set('playing', false);
     };
 
     /**
@@ -225,19 +203,18 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        if (me.playing) {
+        if (me.get('playing')) {
             me.pause();
         }
 
-        me.element.off(namespace);
-        me.switcher.dispose();
-
-        me.element =
-        me.switcher = null;
+        me.inner('main').off(
+            me.namespace()
+        );
+        me.inner('switcher').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -248,33 +225,116 @@ define(function (require, exports, module) {
     Carousel.defaultOptions = {
         index: 0,
         step: 1,
-        delay: 5000,
+        interval: 5000,
         showCount: 1,
-        trigger: 'over',
         loop: true,
         autoPlay: true,
-        pauseOnHover: true
+        pauseOnHover: true,
+        navTrigger: 'enter',
+        navAnimate: function (options) {
+
+            var activeClass = options.navActiveClass;
+            if (!activeClass) {
+                return;
+            }
+
+            var navItems = options.mainElement.find(
+                options.navSelector
+            );
+
+            if (navItems.length > 1) {
+                if (options.fromIndex >= 0) {
+                    navItems.eq(options.fromIndex).removeClass(activeClass);
+                }
+                if (options.toIndex >= 0) {
+                    navItems.eq(options.toIndex).addClass(activeClass);
+                }
+            }
+
+        }
+    };
+
+    Carousel.propertyUpdater = {
+
+        index: function (index) {
+
+            var me = this;
+
+            me.inner('switcher').set('index', index);
+
+            if (me.get('playing')) {
+                startPlayTimer(me);
+            }
+
+        },
+
+        playing: function (playing) {
+
+            var me = this;
+
+            clearPlayTimer(me);
+
+            if (playing) {
+                startPlayTimer(me);
+            }
+
+        }
+
+    };
+
+    Carousel.propertyValidator = {
+
+        playing: function (playing) {
+
+            var me = this;
+
+            if ($.type(playing) !== 'boolean') {
+                playing = false;
+            }
+
+            if (playing && !me.option('autoPlay')) {
+                playing = false;
+            }
+
+            return playing;
+
+        }
+
     };
 
     /**
-     * jquery 事件命名空间
+     * 开始自动播放的 timer
      *
      * @inner
-     * @type {string}
+     * @param {Carousel} instance
      */
-    var namespace = '.cobble_ui_carousel';
+    function startPlayTimer(instance) {
+
+        clearPlayTimer(instance);
+
+        instance.inner(
+            'playTimer',
+            setTimeout(
+                $.proxy(instance.next, instance),
+                instance.option('interval')
+            )
+        );
+
+    }
 
     /**
      * 清除自动播放的 timer
      *
      * @inner
-     * @param {Carousel} carousel
+     * @param {Carousel} instance
      */
-    function clearPlayTimer(carousel) {
+    function clearPlayTimer(instance) {
 
-        if (carousel.playTimer) {
-            clearTimeout(carousel.playTimer);
-            carousel.playTimer = null;
+        var playTimer = instance.inner('playTimer');
+
+        if (playTimer) {
+            clearTimeout(playTimer);
+            instance.inner('playTimer', null);
         }
 
     }

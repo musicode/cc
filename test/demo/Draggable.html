@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
+        body {
+            min-height: 600px
+        }
         #scrollbar {
             background-color: #FCFCFC;
             border: 1px solid #DDD;
@@ -38,16 +41,28 @@
             width: 200px;
             height: 200px;
             position: absolute;
-            top: 20%;
-            left: 20%;
+            top: 150px;
+            left: 130px;
+            margin: 10px;
         }
         #target {
+            border: 5px solid blue;
             background-color: red;
             width: 50px;
             height: 50px;
             position: absolute;
-            top: 20%;
-            left: 20%;
+            top: 180px;
+            left: 150px;
+            margin: 10px;
+        }
+
+        #fixed {
+            background-color: yellow;
+            width: 50px;
+            height: 50px;
+            position: fixed;
+            top: 180px;
+            left: 150px;
         }
     </style>
 </head>
@@ -67,6 +82,8 @@
 
     </div>
 
+    <div id="fixed"></div>
+
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
     <script src="./js/config.js"></script>
@@ -79,36 +96,42 @@
             function (Draggable) {
 
                 var scrollbar = new Draggable({
-                    element: $('#scrollbar i'),
-                    container: $('#scrollbar-track'),
+                    mainElement: $('#scrollbar i'),
+                    containerElement: $('#scrollbar-track'),
                     axis: 'x',
-                    onDragStart: function (point) {
-                        console.log(this, 'drag start');
+                    draggingClass: 'dragging',
+                    onbeforedrag: function (e, data) {
+                        console.log('beforedrag', data);
                     },
-                    onDrag: function (point) {
-                        console.log(this, point);
+                    ondrag: function (e, data) {
+                        console.log('drag', data);
                     },
-                    onDragEnd: function (point) {
-                        console.log(this, 'drag end');
+                    onafterdrag: function (e, data) {
+                        console.log('afterdrag', data);
                     }
                 });
 
                 scrollbar.on({
-                    dragStart: function (e, data) {
-                        console.log(e.cobble, 'dragStart');
+                    beforedrag: function (e, data) {
+                        console.log(e.origin, 'dragStart');
                     },
                     drag: function (e, data) {
-                        console.log(e.cobble, 'drag');
+                        console.log(e.origin, 'drag');
                     },
-                    dragEnd: function (e, data) {
-                        console.log(e.cobble, 'dragEnd');
+                    afterdrag: function (e, data) {
+                        console.log(e.origin, 'dragEnd');
                     }
                 })
 
                 new Draggable({
-                    element: $('#target'),
-                    container: $('#container')
+                    mainElement: $('#target'),
+                    containerElement: $('#container')
                 });
+
+                new Draggable({
+                    mainElement: $('#fixed')
+                });
+
             }
         );
     </script>

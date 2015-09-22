@@ -48,18 +48,49 @@
 
         require(
 
-        [ 'cobble/form/Checkbox' ],
+            [ 'cobble/form/Checkbox' ],
 
-        function (Checkbox) {
-            Checkbox.init(
-                $(':checkbox'),
-                {
+            function (Checkbox) {
+
+                var element = $('.checkbox');
+
+                window.checkbox1 = new Checkbox({
+                    mainElement: element.eq(0),
                     checkedClass: 'checked',
                     disabledClass: 'disabled',
-                    template: '<i class="icon"></i>'
-                }
-            );
-        }
+                    onchange: function (e, data) {
+                        console.log(data);
+                    }
+                });
+
+                window.checkbox2 = new Checkbox({
+                    mainElement: element.eq(1),
+                    checkedClass: 'checked',
+                    disabledClass: 'disabled',
+                    onchange: function (e, data) {
+                        console.log(data);
+                    }
+                });
+
+                window.checkbox3 = new Checkbox({
+                    mainElement: element.eq(2),
+                    checkedClass: 'checked',
+                    disabledClass: 'disabled',
+                    onchange: function (e, data) {
+                        console.log(data);
+                    }
+                });
+
+                window.checkbox4 = new Checkbox({
+                    mainElement: element.eq(3),
+                    checkedClass: 'checked',
+                    disabledClass: 'disabled',
+                    onchange: function (e, data) {
+                        console.log(data);
+                    }
+                });
+
+            }
         );
     </script>
     </body>

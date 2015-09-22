@@ -49,10 +49,10 @@
             function (Tab) {
 
                 var tab = new Tab({
-                    element: $('#main'),
+                    mainElement: $('#main'),
                     index: 1,
 
-                    trigger: 'over',
+                    navTrigger: 'enter',
 
                     navSelector: '.nav-tabs li',
                     contentSelector: '.tab-pane',
@@ -60,14 +60,14 @@
                     navActiveClass: 'active',
                     contentActiveClass: 'active in',
 
-                    animation: function (data) {
-                        var contents = this.element.find(this.contentSelector);
-                        contents.eq(data.from).removeClass('active in');
-                        contents.eq(data.to).addClass('active in');
+                    contentAnimate: function (options) {
+                        var contents = options.mainElement.find(options.contentSelector);
+                        contents.eq(options.fromIndex).removeClass('active in');
+                        contents.eq(options.toIndex).addClass('active in');
 
                     },
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

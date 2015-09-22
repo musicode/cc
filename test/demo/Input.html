@@ -24,8 +24,8 @@
 
             function (Input) {
 
-                var input1 = new Input({
-                    element: $('input'),
+                window.input1 = new Input({
+                    mainElement: $('input'),
                     smart: false,
 
                     action: {
@@ -39,13 +39,19 @@
                         }
                     },
 
-                    onChange: function () {
+                    onkeydown: function (e) {
+                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+                    },
+                    onkeyup: function (e) {
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                    },
+                    onchange: function (e) {
                         console.log('change', this);
                     }
                 });
 
-                var input2 = new Input({
-                    element: $('textarea'),
+                window.input2 = new Input({
+                    mainElement: $('textarea'),
                     smart: true,
 
                     action: {
@@ -57,17 +63,17 @@
                         }
                     },
 
-                    onKeyDown: function (e) {
-                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<', e);
+                    onkeydown: function (e) {
+                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
                     },
-                    onKeyUp: function (e) {
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', e);
+                    onkeyup: function (e) {
+                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
                     },
-                    onChange: function () {
+                    onchange: function () {
                         console.log('change', this);
                     }
                 });
-                input2.autoHeight();
+
             }
         );
     </script>

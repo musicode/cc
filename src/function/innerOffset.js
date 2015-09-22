@@ -19,8 +19,8 @@ define(function (require, exports, module) {
         var borderTopWidth = element.css('border-top-width');
 
         return {
-            left: offsetData.left + toNumber(borderLeftWidth, 0, 'int'),
-            top: offsetData.top + toNumber(borderTopWidth, 0, 'int')
+            x: offsetData.left + toNumber(borderLeftWidth, 0, 'int'),
+            y: offsetData.top + toNumber(borderTopWidth, 0, 'int')
         };
 
     };

@@ -11,20 +11,11 @@ define(function (require, exports, module) {
      *
      * 元素自定义属性使用 data-text 和 data-value
      * 如果需要在点击菜单项获得其他数据，可在元素任意绑定 data-xxx
-     * 当 onChange 事件触发时，会把所有 data 通过参数传入
+     * 当 change 事件触发时，会把所有 data 通过参数传入
      *
-     * # 事件列表
-     *
-     * 1. beforeShow - 返回 false 可阻止打开
-     * 2. afterShow
-     * 3. beforeHide - 返回 false 可阻止关闭
-     * 4. afterHide
-     * 5. change - 选中菜单项触发
      */
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var setValue = require('../function/setValue');
 
     var Popup = require('../helper/Popup');
 
@@ -33,35 +24,34 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.element 如果需要容器包着 button 和 menu, 可以设置主元素
-     *                                     openClass 会优先作用于它，否则作用于 button
+     * @property {jQuery=} options.mainElement 如果需要容器包着 buttonElement 和 menuElement, 可以设置主元素
+     *                                         menuActiveClass 会优先作用于它，否则作用于 buttonElement
      *
-     * @property {jQuery} options.button 点击触发下拉菜单显示的元素
-     * @property {jQuery} options.menu 下拉菜单元素
+     * @property {jQuery} options.buttonElement 点击触发下拉菜单显示的元素
+     * @property {jQuery} options.menuElement 下拉菜单元素
      *
      * @property {Array=} options.data 下拉菜单的数据
-     * @property {string=} options.template 菜单模板
+     * @property {string=} options.menuTemplate 菜单模板
      * @property {Function=} options.renderTemplate 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
      * @property {string=} options.defaultText 未选中值时默认显示的文本，如 请选择
      *
-     * @property {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
-     * @property {string=} options.openClass 菜单展开状态的 class
+     * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
+     * @property {string=} options.menuActiveClass 菜单展开状态的 class
      *
-     * @property {Object=} options.show
-     * @property {number=} options.show.delay 显示延时
-     * @property {Function=} options.show.animation 显示动画
+     * @property {string=} options.showMenuTrigger 显示的触发方式
+     * @property {number=} options.showMenuDelay 显示延时
+     * @property {Function=} options.showMenuAnimate 显示动画
      *
-     * @property {Object=} options.hide
-     * @property {number=} options.hide.delay 隐藏延时
-     * @property {Function=} options.hide.animation 隐藏动画
+     * @property {string=} options.hideMenuTrigger 隐藏的触发方式
+     * @property {number=} options.hideMenuDelay 隐藏延时
+     * @property {Function=} options.hideMenuAnimate 隐藏动画
      *
      * @property {Function} options.setText 设置选中菜单项文本
-     * @argument {string} options.onText.text
      */
     function ComboBox(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = ComboBox.prototype;
@@ -74,72 +64,83 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var button = me.button;
-        var menu = me.menu;
 
-        var context = me.context || me;
+        var mainElement = me.option('mainElement');
 
-        me.popup = new Popup({
-            element: button,
-            layer: menu,
-            show: me.show,
-            hide: me.hide,
-            context: context
+        var buttonElement = me.option('buttonElement');
+        var menuElement = me.option('menuElement');
+
+        var popup = new Popup({
+            triggerElement: buttonElement,
+            layerElement: menuElement,
+            showLayerTrigger: me.option('showMenuTrigger'),
+            showLayerDelay: me.option('showMenuDelay'),
+            hideLayerTrigger: me.option('hideMenuTrigger'),
+            hideLayerDelay: me.option('hideMenuDelay'),
+            showLayerAnimate: function () {
+                me.execute(
+                    'showMenuAnimate',
+                    {
+                        menuElement: menuElement
+                    }
+                );
+            },
+            hideLayerAnimate: function () {
+                me.execute(
+                    'hideMenuAnimate',
+                    {
+                        menuElement: menuElement
+                    }
+                );
+            }
         });
 
-        var openClass = me.openClass;
-        if (openClass) {
+        var menuActiveClass = me.option('menuActiveClass');
+        var element = mainElement || buttonElement;
 
-            var mainElement = me.element || button;
+        var dispatchEvent = function (e) {
+            if (e.target.tagName) {
+                me.emit(e);
+            }
+        };
 
-            context
-            .on(
-                'afterShow' + namespace,
-                function () {
-                    mainElement.addClass(openClass);
-                }
-            )
-            .on(
-                'afterHide' + namespace,
-                function () {
-                    mainElement.removeClass(openClass);
-                }
-            );
+        popup
+        .before('open', dispatchEvent)
+        .after('open', function (e) {
+            if (menuActiveClass) {
+                element.addClass(menuActiveClass);
+            }
+            dispatchEvent(e);
+        })
+        .before('close', dispatchEvent)
+        .after('close', function (e) {
+            if (menuActiveClass) {
+                element.removeClass(menuActiveClass);
+            }
+            dispatchEvent(e);
+        });
 
-        }
 
-        var value = me.value;
 
+        var value = me.option('value');
         if (value == null) {
-            // 通过 DOM 取值
-            var item = menu.find('.' + me.activeClass);
-            if (item.length === 1) {
-                value = item.data('value');
+
+            var itemSelector = '.' + me.option('itemActiveClass');
+            var data = findItem(menuElement, itemSelector);
+            if (data) {
+                value = data.value;
             }
+
         }
 
-        // 不论是直接传入 value 或是通过 DOM 获取的 value
-        // 都不需要触发 onChange 事件
-        // 因为初始化触发事件会带来同步问题
-        // 如果非要触发，可以在初始化后调用 setValue() 手动触发
-
-        me.refresh(
-            {
-                data: me.data,
-                value: value
-            },
-            {
-                silence: true
-            }
-        );
-
-        menu.on(
-            'click' + namespace,
-            '[data-value]',
+        menuElement.on(
+            'click' + me.namespace(),
+            '[' + ATTR_VALUE + ']',
             function (e) {
 
-                me.setValue(
-                    $(this).data('value')
+                me.set(
+                    'value',
+                    $(this).attr(ATTR_VALUE)
                 );
 
                 me.close();
@@ -147,119 +148,39 @@ define(function (require, exports, module) {
             }
         );
 
+        me.set({
+            data: me.option('data'),
+            value: value
+        });
+
+        me.inner({
+            main: mainElement,
+            popup: popup
+        });
+
     };
 
     /**
-     * 获取当前选中的值
-     *
-     * @return {string}
+     * 渲染模板
      */
-    proto.getValue = function () {
-        return this.value;
-    };
-
-    /**
-     * 设置当前选中的值
-     *
-     * @param {string} value
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
+    proto.render = function () {
 
         var me = this;
+        var data = me.get('data');
 
-        var data = { };
+        if (data) {
 
-        // 检查 value 有效性
-        var menu = me.menu;
-        var target = menu.find('[data-value="' + value + '"]');
-
-        if (target.length === 1) {
-
-            data = target.data();
-
-            if (data.text == null) {
-                data.text = target.html();
-            }
-
-        }
-        else {
-            value = null;
-        }
-
-        if (setValue(me, 'value', value, data)) {
-
-            var activeClass = me.activeClass;
-
-            if (activeClass) {
-
-                menu
-                .find('.' + activeClass)
-                .removeClass(activeClass);
-
-                if (value != null) {
-                    target.addClass(activeClass);
-                }
-
-            }
-
-        }
-
-        if ($.isFunction(me.setText)) {
-            me.setText.call(
-                me.context || me,
-                data.text || me.defaultText
-            );
-        }
-
-    };
-
-    /**
-     * 刷新数据
-     *
-     * @param {Object=} options
-     * @property {Array=} options.data 数据
-     * @property {string=} options.value 选中的值
-     */
-    proto.refresh = function (options) {
-
-        var me = this;
-        var value = me.value;
-
-        var setOptions = arguments[1] || { };
-
-        if (options) {
-
-            var data = options.data;
-
-            if (data) {
-
-                me.menu.html(
-
-                    me.renderTemplate.call(
-                        me.context || me,
+            me.option('menuElement').html(
+                me.execute(
+                    'renderTemplate',
+                    [
                         data,
-                        me.template
-                    )
-
-                );
-
-            }
-
-            // 传了值表示必须强制触发 change 事件
-            if ('value' in options) {
-
-                value = options.value;
-
-                setOptions.force = true;
-
-            }
+                        me.option('menuTemplate')
+                    ]
+                )
+            );
 
         }
-
-        me.setValue(value, setOptions);
 
     };
 
@@ -267,14 +188,14 @@ define(function (require, exports, module) {
      * 显示菜单
      */
     proto.open = function () {
-        this.popup.open();
+        this.inner('popup').open();
     };
 
     /**
      * 隐藏菜单
      */
     proto.close = function () {
-        this.popup.close();
+        this.inner('popup').close();
     };
 
     /**
@@ -286,17 +207,15 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.menu.off(namespace);
-        me.popup.dispose();
+        me.option('menuElement').off(
+            me.namespace()
+        );
 
-        me.popup =
-        me.element =
-        me.button =
-        me.menu = null;
+        me.inner('popup').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -305,21 +224,97 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     ComboBox.defaultOptions = {
-        show: {
-            trigger: 'click'
+        showMenuTrigger: 'click',
+        hideMenuTrigger: 'click',
+        showMenuAnimate: function (options) {
+            options.menuElement.show();
         },
-        hide: {
-            trigger: 'click'
+        hideMenuAnimate: function (options) {
+            options.menuElement.hide();
         }
     };
 
     /**
-     * jquery 事件命名空间
+     * 视图更新
      *
-     * @inner
-     * @type {string}
+     * @static
+     * @type {Object}
      */
-    var namespace = '.cobble_ui_combobox';
+    ComboBox.propertyUpdater = { };
+    ComboBox.propertyUpdater.data =
+    ComboBox.propertyUpdater.value = function (newValue, oldValue, changes) {
+
+        var me = this;
+        var menuElement = me.option('menuElement');
+        var value = me.get('value');
+
+        var item;
+        var itemActiveClass = me.option('itemActiveClass');
+
+        if (changes.data) {
+            this.render();
+        }
+        else if (changes.value && itemActiveClass) {
+            item = findItem(menuElement, '[' + ATTR_VALUE + '=' + changes.value.oldValue + ']');
+            if (item) {
+                item.element.removeClass(itemActiveClass);
+            }
+        }
+
+        if (value !== null) {
+            item = findItem(menuElement, '[' + ATTR_VALUE + '=' + value + ']');
+            if (itemActiveClass) {
+                item.element.addClass(itemActiveClass);
+            }
+        }
+
+        me.execute(
+            'setText',
+            {
+                buttonElement: me.option('buttonElement'),
+                text: (item && item.text) || me.option('defaultText')
+            }
+        );
+
+    };
+
+    ComboBox.propertyValidator = {
+        value: function (value) {
+
+            var me = this;
+
+            var menuElement = me.option('menuElement');
+            var itemSelector = '[' + ATTR_VALUE + '="' + value + '"]';
+
+            if (!findItem(menuElement, itemSelector)) {
+                value = null;
+            }
+
+            return value;
+
+        }
+    };
+
+    var ATTR_VALUE = 'data-value';
+
+    function findItem(menuElement, itemSelector) {
+
+        var target = menuElement.find(itemSelector);
+
+        if (target.length === 1) {
+
+            var data = target.data();
+
+            data.element = target;
+
+            if (data.text == null) {
+                data.text = target.html();
+            }
+
+            return data;
+        }
+
+    }
 
 
     return ComboBox;

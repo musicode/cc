@@ -28,14 +28,12 @@ define(function (require, exports, module) {
      * 2. 长按是否触发 change 事件
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
-     *
      */
 
-    var around = require('../function/around');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var keyboard = require('../util/keyboard');
+
     var input = require('../util/input');
+    var keyboardUtil = require('../util/keyboard');
 
     var Keyboard = require('./Keyboard');
 
@@ -44,24 +42,10 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 输入框元素
+     * @property {jQuery} options.mainElement 输入框元素
      *
      * @property {boolean=} options.smart 是否能够聪明的在长按时不触发 change 事件，默认为 true
      *                                    因为长按产生的一般是无效输入
-     *
-     * @property {Function=} options.onKeyDown 按下键位触发
-     * @argument {Event} options.onKeyDown.event
-     *
-     * @property {Function=} options.onKeyUp 松开键位触发
-     * @argument {Event} options.onKeyUp.event
-     *
-     * @property {Function=} options.onChange 内容变化触发
-     *
-     * @property {Function=} options.onBeforeLongPress 长按开始
-     * @argument {Event} options.onBeforeLongPress.event
-     *
-     * @property {Function=} options.onAfterLongPress 长按结束
-     * @argument {Event} options.onAfterLongPress.event
      *
      * @property {Object=} options.action 按下某键，发出某事件
      *                                    组合键只支持 shift/ctrl/alt/meta + 字母/数字
@@ -83,7 +67,7 @@ define(function (require, exports, module) {
      *
      */
     function Input(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Input.prototype;
@@ -96,116 +80,62 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        input.init(element);
+        var mainElement = me.option('mainElement');
 
-        var context = me.context || me;
+        input.init(mainElement);
 
-        me.keyboard = new Keyboard({
-            element: element,
-            action: me.action,
+        var context = me.getContext();
+
+        var updateValue = function () {
+            me.set('value', mainElement.val());
+        };
+
+        updateValue();
+
+        var keyboard = new Keyboard({
+            watchElement: mainElement,
+            action: me.option('action'),
             context: context
         });
 
-        var valueBeforeLongPress;
+        var isLongPressing;
+        var longPressType = 'longpress';
 
         context
-        .on(
-            'beforeLongPress' + namespace,
+        .before(
+            longPressType,
             function () {
-                valueBeforeLongPress = element.val();
+                isLongPressing = true;
             }
         )
-        .on(
-            'afterLongPress' + namespace,
+        .after(
+            longPressType,
             function (e) {
 
-                valueBeforeLongPress = null;
+                isLongPressing = false;
 
-                if (valueBeforeLongPress !== element.val()
-                    && (keyboard.isCharKey(e.keyCode) || keyboard.isDeleteKey())
-                ) {
-                    me.emit('change');
+                if (keyboardUtil.isCharKey(e.keyCode) || keyboardUtil.isDeleteKey()) {
+                    updateValue();
                 }
 
             }
         );
 
-        element
+        mainElement
         .on(
-            inputType,
+            'input' + me.namespace(),
             function () {
-                if (valueBeforeLongPress == null || !me.smart) {
-                    me.emit('change');
+                if (!isLongPressing || !me.option('smart')) {
+                    updateValue();
                 }
             }
         );
 
-    };
-
-    /**
-     * 自动变宽
-     */
-    proto.autoWidth = function () {
-
-        var me = this;
-        var element = me.element;
-
-        element.on(
-            inputType,
-            function () {
-                if (element.scrollLeft() > 0) {
-                    element.width(
-                        element.prop('scrollWidth')
-                    );
-                }
-            }
-        );
-
-    };
-
-    /**
-     * 自动变高
-     */
-    proto.autoHeight = function () {
-
-        var me = this;
-        var element = me.element;
-
-        // 自动变高必须设置 overflow-y: hidden
-        if (element.css('overflow-y') !== 'hidden') {
-            element.css('overflow-y', 'hidden');
-        }
-
-        var originHeight = element.height();
-
-        var oldHeight = originHeight;
-        var newHeight;
-
-        var lineHeight = parseInt(element.css('font-size'), 10);
-        var padding = element.innerHeight() - originHeight;
-
-        element.on(
-            inputType,
-            function () {
-
-                // 把高度重置为原始值才能取到正确的 newHeight
-                if (oldHeight !== originHeight) {
-                    oldHeight = originHeight;
-                    element.height(originHeight);
-                }
-
-                // scrollHeight 包含上下 padding 和 height
-                newHeight = element.prop('scrollHeight') - padding;
-
-                if (Math.abs(newHeight - oldHeight) > lineHeight) {
-                    element.height(newHeight);
-                    oldHeight = newHeight;
-                }
-
-            }
-        );
+        me.inner({
+            keyboard: keyboard,
+            main: mainElement
+        });
 
     };
 
@@ -218,44 +148,30 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        var element = me.element;
-        input.dispose(element);
-        element.off(namespace);
+        var mainElement = me.inner('main');
 
-        me.keyboard.dispose();
+        input.dispose(mainElement);
+        mainElement.off(
+            me.namespace()
+        );
 
-        me.element =
-        me.keyboard = null;
+        me.inner('keyboard').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Input.defaultOptions = {
         smart: true
     };
 
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_helper_input';
+    Input.propertyUpdater = {
 
-    /**
-     * input 事件
-     *
-     * @inner
-     * @type {string}
-     */
-    var inputType = 'input' + namespace;
+        value: function (value) {
+            this.inner('main').val(value);
+        }
+
+    };
 
 
     return Input;

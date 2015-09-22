@@ -12,16 +12,6 @@ define(function (require, exports, module) {
      * 1. 可把 supload.swf 放到自己的域下，修改 FlashUploader.defaultOptions.flashUrl
      * 2. 放一个 crossdomain.xml 跨域配置文件
      *
-     * # 事件列表
-     *
-     * 1. fileChange
-     * 2. uploadStart
-     * 3. uploadProgress
-     * 4. uploadSuccess
-     * 5. uploadChunkSuccess
-     * 6. uploadError
-     * 7. uploadComplete
-     *
      */
 
 
@@ -29,11 +19,9 @@ define(function (require, exports, module) {
 
     var Supload = window.Supload;
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-
-    var percent = require('../function/percent');
-    var formatFile = require('../function/formatFile');
+    var ucFirst = require('../function/ucFirst');
+    var ratio = require('../function/ratio');
 
     /**
      * 使用 flash 上传
@@ -43,7 +31,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 点击打开文件选择框的元素
+     * @property {jQuery} options.mainElement 点击打开文件选择框的元素
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
@@ -52,7 +40,7 @@ define(function (require, exports, module) {
      *                                            [ 'jpg', 'png' ]
      */
     function FlashUploader(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = FlashUploader.prototype;
@@ -66,15 +54,17 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        var mainElement = me.option('mainElement');
+
         var swfOptions = {
-            flashUrl: me.flashUrl,
-            element: me.element[0],
-            action: me.action,
-            accept: me.accept,
-            multiple: me.multiple,
-            data: me.data,
-            fileName: me.fileName,
-            ignoreError: me.ignoreError,
+            element: mainElement[0],
+            flashUrl: me.option('flashUrl'),
+            action: me.option('action'),
+            accept: me.option('accept'),
+            multiple: me.option('multiple'),
+            data: me.option('data'),
+            fileName: me.option('fileName'),
+            ignoreError: me.option('ignoreError'),
             customSettings: {
                 uploader: me
             }
@@ -83,12 +73,14 @@ define(function (require, exports, module) {
         $.each(
             eventHandler,
             function (type, handler) {
-                type = $.camelCase('on-' + type);
-                swfOptions[type] = handler;
+                swfOptions[ 'on' + ucFirst(type) ] = handler;
             }
         );
 
-        me.supload = new Supload(swfOptions);
+        me.inner(
+            'supload',
+            new Supload(swfOptions)
+        );
 
     };
 
@@ -98,7 +90,7 @@ define(function (require, exports, module) {
      * @return {Array.<Object>}
      */
     proto.getFiles = function () {
-        return this.supload.getFiles();
+        return this.inner('supload').getFiles();
     };
 
     /**
@@ -107,7 +99,7 @@ define(function (require, exports, module) {
      * @param {string} action
      */
     proto.setAction = function (action) {
-        this.supload.setAction(action);
+        this.inner('supload').setAction(action);
     };
 
     /**
@@ -116,42 +108,42 @@ define(function (require, exports, module) {
      * @param {Object} data 需要一起上传的数据
      */
     proto.setData = function (data) {
-        this.supload.setData(data);
+        this.inner('supload').setData(data);
     };
 
     /**
      * 重置
      */
     proto.reset = function () {
-        this.supload.reset();
+        this.inner('supload').reset();
     };
 
     /**
      * 上传文件
      */
     proto.upload = function () {
-        this.supload.upload();
+        this.inner('supload').upload();
     };
 
     /**
      * 停止上传
      */
     proto.stop = function () {
-        this.supload.cancel();
+        this.inner('supload').cancel();
     };
 
     /**
      * 启用
      */
     proto.enable = function () {
-        this.supload.enable();
+        this.inner('supload').enable();
     };
 
     /**
      * 禁用
      */
     proto.disable = function () {
-        this.supload.disable();
+        this.inner('supload').disable();
     };
 
     /**
@@ -163,14 +155,11 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.supload.dispose();
-
-        me.supload =
-        me.element = null;
+        me.inner('supload').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -258,7 +247,7 @@ define(function (require, exports, module) {
          */
         fileChange: function () {
             var uploader = this.customSettings.uploader;
-            uploader.emit('fileChange');
+            uploader.emit('filechange');
         },
 
         /**
@@ -269,7 +258,7 @@ define(function (require, exports, module) {
          */
         uploadStart: function (data) {
             var uploader = this.customSettings.uploader;
-            uploader.emit('uploadStart', data);
+            uploader.emit('uploadstart', data);
         },
 
         /**
@@ -284,9 +273,9 @@ define(function (require, exports, module) {
 
             var uploader = this.customSettings.uploader;
 
-            data.percent = percent(data.uploaded, data.total);
+            data.percent = 100  * ratio(data.uploaded, data.total) + '%';
 
-            uploader.emit('uploadProgress', data);
+            uploader.emit('uploadprogress', data);
 
         },
 
@@ -299,7 +288,7 @@ define(function (require, exports, module) {
          */
         uploadSuccess: function (data) {
             var uploader = this.customSettings.uploader;
-            uploader.emit('uploadSuccess', data);
+            uploader.emit('uploadsuccess', data);
         },
 
         /**
@@ -311,7 +300,7 @@ define(function (require, exports, module) {
          */
         uploadError: function (data) {
             var uploader = this.customSettings.uploader;
-            uploader.emit('uploadError', data);
+            uploader.emit('uploaderror', data);
         },
 
         /**
@@ -322,7 +311,7 @@ define(function (require, exports, module) {
          */
         uploadComplete: function (data) {
             var uploader = this.customSettings.uploader;
-            uploader.emit('uploadComplete', data);
+            uploader.emit('uploadcomplete', data);
         }
     };
 

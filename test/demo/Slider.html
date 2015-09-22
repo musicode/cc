@@ -16,6 +16,16 @@
             left: 0;
             overflow: hidden;
         }
+        .slider-bar {
+            background: blue;
+            position: absolute;
+        }
+
+        #horizontal-slider .slider-bar {
+            left: 0;
+            width: 0;
+            height: 100%;
+        }
 
         #horizontal-slider,
         #vertical-slider {
@@ -54,6 +64,7 @@
 <body>
 
     <div id="horizontal-slider" class="slider-track">
+        <b class="slider-bar"></b>
         <b class="slider-thumb"></b>
     </div>
     <div id="vertical-slider" class="slider-track">
@@ -75,38 +86,56 @@
 
             function (Slider) {
 
-                var horizontalSlider = new Slider({
-                    element: $('#horizontal-slider'),
-                    scrollable: true,
-                    step: 10,
+                window.horizontalSlider = new Slider({
+                    mainElement: $('#horizontal-slider'),
+                    scrollStep: 5,
 
                     thumbSelector: '.slider-thumb',
+                    barSelector: '.slider-bar',
                     draggingClass: 'slider-active',
-                    hoverClass: 'slider-active',
 
-                    toAnimation: function (style) {
-                        this.thumb.animate(style, 100);
+                    slideAnimate: function (options) {
+
+                        var thumbElement = options.thumbElement;
+                        var barElement = options.barElement;
+
+                        if (options.action === 'click') {
+                            thumbElement.animate(options.thumbStyle, 100);
+                            if (options.barStyle) {
+                                barElement.animate(options.barStyle, 100);
+                            }
+                        }
+                        else {
+                            thumbElement.css(options.thumbStyle);
+                            if (options.barStyle) {
+                                barElement.css(options.barStyle);
+                            }
+                        }
                     },
-                    onChange: function (e, value) {
-                        console.log(this.value);
+                    change: {
+                        value: function (value) {
+                            console.log(value)
+                        }
                     }
                 });
 
 
                 var verticalSlider = new Slider({
-                    element: $('#vertical-slider'),
+                    mainElement: $('#vertical-slider'),
                     orientation: 'vertical',
                     thumbSelector: '.slider-thumb',
-                    animation: function (style) {
-                        this.thumb.animate(style, 10);
+                    slideAnimate: function (options) {
+                        options.thumbElement.animate(options.thumbStyle, 10);
                     },
-                    onChange: function (e, data) {
-                        console.log(data);
+                    change: {
+                        value: function (value) {
+                            console.log(value)
+                        }
                     }
                 });
 
-                var stepSlider = new Slider({
-                    element: $('#step-slider'),
+                window.stepSlider = new Slider({
+                    mainElement: $('#step-slider'),
 
                     thumbSelector: '.slider-thumb',
 
@@ -114,9 +143,20 @@
                     min: 1,
                     max: 10,
                     step: 1,
-                    scrollable: true,
-                    onChange: function (e, data) {
-                        console.log(data);
+
+                    scrollStep: function (delta) {
+                        if (delta > 0) {
+                            return 1;
+                        }
+                        else if (delta < 0) {
+                            return -1;
+                        }
+                    },
+
+                    change: {
+                        value: function (value) {
+                            console.log(value)
+                        }
                     }
                 });
             }

@@ -49,18 +49,18 @@
             function (FlashUploader) {
 
                 var uploader = new FlashUploader({
-                    element: $('#file'),
+                    mainElement: $('#file'),
                     action: 'http://localhost:8848/upload',
                     multiple: true,
                     accept: ['jpg', 'png', 'gif', 'bmp'],
                     data: {
                         company: 'baidu'
                     },
-                    onReady: function () {
+                    onready: function () {
                         console.log('ready');
                         //uploader.disable();
                     },
-                    onFileChange: function () {
+                    onfilechange: function () {
                         uploader.disable();
                         this.setData({
                             name: 'zhujl',
@@ -69,23 +69,23 @@
                         });
                         this.upload();
                     },
-                    onUploadStart: function (data) {
+                    onuploadstart: function (data) {
                         console.log('upload start:');
                         console.log(data.fileItem);
                     },
-                    onUploadProgress: function (data) {
+                    onuploadprogress: function (data) {
                         console.log('upload progress:');
                         console.log((100 * data.uploaded / data.total) + '%');
                     },
-                    onUploadSuccess: function (data) {
+                    onuploadsuccess: function (data) {
                         console.log('upload success');
                         console.log(data.responseText);
                     },
-                    onUploadError: function (data) {
+                    onuploaderror: function (data) {
                         console.log('upload error');
                         console.log(data);
                     },
-                    onUploadComplete: function (data) {
+                    onuploadcomplete: function (data) {
                         console.log('upload complete');
                     }
                 });

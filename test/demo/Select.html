@@ -34,11 +34,11 @@
             function (ComboBox) {
 
                 var comboBox = new ComboBox({
-                    element: $('.dropdown'),
+                    mainElement: $('.dropdown'),
                     name: 'name',
                     value: '2',
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

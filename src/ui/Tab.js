@@ -8,13 +8,8 @@ define(function (require, exports, module) {
 
     /**
      * 90%
-     *
-     * # 事件列表
-     *
-     * 1. change - 切换 tab 触发
      */
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
@@ -23,10 +18,10 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 主元素
+     * @property {jQuery} options.mainElement 主元素
      * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 navActiveClass 算出索引
      *
-     * @property {string=} options.trigger 触发方式，可选值包括 over click，默认是 click
+     * @property {string=} options.navTrigger 触发方式，可选值包括 over click，默认是 click
      *
      * @property {string} options.navSelector 导航项的选择器，如 .nav-item
      * @property {string=} options.contentSelector 内容区的选择器，如 .tab-panel
@@ -34,14 +29,11 @@ define(function (require, exports, module) {
      * @property {string} options.navActiveClass 导航项选中状态的 class
      * @property {string=} options.contentActiveClass 内容区选中状态的 class，如果未设置，直接 show/hide
      *
-     * @property {Function=} options.animation 切换内容的动画，如果 contentActiveClass 不能满足需求，可自行实现
-     * @argument {Object} options.animation.data
-     * @property {number} options.animation.data.from
-     * @property {number} options.animation.data.to
-     *
+     * @property {Function=} options.navAnimate 切换动画
+     * @property {Function=} options.contentAnimate 切换动画
      */
     function Tab(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Tab.prototype;
@@ -54,61 +46,48 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        me.switcher = new Switchable({
-            element: element,
-            index: me.index,
-            trigger: me.trigger,
-            selector: me.navSelector,
-            activeClass: me.navActiveClass,
-            change: function (data) {
+        var mainElement = me.option('mainElement');
 
-                var from = data.from;
-                var to = data.to;
+        var navSelector = me.option('navSelector');
+        var navActiveClass = me.option('navActiveClass');
 
-                // 切换 content，优先使用动画
-                if ($.isFunction(me.animation)) {
-                    me.animation(data);
+        var switcher = new Switchable({
+            element: mainElement,
+            index: me.option('index'),
+            trigger: me.option('navTrigger'),
+            selector: navSelector,
+            activeClass: navActiveClass,
+            change: {
+                index: function (toIndex, fromIndex) {
+
+                    me.execute('navAnimate', {
+                        mainElement: mainElement,
+                        navSelector: navSelector,
+                        navActiveClass: navActiveClass,
+                        fromIndex: fromIndex,
+                        toIndex: toIndex
+                    });
+
+                    me.execute('contentAnimate', {
+                        mainElement: mainElement,
+                        contentSelector: me.option('contentSelector'),
+                        contentActiveClass: me.option('contentActiveClass'),
+                        fromIndex: fromIndex,
+                        toIndex: toIndex
+                    });
+
+                    me.set('index', toIndex);
+
                 }
-                else {
-
-                    var contents = element.find(me.contentSelector);
-
-                    // 单个 content 表示不需要切换，每次都是刷新这块内容区
-                    if (contents.length !== 1) {
-
-                        var activeClass = me.contentActiveClass;
-
-                        if (activeClass) {
-                            contents.eq(from).removeClass(activeClass);
-                            contents.eq(to).addClass(activeClass);
-                        }
-                        else {
-                            contents.eq(from).hide();
-                            contents.eq(to).show();
-                        }
-                    }
-                }
-
-                me.index = to;
-
-                if (from !== to) {
-                    me.emit('change', data);
-                }
-
             }
         });
 
-    };
+        me.inner({
+            main: mainElement,
+            switcher: switcher
+        });
 
-    /**
-     * 激活 tab
-     *
-     * @param {number} index
-     */
-    proto.to = function (index) {
-        this.switcher.to(index);
     };
 
     /**
@@ -120,14 +99,11 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.switcher.dispose();
-
-        me.element =
-        me.switcher = null;
+        me.inner('switcher').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -136,10 +112,63 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Tab.defaultOptions = {
-        trigger: 'click',
+        navTrigger: 'click',
         navActiveClass: 'active',
         navSelector: '.nav-item',
-        contentSelector: '.tab-panel'
+        contentSelector: '.tab-panel',
+        navAnimate: function (options) {
+
+            var activeClass = options.navActiveClass;
+            if (!activeClass) {
+                return;
+            }
+
+            var navItems = options.mainElement.find(
+                options.navSelector
+            );
+
+            if (navItems.length > 1) {
+
+                if (options.fromIndex >= 0) {
+                    navItems.eq(options.fromIndex).removeClass(activeClass);
+                }
+
+                if (options.toIndex >= 0) {
+                    navItems.eq(options.toIndex).addClass(activeClass);
+                }
+
+            }
+
+        },
+        contentAnimate: function (options) {
+
+            var contentItems = options.mainElement.find(
+                options.contentSelector
+            );
+
+            // 单个 content 表示不需要切换，每次都是刷新这块内容区
+            if (contentItems.length > 1) {
+
+                var activeClass = options.contentActiveClass;
+
+                if (activeClass) {
+                    contentItems.eq(options.fromIndex).removeClass(activeClass);
+                    contentItems.eq(options.toIndex).addClass(activeClass);
+                }
+                else {
+                    contentItems.eq(options.fromIndex).hide();
+                    contentItems.eq(options.toIndex).show();
+                }
+
+            }
+
+        }
+    };
+
+    Tab.propertyUpdater = {
+        index: function (to) {
+            this.inner('switcher').set('index', to);
+        }
     };
 
 

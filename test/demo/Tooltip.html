@@ -20,21 +20,26 @@
             line-height: 24px;
             text-align: center;
 
+
+        }
+
+        #icon2 {
             position: absolute;
             top: 40%;
             left: 40%;
         }
 
-        #icon2 {
-            left: 5%;
-            top: 60%;
+        .wrapper {
+            position: absolute;
+            left: 20%;
+            top: 20%;
         }
 
     </style>
 </head>
 <body>
 
-    <span title="123123123">
+    <span class="wrapper" title="123123123">
         <i id="icon1" class="icon" data-dir="bottom">?</i>
     </span>
 
@@ -60,41 +65,41 @@
 
                 var config = Tooltip.defaultOptions;
 
-                config.template = '<div class="tooltip fade in">'
-                                +    '<div class="tooltip-inner"></div>'
-                                +    '<div class="tooltip-arrow"></div>'
-                                + '</div>';
+                config.mainTemplate = '<div class="tooltip fade in">'
+                                    +    '<div class="tooltip-inner"></div>'
+                                    +    '<div class="tooltip-arrow"></div>'
+                                    + '</div>';
 
-                config.gap = {
-                    x: 8,
-                    y: 0
-                };
-                config.delay = {
-                    hide: 500
-                };
-                config.offset.bottom = {
-                    x: 0,
-                    y: 0
-                };
+                config.gapX = 8;
+                config.gapY = 0;
 
-                config.updateContent = function () {
-                    this.layer.find('.tooltip-inner').html(
-                        this.element.attr('title')
+                config.hideDelay = 500;
+
+                config.updateContent = function (options) {
+
+                    options.mainElement.find('.tooltip-inner').html(
+                        options.triggerElement.attr('title')
                     );
-                }
 
-
-                config.onBeforeShow = function () {
-                    this.element.find('.tooltip-inner').html(this.title);
-                    console.log('====================================');
                 };
-                config.onAfterHide = function () {
+
+
+                config.onbeforeopen = function (e) {
+                    // this.main.find('.tooltip-inner').html(
+                    //     this.element.attr('title')
+                    // );
+                    console.log('before open');
+                };
+                config.onafterclose = function (e) {
                     //console.log(this);
-                    console.log('====================================');
+                    console.log('before close');
                 };
 
 
-                console.log(Tooltip.init($('[title]')));
+                new Tooltip({
+                    triggerElement: $(document.body),
+                    triggerSelector: '[title]'
+                });
 
             }
         );

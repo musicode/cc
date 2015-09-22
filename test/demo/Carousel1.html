@@ -132,9 +132,9 @@
 
             function (Carousel) {
 
-                new Carousel({
+                window.carousel = new Carousel({
 
-                    element: $('#carousel'),
+                    mainElement: $('#carousel'),
 
                     showCount: 3,
                     step: 2,
@@ -143,9 +143,9 @@
                     nextSelector: '#next',
                     itemSelector: '.item',
 
-                    animation: function (data) {
-                        var from = data.from;
-                        var to = data.to;
+                    contentAnimate: function (options) {
+                        var from = options.fromIndex;
+                        var to = options.toIndex;
 
                         $('.row').animate(
                             {
@@ -155,7 +155,7 @@
                         );
                     },
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

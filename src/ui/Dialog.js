@@ -6,23 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 事件列表：
-     *
-     * 1. beforeShow - 返回 false 可阻止显示
-     * 2. afterShow
-     * 3. beforeHide - 返回 false 可阻止隐藏
-     * 4. afterHide
-     */
-
     var instance = require('../util/instance');
-    var dimension = require('../util/dimension');
 
-    var aspect = require('../function/aspect');
-    var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var pageWidth = require('../function/pageWidth');
+    var pageHeight = require('../function/pageHeight');
     var offsetParent = require('../function/offsetParent');
 
     var pinGlobal = require('../function/pinGlobal');
@@ -33,11 +22,11 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.element 对话框元素，此配置可选
-     *                                     如果传参，可把 title/content 写到模板上，把元素传进来
-     *                                     如果未传，必须传 title/content
+     * @property {jQuery=} options.mainElement 对话框元素，此配置可选
+     *                                         如果传参，可把 title/content 写到模板上，把元素传进来
+     *                                         如果未传，必须传 title/content
      *
-     * @property {string=} options.template 对话框模板
+     * @property {string=} options.mainTemplate 对话框模板
      *
      * @property {string=} options.title 对话框标题
      * @property {string=} options.content 对话框内容
@@ -54,33 +43,34 @@ define(function (require, exports, module) {
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
-     * @property {boolean=} options.hideOnClickMask 点击遮罩是否隐藏对话框，默认为 false
+     * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框，默认为 false
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
-     * @property {Function=} options.showAnimation 显示对话框动画
-     * @property {Function=} options.hideAnimation 隐藏对话框动画
-     * @property {Function=} options.resizeAnimation 窗口 resize 事件时调整窗口位置的动画
+     * @property {Function=} options.showAnimate 显示对话框动画
+     * @property {Function=} options.hideAnimate 隐藏对话框动画
+     * @property {Function=} options.resizeAnimate 窗口 resize 时调整窗口位置的动画
+     * @property {Function=} options.resizeMaskAnimate 调整遮罩大小的动画
      *
-     * @property {jQuery=} options.mask 遮罩元素
+     * @property {jQuery=} options.maskElement 遮罩元素
      * @property {string=} options.maskTemplate 如果没传遮罩，可传模板动态创建
-     * @property {Function=} options.showMaskAnimation 显示遮罩动画
-     * @property {Function=} options.hideMaskAnimation 隐藏遮罩动画
+     * @property {Function=} options.showMaskAnimate 显示遮罩动画
+     * @property {Function=} options.hideMaskAnimate 隐藏遮罩动画
      *
      * @property {string=} options.skinClass 皮肤
-     * @property {string=} options.draggableClass 可拖拽时给 element 添加的 class
-     * @property {string=} options.draggingClass 拖拽时给 element 添加的 class
+     * @property {string=} options.draggableClass 可拖拽时给 mainElement 添加的 class
+     * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 class
      *
-     * @property {string=} options.draggableHandleSelector 可拖拽的元素
-     * @property {string=} options.draggableCancelSelector 不可拖拽的元素
+     * @property {(string|Array)=} options.draggableHandleSelector 可拖拽的元素
+     * @property {(string|Array)=} options.draggableCancelSelector 不可拖拽的元素
      *
      * @property {string=} options.headerSelector 头部元素
      * @property {string=} options.titleSelector 填充 title 的元素
      * @property {string=} options.closeSelector 点击可关闭对话框的元素
-     * @property {string=} options.bodySelector 填充 content 的元素
+     * @property {string=} options.contentSelector 填充 content 的元素
      *
      */
     function Dialog(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Dialog.prototype;
@@ -94,31 +84,32 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var element = me.element;
 
-        if (!element) {
-            element =
-            me.element = $(me.template);
+        var mainElement = me.option('mainElement');
+        if (!mainElement) {
+            mainElement = $(me.option('mainTemplate'));
         }
 
-        if (!offsetParent(element).is('body')) {
-            instance.body.append(element);
+        if (!offsetParent(mainElement).is('body')) {
+            instance.body.append(mainElement);
         }
 
-        var maskElement = me.mask;
 
-        if (me.modal) {
+
+        var maskElement = me.option('maskElement');
+
+        if (me.option('modal')) {
 
             if (!maskElement) {
-                maskElement =
-                me.mask = $(me.maskTemplate);
+                maskElement = $(me.option('maskTemplate'));
             }
 
             // 遮罩放到对话框前面
             // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
-            element.before(maskElement);
+            mainElement.before(maskElement);
 
         }
+
 
 
 
@@ -126,18 +117,18 @@ define(function (require, exports, module) {
 
         var classList = [ ];
 
-        var skinClass = me.skinClass;
+        var skinClass = me.option('skinClass');
         if (skinClass) {
             classList.push(skinClass);
         }
 
-        var draggableClass = me.draggableClass;
-        if (me.draggable && draggableClass) {
+        var draggableClass = me.option('draggableClass');
+        if (me.option('draggable') && draggableClass) {
             classList.push(draggableClass);
         }
 
         if (classList.length > 0) {
-            element.addClass(
+            mainElement.addClass(
                 classList.join(' ')
             );
         }
@@ -146,23 +137,34 @@ define(function (require, exports, module) {
 
 
 
-        var removeOnEmpty = me.removeOnEmpty;
+        var removeOnEmpty = me.option('removeOnEmpty');
 
-        var title = me.title;
+        var title = me.option('title');
         if (title) {
-            element.find(me.titleSelector).html(title);
+            mainElement
+            .find(
+                me.option('titleSelector')
+            )
+            .html(title);
         }
         else if (removeOnEmpty) {
-            element.find(me.headerSelector).remove();
+            mainElement
+            .find(
+                me.option('headerSelector')
+            )
+            .remove();
         }
 
-        var content = me.content;
-        var bodyElement = element.find(me.bodySelector);
+        var content = me.option('content');
+        var contentElement = mainElement.find(
+            me.option('contentSelector')
+        );
+
         if (content) {
-            bodyElement.html(content);
+            contentElement.html(content);
         }
         else if (removeOnEmpty) {
-            bodyElement.remove();
+            contentElement.remove();
         }
 
 
@@ -171,15 +173,17 @@ define(function (require, exports, module) {
 
         var style = { };
 
-        switch ($.type(me.width)) {
+        var width = me.option('width');
+
+        switch ($.type(width)) {
             case 'string':
             case 'number':
-                style.width = me.width;
+                style.width = width;
                 break;
         }
 
-        var position = me.fixed ? 'fixed' : 'absolute';
-        if (element.css('position') !== position) {
+        var position = me.option('fixed') ? 'fixed' : 'absolute';
+        if (mainElement.css('position') !== position) {
             style.position = position;
         }
 
@@ -187,7 +191,7 @@ define(function (require, exports, module) {
 
             var zIndexStyleName = 'z-index';
 
-            var zIndex = me.zIndex;
+            var zIndex = me.option('zIndex');
 
             if (!$.isNumeric(zIndex)) {
                 zIndex = maskElement.css(zIndexStyleName);
@@ -202,36 +206,39 @@ define(function (require, exports, module) {
 
         }
 
-        element.css(style);
+        mainElement.css(style);
 
 
 
 
 
-        var clickType = 'click' + namespace;
+        var clickType = 'click' + me.namespace();
         var hideHandler = $.proxy(me.hide, me);
 
-
-        var closeSelector = me.closeSelector;
+        var closeSelector = me.option('closeSelector');
         if (closeSelector) {
-            element.on(clickType, closeSelector, hideHandler);
+            mainElement.on(clickType, closeSelector, hideHandler);
         }
 
-        if (me.hideOnClickMask && maskElement) {
+        if (maskElement && me.option('hideOnBlur')) {
             maskElement.on(clickType, hideHandler);
         }
 
-        if (me.disposeOnHide) {
-            me.on('afterHide' + namespace, function () {
-                me.dispose();
-            });
+        if (me.option('disposeOnHide')) {
+            me.after('hide', $.proxy(me.dispose, me));
         }
 
+        if (me.option('hidden')) {
+            me.hide();
+        }
+        else {
+            me.show();
+        }
 
-        var hidden = me.hidden;
-
-        me.hidden = !hidden;
-        me[ hidden ? 'hide' : 'show' ]();
+        me.inner({
+            main: mainElement,
+            mask: maskElement
+        });
 
     };
 
@@ -239,70 +246,14 @@ define(function (require, exports, module) {
      * 显示对话框
      */
     proto.show = function () {
-
-        var me = this;
-
-        instance.window.resize(
-            me.resizer =
-            debounce(
-                function () {
-                    me.refresh(true);
-                },
-                50
-            )
-        );
-
-        if (me.draggable) {
-            me.drager = dragGlobal({
-                element: me.element,
-                handleSelector: me.draggableHandleSelector,
-                cancelSelector: me.draggableCancelSelector,
-                draggingClass: me.draggingClass,
-                fixed: me.fixed,
-                scrollable: true
-            });
-        }
-
-        // 因为 refresh 会设置 left top
-        // 但是某些浏览器无法及时刷新 DOM，导致 Draggable 读出来的依然是 0 0
-        // 所以这里换到 Draggable 后面调用
-        me.refresh();
-
-        me.showAnimation();
-
-        if (me.mask) {
-            me.showMaskAnimation();
-        }
-
-        me.hidden = false;
-
+        this.set('hidden', false);
     };
 
     /**
      * 隐藏对话框
      */
     proto.hide = function () {
-
-        var me = this;
-
-        if (me.resizer) {
-            instance.window.off('resize', me.resizer);
-            me.resizer = null;
-        }
-
-        if (me.drager) {
-            me.drager.dispose();
-            me.drager = null;
-        }
-
-        me.hideAnimation();
-
-        if (me.mask) {
-            me.hideMaskAnimation();
-        }
-
-        me.hidden = true;
-
+        this.set('hidden', true);
     };
 
     /**
@@ -314,30 +265,36 @@ define(function (require, exports, module) {
 
         var isResize = arguments[0];
 
-        if (!isResize || me.positionOnResize) {
+        if (!isResize || me.option('positionOnResize')) {
 
-            var style = pinGlobal({
-                element: me.element,
-                x: me.x,
-                y: me.y,
-                fixed: me.fixed
-            });
+            var mainElement = me.inner('main');
 
-            if (isResize) {
-                me.resizeAnimation(style);
-            }
-            else {
-                me.refreshAnimation(style);
-            }
-
+            me.execute(
+                isResize ? 'resizeAnimate' : 'refreshAnimate',
+                {
+                    mainElement: mainElement,
+                    mainStyle: pinGlobal({
+                        element: mainElement,
+                        x: me.option('x'),
+                        y: me.option('y'),
+                        fixed: me.option('fixed')
+                    })
+                }
+            );
         }
 
-        var maskElement = me.mask;
+        var maskElement = me.inner('mask');
         if (maskElement) {
-            maskElement.css({
-                width: dimension.getPageWidth(),
-                height: dimension.getPageHeight()
-            });
+            me.execute(
+                'resizeMaskAnimate',
+                {
+                    maskElement: maskElement,
+                    maskStyle: {
+                        width: pageWidth(),
+                        height: pageHeight()
+                    }
+                }
+            );
         }
 
     };
@@ -351,39 +308,30 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        if (!me.hidden) {
+        if (!me.get('hidden')) {
             me.hide();
         }
 
-        var element = me.element;
-        var maskElement = me.mask;
+        var mainElement = me.inner('main');
+        var maskElement = me.inner('mask');
+        var namespace = me.namespace();
 
-        element.off(namespace);
+        mainElement.off(namespace);
         if (maskElement) {
             maskElement.off(namespace);
         }
 
-        if (me.removeOnDispose) {
-            element.remove();
+        if (me.option('removeOnDispose')) {
+            mainElement.remove();
             if (maskElement) {
                 maskElement.remove();
             }
         }
 
-        me.element =
-        me.mask = null;
-
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    aspect(proto, 'show', function () {
-        return this.hidden;
-    });
-
-    aspect(proto, 'hide', function () {
-        return !this.hidden;
-    });
 
     /**
      * 默认配置
@@ -400,10 +348,10 @@ define(function (require, exports, module) {
         fixed: true,
         hidden: false,
         draggable: true,
+        hideOnBlur: false,
         removeOnEmpty: true,
         disposeOnHide: true,
         removeOnDispose: true,
-        hideOnClickMask: false,
         positionOnResize: true,
 
         draggableClass: 'draggable',
@@ -414,43 +362,131 @@ define(function (require, exports, module) {
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',
         closeSelector: '.dialog-close',
-        bodySelector: '.dialog-body',
+        contentSelector: '.dialog-body',
 
-        template: '<div class="dialog">'
-                +     '<i class="dialog-close">&times;</i>'
-                +     '<div class="dialog-header"><h1></h1></div>'
-                +     '<div class="dialog-body"></div>'
-                + '</div>',
+        mainTemplate: '<div class="dialog">'
+                    +     '<i class="dialog-close">&times;</i>'
+                    +     '<div class="dialog-header"><h1></h1></div>'
+                    +     '<div class="dialog-body"></div>'
+                    + '</div>',
 
         maskTemplate: '<div class="dialog-mask"></div>',
 
-        showAnimation: function () {
-            this.element.show();
+        showAnimate: function (options) {
+            options.mainElement.show();
         },
-        hideAnimation: function () {
-            this.element.hide();
+        hideAnimate: function (options) {
+            options.mainElement.hide();
         },
-        showMaskAnimation: function () {
-            this.mask.show();
+        showMaskAnimate: function (options) {
+            options.maskElement.show();
         },
-        hideMaskAnimation: function () {
-            this.mask.hide();
+        hideMaskAnimate: function (options) {
+            options.maskElement.hide();
         },
-        resizeAnimation: function (style) {
-            this.element.css(style);
+        resizeMaskAnimate: function (options) {
+            options.maskElement.css(options.maskStyle);
         },
-        refreshAnimation: function (style) {
-            this.element.css(style);
+        resizeAnimate: function (options) {
+            options.mainElement.css(options.mainStyle);
+        },
+        refreshAnimate: function (options) {
+            options.mainElement.css(options.mainStyle);
         }
+
     };
 
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_dialog';
+    Dialog.propertyUpdater = {
+
+        hidden: function (hidden) {
+
+            var me = this;
+
+            var resizer = me.inner('resizer');
+            if (resizer) {
+                instance.window.off('resize', resizer);
+                resizer = null;
+            }
+
+            var drager = me.inner('drager');
+            if (drager) {
+                drager.dispose();
+                drager = null;
+            }
+
+            var mainElement = me.inner('main');
+            var maskElement = me.inner('mask');
+
+            if (hidden) {
+
+                me.execute(
+                    'hideAnimate',
+                    {
+                        mainElement: mainElement
+                    }
+                );
+
+                if (maskElement) {
+                    me.execute(
+                        'hideMaskAnimate',
+                        {
+                            maskElement: maskElement
+                        }
+                    );
+                }
+
+            }
+            else {
+
+                instance.window.resize(
+                    resizer =
+                    debounce(
+                        function () {
+                            me.refresh(true);
+                        },
+                        50
+                    )
+                );
+
+                if (me.option('draggable')) {
+                    drager = dragGlobal({
+                        element: mainElement,
+                        handleSelector: me.option('draggableHandleSelector'),
+                        cancelSelector: me.option('draggableCancelSelector'),
+                        draggingClass: me.option('draggingClass')
+                    });
+                }
+
+                // 因为 refresh 会设置 left top
+                // 但是某些浏览器无法及时刷新 DOM，导致 Draggable 读出来的依然是 0 0
+                // 所以这里换到 Draggable 后面调用
+                me.refresh();
+
+                me.execute(
+                    'showAnimate',
+                    {
+                        mainElement: mainElement
+                    }
+                );
+
+                if (maskElement) {
+                    me.execute(
+                        'showMaskAnimate',
+                        {
+                            maskElement: maskElement
+                        }
+                    );
+                }
+
+            }
+
+            me.inner({
+                resizer: resizer,
+                drager: drager
+            });
+
+        }
+    };
 
 
     return Dialog;

@@ -87,19 +87,13 @@
             function (ContextMenu) {
 
                 var songListMenu = new ContextMenu({
-                    element: $('#song-list-menu'),
-                    container: $('#song-list'),
-                    show: {
-                        animation: function () {
-                            this.element.hide()
-                                        .slideDown(300);
-                        }
+                    mainElement: $('#song-list-menu'),
+                    watchElement: $('#song-list'),
+                    onbeforeopen: function () {
+                        console.log('before open');
                     },
-                    hide: {
-                        trigger: 'click,context',
-                        animation: function () {
-                            this.element.slideUp(0);
-                        }
+                    onbeforeclose: function () {
+                        console.log('before close');
                     },
                     action: {
                         '[data-action="play"]': function (e) {

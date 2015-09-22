@@ -16,15 +16,10 @@ define(function (require, exports, module) {
      * 菜单项 value: data-value="1"
      * 菜单项 text:  date-text="xxx" 或 innerHTML，优先使用 data-text
      *
-     * # 事件列表
-     *
-     * 1. change
-     *
      */
 
     var ComboBox = require('../ui/ComboBox');
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -32,7 +27,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.element 主元素
+     * @property {jQuery=} options.mainElement 主元素，结构必须完整
      * @property {string} options.name
      *
      * @property {Array=} options.data 下拉菜单的数据
@@ -42,21 +37,21 @@ define(function (require, exports, module) {
      * @property {string=} options.menuSelector 下拉菜单元素
      * @property {string=} options.labelSelector 按钮上显示文本的元素
      *
-     * @property {string=} options.activeClass 菜单项选中状态的 class，可提升用户体验
-     * @property {string=} options.openClass 菜单展开状态的 class
+     * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
+     * @property {string=} options.menuActiveClass 菜单展开状态的 class
      *
-     * @property {Object=} options.show
-     * @property {number=} options.show.delay 显示延时
-     * @property {Function=} options.show.animation 显示动画
+     * @property {string=} options.showMenuTrigger 显示的触发方式
+     * @property {number=} options.showMenuDelay 显示延时
+     * @property {Function=} options.showMenuAnimate 显示动画
      *
-     * @property {Object=} options.hide
-     * @property {number=} options.hide.delay 隐藏延时
-     * @property {Function=} options.hide.animation 隐藏动画
+     * @property {string=} options.hideMenuTrigger 隐藏的触发方式
+     * @property {number=} options.hideMenuDelay 隐藏延时
+     * @property {Function=} options.hideMenuAnimate 隐藏动画
      *
      * @property {Function=} options.setText 把选中的菜单项文本写入到按钮上
      */
     function Select(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Select.prototype;
@@ -69,110 +64,87 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
+
+        var mainElement = me.option('mainElement');
 
 
-        var html = '<input type="hidden" name="' + me.name + '"';
-        if (me.value != null) {
-            html += ' value="' + me.value + '"';
+
+
+
+        var value = me.option('value');
+
+        var html = '<input type="hidden" name="' + me.option('name') + '"';
+        if (value != null) {
+            html += ' value="' + value + '"';
         }
-        if (element.attr('required')) {
+        if (mainElement.attr('required')) {
             html += ' required';
         }
+
         html += ' />';
 
-        var input =
-        me.input = $(html);
+        var inputElement = $(html);
 
-        element.append(input);
+        mainElement.append(inputElement);
 
-        me.comboBox = new ComboBox({
-            element: element,
-            button: element.find(me.buttonSelector),
-            menu: element.find(me.menuSelector),
-            data: me.data,
-            value: me.value,
-            show: me.show,
-            hide: me.hide,
-            defaultText: me.defaultText,
-            template: me.template,
-            renderTemplate: me.renderTemplate,
-            activeClass: me.activeClass,
-            openClass: me.openClass,
-            setText: me.setText,
-            context: me,
-            onChange: function (e, data) {
 
-                me.setValue(
-                    data.value,
-                    {
-                        data: data,
-                        from: FROM_CALENDAR
-                    }
-                );
 
+
+
+        var combobox = new ComboBox({
+            mainElement: mainElement,
+            buttonElement: mainElement.find(me.option('buttonSelector')),
+            menuElement: mainElement.find(me.option('menuSelector')),
+            showMenuTrigger: me.option('showMenuTrigger'),
+            showMenuDelay: me.option('showMenuDelay'),
+            hideMenuTrigger: me.option('hideMenuTrigger'),
+            hideMenuDelay: me.option('hideMenuDelay'),
+            defaultText: me.option('defaultText'),
+            menuTemplate: me.option('menuTemplate'),
+            itemActiveClass: me.option('itemActiveClass'),
+            menuActiveClass: me.option('menuActiveClass'),
+            showMenuAnimate: function (options) {
+                me.execute('showMenuAnimate', options);
             },
-            onAfterShow: function () {
-                element.trigger('focusin');
+            hideMenuAnimate: function (options) {
+                me.execute('hideMenuAnimate', options);
             },
-            onAfterHide: function () {
-                element.trigger('focusout');
+            renderTemplate: function (data, tpl) {
+                return me.execute('renderTemplate', [ data, tpl ]);
+            },
+            setText: function (options) {
+                var labelSelector = me.option('labelSelector');
+                mainElement.find(labelSelector).html(options.text);
+            },
+            change: {
+                value: function (value) {
+                    me.set('value', value);
+                }
             }
         });
 
-    };
+        combobox
+        .after('open', function () {
+            mainElement.trigger('focusin');
+        })
+        .after('close', function () {
+            mainElement.trigger('focusout');
+        });
 
-    /**
-     * 获取当前选中的值
-     *
-     * @return {string}
-     */
-    proto.getValue = function () {
-        return this.value;
-    };
 
-    /**
-     * 设置当前选中的值
-     *
-     * @param {string} value
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
 
-        var me = this;
 
-        options = options || { };
+        me.inner({
+            main: mainElement,
+            input: inputElement,
+            combobox: combobox
+        });
 
-        if (setValue(me, 'value', value, options, options.data)) {
+        me.set({
+            data: me.option('data'),
+            value: me.option('value')
+        });
 
-            me.input.val(
-                value == null ? '' : value
-            );
-
-            if (options.from !== FROM_CALENDAR) {
-                me.comboBox.setValue(
-                    value,
-                    {
-                        silence: true
-                    }
-                );
-            }
-
-        }
-
-    };
-
-    /**
-     * 刷新数据
-     *
-     * @param {Object} options
-     * @property {Array} options.data 数据
-     * @property {index=} options.value 选中的值
-     */
-    proto.refresh = function (options) {
-        this.comboBox.refresh(options);
     };
 
     /**
@@ -184,31 +156,27 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.comboBox.dispose();
-
-        me.input =
-        me.element =
-        me.comboBox = null;
+        me.inner('combobox').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    var FROM_CALENDAR = 'calendar';
-
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Select.defaultOptions = {
         defaultText: '请选择',
         buttonSelector: '.btn-default',
         menuSelector: '.dropdown-menu',
         labelSelector: '.btn-default span',
-        activeClass: 'active',
-        openClass: 'open',
+        itemActiveClass: 'active',
+        menuActiveClass: 'open',
+        showMenuTrigger: 'click',
+        hideMenuTrigger: 'click',
+        showMenuAnimate: function (options) {
+            options.menuElement.show();
+        },
+        hideMenuAnimate: function (options) {
+            options.menuElement.hide();
+        },
         renderTemplate: function (data) {
 
             var html = [ ];
@@ -238,10 +206,37 @@ define(function (require, exports, module) {
 
             return html.join('');
 
-        },
-        setText: function (text) {
-            this.element.find(this.labelSelector).html(text);
         }
+    };
+
+    Select.propertyUpdater = { };
+    Select.propertyUpdater.data =
+    Select.propertyUpdater.value = function (newValue, oldValue, changes) {
+
+        var me = this;
+
+        var properties = { };
+
+        var valueChange = changes.value;
+        if (valueChange) {
+
+            var value = valueChange.newValue;
+
+            value = value == null ? '' : value;
+
+            me.inner('input').val(value);
+
+            properties.value = value;
+
+        }
+
+        var dataChange = changes.data;
+        if (dataChange) {
+            properties.data = dataChange.newValue;
+        }
+
+        me.inner('combobox').set(properties);
+
     };
 
 

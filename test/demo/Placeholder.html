@@ -20,6 +20,7 @@
 
     <input type="text" class="form-text" placeholder="请输入用户名" value="" />
     <input type="text" class="form-text" placeholder="请输入用户名" value="" />
+    <input type="text" class="form-text" placeholder="请输入用户名" value="" />
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -34,16 +35,30 @@
 
                 var element = $(':text');
 
-                var placeholder1 = new Placeholder({
-                    element: element.eq(0),
-                    simple: false,
-                    nativeFirst: false
+                window.nativePlaceholder = new Placeholder({
+                    mainElement: element.eq(0),
+                    nativeFirst: true,
+                    onchange: function (e, data) {
+                        console.log(data, this);
+                    }
                 });
 
-                var placeholder2 = new Placeholder({
-                    element: element.eq(1),
+                window.simplePlaceholder = new Placeholder({
+                    mainElement: element.eq(1),
+                    nativeFirst: false,
+                    simple: true,
+                    onchange: function (e, data) {
+                        console.log(data, this);
+                    }
+                });
+
+                window.complexPlaceholder = new Placeholder({
+                    mainElement: element.eq(2),
+                    nativeFirst: false,
                     simple: false,
-                    nativeFirst: false
+                    onchange: function (e, data) {
+                        console.log(data, this);
+                    }
                 });
 
             }

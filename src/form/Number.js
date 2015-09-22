@@ -10,7 +10,6 @@ define(function (require, exports, module) {
     var timer = require('../function/timer');
     var setValue = require('../function/setValue');
     var toNumber = require('../function/toNumber');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var replaceWith = require('../function/replaceWith');
     var isActiveElement = require('../function/isActiveElement');
@@ -25,7 +24,6 @@ define(function (require, exports, module) {
     /**
      * 构造函数
      *
-     * @constructor
      * @param {Object} options
      * @property {jQuery} options.element 输入框元素，如果结构完整，可直接传容器元素
      * @property {number=} options.defaultValue 默认值，当输入的值验证失败时，可用默认值替换错误值，如果不想替换，则不传
@@ -35,7 +33,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onChange 数值变化时调用的接口
      */
     function Number(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Number.prototype;
@@ -127,6 +125,7 @@ define(function (require, exports, module) {
         var upTimer = timer(upHandler, delay, delay);
         var downTimer = timer(downHandler, delay, delay);
 
+        var namespace = me.namespace();
         var mouseup = 'mouseup' + namespace;
         var mousedown = 'mousedown' + namespace;
         var blur = 'focusout' + namespace;
@@ -243,6 +242,8 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
+        var namespace = me.namespace();
+
         instance.document.off(namespace);
         me.main.off(namespace);
         me.input.dispose();
@@ -253,7 +254,7 @@ define(function (require, exports, module) {
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -270,26 +271,6 @@ define(function (require, exports, module) {
                 +     '<i class="icon icon-caret-down"></i>'
                 + '</div>'
     };
-
-
-    /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element
-     * @param {Object=} options
-     * @return {Array.<Number>}
-     */
-    Number.init = init(Number);
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_form_number';
-
 
 
     return Number;

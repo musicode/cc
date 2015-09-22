@@ -1,5 +1,5 @@
 /**
- * @file 获取百分比
+ * @file 计算比例
  * @author musicode
  */
 define(function (require, exports, module) {
@@ -13,7 +13,7 @@ define(function (require, exports, module) {
             if (value > 1) {
                 value = 1;
             }
-            return 100 * value + '%';
+            return value;
         }
         else {
             return 0;

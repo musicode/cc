@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var debounce = require('../function/debounce');
 
     /**
      *
@@ -48,14 +48,13 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element <input type="radio" /> 元素
-     * @property {string=} options.template 模拟单选框的模版
+     * @property {jQuery} options.mainElement 主元素
+     * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
-     * @property {string=} options.wrapperSelector 应用 className 的元素选择器，默认是 label
      */
     function Radio(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Radio.prototype;
@@ -70,125 +69,48 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var element = me.element;
+        var mainElement = me.option('mainElement');
 
-        if (me.template) {
-            element.hide().before(me.template);
+        var radioSelector = ':radio';
+        var radioElement = mainElement.find(radioSelector);
+        if (radioElement.length !== 1) {
+
+            mainElemen.html(
+                me.option('mainTemplate')
+            );
+
+            radioElement = mainElement.find(radioSelector);
+
         }
 
-        if (element.prop('checked')) {
-            me.check();
-        }
+        mainElement.on(
+            'click' + me.namespace(),
+            // 有时候会连续触发两次
+            debounce(
+                function (e) {
 
-        if (element.prop('disabled')) {
-            me.disable();
-        }
+                    if (me.get('disabled')) {
+                        return;
+                    }
 
-        element.on(
-            'click' + namespace,
-            function () {
+                    me.set('checked', true);
 
-                if (me.isDisabled()) {
-                    return;
-                }
-
-                me.check();
-
-            }
+                },
+                50
+            )
         );
 
-    };
+        me.inner({
+            radio: radioElement,
+            main: mainElement
+        });
 
-    /**
-     * 选中单选框
-     */
-    proto.check = function () {
-        var me = this;
-        me.element.prop('checked', true);
-        me.setClass('add', me.checkedClass);
-    };
+        me.set({
+            value: radioElement.val(),
+            checked: radioElement.prop('checked'),
+            disabled: radioElement.prop('disabled')
+        });
 
-    /**
-     * 取消选中单选框
-     */
-    proto.uncheck = function () {
-        var me = this;
-        if (!me.element.prop('checked')) {
-            me.setClass('remove', me.checkedClass);
-        }
-    };
-
-    /**
-     * 启用单选框
-     */
-    proto.enable = function () {
-        var me = this;
-        me.element.prop('disabled', false);
-        me.setClass('remove', me.disabledClass);
-    };
-
-    /**
-     * 禁用单选框
-     */
-    proto.disable = function () {
-        var me = this;
-        me.element.prop('disabled', true);
-        me.setClass('add', me.disabledClass);
-    };
-
-    /**
-     * 是否选中
-     *
-     * @returns {boolean}
-     */
-    proto.isChecked = function () {
-        return this.element.prop('checked');
-    };
-
-    /**
-     * 是否禁用
-     *
-     * @returns {boolean}
-     */
-    proto.isDisabled = function () {
-        return this.element.prop('disabled');
-    };
-
-    /**
-     * 获取值
-     *
-     * @return {string}
-     */
-    proto.getValue = function () {
-        return this.element.val();
-    };
-
-    /**
-     * 设置值
-     *
-     * @param {string|number} value
-     */
-    proto.setValue = function (value) {
-        this.element.val(value);
-    };
-
-    /**
-     * 为 wrapper 元素设置 className
-     *
-     * @param {string} type 动作类型，可选值有 add remove
-     * @param {string} className
-     */
-    proto.setClass = function (type, className) {
-
-        if (!className) {
-            return;
-        }
-
-        var me = this;
-        var wrapper = me.element.closest(me.wrapperSelector);
-        if (wrapper.length === 1) {
-            wrapper[type + 'Class'](className);
-        }
 
     };
 
@@ -201,30 +123,68 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
-    Radio.defaultOptions = {
-        wrapperSelector: 'label'
+
+    Radio.propertyUpdater = {
+
+        checked: function (checked) {
+
+            var me = this;
+
+            me.inner('radio').prop(
+                'checked',
+                !!checked
+            );
+
+            var checkedClass = me.option('checkedClass');
+            if (checkedClass) {
+
+                var mainElement = me.inner('main');
+
+                mainElement[ checked ? 'addClass' : 'removeClass' ](
+                    checkedClass
+                );
+
+            }
+
+        },
+
+        disabled: function (disabled) {
+
+            var me = this;
+
+            me.inner('radio').prop(
+                'disabled',
+                !!disabled
+            );
+
+            var disabledClass = me.option('disabledClass');
+            if (disabledClass) {
+
+                var mainElement = me.inner('main');
+
+                mainElement[ disabled ? 'addClass' : 'removeClass' ](
+                    disabledClass
+                );
+
+            }
+
+        },
+
+        value: function (value) {
+
+            this.inner('radio').val(value);
+
+        }
+
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_form_radio';
 
 
     return Radio;

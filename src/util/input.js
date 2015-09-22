@@ -11,7 +11,7 @@ define(function (require, exports, module) {
      *
      * 企图处理中文输入法的同学都洗洗睡吧，这里坑太多了
      *
-     * 之前我的做法是监听 keydown 的 keyCode 是否是 0 或 229，如果是表示开始输入中文，
+     * 之前我的做法是监听 keydown 的 keyCode 是否是 0 或 229，如果是，表示开始输入中文
      *
      * 相应的也需要结束输入的标识。在开始和结束之间的所有输入，都不能触发 input 事件。
      *
@@ -27,24 +27,11 @@ define(function (require, exports, module) {
      */
 
     var around = require('../function/around');
-
-    var input = $('<input type="text" />')[0];
-
-    /**
-     * 特性检测是否支持 input 事件
-     *
-     * @inner
-     * @type {boolean}
-     */
-    var supportInput = 'oninput' in input;
-
-    input = null;
+    var detection = require('./detection');
 
     var namespace = '.cobble_util_input';
 
-    function bindInput() {
-        // 空函数
-    }
+    var bindInput = $.noop;
 
     /**
      * 初始化 IE8- 的 propertychange 事件监听
@@ -93,7 +80,7 @@ define(function (require, exports, module) {
         );
     }
 
-    exports.init = supportInput
+    exports.init = detection.supportInput()
                  ? bindInput
                  : bindPropertyChange;
 

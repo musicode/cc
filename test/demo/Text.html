@@ -34,16 +34,16 @@
                 function (Text) {
 
                     new Text({
-                        element: $(':text'),
-                        onChange: function () {
-                            console.log(this.element.val());
+                        mainElement: $(':text'),
+                        onchange: function () {
+                            console.log(this.get('value'));
                         }
                     });
 
                     new Text({
-                        element: $('textarea'),
-                        onChange: function () {
-                            console.log(this.element.val());
+                        mainElement: $('textarea'),
+                        onchange: function () {
+                            console.log(this.get('value'));
                         }
                     });
 

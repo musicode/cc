@@ -4,23 +4,21 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
-     *
      * 火狐支持 DOMMouseScroll 事件，事件属性为 event.detail
      * 其他浏览器支持 mousewheel 事件，事件属性为 event.wheelDelta
      *
      * event.detail 向上滚动为负值，向下滚动为正值，值为 3 的倍数
      * event.wheelDelta 向下滚动为正值，向上滚动为负值，值为 120 的倍数
      *
-     * 此模块统一使用 onScroll 接口
-     *      统一使用 event.delta
+     * 此模块统一使用 scroll 事件
+     *      统一使用 data.delta
      *      统一为向上为负值，向下为正值，值为 1 的倍数
      */
 
-    'use strict';
-
     var lifeCycle = require('../function/lifeCycle');
-    var jquerify = require('../function/jquerify');
 
     var instance = require('../util/instance');
 
@@ -29,13 +27,10 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.element 需要监听鼠标滚轮事件的元素，默认是 document
-     * @property {Function=} options.onScroll 滚动事件对外接口，如果返回 false 可阻止默认行为
-     * @argument {Object} options.onScroll.data
-     * @property {number} options.onScroll.data.delta
+     * @property {jQuery=} options.watchElement 需要监听鼠标滚轮事件的元素，默认是 document
      */
     function Wheel(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Wheel.prototype;
@@ -49,28 +44,33 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.element.on(
-            support + namespace,
+        me.option('watchElement').on(
+            support + me.namespace(),
             function (e) {
 
-                var delta = 0;
-
                 var event = e.originalEvent;
-                if (support === 'mousewheel') {
-                    delta = - event.wheelDelta / 120;
+
+                var delta;
+
+                var wheelDelta = event.wheelDelta;
+
+                if (wheelDelta % 120 === 0) {
+                    delta = -wheelDelta / 120;
+                }
+                else if (wheelDelta % 3 === 0) {
+                    delta = -wheelDelta / 3;
+                }
+                else if (event.detail % 3 === 0) {
+                    delta = -event.detail / 3;
                 }
                 else {
-                    delta = event.detail / 3;
+                    delta = event.delta || 0;
                 }
 
                 e.type = 'scroll';
+                e.delta = delta;
 
-                me.emit(
-                    e,
-                    {
-                        delta: delta
-                    }
-                );
+                me.emit(e);
 
             }
         );
@@ -86,12 +86,13 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.option('watchElement').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -100,16 +101,12 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Wheel.defaultOptions = {
-        element: instance.document
+        watchElement: instance.document
     };
 
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_helper_wheel';
+    var MOUSE_SCROLL = 'DOMMouseScroll';
+
+    var MOUSE_WHEEL = 'mousewheel';
 
     /**
      * 支持的滚轮事件名称
@@ -117,9 +114,9 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var support = 'onmousewheel' in instance.body[0]
-                ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
-                : 'DOMMouseScroll';          // 火狐的老版本
+    var support = ('on' + MOUSE_WHEEL) in instance.body[0]
+                ? MOUSE_WHEEL               // Webkit 和 IE 支持 mousewheel
+                : MOUSE_SCROLL;             // 火狐的老版本
 
     return Wheel;
 

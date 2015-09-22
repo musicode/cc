@@ -45,18 +45,38 @@
 
             require(
 
-                [ 'cobble/form/RadioGroup' ],
+                [ 'cobble/form/Radio' ],
 
-                function (RadioGroup) {
-                    new RadioGroup(
-                        {
-                            element: $('form'),
-                            name: 'city',
-                            checkedClass: 'checked',
-                            disabledClass: 'disabled',
-                            template: ''
+                function (Radio) {
+
+                    var element = $('.radio');
+
+                    window.radio1 = new Radio({
+                        mainElement: element.eq(0),
+                        checkedClass: 'checked',
+                        disabledClass: 'disabled',
+                        onchange: function (e, data) {
+                            console.log(data);
                         }
-                    );
+                    });
+
+                    window.radio2 = new Radio({
+                        mainElement: element.eq(1),
+                        checkedClass: 'checked',
+                        disabledClass: 'disabled',
+                        onchange: function (e, data) {
+                            console.log(data);
+                        }
+                    });
+
+                    window.radio3 = new Radio({
+                        mainElement: element.eq(2),
+                        checkedClass: 'checked',
+                        disabledClass: 'disabled',
+                        onchange: function (e, data) {
+                            console.log(data);
+                        }
+                    });
                 }
             );
         </script>

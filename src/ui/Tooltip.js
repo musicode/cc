@@ -20,11 +20,11 @@ define(function (require, exports, module) {
      *
      * 如果要实现箭头效果，有两种方式：
      *
-     * 1. border 实现: 配置 defaultOptions.placementClass，这是一个方位映射表，如
+     * 1. border 实现: 配置方位 class，如
      *
      *    {
-     *        top: 'tooltip-up',
-     *        bottom: 'tooltip-down'
+     *        topClass: 'tooltip-up',
+     *        bottomClass: 'tooltip-down'
      *    }
      *
      *    当显示在上方时，会给浮层元素加上 `tooltip-up` class;
@@ -34,46 +34,22 @@ define(function (require, exports, module) {
      *    当箭头向上时，需要把 border-top-width 设置为 0，
      *    这样才可避免透明的上边框影响触发逻辑，其他方向同理
      *
-     * 2. 图标实现：配置 defaultOptions.updatePlacement 函数，如：
-     *
-     *    function (placement) {
-     *
-     *        var map = {
-     *            top: 'up',
-     *            right: 'right',
-     *            bottom: 'down',
-     *            left: 'left'
-     *        };
-     *
-     *        var icon = 'icon icon-angle-' + map[placement];
-     *
-     *        this.layer.find('.icon').prop('class', icon);
-     *
-     *    };
      *
      *
      * 如需要微调位置，比如不是上下左右，而是下方偏右，可参考如下配置：
      *
      * {
      *     placement: 'bottom,auto',
-     *     offset: {
-     *         bottom: {
-     *             x: 20,   // 向右偏移 20px
-     *             y: 0
-     *         }
+     *     bottomOffset: {
+     *         x: 20,   // 向右偏移 20px
+     *         y: 0
      *     }
      * }
      *
-     * 如果实例化的 template 参数和 defaultOptions.template 不同，会在实例上新建一个 layer 属性
+     * 如果实例化的 template 参数和 defaultOptions.mainTemplate 不同，会在实例上新建一个 main 属性
      *
      * 如果想控制提示浮层的最大宽度，可以在触发元素上加 data-width="100px"
      *
-     * # 事件列表
-     *
-     * 1. beforeShow
-     * 2. afterShow
-     * 3. beforeHide
-     * 4. afterHide
      */
 
     /**
@@ -84,12 +60,10 @@ define(function (require, exports, module) {
      * 2. 为了减少元素数量，同一个模板改为元素共享
      */
 
-    var init = require('../function/init');
     var split = require('../function/split');
     var position = require('../util/position');
     var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
@@ -103,48 +77,59 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 需要工具提示的元素
-     * @property {jQuery=} options.layer 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
-     *                                   简单场景可用 template 配置搞定
-     * @property {string=} options.template 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
+     * @property {jQuery} options.triggerElement 需要工具提示的元素
+     * @property {jQuery=} options.mainElement 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
+     *                                          简单场景可用 mainTemplate 配置搞定
+     * @property {string=} options.mainTemplate 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
      *
      * @property {string=} options.placement 提示元素出现的位置
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
-     * @property {string=} options.selector 如果传了选择器，表示为 element 的 selector 元素进行事件代理
-     * @property {string=} options.width 提示元素的宽度
+     * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
+     * @property {string=} options.maxWidth 提示元素的最大宽度
      *
      * @property {Function} options.updateContent 更新提示浮层的内容
-     * @property {Function} options.updatePlacement 更新提示浮层的方位
-     * @property {Object=} options.placementClass 方位对应的 className
      *
-     * @property {Object} options.show
-     * @property {string=} options.show.trigger 显示的触发方式，可选值有 click over focus，可组合使用，以逗号分隔
-     * @property {number=} options.show.delay 显示延时
-     * @property {Function=} options.show.animation 显示动画，如果未设置，默认是 layer.show()
+     * @property {string=} options.showTrigger 显示的触发方式
+     * @property {number=} options.showDelay 显示延时
+     * @property {Function=} options.showAnimate 显示动画
      *
-     * @property {Object} options.hide
-     * @property {string=} options.hide.trigger 隐藏的触发方式，可选值有 click out blur，可组合使用，以逗号分隔
-     * @property {number=} options.hide.delay 隐藏延时
-     * @property {Function=} options.hide.animation 隐藏动画，如果未设置，默认是 layer.hide()
+     * @property {string=} options.hideTrigger 隐藏的触发方式
+     * @property {number=} options.hideDelay 隐藏延时
+     * @property {Function=} options.hideAnimate 隐藏动画
      *
-     * @property {Object} options.gap
-     * @property {number=} options.gap.x 提示层和触发元素之间的横向间距，如果为 0，提示会和元素贴在一起
-     * @property {number=} options.gap.y 提示层和触发元素之间的纵向间距，如果为 0，提示会和元素贴在一起
+     * @property {number=} options.gapX 提示层和触发元素之间的横向间距，如果为 0，提示会和元素贴在一起
+     * @property {number=} options.gapY 提示层和触发元素之间的纵向间距，如果为 0，提示会和元素贴在一起
      *
-     * @property {Object=} options.offset 偏移量
-     * @property {Object=} options.offset.top 设置上侧偏移量
-     * @property {Object=} options.offset.right 设置右侧偏移量
-     * @property {Object=} options.offset.bottom 设置下侧偏移量
-     * @property {Object=} options.offset.left 设置左侧偏移量
-     * @property {Object=} options.offset.topLeft 设置左上侧偏移量
-     * @property {Object=} options.offset.topRight 设置右上侧偏移量
-     * @property {Object=} options.offset.bottomLeft 设置左下侧偏移量
-     * @property {Object=} options.offset.bottomRight 设置右下侧偏移量
+     * @property {Object=} options.topClass 设置上侧 class
+     * @property {Object=} options.rightClass 设置右侧 class
+     * @property {Object=} options.bottomClass 设置下侧 class
+     * @property {Object=} options.leftClass 设置左侧 class
+     * @property {Object=} options.topLeftClass 设置左上侧 class
+     * @property {Object=} options.topRightClass 设置右上侧 class
+     * @property {Object=} options.bottomLeftClass 设置左下侧 class
+     * @property {Object=} options.bottomRightClass 设置右下侧 class
+     *
+     * @property {Object=} options.topOffsetX 设置上侧偏移量
+     * @property {Object=} options.topOffsetY 设置上侧偏移量
+     * @property {Object=} options.rightOffsetX 设置右侧偏移量
+     * @property {Object=} options.rightOffsetY 设置右侧偏移量
+     * @property {Object=} options.bottomOffsetX 设置下侧偏移量
+     * @property {Object=} options.bottomOffsetY 设置下侧偏移量
+     * @property {Object=} options.leftOffsetX 设置左侧偏移量
+     * @property {Object=} options.leftOffsetY 设置左侧偏移量
+     * @property {Object=} options.topLeftOffsetX 设置左上侧偏移量
+     * @property {Object=} options.topLeftOffsetY 设置左上侧偏移量
+     * @property {Object=} options.topRightOffsetX 设置右上侧偏移量
+     * @property {Object=} options.topRightOffsetY 设置右上侧偏移量
+     * @property {Object=} options.bottomLeftOffsetX 设置左下侧偏移量
+     * @property {Object=} options.bottomLeftOffsetY 设置左下侧偏移量
+     * @property {Object=} options.bottomRightOffsetX 设置右下侧偏移量
+     * @property {Object=} options.bottomRightOffsetY 设置右下侧偏移量
      *
      */
     function Tooltip(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Tooltip.prototype;
@@ -157,86 +142,116 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
+        var triggerElement = me.option('triggerElement');
 
-        var layer = me.layer;
-        if (!layer) {
+        var mainElement = me.option('mainElement');
+        if (!mainElement) {
 
-            var template = me.template;
+            var mainTemplate = me.option('mainTemplate');
 
-            layer = templateElementMap[ template ];
+            mainElement = templateElementMap[ mainTemplate ];
 
-            if (!layer) {
-                layer =
-                templateElementMap[ template ] = $(template);
+            if (!mainElement) {
+                mainElement =
+                templateElementMap[ mainTemplate ] = $(mainTemplate);
             }
 
-            me.layer = layer;
-
         }
 
-        if (!isHidden(layer)) {
-            layer.hide();
+        if (!offsetParent(mainElement).is('body')) {
+            instance.body.append(mainElement);
         }
 
-        if (!offsetParent(layer).is('body')) {
-            instance.body.append(layer);
-        }
 
-        me.popup = new Popup({
-            element: element,
-            layer: layer,
-            selector: me.selector,
-            show: me.show,
-            hide: me.hide,
-            context: me
-        });
 
-        me
-        .on(
-            'beforeShow' + namespace,
-            function (e) {
 
-                var currentElement = e.currentElement;
+        var popup = new Popup({
+            layerElement: mainElement,
+            triggerElement: triggerElement,
+            triggerSelector: me.option('triggerSelector'),
+            showLayerTrigger: me.option('showTrigger'),
+            showLayerDelay: me.option('showDelay'),
+            hideLayerTrigger: me.option('hideTrigger'),
+            hideLayerDelay: me.option('hideDelay'),
+            showLayerAnimate: function () {
 
-                if (!currentElement || !currentElement.tagName) {
-                    return;
-                }
-
-                var skinClass;
-                var sourceElement = me.sourceElement;
-
-                if (sourceElement) {
-
-                    skinClass = sourceElement.attr('data-skin');
-
-                    if (skinClass) {
-                        layer.removeClass(skinClass);
+                me.execute(
+                    'showAnimate',
+                    {
+                        mainElement: mainElement
                     }
-
-                }
-
-                sourceElement =
-                me.sourceElement = $(currentElement);
-
-
-
-
-
-
-                var placementList = getPlacementList(
-                    sourceElement.attr('data-placement') || me.placement
                 );
 
-                var placement = placementList.length === 1
-                             && placementList[0];
+            },
+            hideLayerAnimate: function () {
 
-                if (!placement) {
+                me.execute(
+                    'hideAnimate',
+                    {
+                        mainElement: mainElement
+                    }
+                );
 
+            }
+        });
+
+        var dispatchEvent = function (e) {
+            if (e.target.tagName) {
+                me.emit(e);
+            }
+        };
+
+        var resizeHandler;
+
+        popup
+        .before('open', function (e) {
+
+            var originElement = e.originElement;
+            if (!originElement || !originElement.tagName) {
+                return;
+            }
+
+            var skinClass;
+            var sourceElement = mainElement.source;
+
+            if (sourceElement) {
+                skinClass = sourceElement.attr('data-skin');
+                if (skinClass) {
+                    mainElement.removeClass(skinClass);
+                }
+            }
+
+            sourceElement =
+            mainElement.source = $(originElement);
+
+            skinClass = sourceElement.attr('data-skin');
+            if (skinClass) {
+                mainElement.addClass(skinClass);
+            }
+
+
+
+
+
+
+
+            var placementList = getPlacementList(
+                sourceElement.attr('data-placement')
+                || me.option('placement')
+            );
+
+            var placement;
+
+            if (placementList.length > 0) {
+
+                if (placementList.length === 1) {
+                    placement = placementList[0];
+                }
+                else {
                     $.each(
                         placementList,
                         function (index, name) {
-                            var tests = placementMap[name].test;
+                            var tests = placementMap[ name ].test;
                             for (var i = 0, len = tests.length; i < len; i++) {
                                 if (!tests[i].call(me)) {
                                     return;
@@ -246,73 +261,88 @@ define(function (require, exports, module) {
                             return false;
                         }
                     );
-
-                    if (!placement) {
-                        e.stopPropagation();
-                        return;
-                    }
-
-                }
-
-
-
-
-
-                skinClass = sourceElement.attr('data-skin');
-
-                if (skinClass) {
-                    layer.addClass(skinClass);
-                }
-
-
-
-                var update = function () {
-
-                    me.updatePlacement(placement);
-
-                    var width = sourceElement.attr('data-width') || me.width;
-                    if (width) {
-                        layer.css('max-width', width);
-                    }
-
-                    me.pin(placement);
-
-                    instance.window.resize(
-                        me.resizer =
-                        debounce(
-                            function () {
-                                if (me.popup) {
-                                    me.pin(placement);
-                                }
-                            },
-                            50
-                        )
-                    );
-
-                };
-
-                var promise = me.updateContent();
-
-                if (promise && $.isFunction(promise.then)) {
-                    promise.then(update);
-                }
-                else {
-                    update();
                 }
 
             }
-        )
-        .on(
-            'afterHide' + namespace,
-            function (e) {
 
-                if (me.resizer) {
-                    instance.window.off('resize', me.resizer);
-                    me.resizer = null;
+            if (!placement) {
+                return false;
+            }
+
+
+
+
+
+
+
+            var updateLayer = function () {
+
+                dispatchEvent(e);
+
+                if (e.isDefaultPrevented()) {
+                    return;
                 }
 
+                var maxWidth = sourceElement.attr('data-width')
+                            || me.option('maxWidth');
+
+                if (maxWidth) {
+                    mainElement.css('max-width', maxWidth);
+                }
+
+                me.pin(placement);
+
+                instance.window.resize(
+                    resizeHandler =
+                    debounce(
+                        function () {
+                            if (me.popup) {
+                                me.pin(placement);
+                            }
+                        },
+                        50
+                    )
+                );
+
+            };
+
+            var promise = me.execute(
+                'updateContent',
+                {
+                    mainElement: mainElement,
+                    triggerElement: sourceElement
+                }
+            );
+
+            if (promise && $.isFunction(promise.then)) {
+                promise.then(updateLayer);
             }
-        );
+            else {
+                updateLayer();
+            }
+
+
+        })
+        .after('open', dispatchEvent)
+        .before('close', dispatchEvent)
+        .after('close', function (e) {
+
+            if (resizeHandler) {
+                instance.window.off('resize', resizeHandler);
+                resizeHandler = null;
+            }
+
+            dispatchEvent(e);
+
+        });
+
+
+
+
+        me.inner({
+            main: mainElement,
+            popup: popup
+        })
 
     };
 
@@ -320,23 +350,14 @@ define(function (require, exports, module) {
      * 显示提示浮层
      */
     proto.open = function () {
-        this.popup.open();
+        this.inner('popup').open();
     };
 
     /**
      * 隐藏提示浮层
      */
     proto.close = function () {
-        this.popup.close();
-    };
-
-    /**
-     * 获得触发源元素
-     *
-     * @return {jQuery}
-     */
-    proto.getSourceElement = function () {
-        return this.sourceElement;
+        this.inner('popup').close();
     };
 
     /**
@@ -350,51 +371,64 @@ define(function (require, exports, module) {
     proto.pin = function (placement) {
 
         var me = this;
-        var layer = me.layer;
+        var mainElement = me.inner('main');
 
         // 先设置好样式，再定位
         // 这样才能保证定位计算不会出问题
 
-        var placementClass = layer.data(placementClassKey);
+        var placementClass = mainElement.data(placementClassKey);
         if (placementClass) {
-            layer.removeClass(placementClass);
-            layer.removeData(placementClassKey);
+            mainElement
+            .removeClass(placementClass)
+            .removeData(placementClassKey);
         }
 
-        placementClass = me.placementClass;
-        if (placementClass
-            && (placementClass = placementClass[placement])
-        ) {
-            layer.addClass(placementClass);
-            layer.data(placementClassKey, placementClass);
+        placementClass = me.option(placement + 'Class');
+        if (placementClass) {
+            mainElement
+            .addClass(placementClass)
+            .data(placementClassKey, placementClass);
         }
+
+
 
         // 定位条件
-        var gap = me.gap;
+
         var options = {
-            element: me.layer,
-            attachment: me.sourceElement,
-            offsetX: $.type(gap.x) === 'number' ? gap.x : 0,
-            offsetY: $.type(gap.y) === 'number' ? gap.y : 0
+            element: mainElement,
+            attachment: mainElement.source,
+            offsetX: 0,
+            offsetY: 0
         };
 
-        var target = placementMap[placement];
+        var gapX = me.option('gapX');
+        if ($.type(gapX) === 'number') {
+            options.offsetX = gapX;
+        }
 
+        var gapY = me.option('gapY');
+        if ($.type(gapY) === 'number') {
+            options.offsetY = gapY;
+        }
+
+        var target = placementMap[ placement ];
         if ($.isFunction(target.gap)) {
             target.gap(options);
         }
 
-        var offset = me.offset[placement];
-        if (offset) {
-            if ($.type(offset.x) === 'number') {
-                options.offsetX += offset.x;
-            }
-            if ($.type(offset.y) === 'number') {
-                options.offsetY += offset.y;
-            }
+        var offsetX = me.option(placement + 'OffsetX');
+        if ($.type(offsetX) === 'number') {
+            options.offsetX += offsetX;
         }
 
-        position[target.name](options);
+        var offsetY = me.option(placement + 'OffsetY');
+        if ($.type(offsetY) === 'number') {
+            options.offsetY += offsetY;
+        }
+
+
+        position[ target.name ](options);
+
 
     };
 
@@ -407,16 +441,11 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.popup.dispose();
-
-        me.element =
-        me.sourceElement =
-        me.layer =
-        me.popup = null;
+        me.inner('popup').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -425,61 +454,44 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     Tooltip.defaultOptions = {
+
+        showTrigger: 'enter',
+        showDelay: 100,
+        showAnimate: function (options) {
+            options.mainElement.show();
+        },
+
+        hideTrigger: 'leave,click',
+        hideDelay: 100,
+        hideAnimate: function (options) {
+            options.mainElement.hide();
+        },
+
+        mainTemplate: '<div class="tooltip tooltip-inverted"></div>',
+
         placement: 'auto',
-        template: '<div class="tooltip tooltip-inverted"></div>',
-        placementClass: {
-            top: 'tooltip-top',
-            right: 'tooltip-right',
-            bottom: 'tooltip-bottom',
-            left: 'tooltip-left',
-            topLeft: 'tooltip-top-left',
-            topRight: 'tooltip-top-right',
-            bottomLeft: 'tooltip-bottom-left',
-            bottomRight: 'tooltip-bottom-right'
-        },
 
-        show: {
-            trigger: 'over',
-            delay: 100
-        },
-        hide: {
-            trigger: 'out,click',
-            delay: 100
-        },
-        gap: { x: 10, y: 10 },
-        offset: { },
+        topClass: 'tooltip-top',
+        rightClass: 'tooltip-right',
+        bottomClass: 'tooltip-bottom',
+        leftClass: 'tooltip-left',
+        topLeftClass: 'tooltip-top-left',
+        topRightClass: 'tooltip-top-right',
+        bottomLeftClass: 'tooltip-bottom-left',
+        bottomRightClass: 'tooltip-bottom-right',
 
-        updateContent: function () {
+        gapX: 10,
+        gapY: 10,
 
-            var layer = this.layer;
+        updateContent: function (options) {
 
-            layer.html(
-                this.getSourceElement().attr('data-title')
+            options.mainElement.html(
+                options.triggerElement.attr('data-title')
             );
 
-        },
-
-        updatePlacement: $.noop
+        }
 
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_tooltip';
-
-    /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element 需要提示浮层的元素
-     * @param {Object=} options 配置参数
-     * @return {Array.<Tooltip>}
-     */
-    Tooltip.init = init(Tooltip);
 
     /**
      * 测试左侧
@@ -488,7 +500,8 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testLeft() {
-        return this.sourceElement.offset().left > this.layer.outerWidth();
+        var main = this.inner('main');
+        return main.source.offset().left > main.outerWidth();
     }
 
     /**
@@ -498,11 +511,12 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testRight() {
-        var sourceElement = this.sourceElement;
+        var main = this.inner('main');
+        var source = main.source;
         return pageWidth() >
-               (sourceElement.offset().left
-               + sourceElement.outerWidth()
-               + this.layer.outerWidth());
+               (source.offset().left
+               + source.outerWidth()
+               + main.outerWidth());
     }
 
     /**
@@ -512,7 +526,8 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testTop() {
-        return this.sourceElement.offset().top > this.layer.outerHeight();
+        var main = this.inner('main');
+        return main.source.offset().top > main.outerHeight();
     }
 
     /**
@@ -522,11 +537,12 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testBottom() {
-        var sourceElement = this.sourceElement;
+        var main = this.inner('main');
+        var source = main.source;
         return pageHeight() >
-               (sourceElement.offset().top
-                + sourceElement.outerHeight()
-                + this.layer.outerHeight());
+               (source.offset().top
+                + source.outerHeight()
+                + main.outerHeight());
     }
 
     /**
@@ -539,7 +555,7 @@ define(function (require, exports, module) {
 
         bottom: {
             name: 'bottomCenter',
-            test: [testBottom],
+            test: [ testBottom ],
             gap: function (options) {
                 options.offsetX = 0;
             }
@@ -547,7 +563,7 @@ define(function (require, exports, module) {
 
         top: {
             name: 'topCenter',
-            test: [testTop],
+            test: [ testTop ],
             gap: function (options) {
                 options.offsetY *= -1;
                 options.offsetX = 0;
@@ -556,7 +572,7 @@ define(function (require, exports, module) {
 
         right: {
             name: 'middleRight',
-            test: [testRight],
+            test: [ testRight ],
             gap: function (options) {
                 options.offsetY = 0;
             }
@@ -564,7 +580,7 @@ define(function (require, exports, module) {
 
         left: {
             name: 'middleLeft',
-            test: [testLeft],
+            test: [ testLeft ],
             gap: function (options) {
                 options.offsetX *= -1;
                 options.offsetY = 0;
@@ -573,7 +589,7 @@ define(function (require, exports, module) {
 
         bottomLeft: {
             name: 'bottomLeft',
-            test: [testBottom, testLeft],
+            test: [ testBottom, testLeft ],
             gap: function (options) {
                 options.offsetX *= -1;
             }
@@ -581,12 +597,12 @@ define(function (require, exports, module) {
 
         bottomRight: {
             name: 'bottomRight',
-            test: [testBottom, testRight]
+            test: [ testBottom, testRight ]
         },
 
         topLeft: {
             name: 'topLeft',
-            test: [testTop, testLeft],
+            test: [ testTop, testLeft ],
             gap: function (options) {
                 options.offsetX *= -1;
                 options.offsetY *= -1;
@@ -595,7 +611,7 @@ define(function (require, exports, module) {
 
         topRight: {
             name: 'topRight',
-            test: [testTop, testRight],
+            test: [ testTop, testRight ],
             gap: function (options) {
                 options.offsetY *= -1;
             }

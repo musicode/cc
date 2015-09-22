@@ -6,30 +6,22 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 事件列表
-     *
-     * 1. change
-     */
-
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var contains = require('../function/contains');
     var setValue = require('../function/setValue');
     var isHidden = require('../function/isHidden');
     var lpad = require('../function/lpad');
-    var init = require('../function/init');
     var replaceWith = require('../function/replaceWith');
 
-    var Calendar = require('../ui/Calendar');
     var Popup = require('../helper/Popup');
+    var Calendar = require('../ui/Calendar');
     var dateUtil = require('../util/date');
 
     /**
      * 表单日期选择器
      *
      * @param {Object} options
-     * @property {jQuery} options.element 输入框元素，如果结构完整，也可传容器元素
+     * @property {jQuery} options.mainElement 主元素
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
      * @property {Date=} options.date 打开面板所在月份
      * @property {string=} options.mode 视图类型，可选值包括 month, week
@@ -43,23 +35,27 @@ define(function (require, exports, module) {
      *                                     分组 2 表示月份
      *                                     分组 3 表示日期
      *
-     * @property {Object} options.show
-     * @property {number=} options.show.delay 显示延时
-     * @property {Function=} options.show.animation 显示动画
+     * @property {string=} options.showCalendarTrigger 显示的触发方式
+     * @property {number=} options.showCalendarDelay 显示延时
+     * @property {Function=} options.showCalendarAnimate 显示动画
      *
-     * @property {Object} options.hide
-     * @property {number=} options.hide.delay 隐藏延时
-     * @property {Function=} options.hide.animation 隐藏动画
+     * @property {string=} options.hideCalendarTrigger 隐藏的触发方式
+     * @property {number=} options.hideCalendarDelay 隐藏延时
+     * @property {Function=} options.hideCalendarAnimate 隐藏动画
      *
-     * @property {string=} options.template 组件模板
+     * @property {string=} options.mainTemplate 组件模板
      * @property {string=} options.calendarTemplate 日历模板
-     * @property {string=} options.calendarSelector 日期选择器
+     *
+     * @property {string=} options.inputSelector 输入框选择器
+     * @property {string=} options.calendarSelector 日历选择器
+     *
      * @property {string=} options.prevSelector 上个月的按钮选择器
      * @property {string=} options.nextSelector 下个月的按钮选择器
-     * @property {Function=} options.renderCalendarTemplate 渲染日历模板函数
+     *
+     * @property {Function=} options.renderTemplate 渲染模板函数
      */
     function Date(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Date.prototype;
@@ -69,95 +65,129 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
-        var calendarSelector = me.calendarSelector;
+
+        var mainElement = me.option('mainElement');
 
 
 
-        var mainElement;
+        var inputSelector = me.option('inputSelector');
+        var calendarSelector = me.option('calendarSelector');
 
-        // 如果结构完整，不需要初始化模板
-        if (element.find(calendarSelector).length === 1) {
-
-            mainElement = element;
-
-            element =
-            me.element = mainElement.find(':text');
-
-        }
-        else {
-
-            mainElement = $(me.template);
-
-            replaceWith(element, mainElement);
-            replaceWith(mainElement.find(':text'), element);
-
-        }
-
-
-
-
-        var value = me.value;
-
-        // 必须有一个初始化的值，便于变化时对比
-        if ($.type(value) !== 'string') {
-            value = element.val();
-        }
-
+        var inputElement = mainElement.find(inputSelector);
         var calendarElement = mainElement.find(calendarSelector);
 
-        me.calendar = new Calendar({
-            element: calendarElement,
-            mode: me.mode,
-            date: me.date,
-            today: me.today,
-            stable: me.stable,
-            template: me.calendarTemplate,
-            renderTemplate: $.proxy(me.renderCalendarTemplate, me),
-            prevSelector: me.prevSelector,
-            nextSelector: me.nextSelector,
-            onChange: function () {
-                me.setValue(this.value);
-            }
-        });
+        if (inputElement.length !== 1 || calendarElement.length !== 1) {
 
-        me.popup = new Popup({
-            element: element,
-            layer: calendarElement,
-            show: me.show,
-            hide: me.hide,
-            onBeforeHide: function (e) {
+            mainElement.html(
+                me.option('mainTemplate')
+            );
 
-                var target = e.target;
+            inputElement = mainElement.find(inputSelector);
+            calendarElement = mainElement.find(calendarSelector);
 
-                if (target && target.tagName) {
+        }
 
-                    if (target === element[0]
-                        || !contains(document, target) // 日历刷新后触发，所以元素没了
-                        || contains(calendarElement, target)
-                    ) {
-                        return false;
+
+
+
+        var value = me.option('value');
+
+        if ($.type(value) !== 'string') {
+            value = inputElement.val();
+        }
+
+        var calendar = new Calendar({
+            mainElement: calendarElement,
+            mainTemplate: me.option('calendarTemplate'),
+            mode: me.option('mode'),
+            date: me.option('date'),
+            today: me.option('today'),
+            stable: me.option('stable'),
+            prevSelector: me.option('prevSelector'),
+            nextSelector: me.option('nextSelector'),
+            renderTemplate: function (data, tpl) {
+                calendarElement.html(
+                    me.execute('renderTemplate', [ data, tpl ])
+                );
+            },
+            change: {
+                value: function (newValue, oldValue, changes) {
+
+                    me.set('value', value);
+
+                    if (changes.value.action === 'click') {
+                        me.close();
                     }
 
                 }
-
             }
         });
 
-        // 默认隐藏
-        if (!isHidden(calendarElement)) {
-            me.close();
-        }
+        var popup = new Popup({
+            triggerElement: inputElement,
+            layerElement: calendarElement,
+            hidden: true,
+            showLayerTrigger: me.option('showCalendarTrigger'),
+            showLayerDelay: me.option('showCalendarDelay'),
+            hideLayerTrigger: me.option('hideCalendarTrigger'),
+            hideLayerDelay: me.option('hideCalendarDelay'),
+            showLayerAnimate: function () {
+                me.execute(
+                    'showCalendarAnimate',
+                    {
+                        calendarElement: calendarElement
+                    }
+                );
+            },
+            hideLayerAnimate: function () {
+                me.execute(
+                    'hideCalendarAnimate',
+                    {
+                        calendarElement: calendarElement
+                    }
+                );
+            }
+        });
 
-        if (value != null) {
-            me.setValue(
-                value,
-                {
-                    force: true,
-                    silence: true
+        var dispatchEvent = function (e) {
+            if (e.target.tagName) {
+                me.emit(e);
+            }
+        };
+
+        popup
+        .before('open', dispatchEvent)
+        .after('open', dispatchEvent)
+        .before('close', function (e) {
+
+            var target = e.target;
+
+            if (target.tagName) {
+
+                if (!contains(document, target) // 日历刷新后触发，所以元素没了
+                    || contains(inputElement, target)
+                    || contains(calendarElement, target)
+                ) {
+                    return false;
                 }
-           );
-        }
+
+            }
+
+            dispatchEvent(e);
+
+        })
+        .after('close', dispatchEvent);
+
+        me.inner({
+            main: mainElement,
+            input: inputElement,
+            popup: popup,
+            calendar: calendar
+        });
+
+        me.set({
+            value: value
+        });
 
     };
 
@@ -165,90 +195,21 @@ define(function (require, exports, module) {
      * 打开日历面板
      */
     proto.open = function () {
-        this.popup.open();
+        this.inner('popup').open();
     };
 
     /**
      * 关闭日历面板
      */
     proto.close = function () {
-        this.popup.close();
-    };
-
-    /**
-     * 取值
-     *
-     * @return {string}
-     */
-    proto.getValue = function () {
-        return this.value;
-    };
-
-    /**
-     * 设值
-     *
-     * @param {string} value 日期，格式为 YYYY-mm-dd
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
-
-        var me = this;
-
-        value = $.type(value) === 'string'
-              ? $.trim(value)
-              : '';
-
-        var date;
-        var match = value.match(me.pattern);
-
-        if (match) {
-
-            if (match.length < 4) {
-                throw new Error('[form/Date]pattern 必须包含 3 个分组.');
-            }
-
-            date = dateUtil.parse(
-                parseInt(match[1], 10),
-                parseInt(match[2], 10),
-                parseInt(match[3], 10)
-            );
-
-        }
-        else {
-            value = '';
-        }
-
-        if (setValue(me, 'value', value)) {
-
-            var calendar = me.calendar;
-
-            if (date && !calendar.inRange(date)) {
-                calendar.render(date);
-            }
-
-            calendar.setValue(
-                value,
-                {
-                    silence: true
-                }
-            );
-
-            me.element.val(value);
-            me.close();
-
-        }
-
+        this.inner('popup').close();
     };
 
     /**
      * 渲染日历
-     *
-     * @param {Date} date
      */
-    proto.render = function (date) {
-        this.calendar.render(date);
+    proto.render = function () {
+        this.inner('calendar').render();
     };
 
     /**
@@ -260,15 +221,12 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.calendar.dispose();
-        me.popup.dispose();
-
-        me.calendar =
-        me.popup = null;
+        me.inner('calendar').dispose();
+        me.inner('popup').dispose();
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
 
     /**
@@ -279,116 +237,93 @@ define(function (require, exports, module) {
      */
     Date.defaultOptions = {
 
-        template: '<div class="form-date">'
-                +     '<input type="text" />'
-                +     '<div class="calendar"></div>'
-                + '</div>',
+        mainTemplate: '<div class="form-date">'
+                    +     '<input type="text" />'
+                    +     '<div class="calendar"></div>'
+                    + '</div>',
+
+        calendarTemplate: '',
 
         mode: 'week',
-        disablePast: true,
 
         prevSelector: '.icon-chevron-left',
         nextSelector: '.icon-chevron-right',
 
+        inputSelector: ':text',
         calendarSelector: '.calendar',
-
-        calendarTemplate: '',
 
         pattern: /^(\d{4})-(\d{2})-(\d{2})$/,
 
-        show: {
-            trigger: 'focus'
+        showCalendarTrigger: 'focus',
+        hideCalendarTrigger: 'click',
+
+        showCalendarAnimate: function (options) {
+            options.calendarElement.show();
         },
-        hide: {
-            trigger: 'click'
-        },
+        hideCalendarAnimate: function (options) {
+            options.calendarElement.hide();
+        }
 
-        renderCalendarTemplate: function (data) {
+    };
 
-            var disablePast = this.disablePast;
+    Date.propertyUpdater = {
 
-            $.each(
-                data.list,
-                function (index, item) {
+        value: function (value) {
 
-                    item.text = [
-                        item.year,
-                        lpad(item.month),
-                        lpad(item.date)
-                    ].join('-');
+            var me = this;
 
+            var calendar = me.inner('calendar');
+
+            var properties = {
+                value: value
+            };
+
+            if (value) {
+
+                var matches = value.match(
+                    me.option('pattern')
+                );
+
+                var date = dateUtil.parse(
+                    parseInt(matches[ 1 ], 10),
+                    parseInt(matches[ 2 ], 10),
+                    parseInt(matches[ 3 ], 10)
+                );
+
+                if (date && !calendar.inRange(date)) {
+                    properties.date = date;
+                    properties.data = calendar.createRenderData(date)
                 }
+
+            }
+
+            calendar.set(properties);
+
+            me.inner('input').val(value);
+
+        }
+
+    };
+
+    Date.propertyValidator = {
+
+        value: function (value) {
+
+            value = $.type(value) === 'string'
+                  ? $.trim(value)
+                  : '';
+
+            var matches = value.match(
+                this.option('pattern')
             );
 
-            var html = [
-                '<div class="calendar-header">',
-                    '<i class="icon icon-chevron-left"></i>',
-                    '<strong>', data.year, '年', data.month, '月</strong>',
-                    '<i class="icon icon-chevron-right"></i>',
-                '</div>',
-                '<table>',
-                      '<thead>',
-                          '<tr>',
-                              '<th>一</th>',
-                              '<th>二</th>',
-                              '<th>三</th>',
-                              '<th>四</th>',
-                              '<th>五</th>',
-                              '<th>六</th>',
-                              '<th>日</th>',
-                          '</tr>',
-                      '</thead>',
-                      '<tbody>'
-            ];
+            return matches && matches.length === 4
+                 ? value
+                 : '';
 
-            $.each(
-                data.list,
-                function (index, item) {
-
-                    if (index % 7 === 0) {
-                        html.push(
-                            index === 0 ? '<tr>' : '</tr>'
-                        );
-                    }
-
-                    html.push('<td class="' + item.phase);
-
-                    var enable = !disablePast || item.phase !== 'past';
-
-                    if (!enable) {
-                        html.push(' date-disabled');
-                    }
-
-                    html.push('"');
-
-                    if (enable) {
-                        html.push(' data-value="' + item.text + '"');
-                    }
-
-                    html.push(' data-year="' + item.year + '"');
-                    html.push(' data-month="' + item.month + '"');
-                    html.push(' data-date="' + item.date + '">');
-                    html.push(item.date);
-                    html.push('</td>');
-
-                }
-            );
-
-            html.push('</tbody></table>');
-
-            return html.join('');
         }
     };
 
-    /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element
-     * @param {Object=} options
-     * @return {Array.<Date>}
-     */
-    Date.init = init(Date);
 
 
     return Date;

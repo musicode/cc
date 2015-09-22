@@ -32,9 +32,8 @@ define(function (require, exports, module) {
      *
      */
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-    var init = require('../function/init');
+    var debounce = require('../function/debounce');
 
 
     /**
@@ -42,14 +41,13 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element <input type="checkbox" /> 元素
-     * @property {string=} options.template 模拟复选框的模版
+     * @property {jQuery} options.mainElement 主元素
+     * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
-     * @property {string=} options.wrapperSelector 应用 className 的元素选择器，默认是 label
      */
     function Checkbox(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Checkbox.prototype;
@@ -63,130 +61,49 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var element = me.element;
-        var template = me.template;
+        var mainElement = me.option('mainElement');
 
-        if (template) {
-            element.hide().before(template);
+        var checkboxSelector = ':checkbox';
+        var checkboxElement = mainElement.find(checkboxSelector);
+        if (checkboxElement.length !== 1) {
+
+            mainElemen.html(
+                me.option('mainTemplate')
+            );
+
+            checkboxElement = mainElement.find(checkboxSelector);
+
         }
 
-        if (element.prop('checked')) {
-            me.check();
-        }
+        mainElement.on(
+            'click' + me.namespace(),
+            debounce(
+                function (e) {
 
-        if (element.prop('disabled')) {
-            me.disable();
-        }
+                    if (me.get('disabled')) {
+                        return;
+                    }
 
-        element.on(
-            'click' + namespace,
-            function (e) {
+                    me.set(
+                        'checked',
+                        !me.get('checked')
+                    );
 
-                if (me.isDisabled()) {
-                    return;
-                }
-
-                if (element.prop('checked')) {
-                    me.check();
-                }
-                else {
-                    me.uncheck();
-                }
-
-            }
+                },
+                50
+            )
         );
 
-    };
+        me.inner({
+            checkbox: checkboxElement,
+            main: mainElement
+        });
 
-    /**
-     * 选中复选框
-     */
-    proto.check = function () {
-        var me = this;
-        me.element.prop('checked', true);
-        me.setClass('add', me.checkedClass);
-    };
-
-    /**
-     * 取消选中复选框
-     */
-    proto.uncheck = function () {
-        var me = this;
-        me.element.prop('checked', false);
-        me.setClass('remove', me.checkedClass);
-    };
-
-    /**
-     * 启用复选框
-     */
-    proto.enable = function () {
-        var me = this;
-        me.element.prop('disabled', false);
-        me.setClass('remove', me.disabledClass);
-    };
-
-    /**
-     * 禁用复选框
-     */
-    proto.disable = function () {
-        var me = this;
-        me.element.prop('disabled', true);
-        me.setClass('add', me.disabledClass);
-    };
-
-    /**
-     * 是否选中
-     *
-     * @returns {boolean}
-     */
-    proto.isChecked = function () {
-        return this.element.prop('checked');
-    };
-
-    /**
-     * 是否禁用
-     *
-     * @returns {boolean}
-     */
-    proto.isDisabled = function () {
-        return this.element.prop('disabled');
-    };
-
-    /**
-     * 获取值
-     *
-     * @return {string}
-     */
-    proto.getValue = function () {
-        this.element.val();
-    };
-
-    /**
-     * 设置值
-     *
-     * @param {string|number} value
-     */
-    proto.setValue = function (value) {
-        this.element.val(value);
-    };
-
-    /**
-     * 为 wrapper 元素设置 className
-     *
-     * @param {string} type 动作类型，可选值有 add remove
-     * @param {string} className
-     */
-    proto.setClass = function (type, className) {
-
-        if (!className) {
-            return;
-        }
-
-        var me = this;
-        var wrapper = me.element.closest(me.wrapperSelector);
-        if (wrapper.length === 1) {
-            wrapper[type + 'Class'](className);
-        }
+        me.set({
+            value: checkboxElement.val(),
+            checked: checkboxElement.prop('checked'),
+            disabled: checkboxElement.prop('disabled')
+        });
 
     };
 
@@ -199,40 +116,73 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
+
     Checkbox.defaultOptions = {
-        wrapperSelector: 'label'
+
     };
 
-    /**
-     * 批量初始化
-     *
-     * @static
-     * @param {jQuery} element
-     * @param {Object=} options
-     * @return {Array.<Checkbox>}
-     */
-    Checkbox.init = init(Checkbox);
 
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_form_checkbox';
+    Checkbox.propertyUpdater = {
+
+        checked: function (checked) {
+
+            var me = this;
+
+            me.inner('checkbox').prop(
+                'checked',
+                !!checked
+            );
+
+            var checkedClass = me.option('checkedClass');
+            if (checkedClass) {
+
+                var mainElement = me.inner('main');
+
+                mainElement[ checked ? 'addClass' : 'removeClass' ](
+                    checkedClass
+                );
+
+            }
+
+        },
+
+        disabled: function (disabled) {
+
+            var me = this;
+
+            me.inner('checkbox').prop(
+                'disabled',
+                !!disabled
+            );
+
+            var disabledClass = me.option('disabledClass');
+            if (disabledClass) {
+
+                var mainElement = me.inner('main');
+
+                mainElement[ disabled ? 'addClass' : 'removeClass' ](
+                    disabledClass
+                );
+
+            }
+
+        },
+
+        value: function (value) {
+
+            this.inner('checkbox').val(value);
+
+        }
+
+    };
 
 
     return Checkbox;

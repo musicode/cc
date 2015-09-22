@@ -7,7 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
 
     /**
@@ -84,7 +83,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 表单元素
+     * @property {jQuery} options.mainElement 表单元素
      * @property {boolean=} options.realtime 是否实时验证（元素失焦验证），默认为 false
      *
      * @property {number=} options.scrollGap 开启 autoScroll 时，为了避免顶部贴边，最好加上一些间距
@@ -99,12 +98,9 @@ define(function (require, exports, module) {
      *
      * @property {Object=} options.fields 配置字段
      *
-     * @property {Function=} options.onBeforeValidate 校验开始前调用
-     * @property {Function=} options.onAfterValidate 校验结束后调用，触发方式可以是表单产生 submit 事件 或 点击按钮
-     *                                               当使用 <form> 元素时，此接口比较有用
      */
     function Validator(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Validator.prototype;
@@ -117,27 +113,33 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
 
-        // 禁用原生表单验证
-        var form = element.prop('tagName') === 'FORM'
-                 ? element
-                 : element.find('form');
+        var mainElement = me.option('mainElement');
+        var namespace = me.namespace();
 
-        if (form.length > 0) {
-            form
+
+
+        var formElement = mainElement.prop('tagName') === 'FORM'
+                        ? mainElement
+                        : mainElement.find('form');
+
+        if (element.length > 0) {
+            element
+                // 禁用原生表单验证
                 .attr('novalidate', 'novalidate')
-                .on(
-                    'submit' + namespace,
-                    $.proxy(me.validate, me)
-                );
+                // 拦截 submit
+                .on('submit' + namespace, $.proxy(me.validate, me));
         }
+
+
+
+
 
         $.each(
             me.fields,
             function (name, conf) {
 
-                var field = element.find('[name="' + name + '"]');
+                var field = mainElement.find('[name="' + name + '"]');
 
                 var type = conf.type;
 
@@ -174,38 +176,61 @@ define(function (require, exports, module) {
             }
         );
 
-        var groupSelector = me.groupSelector;
 
-        element.on(
+        mainElement.on(
             'focusin' + namespace,
             function (e) {
 
-                var group = $(e.target).closest(groupSelector);
-                var className = [ me.successClass, me.errorClass, me.requiredClass ].join(' ');
+                var target = $(e.target);
 
-                group.removeClass(
-                    $.trim(className)
-                );
+                var groupSelector = me.option('groupSelector');
+                var groupElement = target.closest(groupSelector);
+
+                if (groupElement.length === 1) {
+
+                    var classList = [ ];
+
+                    var successClass = me.option('successClass');
+                    if (successClass) {
+                        classList.push(successClass);
+                    }
+
+                    var errorClass = me.option('errorClass');
+                    if (errorClass) {
+                        classList.push(errorClass);
+                    }
+
+                    if (classList.length > 0) {
+                        groupElement.removeClass(
+                            classList.join(' ')
+                        );
+                    }
+
+                }
 
             }
         );
 
-        if (me.realtime) {
-            element.on(
+        if (me.option('realtime')) {
+            mainElement.on(
                 'focusout' + namespace,
                 function (e) {
 
                     var target = $(e.target);
-                    var name = target.prop('name');
 
+                    var name = target.prop('name');
                     if (!name) {
+                        // 便于封装组件
                         target = target.find('[name]');
-                        name = target.prop('name');
+                        if (target.length === 1) {
+                            name = target.prop('name');
+                        }
                     }
 
                     if (name) {
                         me.validate(name);
                     }
+
                 }
             );
         }
@@ -227,15 +252,12 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var event = me.emit('beforeValidate');
-        if (event.isDefaultPrevented()) {
-            return;
-        }
+        var mainElement = me.option('mainElement');
+        var groupSelector = me.option('groupSelector');
 
-        var element = me.element;
-        var groupSelector = me.groupSelector;
 
-        var groups;
+        // 找出需要验证的分组元素列表
+        var groupElement;
 
         if ($.type(fields) === 'string') {
             fields = [ fields ];
@@ -245,14 +267,14 @@ define(function (require, exports, module) {
             groups = $.map(
                         fields,
                         function (name) {
-                            return element
+                            return mainElement
                             .find('[name="' + name + '"]')
                             .closest(groupSelector);
                         }
                     );
         }
         else {
-            groups = element.find(groupSelector);
+            groupElement = mainElement.find(groupSelector);
             if ($.type(fields) === 'boolean') {
                 autoScroll = fields;
             }
@@ -376,7 +398,7 @@ define(function (require, exports, module) {
                         // 因为要改值，所以复制一份
                         conf = $.extend(true, { }, conf);
 
-                        conf.form = me.element;
+                        conf.form = me.inner('form');
                         conf.value = $.trim(value);
 
                         // 验证失败的属性名称，如 max
@@ -551,11 +573,13 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
+
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -776,7 +800,8 @@ define(function (require, exports, module) {
             return element.attr('minlength');
         },
         maxlength: function (element) {
-            return element.attr('maxlength');
+            return element.
+attr('maxlength');
         },
         min: function (element) {
             return element.attr('min');
@@ -791,14 +816,6 @@ define(function (require, exports, module) {
             return element.attr('equals');
         }
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_form_validator';
 
     /**
      * 跳转到第一个错误的位置，用于提升用户体验

@@ -17,15 +17,17 @@ define(function (require, exports, module) {
 
         var result = [ ];
 
-        $.each(
-            str.split(sep),
-            function (index, part) {
-                part = $.trim(part);
-                if (part) {
-                    result.push(part);
+        if (str && $.type(str) === 'string') {
+            $.each(
+                str.split(sep),
+                function (index, part) {
+                    part = $.trim(part);
+                    if (part) {
+                        result.push(part);
+                    }
                 }
-            }
-        );
+            );
+        }
 
         return result;
     };

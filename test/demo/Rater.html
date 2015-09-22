@@ -39,8 +39,8 @@
 
             function (Rater) {
 
-                var rater = new Rater({
-                    element: $('#main'),
+                window.rater = new Rater({
+                    mainElement: $('#main'),
                     value: 3.5,
                     count: 6,
                     min: 2,
@@ -51,8 +51,8 @@
                     halfClass: 'half',
 
                     half: true,
-                    onChange: function () {
-                        console.log(this.value)
+                    onchange: function () {
+                        console.log(this.get('value'));
                     }
                 });
 

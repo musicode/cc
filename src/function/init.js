@@ -31,7 +31,7 @@ define(function (require, exports, module) {
                         new Class(
                             $.extend(
                                 {
-                                    element: $(this)
+                                    mainElement: $(this)
                                 },
                                 options
                             )

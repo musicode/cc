@@ -87,45 +87,45 @@
 
                 var layer = $('#select-layer');
 
-                var popup = new Popup({
-                    element: $('#select-trigger'),
-                    layer: layer,
-                    show: {
-                        trigger: 'click',
-                        animation: function () {
-                            this.layer.slideDown(100);
-                        }
-                    },
-                    hide: {
-                        trigger: 'click',
-                        animation: function () {
-                            this.layer.slideUp(10);
-                        }
+                window.popup = new Popup({
+                    triggerElement: $('#select-trigger'),
+                    layerElement: layer,
+
+                    showTrigger: 'click',
+                    //showDelay: 100,
+                    showAnimate: function (options) {
+                        options.layerElement.slideDown(100);
                     },
 
-                    onBeforeShow: function (e) {
-                        //console.log('beforeShow');
-                        e.stopPropagation();
-                        e.preventDefault();
+                    hideTrigger: 'click',
+                    //hideDelay: 100,
+                    hideAnimate: function (options) {
+                        options.layerElement.slideUp(10);
                     },
-                    onAfterShow: function () {
+
+                    onbeforeopen: function (e) {
+                        console.log(e)
+                        //console.log('beforeShow');
+                        //return false;
+                    },
+                    onafteropen: function () {
                         $('#select-trigger i').removeClass('icon-arrow-down')
                                               .addClass('icon-arrow-up');
                         //console.log('afterShow');
                     },
-                    onBeforeHide:function () {
+                    onbeforeclose:function () {
                         //console.log('beforeHide');
                     },
-                    onAfterHide: function () {
+                    onafterclose: function () {
                         $('#select-trigger i').removeClass('icon-arrow-up')
                                               .addClass('icon-arrow-down');
                         //console.log('afterHide');
                     }
                 });
 
-                popup.on('beforeShow', function (e, data) {
-                    console.log(e, data);
-                    return false;
+                popup.before('open', function (e, data) {
+                    //console.log(e, data);
+                    //return false;
                 });
 
                 layer.on('click', 'li', function (e) {

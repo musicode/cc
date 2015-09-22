@@ -17,23 +17,10 @@ define(function (require, exports, module) {
      *     具体可见 http://www.iana.org/assignments/media-types
      *
      *     但鉴于这种方式不直观(小白可能都没听过 MIME type)，还是用扩展名好了
-     *
-     * ## 事件列表
-     *
-     * 1. fileChange
-     * 2. uploadStart
-     * 3. uploadProgress
-     * 4. uploadSuccess
-     * 5. uploadChunkSuccess
-     * 6. uploadError
-     * 7. uploadComplete
      */
 
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
-
-    var percent = require('../function/percent');
-    var formatFile = require('../function/formatFile');
+    var ratio = require('../function/ratio');
 
     var ext2MimeType = require('../util/mimeType');
 
@@ -42,7 +29,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 点击打开文件选择框的元素
+     * @property {jQuery} options.mainElement 点击打开文件选择框的元素
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
@@ -55,11 +42,10 @@ define(function (require, exports, module) {
      *
      */
     function AjaxUploader(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = AjaxUploader.prototype;
-
 
     proto.type = 'AjaxUploader';
 
@@ -70,6 +56,50 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        var inputElement = me.option('mainElement');
+
+
+        // 确保是文件上传控件
+        if (!inputElement.is(':file')) {
+            throw new Error('AjaxUploader mainElement must be <input type="file" />');
+        }
+
+        // 用一个 form 元素包着，便于重置
+        var mainElement = $('<form></form>');
+
+        inputElement.replaceWith(mainElement);
+        mainElement.append(inputElement);
+
+
+
+        // 完善元素属性
+        var properties = { };
+
+        if (me.option('accept')) {
+            properties.accept = formatAccept(me.option('accept'));
+        }
+
+        if (me.option('multiple')) {
+            properties.multiple = true;
+        }
+
+
+
+        inputElement
+        .prop(properties)
+        .on(
+            'change' + me.namespace(),
+            function () {
+
+                setFiles(me, inputElement.prop('files'));
+
+                me.emit(
+                    AjaxUploader.FILE_CHANGE
+                );
+
+            }
+        );
+
         /**
          * 文件队列，格式如下：
          * {
@@ -79,45 +109,15 @@ define(function (require, exports, module) {
          *
          * @type {Object}
          */
-        me.fileQueue = { };
+        me.inner({
+            main: mainElement,
+            input: inputElement,
+            fileQueue: { }
+        });
 
-        var element = me.element;
-
-        // 确保是文件上传控件
-        if (!element.is(':file')) {
-            throw new Error('AjaxUploader element must be <input type="file" />');
-        }
-
-        // 用一个 form 元素包着，便于重置
-        var faker = me.faker = $('<form></form>');
-        element.replaceWith(faker);
-        faker.append(element);
-
-        // 完善元素属性
-        var properties = { };
-
-        if (me.accept) {
-            properties.accept = formatAccept(me.accept);
-        }
-
-        if (me.multiple) {
-            properties.multiple = true;
-        }
-
-        element.prop(properties);
-
-        element.on(
-            'change' + namespace,
-            function () {
-
-                setFiles(me, element.prop('files'));
-
-                me.emit('fileChange');
-
-            }
+        me.emit(
+            AjaxUploader.READY
         );
-
-        me.emit('ready');
 
     };
 
@@ -134,7 +134,7 @@ define(function (require, exports, module) {
      *
      */
     proto.getFiles = function () {
-        return this.fileQueue.files || [ ];
+        return this.inner('fileQueue').files || [ ];
     };
 
     /**
@@ -143,7 +143,7 @@ define(function (require, exports, module) {
      * @param {string} action
      */
     proto.setAction = function (action) {
-        this.action = action;
+        this.option('action', action);
     };
 
     /**
@@ -152,7 +152,18 @@ define(function (require, exports, module) {
      * @param {Object} data 需要一起上传的数据
      */
     proto.setData = function (data) {
-        $.extend(this.data, data);
+
+        var currentData = this.option('data');
+
+        if ($.isPlainObject(currentData)) {
+            $.extend(currentData, data);
+        }
+        else {
+            currentData = data;
+        }
+
+        this.option('data', currentData);
+
     };
 
     /**
@@ -160,7 +171,7 @@ define(function (require, exports, module) {
      */
     proto.reset = function () {
         // 避免出现停止后选择相同文件，不触发 change 事件的问题
-        this.faker[0].reset();
+        this.inner('main')[0].reset();
     };
 
     /**
@@ -170,7 +181,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var validStatus = me.useChunk
+        var validStatus = me.option('useChunk')
                         ? AjaxUploader.STATUS_UPLOADING
                         : AjaxUploader.STATUS_WAITING;
 
@@ -200,9 +211,9 @@ define(function (require, exports, module) {
             }
         );
 
-        xhr.open('post', me.action, true);
+        xhr.open('post', me.option('action'), true);
 
-        var upload = me.useChunk ? uploadChunk : uploadFile;
+        var upload = me.option('useChunk') ? uploadChunk : uploadFile;
 
         upload(me, fileItem);
 
@@ -227,14 +238,14 @@ define(function (require, exports, module) {
      * 启用
      */
     proto.enable = function () {
-        this.element.prop('disabled', false);
+        this.option('input').prop('disabled', false);
     };
 
     /**
      * 禁用
      */
     proto.disable = function () {
-        this.element.prop('disabled', true);
+        this.option('input').prop('disabled', true);
     };
 
     /**
@@ -247,15 +258,14 @@ define(function (require, exports, module) {
         lifeCycle.dispose(me);
 
         me.stop();
-        me.element.off(namespace);
 
-        me.faker =
-        me.element =
-        me.fileQueue = null;
+        me.inner('input').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
     /**
      * 默认配置
@@ -277,6 +287,22 @@ define(function (require, exports, module) {
      * @type {boolean}
      */
     AjaxUploader.supportChunk = typeof FileReader !== 'undefined';
+
+    AjaxUploader.READY = 'ready';
+
+    AjaxUploader.FILE_CHANGE = 'filechange';
+
+    AjaxUploader.UPLOAD_START = 'uploadstart';
+
+    AjaxUploader.UPLOAD_SUCCESS = 'uploadsuccess';
+
+    AjaxUploader.CHUNK_UPLOAD_SUCCESS = 'chunkuploadsuccess';
+
+    AjaxUploader.UPLOAD_ERROR = 'uploaderror';
+
+    AjaxUploader.UPLOAD_PROGRESS = 'uploadprogress';
+
+    AjaxUploader.UPLOAD_COMPLETE = 'uploadcomplete';
 
     /**
      * 等待上传状态
@@ -319,14 +345,6 @@ define(function (require, exports, module) {
     AjaxUploader.ERROR_CANCEL = 0;
 
     /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_helper_ajaxuploader';
-
-    /**
      * 上传整个文件
      *
      * @inner
@@ -338,14 +356,14 @@ define(function (require, exports, module) {
         var formData = new FormData();
 
         $.each(
-            uploader.data,
+            uploader.option('data'),
             function (key, value) {
                 formData.append(key, value);
             }
         );
 
         formData.append(
-            uploader.fileName,
+            uploader.option('fileName'),
             fileItem.nativeFile
         );
 
@@ -371,7 +389,7 @@ define(function (require, exports, module) {
 
         var chunkIndex = chunkInfo.index;
 
-        var chunkSize = uploader.chunkSize;
+        var chunkSize = uploader.option('chunkSize');
         var start = chunkSize * chunkIndex;
         var end = chunkSize * (chunkIndex + 1);
         if (end > file.size) {
@@ -408,7 +426,7 @@ define(function (require, exports, module) {
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
 
                 uploader.emit(
-                    'uploadStart',
+                    AjaxUploader.UPLOAD_START,
                     {
                         fileItem: fileItem
                     }
@@ -435,7 +453,10 @@ define(function (require, exports, module) {
                     if (chunkInfo.uploaded < fileItem.file.size) {
 
                         // 分片上传成功
-                        uploader.emit('chunkUploadSuccess', data);
+                        uploader.emit(
+                            AjaxUploader.CHUNK_UPLOAD_SUCCESS,
+                            data
+                        );
 
                         chunkInfo.index++;
                         uploader.upload();
@@ -446,7 +467,10 @@ define(function (require, exports, module) {
 
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
 
-                uploader.emit('uploadSuccess', data);
+                uploader.emit(
+                    AjaxUploader.UPLOAD_SUCCESS,
+                    data
+                );
 
                 uploadComplete(uploader, fileItem);
 
@@ -461,7 +485,7 @@ define(function (require, exports, module) {
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
                 uploader.emit(
-                    'uploadError',
+                    AjaxUploader.UPLOAD_ERROR,
                     {
                         fileItem: fileItem,
                         errorCode: errorCode
@@ -499,12 +523,12 @@ define(function (require, exports, module) {
                 }
 
                 uploader.emit(
-                    'uploadProgress',
+                    AjaxUploader.UPLOAD_PROGRESS,
                     {
                         fileItem: fileItem,
                         uploaded: uploaded,
                         total: total,
-                        percent: percent(uploaded, total)
+                        percent: 100 * ratio(uploaded, total) + '%'
                     }
                 );
 
@@ -544,18 +568,22 @@ define(function (require, exports, module) {
         }
 
         uploader.emit(
-            'uploadComplete',
+            AjaxUploader.UPLOAD_COMPLETE,
             {
                 fileItem: fileItem
             }
         );
 
         if (fileItem.status === AjaxUploader.STATUS_UPLOAD_SUCCESS
-            || (fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR && uploader.ignoreError)
+            || (fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR
+                && uploader.option('ignoreError'))
         ) {
+
             var index = fileItem.index + 1;
-            if (index < uploader.fileQueue.files.length) {
-                uploader.fileQueue.index = index;
+            var fileQueue = uploader.inner('fileQueue');
+
+            if (index < fileQueue.files.length) {
+                fileQueue.index = index;
                 uploader.upload();
             }
             else {
@@ -573,7 +601,7 @@ define(function (require, exports, module) {
      */
     function setFiles(uploader, files) {
 
-        var fileQueue = uploader.fileQueue;
+        var fileQueue = uploader.inner('fileQueue');
 
         fileQueue.index = 0;
         fileQueue.files = $.map(
@@ -597,7 +625,7 @@ define(function (require, exports, module) {
      * @return {?Object}
      */
     function getCurrentFileItem(uploader) {
-        var fileQueue = uploader.fileQueue;
+        var fileQueue = uploader.inner('fileQueue');
         var index = fileQueue.index;
         if (fileQueue.files && $.type(index) === 'number') {
             return fileQueue.files[index];
@@ -630,6 +658,32 @@ define(function (require, exports, module) {
         return $.unique(result).join(',');
 
     }
+
+    /**
+     * 格式化文件对象
+     *
+     * @inner
+     * @param {Object} file
+     * @property {string} file.name 文件名称
+     * @property {number} file.size 文件大小
+     * @return {Object}
+     */
+    function formatFile(file) {
+
+        var name = file.name;
+        var parts = name.split('.');
+        var type = parts.length > 1
+                 ? parts.pop().toLowerCase()
+                 : '';
+
+        return {
+            name: name,
+            type: type,
+            size: file.size
+        };
+
+    }
+
 
     return AjaxUploader;
 

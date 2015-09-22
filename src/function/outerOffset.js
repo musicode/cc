@@ -19,8 +19,8 @@ define(function (require, exports, module) {
         var marginTop = toNumber(element.css('margin-top'), 0, 'int');
 
         return {
-            left: offsetData.left - marginLeft,
-            top: offsetData.top - marginTop
+            x: offsetData.left - marginLeft,
+            y: offsetData.top - marginTop
         };
 
     };

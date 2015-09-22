@@ -11,29 +11,26 @@ define(function (require) {
      *
      * 只有具有 data-value 属性的元素才支持点击选中
      *
-     * 事件列表：
-     *
-     * 1. change
-     * 2. prev - 点击 上月/上周 元素触发
-     * 3. next - 点击 下月/下周 元素触发
-     * 4. beforeRender - 渲染开始前触发，可用于调整数据
-     * 5. afterRender - 渲染完成后触发，可用于初始化逻辑
      */
 
-    var setValue = require('../function/setValue');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
+    var split = require('../function/split');
+    var lpad = require('../function/lpad');
     var dateUtil = require('../util/date');
 
     /**
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 主元素
-     * @property {string=} options.value 选中的值，multiple 为 false 时才有意义，没处理多选的逻辑
-     * @property {Date=} options.date 初始化时视图所在的日期，默认是浏览器的当天
+     * @property {jQuery} options.mainElement 主元素
+     * @property {string} options.mainTemplate
+     *
+     * @property {string=} options.value 选中的值，多选时以 , 分隔
+     *
      * @property {Date=} options.today 今天的日期，主要是为了服务器时间校正，默认是浏览器的当天
+     * @property {Date=} options.date 初始化时视图所在的日期，默认取 today
      * @property {number=} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
+     *
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否 toggle 选中
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
@@ -44,12 +41,12 @@ define(function (require) {
      * @property {string} options.prevSelector 上月/上周 选择器
      * @property {string} options.nextSelector 下月/下周 选择器
      *
-     * @property {string} options.template
      * @property {Function} options.renderTemplate
+     * @property {Function=} options.parseDate 把字符串类型的 value 解析成 Date 类型
      *
      */
     function Calendar(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Calendar.prototype;
@@ -64,118 +61,72 @@ define(function (require) {
 
         var me = this;
 
-        me.today = me.today || new Date();
+        var mainElement = me.option('mainElement');
 
-        me.render(
-            me.date || new Date()
-        );
+        var multiple = me.option('multiple');
 
-        if (me.value) {
-            me.setValue(
-                me.value,
-                {
-                    force: true,
-                    silence: true
-                }
-            );
-        }
+        var today = me.option('today') || new Date();
+        var date = me.option('date') || today;
+        var value = me.option('value');
 
-        var clickType = 'click' + namespace;
-        var element = me.element;
+        me.set({
+            today: today,
+            date: date,
+            value: value
+        });
 
-        element.on(
+        var clickType = 'click' + me.namespace();
+
+        mainElement.on(
             clickType,
-            '[data-value]',
+            '[' + ATTR_VALUE + ']',
             function () {
 
-                var target = $(this);
+                var value = me.get('value');
 
-                var activeClass = me.activeClass;
-                var isActive = target.hasClass(activeClass);
+                var list = splitValue(value);
+                var item = $(this).attr(ATTR_VALUE);
 
-                var value;
+                var index = $.inArray(item, list);
 
-                if (isActive) {
-                    if (me.toggle) {
-                        value = '';
-                        target.removeClass(activeClass);
-                    }
-                    else {
-                        return;
-                    }
+                if (item
+                    && index >= 0
+                    && me.option('toggle')
+                ) {
+                    list.splice(index, 1);
                 }
                 else {
-                    value = target.data('value');
+                    list.push(item);
                 }
 
-                me.setValue(value);
+                me.set(
+                    'value',
+                    joinValues(list, multiple),
+                    { action: 'click' }
+                );
+
             }
         );
 
-        var prevSelector = me.prevSelector;
+        var prevSelector = me.option('prevSelector');
         if (prevSelector) {
-            element.on(
+            mainElement.on(
                 clickType,
                 prevSelector,
                 $.proxy(me.prev, me)
             );
         }
 
-        var nextSelector = me.nextSelector;
+        var nextSelector = me.option('nextSelector');
         if (nextSelector) {
-            element.on(
+            mainElement.on(
                 clickType,
                 nextSelector,
                 $.proxy(me.next, me)
             );
         }
 
-    };
-
-    /**
-     * 获得选中的日期
-     *
-     * @returns {string|*}
-     */
-    proto.getValue = function () {
-        return this.value;
-    };
-
-    /**
-     * 设置选中的日期（只能设置当前视图内的日期）
-     *
-     * @param {string} value
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
-
-        var me = this;
-
-        var element = me.element;
-        var target = element.find('[data-value="' + value + '"]');
-
-        if (target.length !== 1) {
-            value = '';
-        }
-
-        if (setValue(me, 'value', value, options)) {
-
-            var activeClass = me.activeClass;
-            var activeElement = element.find('.' + activeClass);
-
-            if (value) {
-                if (!me.multiple) {
-                    activeElement.removeClass(activeClass);
-                }
-                target.addClass(activeClass);
-            }
-            else {
-                activeElement.removeClass(activeClass);
-            }
-
-        }
+        me.inner('main', mainElement);
 
     };
 
@@ -185,15 +136,16 @@ define(function (require) {
     proto.prev = function () {
 
         var me = this;
-        var date = me.date;
+        var date = me.get('date');
 
-        date = me.mode === 'week'
+        date = me.option('mode') === MODE_WEEK
              ? dateUtil.prevWeek(date)
              : dateUtil.prevMonth(date);
 
-        me.render(date);
-
-        me.emit('prev');
+        me.set({
+            date: date,
+            data: me.createRenderData(date)
+        });
 
     };
 
@@ -203,15 +155,16 @@ define(function (require) {
     proto.next = function () {
 
         var me = this;
-        var date = me.date;
+        var date = me.get('date');
 
-        date = me.mode === 'week'
+        date = me.option('mode') === MODE_WEEK
              ? dateUtil.nextWeek(date)
              : dateUtil.nextMonth(date);
 
-        me.render(date);
-
-        me.emit('next');
+        me.set({
+            date: date,
+            data: me.createRenderData(date)
+        });
 
     };
 
@@ -223,10 +176,14 @@ define(function (require) {
      */
     proto.inRange = function (date) {
 
-        var data = this.data;
+        var data = this.get('data');
+
+        if (!data) {
+            return false;
+        }
 
         return date >= dateUtil.parse(data.start)
-            && date <= dateUtil.parse(data.end);
+            && date < dateUtil.parse(data.end) + dateUtil.DAY;
 
     };
 
@@ -236,52 +193,68 @@ define(function (require) {
      * @param {Date} date
      * @return {Object}
      */
-    proto.createData = function (date) {
+    proto.createRenderData = function (date) {
 
         var me = this;
-        var firstDay = me.firstDay;
 
-        // 转成 00:00:00 便于比较大小
-        date = date.setHours(0, 0, 0, 0);
+        var firstDay = me.option('firstDay');
 
         var weekFirstDay;
         var weekLastDay;
 
-        var isMonthMode = me.mode === 'month';
+        var isMonthMode = me.option('mode') === MODE_MONTH;
 
         if (isMonthMode) {
+
             var monthFirstDay = dateUtil.getMonthFirstDay(date);
             var monthLastDay = dateUtil.getMonthLastDay(date);
 
             weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
             weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+
         }
         else {
+
             weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
             weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
+
         }
 
-        weekFirstDay = + weekFirstDay;
-        weekLastDay = + weekLastDay;
+        weekFirstDay = normalizeDate(weekFirstDay);
+        weekLastDay = normalizeDate(weekLastDay);
 
-        if (isMonthMode && me.stable) {
+        if (isMonthMode && me.option('stable')) {
+
             var duration = weekLastDay - weekFirstDay;
             var offset = stableDuration - duration;
+
             if (offset > 0) {
                 weekLastDay += offset;
             }
+
         }
 
         var list = getDatasource(
             weekFirstDay,
             weekLastDay,
-            me.today.setHours(0, 0, 0, 0)
+            normalizeDate(me.get('today')),
+            $.map(
+                splitValue(me.get('value')),
+                function (literal) {
+                    if (literal) {
+                        var date = me.execute('parseDate', literal);
+                        if (date) {
+                            return normalizeDate(date);
+                        }
+                    }
+                }
+            )
         );
 
         return $.extend(
             dateUtil.simplify(date),
             {
-                start: list[0],
+                start: list[ 0 ],
                 end: list[ list.length - 1 ],
                 list: list
             }
@@ -290,26 +263,21 @@ define(function (require) {
     };
 
     /**
-     * 渲染日历
-     *
-     * @param {Date} date
+     * 渲染
      */
-    proto.render = function (date) {
+    proto.render = function () {
 
         var me = this;
 
-        me.date = date;
-
-        var data =
-        me.data = me.createData(date);
-
-        me.emit('beforeRender', data);
-
-        me.element.html(
-            me.renderTemplate(data, me.template)
+        me.inner('main').html(
+            me.execute(
+                'renderTemplate',
+                [
+                    me.get('data'),
+                    me.option('mainTemplate')
+                ]
+            )
         );
-
-        me.emit('afterRender', data);
 
     };
 
@@ -322,12 +290,21 @@ define(function (require) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
+
+
+    var MODE_MONTH = 'month';
+    var MODE_WEEK = 'week';
+
+    var SEPARATE = ',';
+
+    var ATTR_VALUE = 'data-value';
 
     /**
      * 默认配置
@@ -337,17 +314,88 @@ define(function (require) {
      */
     Calendar.defaultOptions = {
         firstDay: 1,
-        mode: 'month',
+        mode: MODE_MONTH,
         toggle: false,
         multiple: false,
         stable: true,
-        activeClass: 'active'
+        activeClass: 'active',
+        parseDate: dateUtil.parse
     };
 
-    /**
-     * jquery 事件命名空间
-     */
-    var namespace = '.cobble_ui_calendar';
+
+    Calendar.propertyUpdater = { };
+
+    Calendar.propertyUpdater.date =
+    Calendar.propertyUpdater.data =
+    Calendar.propertyUpdater.value = function (newValue, oldValue, changes) {
+
+        var me = this;
+
+        var silentOptions = {
+            silent: true
+        };
+
+        // 如果是  render 就一次成型，不需要一个个去选中
+        var needRender = false;
+
+        if (changes.date) {
+
+            var date = changes.date.newValue;
+
+            if (!me.inRange(date)) {
+                needRender = true;
+                me.set('data', me.createRenderData(date), silentOptions);
+            }
+
+        }
+
+        if (!needRender && changes.data) {
+            needRender = true;
+        }
+
+        if (needRender) {
+            me.render();
+        }
+        else if (changes.value) {
+
+            var activeClass = me.option('activeClass');
+            if (!activeClass) {
+                return;
+            }
+
+            var mainElement = me.inner('main');
+
+            mainElement
+            .find('.' + activeClass + '[' + ATTR_VALUE + ']')
+            .removeClass(activeClass);
+
+            $.each(
+                splitValue(changes.value.newValue),
+                function (index, value) {
+
+                    if (!value) {
+                        return;
+                    }
+
+                    mainElement
+                    .find('[' + ATTR_VALUE + '="' + value + '"]')
+                    .addClass(activeClass);
+
+                }
+            );
+
+        }
+
+    };
+
+    Calendar.propertyValidator = {
+        value: function (value) {
+            return joinValues(
+                splitValue(value),
+                this.option('multiple')
+            );
+        }
+    };
 
     /**
      * 6 周才能稳定（跨度需要减一天，所以是 41 天）
@@ -358,6 +406,47 @@ define(function (require) {
     var stableDuration = 41 * dateUtil.DAY;
 
     /**
+     * 按 , 拆分 value
+     *
+     * @inner
+     * @param {string} value
+     * @return {Array}
+     */
+    function splitValue(value) {
+        return split(value, SEPARATE);
+    }
+
+    /**
+     * 组合 values
+     *
+     * @inner
+     * @param {Array} values
+     * @param {boolean} multiple
+     * @return {string}
+     */
+    function joinValues(values, multiple) {
+
+        if (!multiple) {
+            return values.pop();
+        }
+
+        values.sort(function (a, b) {
+            if (a > b) {
+                return 1;
+            }
+            else if (a < b) {
+                return -1;
+            }
+            else {
+                return 0;
+            }
+        });
+
+        return values.join(SEPARATE);
+
+    }
+
+    /**
      * 获得渲染模板的数据
      *
      * @inner
@@ -366,13 +455,16 @@ define(function (require) {
      * @param {number} today 今天的时间戳
      * @return {Array.<Object>}
      */
-    function getDatasource(start, end, today) {
+    function getDatasource(start, end, today, selected) {
 
         var data = [ ];
 
-        for (var time = start, item; time <= end; time += dateUtil.DAY) {
+        for (var time = start, date, item; time <= end; time += dateUtil.DAY) {
 
             item = dateUtil.simplify(time);
+
+            item.month = lpad(item.month);
+            item.date = lpad(item.date);
 
             // 过去 or 现在 or 将来
             if (time > today) {
@@ -385,10 +477,27 @@ define(function (require) {
                 item.phase = 'today';
             }
 
+            if ($.inArray(time, selected) >= 0) {
+                item.active = true;
+            }
+
             data.push(item);
+
         }
 
         return data;
+
+    }
+
+    /**
+     * 获取 00:00:00 时间戳
+     *
+     * @inner
+     * @param {Date} date
+     * @return {number}
+     */
+    function normalizeDate(date) {
+        return date.setHours(0, 0, 0, 0);
     }
 
 

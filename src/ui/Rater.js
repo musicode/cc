@@ -6,16 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * # 事件列表
-     *
-     * 1. change - 选中星星触发
-     */
-
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
-    var setValue = require('../function/setValue');
     var restrain = require('../function/restrain');
     var eventOffset = require('../function/eventOffset');
 
@@ -24,7 +16,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element 主元素
+     * @property {jQuery} options.mainElement 主元素
      * @property {number} options.value 当前星级
      * @property {number=} options.count 星星总数
      * @property {number=} options.min 可选最小值，默认为 1
@@ -51,18 +43,20 @@ define(function (require, exports, module) {
      *
      * @example
      * var rater = new Rater({
-     *     element: $('.rater'),
+     *     mainElement: $('.rater'),
      *     value: 2,                        // 当前选中 2 颗星
      *     count: 5,                        // 总共有 5 颗星
      *     onClass: 'icon on',
      *     offClass: 'icon off',
-     *     onChange: function (e, data) {
-     *         console.log('select ' + data.value);
+     *     change: {
+     *         value: function (value) {
+     *             console.log('value change');
+     *         }
      *     }
      * });
      */
     function Rater(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Rater.prototype;
@@ -75,41 +69,25 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var count = me.count;
 
-        if ($.type(me.max) !== 'number') {
-            me.max = count;
+        var count = me.option('count');
+        var value = me.option('value');
+        var min = me.option('min');
+        var max = me.option('max');
+
+        if ($.type(max) !== 'number') {
+            max = count;
         }
 
-        var html = '';
-        var hint = me.hint || { };
+        var mainElement = me.option('mainElement');
 
-        traverse(
-            me.value,
-            count,
-            function (index, className) {
+        if (!me.option('readOnly')) {
 
-                index++;
-
-                html += me.renderTemplate(
-                            {
-                                'class': me[className],
-                                'value': index,
-                                'hint': hint[index]
-                            },
-                            me.itemTemplate
-                        );
-            }
-        );
-
-        var element = me.element;
-        element.html(html);
-
-        if (!me.readOnly) {
-
-            var supportHalf = me.half;
-            var itemSelector = me.itemSelector;
+            var supportHalf = me.option('half');
+            var itemSelector = me.option('itemSelector');
             var itemElement;
+
+            var namespace = me.namespace();
 
             var pickValue = function (e, target) {
 
@@ -121,7 +99,7 @@ define(function (require, exports, module) {
                     }
                 }
 
-                return restrain(value, me.min, me.max);
+                return restrain(value, min, max);
 
             };
 
@@ -132,15 +110,13 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                var value = pickValue(e, itemElement);
-
-                if (value !== me._value) {
-                    me.previewValue(value);
-                }
+                me.preview(
+                    pickValue(e, itemElement)
+                );
 
             };
 
-            element
+            mainElement
             .on('mouseenter' + namespace, itemSelector, function (e) {
 
                 itemElement = $(this);
@@ -152,7 +128,7 @@ define(function (require, exports, module) {
                     );
                 }
 
-                me.previewValue(
+                me.preview(
                     pickValue(e, itemElement)
                 );
 
@@ -165,47 +141,61 @@ define(function (require, exports, module) {
 
                 itemElement = null;
 
-                me.previewValue();
+                me.preview();
 
             })
             .on('click' + namespace, itemSelector, function (e) {
-                me.setValue(
+
+                me.set(
+                    'value',
                     pickValue(e, itemElement || $(this))
                 );
+
             });
 
         }
 
+        me.inner({
+            main: mainElement
+        });
+
+        me.set({
+            count: count,
+            value: value
+        });
+
     };
 
-    /**
-     * 获得当前星级
-     *
-     * @return {number}
-     */
-    proto.getValue = function () {
-        return this.value || 0;
-    };
-
-    /**
-     * 设置当前星级
-     *
-     * @param {number} value
-     * @param {Object=} options 选项
-     * @property {boolean=} options.force 是否强制执行，不判断是否跟旧值相同
-     * @property {boolean=} options.silence 是否不触发 change 事件
-     */
-    proto.setValue = function (value, options) {
+    proto.render = function () {
 
         var me = this;
 
-        if (me.readOnly) {
-            return;
-        }
+        var html = '';
+        var hint = me.option('hint') || { };
 
-        if (setValue(me, 'value', value, options)) {
-            refresh(me, value);
-        }
+        traverse(
+            me.get('value'),
+            me.get('count'),
+            function (index, className) {
+
+                index++;
+
+                html += me.execute(
+                            'renderTemplate',
+                            [
+                                {
+                                    'class': me.option(className),
+                                    'value': index,
+                                    'hint': hint[ index ]
+                                },
+                                me.option('itemTemplate')
+                            ]
+                        );
+
+            }
+        );
+
+        me.inner('main').html(html);
 
     };
 
@@ -214,14 +204,18 @@ define(function (require, exports, module) {
      *
      * @param {number} value
      */
-    proto.previewValue = function (value) {
+    proto.preview = function (value) {
 
         var me = this;
 
-        me._value = value;
+        if (value === me.inner('previewValue')) {
+            return;
+        }
+
+        me.inner('previewValue', value);
 
         if ($.type(value) !== 'number') {
-            value = me.value;
+            value = me.get('value');
         }
 
         refresh(me, value);
@@ -237,19 +231,14 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        me.element.off(namespace);
-        me.element = null;
+        me.inner('main').off(
+            me.namespace()
+        );
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    /**
-     * 默认参数
-     *
-     * @static
-     * @type {Object}
-     */
     Rater.defaultOptions = {
         min: 1,
         half: false,
@@ -263,13 +252,26 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_rater';
+    Rater.propertyUpdater = { };
+
+    Rater.propertyUpdater.value =
+    Rater.propertyUpdater.count = function (newValue, oldValue, changes) {
+
+        var me = this;
+
+        var countChange = changes.count;
+        var valueChange = changes.value;
+
+        if (countChange) {
+            me.render();
+        }
+        else if (valueChange) {
+            refresh(me, valueChange.newValue);
+        }
+
+        return false;
+
+    };
 
     /**
      * 刷新星星的状态
@@ -280,13 +282,15 @@ define(function (require, exports, module) {
      */
     function refresh(rater, value) {
 
-        var items = rater.element.find(rater.itemSelector);
+        var items = rater.inner('main').find(
+            rater.option('itemSelector')
+        );
 
         traverse(
             value,
-            rater.count,
+            rater.get('count'),
             function (index, className) {
-                items[index].className = rater[className];
+                items[ index ].className = rater.option(className);
             }
         );
 

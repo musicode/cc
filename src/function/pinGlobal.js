@@ -8,8 +8,11 @@ define(function (require, exports, module) {
 
     var pin = require('./pin');
 
-    var dimension = require('../util/dimension');
-    var viewport = require('../function/viewport');
+    var viewport = require('./viewport');
+    var viewportWidth = require('./viewportWidth');
+    var viewportHeight = require('./viewportHeight');
+    var pageScrollLeft = require('./pageScrollLeft');
+    var pageScrollTop = require('./pageScrollTop');
 
     /**
      * @param {Object} options
@@ -32,8 +35,8 @@ define(function (require, exports, module) {
 
             attachment: {
                 element: viewport(),
-                width: dimension.getViewportWidth(),
-                height: dimension.getViewportHeight(),
+                width: viewportWidth(),
+                height: viewportHeight(),
                 x: options.x,
                 y: options.y
             }
@@ -41,8 +44,8 @@ define(function (require, exports, module) {
 
         if (!options.fixed) {
             pinOptions.offset = {
-                x: dimension.getPageScrollLeft(),
-                y: dimension.getPageScrollTop()
+                x: pageScrollLeft(),
+                y: pageScrollTop()
             };
         }
 

@@ -110,6 +110,7 @@ define(function (require, exports, module) {
                : '...';
 
         return result + suffix;
+
     };
 
     /**
@@ -119,12 +120,14 @@ define(function (require, exports, module) {
      * @return {string}
      */
     exports.encodeHTML = function (source) {
+
         return String(source)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+
     };
 
     /**
@@ -134,6 +137,7 @@ define(function (require, exports, module) {
      * @return {string}
      */
     exports.decodeHTML = function (source) {
+
         var str = String(source)
                     .replace(/&amp;/g, '&')
                     .replace(/&lt;/g, '<')
@@ -143,11 +147,12 @@ define(function (require, exports, module) {
 
         // 处理转义的中文和实体字符
         return str.replace(
-                    /&#([\d]+);/g,
-                    function ($0, $1) {
-                        return String.fromCharCode(parseInt($1, 10));
-                    }
-                );
+            /&#([\d]+);/g,
+            function ($0, $1) {
+                return String.fromCharCode(parseInt($1, 10));
+            }
+        );
+
     };
 
 });

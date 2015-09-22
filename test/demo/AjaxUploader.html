@@ -10,7 +10,7 @@
 <body>
 
     <div id="uploader">
-        <span id="file"></span>
+        <input type="file" id="file" />
     </div>
 
     <script src="./js/jquery.js"></script>
@@ -26,34 +26,34 @@
 
                 var element = $('#file');
                 var uploader = new AjaxUploader({
-                    element: element,
+                    mainElement: element,
                     action: 'http://localhost:8808/upload',
                     multiple: true,
                     accept: ['jpg', 'png', 'gif', 'bmp'],
-                    onFileChange: function (event) {
+                    onfilechange: function (event) {
                         this.setData({
                             name: 'zhujl',
                             age: 25
                         });
                         this.upload();
                     },
-                    onUploadStart: function (event, data) {
+                    onuploadstart: function (event, data) {
                         console.log('upload start:');
                         console.log(data.fileItem);
                     },
-                    onUploadProgress: function (event, data) {
+                    onuploadprogress: function (event, data) {
                         console.log('upload progress:');
                         console.log(data.percent);
                     },
-                    onUploadSuccess: function (event, data) {
+                    onuploadsuccess: function (event, data) {
                         console.log('upload success');
                         console.log(data.responseText);
                     },
-                    onUploadError: function (event, data) {
+                    onuploaderror: function (event, data) {
                         console.log('upload error');
                         console.log(data);
                     },
-                    onUploadComplete: function (event, data) {
+                    onuploadcomplete: function (event, data) {
                         console.log('upload complete');
                     }
                 });

@@ -64,23 +64,23 @@
 
                 new Carousel({
 
-                    element: $('#carousel'),
+                    mainElement: $('#carousel'),
 
-                    trigger: 'click',
+                    navTrigger: 'click',
 
-                    iconSelector: '.carousel-indicators li',
+                    navSelector: '.carousel-indicators li',
                     prevSelector: '[data-slide="prev"]',
                     nextSelector: '[data-slide="next"]',
                     itemSelector: '.carousel-inner .item',
 
-                    activeClass: 'active',
+                    navActiveClass: 'active',
 
-                    animation: function (data) {
-                        var from = data.fromIndex;
-                        var to = data.toIndex;
+                    contentAnimate: function (options) {
+                        var from = options.fromIndex;
+                        var to = options.toIndex;
                     },
 
-                    onChange: function (event, data) {
+                    onchange: function (event, data) {
                         console.log(data);
                     }
                 });

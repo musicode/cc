@@ -10,8 +10,6 @@ define(function (require, exports, module) {
     var body = require('../util/instance').body;
 
     var pin = require('../function/pin');
-    var isHidden = require('../function/isHidden');
-    var jquerify = require('../function/jquerify');
     var lifeCycle = require('../function/lifeCycle');
     var eventPage = require('../function/eventPage');
     var offsetParent = require('../function/offsetParent');
@@ -21,18 +19,18 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.element 菜单元素
-     * @property {string=} options.template 如果想动态生成元素，可不传 element，而是传入模板
+     * @property {jQuery=} options.mainElement 菜单元素
+     * @property {string=} options.mainTemplate 如果想动态生成元素，可不传 mainElement，而是传入模板
      *
-     * @property {jQuery=} options.container 在 container 内部右键弹出菜单，默认是 body
+     * @property {jQuery=} options.watchElement 在 watchElement 内部响应右键菜单，默认是 body
      *
-     * @property {Object} options.show
-     * @property {number=} options.show.delay 显示延时
-     * @property {Function=} options.show.animation 显示动画
+     * @property {string=} options.showTrigger 显示的触发方式
+     * @property {number=} options.showDelay 显示延时
+     * @property {Function=} options.showAnimate 显示动画
      *
-     * @property {Object} options.hide
-     * @property {number=} options.hide.delay 隐藏延时
-     * @property {Function=} options.hide.animation 隐藏动画
+     * @property {string=} options.hideTrigger 隐藏的触发方式
+     * @property {number=} options.hideDelay 隐藏延时
+     * @property {Function=} options.hideAnimate 隐藏动画
      *
      * @property {Object=} options.action 可选，配置点击事件处理器
      *                     {
@@ -42,7 +40,7 @@ define(function (require, exports, module) {
      *                     key 是选择器，value 是 handler
      */
     function ContextMenu(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = ContextMenu.prototype;
@@ -56,37 +54,29 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
-        var element = me.element;
-        var container = me.container;
 
         var contextEvent;
+        var namespace = me.namespace();
 
-        var initMenu = function (element) {
-
-            me.element = element;
-
-            // 默认隐藏
-            if (!isHidden(element)) {
-                element.hide();
-            }
+        var initMenu = function (mainElement) {
 
             // body 必须是定位容器
-            if (!offsetParent(element).is('body')) {
-                body.append(element);
+            if (!offsetParent(mainElement).is('body')) {
+                body.append(mainElement);
             }
 
             // 绑定点击事件
-            var action = me.action;
+            var action = me.option('action');
             if (action) {
                 $.each(
                     action,
                     function (selector, handler) {
-                        element.on(
+                        mainElement.on(
                             'click' + namespace,
                             selector,
                             function () {
-                                handler.call(
-                                    me,
+                                me.execute(
+                                    handler,
                                     contextEvent
                                 );
                             }
@@ -95,28 +85,69 @@ define(function (require, exports, module) {
                 );
             }
 
-            me.popup = new Popup({
-                layer: element,
-                show: me.show,
-                hide: me.hide,
-                context: me
+            var popup = new Popup({
+                layerElement: mainElement,
+                showLayerTrigger: me.option('showTrigger'),
+                showLayerDelay: me.option('showDelay'),
+                hideLayerTrigger: me.option('hideTrigger'),
+                hideLayerDelay: me.option('hideDelay'),
+                showLayerAnimate: function () {
+                    me.execute(
+                        'showAnimate',
+                        {
+                            mainElement: mainElement
+                        }
+                    );
+                },
+                hideLayerAnimate: function () {
+                    me.execute(
+                        'hideAnimate',
+                        {
+                            mainElement: mainElement
+                        }
+                    );
+                }
+            });
+
+
+            var dispatchEvent = function (e) {
+                if (e.target.tagName) {
+                    me.emit(e);
+                }
+            };
+
+            popup
+            .before('open', dispatchEvent)
+            .after('open', dispatchEvent)
+            .before('close', dispatchEvent)
+            .after('close', dispatchEvent);
+
+            // 默认隐藏
+            if (!popup.get('hidden')) {
+                popup.close();
+            }
+
+            me.inner({
+                popup: popup,
+                main: mainElement
             });
 
         };
 
-        if (element) {
-            initMenu(element);
+        var mainElement = me.option('mainElement');
+        if (mainElement) {
+            initMenu(mainElement);
         }
 
-        container
+        me.option('watchElement')
         .on('contextmenu' + namespace, function (e) {
 
-            var template = me.template;
+            var mainTemplate = me.option('mainTemplate');
 
             // 惰性初始化
-            if (!element && template) {
-                element = $(template);
-                initMenu(element);
+            if (!mainElement && mainTemplate) {
+                mainElement = $(mainTemplate);
+                initMenu(mainElement);
             }
 
             if (activeMenu && activeMenu !== me) {
@@ -131,7 +162,7 @@ define(function (require, exports, module) {
             var pos = eventPage(e);
 
             pin({
-                element: element,
+                element: mainElement,
                 x: 0,
                 y: 0,
                 attachment: {
@@ -141,28 +172,18 @@ define(function (require, exports, module) {
                 }
             });
 
-            // 禁掉默认菜单
-            e.preventDefault();
-
-            // 防止被外层响应
-            e.stopPropagation();
+            return false;
 
         });
 
     };
 
-    /**
-     * 显示菜单
-     */
     proto.open = function () {
-        this.popup.open();
+        this.inner('popup').open();
     };
 
-    /**
-     * 隐藏菜单
-     */
     proto.close = function () {
-        this.popup.close();
+        this.inner('popup').close();
     };
 
     /**
@@ -174,20 +195,19 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        var popup = me.popup;
+        var popup = me.inner('popup');
         if (popup) {
             popup.dispose();
-            me.popup = null;
         }
 
-        var element = me.element;
-        if (element) {
-            element.remove();
-            me.element = null;
+        var mainElement = me.inner('main');
+        if (mainElement) {
+            mainElement.remove();
         }
 
-        me.container.off(namespace);
-        me.container = null;
+        me.option('watchElement').off(
+            me.namespace()
+        );
 
         if (activeMenu === me) {
             activeMenu = null;
@@ -195,28 +215,18 @@ define(function (require, exports, module) {
 
     };
 
-    jquerify(proto);
+    lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     ContextMenu.defaultOptions = {
-        container: body,
-        hide: {
-            trigger: 'click,context'
+        watchElement: body,
+        hideTrigger: 'click,context',
+        showAnimate: function (options) {
+            options.mainElement.show();
+        },
+        hideAnimate: function (options) {
+            options.mainElement.hide();
         }
     };
-
-    /**
-     * jquery 事件命名空间
-     *
-     * @inner
-     * @type {string}
-     */
-    var namespace = '.cobble_ui_contextmenu';
 
     /**
      * 当前正在显示的菜单
