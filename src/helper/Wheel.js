@@ -18,8 +18,7 @@ define(function (require, exports, module) {
      *      统一为向上为负值，向下为正值，值为 1 的倍数
      */
 
-    var lifeCycle = require('../function/lifeCycle');
-
+    var lifeCycle = require('../util/lifeCycle');
     var instance = require('../util/instance');
 
     /**
@@ -37,9 +36,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Wheel';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -68,18 +64,14 @@ define(function (require, exports, module) {
                 }
 
                 e.type = 'scroll';
-                e.delta = delta;
 
-                me.emit(e);
+                me.emit(e, { delta: delta });
 
             }
         );
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -94,12 +86,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Wheel.defaultOptions = {
         watchElement: instance.document
     };
@@ -108,15 +94,10 @@ define(function (require, exports, module) {
 
     var MOUSE_WHEEL = 'mousewheel';
 
-    /**
-     * 支持的滚轮事件名称
-     *
-     * @inner
-     * @type {string}
-     */
     var support = ('on' + MOUSE_WHEEL) in instance.body[0]
                 ? MOUSE_WHEEL               // Webkit 和 IE 支持 mousewheel
                 : MOUSE_SCROLL;             // 火狐的老版本
+
 
     return Wheel;
 

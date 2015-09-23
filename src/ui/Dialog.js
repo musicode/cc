@@ -7,9 +7,9 @@ define(function (require, exports, module) {
     'use strict';
 
     var instance = require('../util/instance');
+    var lifeCycle = require('../util/lifeCycle');
 
     var debounce = require('../function/debounce');
-    var lifeCycle = require('../function/lifeCycle');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
     var offsetParent = require('../function/offsetParent');
@@ -77,9 +77,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Dialog';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -228,37 +225,26 @@ define(function (require, exports, module) {
             me.after('hide', $.proxy(me.dispose, me));
         }
 
-        if (me.option('hidden')) {
-            me.hide();
-        }
-        else {
-            me.show();
-        }
 
         me.inner({
             main: mainElement,
             mask: maskElement
         });
 
+        me.set({
+            hidden: me.option('hidden')
+        });
+
     };
 
-    /**
-     * 显示对话框
-     */
     proto.show = function () {
         this.set('hidden', false);
     };
 
-    /**
-     * 隐藏对话框
-     */
     proto.hide = function () {
         this.set('hidden', true);
     };
 
-    /**
-     * 刷新对话框的位置和大小
-     */
     proto.refresh = function () {
 
         var me = this;
@@ -299,9 +285,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -486,6 +469,17 @@ define(function (require, exports, module) {
             });
 
         }
+    };
+
+    Dialog.propertyValidator = {
+
+        hidden: function (hidden) {
+            if ($.type(hidden) !== 'boolean') {
+                hidden = !!hidden;
+            }
+            return hidden;
+        }
+
     };
 
 

@@ -12,7 +12,7 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
-    var Iterator = require('../helper/Iterator');
+    var Iterator = require('../helper/ElementIterator');
 
     var browser = require('../util/browser');
     var lifeCycle = require('../util/lifeCycle');
@@ -56,9 +56,6 @@ define(function (require, exports, module) {
 
     proto.type = 'AutoComplete';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -439,7 +436,6 @@ define(function (require, exports, module) {
 
     /**
      * 渲染数据
-     *
      */
     proto.render = function () {
 
@@ -457,17 +453,32 @@ define(function (require, exports, module) {
 
     };
 
+    proto._render = function () {
+        if (!this.get('data')) {
+            return false;
+        }
+    };
+
     proto.open = function () {
         this.inner('popup').open();
+    };
+
+    proto._open = function () {
+        if (!this.inner('popup').get('hidden')) {
+            return false;
+        }
     };
 
     proto.close = function () {
         this.inner('popup').close();
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._close = function () {
+        if (this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.dispose = function () {
 
         var me = this;

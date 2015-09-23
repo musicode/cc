@@ -335,18 +335,15 @@ define(function (require, exports, module) {
             }
 
             // 批量更新
-            var record = {
-                newValue: me.get(name),
-                oldValue: oldValue
-            };
-
+            var record = { };
             extend(record, options);
 
-            var changes = me.changes;
+            record.newValue = me.get(name);
+            record.oldValue = oldValue;
 
+            var changes = me.changes;
             if (!changes) {
-                changes =
-                me.changes = { };
+                changes = me.changes = { };
             }
 
             var oldRecord = changes[ name ];
@@ -398,6 +395,11 @@ define(function (require, exports, module) {
         $.each(
             proto,
             function (name) {
+
+                var _index = name.indexOf('_');
+                if (_index === 0 || _index === name.length - 1) {
+                    return;
+                }
 
                 around(
                     proto,

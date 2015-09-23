@@ -39,7 +39,7 @@
                     }
                 });
 
-                var dialog = new Dialog({
+                window.dialog = new Dialog({
 
                     title: '标题',
                     content: '内容',
@@ -93,18 +93,32 @@
                         options.mainElement.animate(options.mainStyle, 100);
                     },
 
-                    onbeforeshow: function (event) {
-                        return true
-                    },
-                    onaftershow: function (event) {
 
+                    onbeforeshow: function () {
+                        console.log('before show');
                     },
-                    onbeforehide: function (event) {
-                        return true;
+                    onaftershow: function () {
+                        console.log('after show');
                     },
-                    onafterhide: function (event) {
-
+                    onbeforehide: function () {
+                        console.log('before hide');
+                    },
+                    onafterhide: function () {
+                        console.log('after hide');
+                    },
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
                     }
+
                 });
 
 

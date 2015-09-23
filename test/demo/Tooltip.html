@@ -85,14 +85,16 @@
 
 
                 config.onbeforeopen = function (e) {
-                    // this.main.find('.tooltip-inner').html(
-                    //     this.element.attr('title')
-                    // );
                     console.log('before open');
                 };
-                config.onafterclose = function (e) {
-                    //console.log(this);
+                config.onafteropen = function (e) {
+                    console.log('after open');
+                };
+                config.onbeforeclose = function (e) {
                     console.log('before close');
+                };
+                config.onafterclose = function (e) {
+                    console.log('after close');
                 };
 
 

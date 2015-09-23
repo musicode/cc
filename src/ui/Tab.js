@@ -6,11 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 90%
-     */
-
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
     var Switchable = require('../helper/Switchable');
 
     /**
@@ -22,12 +18,13 @@ define(function (require, exports, module) {
      * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 navActiveClass 算出索引
      *
      * @property {string=} options.navTrigger 触发方式，可选值包括 over click，默认是 click
+     * @property {number=} options.navDelay 触发延时
      *
      * @property {string} options.navSelector 导航项的选择器，如 .nav-item
      * @property {string=} options.contentSelector 内容区的选择器，如 .tab-panel
      *
-     * @property {string} options.navActiveClass 导航项选中状态的 class
-     * @property {string=} options.contentActiveClass 内容区选中状态的 class，如果未设置，直接 show/hide
+     * @property {string} options.navActiveClass 导航项选中状态的 className
+     * @property {string=} options.contentActiveClass 内容区选中状态的 className
      *
      * @property {Function=} options.navAnimate 切换动画
      * @property {Function=} options.contentAnimate 切换动画
@@ -40,9 +37,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Tab';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -53,11 +47,12 @@ define(function (require, exports, module) {
         var navActiveClass = me.option('navActiveClass');
 
         var switcher = new Switchable({
-            element: mainElement,
+            mainElement: mainElement,
             index: me.option('index'),
-            trigger: me.option('navTrigger'),
-            selector: navSelector,
-            activeClass: navActiveClass,
+            switchTrigger: me.option('navTrigger'),
+            switchDelay: me.option('navDelay'),
+            itemSelector: navSelector,
+            itemActiveClass: navActiveClass,
             change: {
                 index: function (toIndex, fromIndex) {
 
@@ -90,9 +85,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -105,12 +97,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Tab.defaultOptions = {
         navTrigger: 'click',
         navActiveClass: 'active',

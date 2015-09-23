@@ -27,7 +27,6 @@ define(function (require, exports, module) {
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
-    var lifeCycle = require('../function/lifeCycle');
     var innerOffset = require('../function/innerOffset');
     var outerOffset = require('../function/outerOffset');
     var pageScrollLeft = require('../function/pageScrollLeft');
@@ -38,6 +37,7 @@ define(function (require, exports, module) {
     var disableSelection = require('../function/disableSelection');
 
     var instance = require('../util/instance');
+    var lifeCycle = require('../util/lifeCycle');
     var supportEvents = require('../util/mouse');
 
     /**

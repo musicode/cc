@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 树形组件的特点如下：
@@ -95,8 +95,7 @@ define(function (require, exports, module) {
 
 
         var mainElement = me.option('mainElement');
-        var namespace = me.namespace();
-        var clickType = 'click' + namespace;
+        var clickType = 'click' + me.namespace();
 
         var labelSelector = me.option('labelSelector');
         if (labelSelector) {
@@ -442,6 +441,19 @@ define(function (require, exports, module) {
                 node: this.find(id)
             };
         }
+    };
+
+
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+        me.inner('main').off(
+            me.namespace()
+        );
+
     };
 
     lifeCycle.extend(proto);

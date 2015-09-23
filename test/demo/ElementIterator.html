@@ -5,10 +5,25 @@
     <title>Iterator</title>
 
     <style>
-
+        li.active {
+            background-color: red;
+            color: #FFF;
+        }
     </style>
 </head>
 <body>
+
+    <ul>
+        <li>111</li>
+        <li>222</li>
+        <li>333</li>
+        <li>444</li>
+        <li>555</li>
+        <li>666</li>
+        <li>777</li>
+        <li>888</li>
+        <li>999</li>
+    </ul>
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -17,17 +32,16 @@
 
         require(
 
-            [ 'cobble/helper/Iterator' ],
+            [ 'cobble/helper/ElementIterator' ],
 
-            function (Iterator) {
+            function (ElementIterator) {
 
-                window.iterator = new Iterator({
-
+                window.iterator = new ElementIterator({
+                    watchElement: $(document),
                     defaultIndex: -1,
                     minIndex: 2,
                     maxIndex: 5,
-                    loop: false,
-                    interval: 1000,
+                    loop: true,
 
                     onbeforestart: function () {
                         console.log('before start');
@@ -78,7 +92,13 @@
                     onchange: function (e, data) {
                         var diff = data.index;
                         if (diff) {
-                            console.log('change', diff);
+                            console.log('change', diff)
+                            if ($.type(diff.oldValue) === 'number') {
+                                $('li').eq(diff.oldValue).removeClass('active');
+                            }
+                            if ($.type(diff.newValue) === 'number') {
+                                $('li').eq(diff.newValue).addClass('active');
+                            }
                         }
                     }
                 });

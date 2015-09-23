@@ -64,13 +64,14 @@ define(function (require, exports, module) {
     var position = require('../util/position');
     var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
-    var lifeCycle = require('../function/lifeCycle');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
     var offsetParent = require('../function/offsetParent');
 
     var Popup = require('../helper/Popup');
+
     var instance = require('../util/instance');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 工具提示
@@ -78,6 +79,8 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.triggerElement 需要工具提示的元素
+     * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
+     *
      * @property {jQuery=} options.mainElement 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
      *                                          简单场景可用 mainTemplate 配置搞定
      * @property {string=} options.mainTemplate 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
@@ -85,7 +88,7 @@ define(function (require, exports, module) {
      * @property {string=} options.placement 提示元素出现的位置
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
-     * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
+     *
      * @property {string=} options.maxWidth 提示元素的最大宽度
      *
      * @property {Function} options.updateContent 更新提示浮层的内容
@@ -136,9 +139,7 @@ define(function (require, exports, module) {
 
     proto.type = 'Tooltip';
 
-    /**
-     * 初始化
-     */
+
     proto.init = function () {
 
         var me = this;
@@ -166,6 +167,7 @@ define(function (require, exports, module) {
 
 
         var popup = new Popup({
+            hidden: true,
             layerElement: mainElement,
             triggerElement: triggerElement,
             triggerSelector: me.option('triggerSelector'),
@@ -346,18 +348,24 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 显示提示浮层
-     */
     proto.open = function () {
         this.inner('popup').open();
     };
 
-    /**
-     * 隐藏提示浮层
-     */
+    proto._open = function () {
+        if (!this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.close = function () {
         this.inner('popup').close();
+    };
+
+    proto._close = function () {
+        if (this.inner('popup').get('hidden')) {
+            return false;
+        }
     };
 
     /**
@@ -432,9 +440,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -447,12 +452,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Tooltip.defaultOptions = {
 
         showTrigger: 'enter',

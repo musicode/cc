@@ -46,14 +46,10 @@
     function (Zoom) {
 
         var Zoom = new Zoom({
-            element: $('#zoom'),
-            finder: $('#finder'),
-            viewport: $('#viewport'),
-            url: 'http://img.gsxservice.com/2805014_lo7yjler.jpeg',
-            onScroll: function (event, data) {
-                console.log('onScroll', event.cobble, data);
-
-            }
+            thumbnailElement: $('#zoom'),
+            viewportElement: $('#viewport'),
+            finderElement: $('#finder'),
+            imageUrl: 'http://img.gsxservice.com/2805014_lo7yjler.jpeg'
         });
 
     }

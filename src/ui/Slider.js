@@ -7,8 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
-     * 75%
-     *
      * slider 有两种常见用法：
      *
      * 1. 进度条、音量条为代表的以 1px 为最小变化量
@@ -23,11 +21,11 @@ define(function (require, exports, module) {
      *
      * 综上，组件需求如下：
      *
-     * 1. 配置 min 和 max，表示 value 的计算基于百分比（如音量条可配置为 0 100）
+     * 1. 配置 minValue 和 maxValue，表示 value 的计算基于百分比（如音量条可配置为 0 100）
      *
-     * 2. 配置 min max step，表示按 step 步进，即下一个值是 value + step
+     * 2. 配置 minValue maxValue step，表示按 step 步进，即下一个值是 value + step
      *
-     * 3. 配置 scrollStep，表示支持鼠标滚轮，值取决与 min 和 max
+     * 3. 配置 scrollStep，表示支持鼠标滚轮，值取决与 minValue 和 maxValue
      *
      * 4. 配置 orientation 支持水平和垂直两个方向的滑动，默认方向是从左到右，从上到下，
      *    但有小部分需求是反向的，因此支持反向配置
@@ -38,7 +36,6 @@ define(function (require, exports, module) {
     var divide = require('../function/divide');
     var multiply = require('../function/multiply');
 
-    var lifeCycle = require('../function/lifeCycle');
     var toNumber = require('../function/toNumber');
     var restrain = require('../function/restrain');
     var contains = require('../function/contains');
@@ -47,6 +44,7 @@ define(function (require, exports, module) {
     var Draggable = require('../helper/Draggable');
     var Wheel = require('../helper/Wheel');
 
+    var lifeCycle = require('../util/lifeCycle');
     var orientationMap = require('../util/orientation');
 
     /**
@@ -59,13 +57,13 @@ define(function (require, exports, module) {
      *
      * @property {number=} options.value
      *
-     * @property {number=} options.min 允许的最小值，默认是 0
-     * @property {number=} options.max 允许的最大值，默认是 100
+     * @property {number=} options.minValue 允许的最小值，默认是 0
+     * @property {number=} options.maxValue 允许的最大值，默认是 100
      * @property {number=} options.step 步进值，默认是 1
      * @property {Function=} options.slideAnimate 滑动动画
      *
      * @property {boolean=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数，表示单位步进值
-     * @property {boolean=} options.scrollStepType 步进类型，可选值是 value 或 pixel，默认是 value
+     * @property {boolean=} options.scrollStepType 滚动步进类型，可选值是 value 或 pixel，默认是 value
      * @property {boolean=} options.reverse 是否反向，默认是从左到右，或从上到下，如果反向，则是从右到左，从下到上
      *
      * @property {string=} options.orientation 方向，可选值有 horizontal 和 vertical，默认是 horizontal
@@ -85,9 +83,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Slider';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -200,9 +195,9 @@ define(function (require, exports, module) {
 
             wheels = [ ];
 
-            var scrollHandler = function (e) {
+            var scrollHandler = function (e, data) {
 
-                var delta = e.delta;
+                var delta = data.delta;
 
                 var offset = scrollStepIsFunction
                            ? scrollStep(delta)
@@ -291,17 +286,17 @@ define(function (require, exports, module) {
          *
          * 此处的核心逻辑是 value <=> pixel
          *
-         * min 和 max 是必定有值的
+         * minValue 和 maxValue 是必定有值的
          *
          * 当传了 step 时，可以计算出总步数，以及每步的像素长度
          *
-         *     pixel = (value - min) * stepPixel
-         *     value = min + pixel / stepPixel
+         *     pixel = (value - minValue) * stepPixel
+         *     value = minValue + pixel / stepPixel
          *
          * 当未传 step 时
          *
-         *     value = min + (max - min) * pixel / maxPixel
-         *     pixel = (value - min) * maxPixel / (max - min)
+         *     value = minValue + (maxValue - minValue) * pixel / maxPixel
+         *     pixel = (value - minValue) * maxPixel / (maxValue - minValue)
          *
          */
 
@@ -318,8 +313,8 @@ define(function (require, exports, module) {
         var pixelToValue;
         var valueToPixel;
 
-        var min = me.option('min');
-        var max = me.option('max');
+        var minValue = me.option('minValue');
+        var maxValue = me.option('maxValue');
         var step = me.option('step');
 
         if ($.type(step) === 'number') {
@@ -327,14 +322,14 @@ define(function (require, exports, module) {
             var stepPixel = divide(
                                 maxPixel,
                                 divide(
-                                    minus(max, min),
+                                    minus(maxValue, minValue),
                                     step
                                 )
                             );
 
             pixelToValue = function (pixel) {
                 return plus(
-                    min,
+                    minValue,
                     Math.floor(
                         divide(
                             pixel,
@@ -345,7 +340,7 @@ define(function (require, exports, module) {
             };
             valueToPixel = function (value) {
                 return multiply(
-                    minus(value, min),
+                    minus(value, minValue),
                     stepPixel
                 );
             };
@@ -355,19 +350,19 @@ define(function (require, exports, module) {
 
             pixelToValue = function (pixel) {
                 return plus(
-                    min,
+                    minValue,
                     multiply(
-                        minus(max, min),
+                        minus(maxValue, minValue),
                         divide(pixel, maxPixel)
                     )
                 );
             };
             valueToPixel = function (value) {
                 return multiply(
-                    minus(value, min),
+                    minus(value, minValue),
                     divide(
                         maxPixel,
-                        minus(max, min)
+                        minus(maxValue, minValue)
                     )
                 );
             };
@@ -392,10 +387,6 @@ define(function (require, exports, module) {
 
     };
 
-
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -418,15 +409,9 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Slider.defaultOptions = {
-        min: 0,
-        max: 100,
+        minValue: 0,
+        maxValue: 100,
         scrollStepType: 'value',
         orientation: 'horizontal',
         mainTemplate: '<div class="slider-thumb"></div>',
@@ -500,12 +485,12 @@ define(function (require, exports, module) {
         value: function (value) {
 
             var me = this;
+            var minValue = me.option('minValue');
+            var maxValue = me.option('maxValue');
 
-            return restrain(
-                value,
-                me.option('min'),
-                me.option('max')
-            );
+            value = toNumber(value, minValue);
+
+            return restrain(value, minValue, maxValue);
 
         }
 

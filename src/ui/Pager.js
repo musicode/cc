@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var toNumber = require('../function/toNumber');
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 约定翻页开始页码为 1，好处如下：
@@ -33,7 +33,7 @@ define(function (require, exports, module) {
      * @property {number=} options.startCount 省略号前面的数量，默认是 1
      * @property {number=} options.endCount 省略号后面的数量，默认是 2
      *
-     * @property {boolean=} options.autoHide 是否在只有一页时自动隐藏
+     * @property {boolean=} options.hideOnSingle 是否在只有一页时自动隐藏
      *
      * @property {string=} options.pageTemplate 页码模板
      * @property {string=} options.prevTemplate 上一页模板
@@ -52,17 +52,9 @@ define(function (require, exports, module) {
 
     proto.type = 'Pager';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
-
-        me.set({
-            page: me.option('page'),
-            count: me.option('count')
-        });
 
         var mainElement = me.option('mainElement');
 
@@ -72,18 +64,22 @@ define(function (require, exports, module) {
             '[' + ATTR_PAGE + ']',
             function () {
 
-                var page = toNumber(
-                    $(this).attr(ATTR_PAGE)
-                );
-
+                var page = $(this).attr(ATTR_PAGE);
                 if (page > 0) {
-                    me.set('page', page);
+                    me.set('page', page, { action: 'click' });
                 }
 
             }
         );
 
-        me.inner('main', mainElement);
+        me.inner({
+            main: mainElement
+        });
+
+        me.set({
+            page: me.option('page'),
+            count: me.option('count')
+        });
 
     };
 
@@ -98,9 +94,8 @@ define(function (require, exports, module) {
         var count = me.get('count');
         var mainElement = me.inner('main');
 
-        if (count < 2 && me.option('autoHide')) {
+        if (count < 2 && me.option('hideOnSingle')) {
             me.execute('hideAnimate');
-            mainElement.html('');
             return;
         }
 
@@ -273,9 +268,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 上一页
-     */
     proto.prev = function () {
 
         var me = this;
@@ -287,9 +279,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 下一页
-     */
     proto.next = function () {
 
         var me = this;
@@ -301,9 +290,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -318,15 +304,9 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Pager.defaultOptions = {
 
-        autoHide: true,
+        hideOnSingle: true,
 
         showCount: 6,
         startCount: 1,
@@ -347,8 +327,19 @@ define(function (require, exports, module) {
 
     Pager.propertyUpdater.page =
     Pager.propertyUpdater.count = function () {
+
         this.render();
+
         return false;
+
+    };
+
+    Pager.propertyValidator = {
+
+        page: function (page) {
+            return toNumber(page, 1);
+        }
+
     };
 
     var ATTR_PAGE = 'data-page';

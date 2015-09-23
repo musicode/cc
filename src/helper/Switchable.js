@@ -6,9 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
     var toNumber = require('../function/toNumber');
 
+    var lifeCycle = require('../util/lifeCycle');
     var trigger = require('../util/trigger');
 
     /**
@@ -16,12 +16,12 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.element
+     * @property {jQuery} options.mainElement
      * @property {number=} options.index 当前选中索引，默认是 0
-     * @property {string=} options.trigger 触发方式，可选值有 over click，默认是 click
-     * @property {number=} options.delay 延时时间
-     * @property {string} options.selector 触发器的选择器
-     * @property {string=} options.activeClass 触发元素被激活时的 class
+     * @property {string=} options.switchTrigger 触发方式，可选值有 enter click，默认是 click
+     * @property {number=} options.switchDelay 延时时间
+     * @property {string} options.itemSelector 触发器的选择器
+     * @property {string=} options.itemActiveClass 触发元素被激活时的 class
      */
     function Switchable(options) {
         lifeCycle.init(this, options);
@@ -31,94 +31,58 @@ define(function (require, exports, module) {
 
     proto.type = 'Switchable';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
-        var mainElement = me.option('element');
+        var mainElement = me.option('mainElement');
+        var itemSelector = me.option('itemSelector');
 
-        me.inner('main', mainElement);
+        if (itemSelector) {
 
-        var selector = me.option('selector');
-
-        var items = mainElement.find(selector);
-
-        var activeClass = me.option('activeClass');
-        var index = toNumber(
-            me.option('index'),
-            defaultIndex
-        );
-
-        if (index === defaultIndex && activeClass) {
-            index = items.index(
-                mainElement.find('.' + activeClass)
-            );
-        }
-
-
-        if (selector) {
-
-            var namespace = me.namespace();
-
-            var leaveType = trigger.leave.type + namespace;
+            var executeProxy = function (proxy, name) {
+                if ($.isFunction(proxy[ name ])) {
+                    return proxy[ name ](me);
+                }
+            };
 
             $.each(
                 trigger.parse(
-                    me.option('trigger'),
+                    me.option('switchTrigger'),
                     function (trigger) {
 
-                        var options = {
-                            handler: function () {
-                                me.set(
-                                    'index',
-                                    items.index(this)
-                                )
-                            }
+                        var proxy = triggers[ trigger ];
+
+                        return {
+                            delay: me.option('switchDelay'),
+                            startDelay: executeProxy(proxy, 'startDelay'),
+                            endDelay: executeProxy(proxy, 'endDelay'),
+                            handler: executeProxy(proxy, 'handler')
                         };
-
-                        if (trigger === 'enter') {
-
-                            options.delay = me.option('delay');
-
-                            options.startDelay = function (fn) {
-                                mainElement.on(leaveType, selector, fn);
-                            };
-
-                            options.endDelay = function (fn) {
-                                mainElement.off(leaveType, fn);
-                            };
-
-                        }
-
-                        return options;
 
                     }
                 ),
                 function (name, config) {
-
                     mainElement.on(
-                        config.type + namespace,
-                        selector,
+                        config.type + me.namespace(),
+                        itemSelector,
                         config.handler
                     );
-
                 }
             );
 
         }
 
-        if (index >= 0) {
-            me.set('index', index);
-        }
+        me.inner({
+            main: mainElement
+        });
+
+        me.set({
+            index: me.option('index')
+        });
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -133,25 +97,77 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
+
     Switchable.defaultOptions = {
         index: 0,
-        trigger: 'click',
-        delay: 150
+        switchTrigger: 'click',
+        switchDelay: 100
     };
 
-    /**
-     * 默认的索引值
-     *
-     * @inner
-     * @type {number}
-     */
+    Switchable.propertyValidator = {
+
+        index: function (index) {
+
+            var me = this;
+
+            index = toNumber(index, defaultIndex);
+
+            if (index === defaultIndex) {
+                var itemSelector = me.option('itemSelector');
+                var itemActiveClass = me.option('itemActiveClass');
+                if (itemSelector && itemActiveClass) {
+                    var mainElement = me.inner('main');
+                    index = mainElement.find(itemSelector).index(
+                        mainElement.find('.' + itemActiveClass)
+                    );
+                }
+            }
+
+            return index;
+
+        }
+    };
+
     var defaultIndex = -1;
+
+    var triggers = {
+
+        enter: {
+            startDelay: function (instance) {
+                return function (fn) {
+                    instance.inner('main').on(
+                        trigger.leave.type,
+                        instance.option('itemSelector'),
+                        fn
+                    );
+                };
+            },
+            endDelay: function (instance) {
+                return function (fn) {
+                    instance.inner('main').off(
+                        trigger.leave.type,
+                        fn
+                    );
+                };
+            }
+        },
+
+        click: {
+
+        }
+    };
+
+    triggers.enter.handler =
+    triggers.click.handler = function (instance) {
+        return function () {
+            var itemSelector = instance.option('itemSelector');
+            var itemElements = instance.inner('main').find(itemSelector);
+            instance.set(
+                'index',
+                itemElements.index(this)
+            );
+        };
+    };
 
 
     return Switchable;

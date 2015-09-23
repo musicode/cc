@@ -30,8 +30,20 @@
 
         var wheel = new Wheel({
             watchElement: element,
-            onscroll: function (event) {
-                console.log('onScroll', event.delta);
+            onbeforeinit: function () {
+                console.log('before init');
+            },
+            onafterinit: function () {
+                console.log('after init');
+            },
+            onbeforedispose: function () {
+                console.log('before dispose');
+            },
+            onafterdispose: function () {
+                console.log('after dispose');
+            },
+            onscroll: function (event, data) {
+                console.log('onscroll', data);
                 return false;
             }
         });

@@ -7,7 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
-     * 90%
      *
      * 元素自定义属性使用 data-text 和 data-value
      * 如果需要在点击菜单项获得其他数据，可在元素任意绑定 data-xxx
@@ -15,7 +14,7 @@ define(function (require, exports, module) {
      *
      */
 
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
     var Popup = require('../helper/Popup');
 
@@ -58,9 +57,6 @@ define(function (require, exports, module) {
 
     proto.type = 'ComboBox';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -121,48 +117,34 @@ define(function (require, exports, module) {
         });
 
 
-
-        var value = me.option('value');
-        if (value == null) {
-
-            var itemSelector = '.' + me.option('itemActiveClass');
-            var data = findItem(menuElement, itemSelector);
-            if (data) {
-                value = data.value;
-            }
-
-        }
-
         menuElement.on(
             'click' + me.namespace(),
             '[' + ATTR_VALUE + ']',
             function (e) {
 
-                me.set(
-                    'value',
-                    $(this).attr(ATTR_VALUE)
-                );
+                var value = $(this).attr(ATTR_VALUE);
+
+                me.set('value', value, { action: 'click' });
 
                 me.close();
 
             }
         );
 
-        me.set({
-            data: me.option('data'),
-            value: value
-        });
+
 
         me.inner({
             main: mainElement,
             popup: popup
         });
 
+        me.set({
+            data: me.option('data'),
+            value: me.option('value')
+        });
+
     };
 
-    /**
-     * 渲染模板
-     */
     proto.render = function () {
 
         var me = this;
@@ -184,23 +166,26 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 显示菜单
-     */
     proto.open = function () {
         this.inner('popup').open();
     };
 
-    /**
-     * 隐藏菜单
-     */
+    proto._open = function () {
+        if (!this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.close = function () {
         this.inner('popup').close();
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._close = function () {
+        if (this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.dispose = function () {
 
         var me = this;
@@ -217,12 +202,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     ComboBox.defaultOptions = {
         showMenuTrigger: 'click',
         hideMenuTrigger: 'click',
@@ -234,12 +213,6 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * 视图更新
-     *
-     * @static
-     * @type {Object}
-     */
     ComboBox.propertyUpdater = { };
     ComboBox.propertyUpdater.data =
     ComboBox.propertyUpdater.value = function (newValue, oldValue, changes) {
@@ -282,12 +255,21 @@ define(function (require, exports, module) {
         value: function (value) {
 
             var me = this;
-
             var menuElement = me.option('menuElement');
-            var itemSelector = '[' + ATTR_VALUE + '="' + value + '"]';
+            var itemSelector;
 
-            if (!findItem(menuElement, itemSelector)) {
-                value = null;
+            if (value == null) {
+                itemSelector = '.' + me.option('itemActiveClass');
+                var itemData = findItem(menuElement, itemSelector);
+                if (itemData) {
+                    value = itemData.value;
+                }
+            }
+            else {
+                itemSelector = '[' + ATTR_VALUE + '="' + value + '"]';
+                if (!findItem(menuElement, itemSelector)) {
+                    value = null;
+                }
             }
 
             return value;

@@ -45,10 +45,16 @@
 
                     onbeforeopen: function () {
                         console.log('before open');
-                        //return false;
+                    },
+                    onafteropen: function () {
+                        console.log('after open');
                     },
                     onbeforeclose: function () {
                         console.log('before close');
+                        return true;
+                    },
+                    onafterclose: function () {
+                        console.log('after close');
                         return true;
                     },
 

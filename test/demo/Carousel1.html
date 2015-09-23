@@ -136,14 +136,14 @@
 
                     mainElement: $('#carousel'),
 
-                    showCount: 3,
+                    maxIndex: 10,
                     step: 2,
 
                     prevSelector: '#prev',
                     nextSelector: '#next',
                     itemSelector: '.item',
 
-                    contentAnimate: function (options) {
+                    itemAnimate: function (options) {
                         var from = options.fromIndex;
                         var to = options.toIndex;
 

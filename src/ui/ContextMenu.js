@@ -8,9 +8,9 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
     var body = require('../util/instance').body;
+    var lifeCycle = require('../util/lifeCycle');
 
     var pin = require('../function/pin');
-    var lifeCycle = require('../function/lifeCycle');
     var eventPage = require('../function/eventPage');
     var offsetParent = require('../function/offsetParent');
 
@@ -45,12 +45,8 @@ define(function (require, exports, module) {
 
     var proto = ContextMenu.prototype;
 
-
     proto.type = 'ContextMenu';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -86,6 +82,7 @@ define(function (require, exports, module) {
             }
 
             var popup = new Popup({
+                hidden: true,
                 layerElement: mainElement,
                 showLayerTrigger: me.option('showTrigger'),
                 showLayerDelay: me.option('showDelay'),
@@ -122,11 +119,6 @@ define(function (require, exports, module) {
             .before('close', dispatchEvent)
             .after('close', dispatchEvent);
 
-            // 默认隐藏
-            if (!popup.get('hidden')) {
-                popup.close();
-            }
-
             me.inner({
                 popup: popup,
                 main: mainElement
@@ -150,6 +142,8 @@ define(function (require, exports, module) {
                 initMenu(mainElement);
             }
 
+            // [TODO] 可以优化成 if (activeMenu) {}
+            // 保证流程是 close => open
             if (activeMenu && activeMenu !== me) {
                 activeMenu.close();
             }
@@ -182,13 +176,22 @@ define(function (require, exports, module) {
         this.inner('popup').open();
     };
 
+    proto._open = function () {
+        if (!this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.close = function () {
         this.inner('popup').close();
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._close = function () {
+        if (this.inner('popup').get('hidden')) {
+            return false;
+        }
+    };
+
     proto.dispose = function () {
 
         var me = this;

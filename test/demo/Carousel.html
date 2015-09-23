@@ -75,13 +75,17 @@
 
                     navActiveClass: 'active',
 
-                    contentAnimate: function (options) {
+                    itemAnimate: function (options) {
                         var from = options.fromIndex;
                         var to = options.toIndex;
                     },
 
                     onchange: function (event, data) {
-                        console.log(data);
+                        var indexChange = data.index;
+                        if (indexChange) {
+                            console.log(indexChange.action);
+                        }
+
                     }
                 });
 

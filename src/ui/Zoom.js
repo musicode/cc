@@ -7,12 +7,12 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
-    var lifeCycle = require('../function/lifeCycle');
     var eventPage = require('../function/eventPage');
     var offsetParent = require('../function/offsetParent');
     var imageDimension = require('../function/imageDimension');
 
     var instance = require('../util/instance');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      *

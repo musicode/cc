@@ -33,7 +33,7 @@ define(function (require, exports, module) {
 
                 switcher.stop();
 
-                setTimeout(process, wait);
+                timer = setTimeout(process, wait);
 
             },
 

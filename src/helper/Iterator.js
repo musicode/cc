@@ -1,30 +1,25 @@
 /**
- * @file DOM 遍历器
+ * @file 遍历器
  * @author musicode
  */
 define(function (require, exports, module) {
 
     'use strict';
 
-    var Keyboard = require('./Keyboard');
-
-    var timer = require('../util/timer');
+    var createTimer = require('../util/timer');
     var lifeCycle = require('../util/lifeCycle');
 
     /**
      *
      * @constrctor
      * @param {Object} options
-     * @property {jQuery} options.watchElement 监听键盘事件的元素
      * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
      * @property {number=} options.defaultIndex 默认索引，默认是 -1
-     * @property {string=} options.prevKey prev 操作对应的键名，默认是方向键上（up）
-     * @property {string=} options.nextKey next 操作对应的键名，默认是方向键下（down）
-     * @property {boolean=} options.loop 是否可循环遍历，默认循环
      * @property {number=} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
-     *
+     * @property {number=} options.step prev 和 next 的步进值，默认是 1
+     * @property {boolean=} options.loop 是否可循环遍历，默认循环
      */
     function Iterator(options) {
         lifeCycle.init(this, options);
@@ -36,72 +31,46 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var prev = $.proxy(me.prev, me);
-        var next = $.proxy(me.next, me);
-
-        var shortcut = { };
-
-        shortcut[ me.option('prevKey') ] = function (e, data) {
-            if (data.isLongPress) {
-                return;
-            }
-            prev();
-        };
-
-        shortcut[ me.option('nextKey') ] = function (e, data) {
-            if (data.isLongPress) {
-                return;
-            }
-            next();
-        };
-
-        var keyboard = new Keyboard({
-            watchElement: me.option('watchElement'),
-            shortcut: shortcut
-        });
-
-
-
-
-        var start = $.proxy(me.start, me);
-        var pause = $.proxy(me.pause, me);
-
-        keyboard
-        .before('longpress', start)
-        .after('longpress', pause);
-
-
-
-
-        var interval = me.option('interval');
-        var prevTimer = timer(prev, interval);
-        var nextTimer = timer(next, interval);
-
-        me
-        .after('prev', function () {
-            me.inner('timer', prevTimer);
-        })
-        .after('next', function () {
-            me.inner('timer', nextTimer);
-        });
-
-
-
-
-        me.inner('keyboard', keyboard);
-
         me.set({
             index: me.option('index'),
             minIndex: me.option('minIndex'),
             maxIndex: me.option('maxIndex')
         });
 
-
     };
 
-    proto.start = function () {
+    /**
+     *
+     * @param {boolean} reverse 是否反向
+     */
+    proto.start = function (reverse) {
 
-        this.inner('timer').start();
+        var me = this;
+        var interval = me.option('interval');
+
+        var timer = me.inner('timer');
+        if (timer) {
+            timer.stop();
+        }
+
+        if (reverse) {
+            timer = createTimer(
+                $.proxy(me.prev, me),
+                interval,
+                interval
+            );
+        }
+        else {
+            timer = createTimer(
+                $.proxy(me.next, me),
+                interval,
+                interval
+            );
+        }
+
+        timer.start();
+
+        me.inner('timer', timer);
 
     };
 
@@ -114,7 +83,6 @@ define(function (require, exports, module) {
 
     };
 
-    proto._start =
     proto._pause = function () {
         if (!this.inner('timer')) {
             return false;
@@ -137,9 +105,14 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.get('index') - 1;
-        if (index < me.get('minIndex')) {
-            index = me.get('maxIndex');
+        var index = me.get('index') - me.option('step');
+        var minIndex = me.get('minIndex');
+        var maxIndex = me.get('maxIndex');
+
+        if (index < minIndex
+            || index > maxIndex
+        ) {
+            index = maxIndex;
         }
 
         me.set('index', index, { action: 'prev' });
@@ -147,32 +120,40 @@ define(function (require, exports, module) {
     };
 
     proto._prev = function () {
+
         var me = this;
-        if (me.get('index') - 1 < me.get('minIndex')) {
+
+        if (me.get('index') - me.option('step') < me.get('minIndex')) {
             if (!me.option('loop')) {
                 return false;
             }
         }
+
     };
 
     proto.next = function () {
 
         var me = this;
 
-        var index = me.get('index') + 1;
-        if (index > me.get('maxIndex')) {
-            index = me.get('minIndex');
+        var index = me.get('index') + me.option('step');
+        var minIndex = me.get('minIndex');
+        var maxIndex = me.get('maxIndex');
+
+        if (index > maxIndex
+            || index < minIndex
+        ) {
+            index = minIndex;
         }
 
         me.set('index', index, { action: 'next' });
 
     };
 
-    proto._prev = function () {
+    proto._next = function () {
 
         var me = this;
 
-        if (me.get('index') + 1 < me.get('maxIndex')) {
+        if (me.get('index') + me.option('step') > me.get('maxIndex')) {
             if (!me.option('loop')) {
                 return false;
             }
@@ -182,35 +163,27 @@ define(function (require, exports, module) {
 
     proto.dispose = function () {
 
-        var me = this;
-
-        me.stop();
-        me.inner('keyboard').dispose();
+        this.stop();
 
     };
 
     lifeCycle.extend(proto);
 
-
     Iterator.defaultOptions = {
         loop: true,
-        interval: 60,
+        step: 1,
         minIndex: 0,
-        defaultIndex: -1,
-        prevKey: 'up',
-        nextKey: 'down'
+        interval: 100,
+        defaultIndex: -1
     };
 
     Iterator.propertyValidator = {
-
         index: function (index) {
 
             if ($.type(index) !== 'number') {
-
                 index = this.option('defaultIndex');
-
                 if ($.type(index) !== 'number') {
-                    throw new Erro('[Cobble Error] Iterator index is not a number.');
+                    throw new Error('[Cobble Error] Iterator index is not a number.');
                 }
             }
 

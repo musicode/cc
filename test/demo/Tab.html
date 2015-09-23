@@ -48,11 +48,12 @@
 
             function (Tab) {
 
-                var tab = new Tab({
+                window.tab = new Tab({
                     mainElement: $('#main'),
-                    index: 1,
+                    //index: 1,
 
                     navTrigger: 'enter',
+                    navDelay: 1000,
 
                     navSelector: '.nav-tabs li',
                     contentSelector: '.tab-pane',
@@ -67,6 +68,19 @@
 
                     },
 
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
+                    },
                     onchange: function (event, data) {
                         console.log(data);
                     }

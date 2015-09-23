@@ -23,9 +23,8 @@ define(function (require, exports, module) {
      */
 
     var getRaito = require('../function/ratio');
-    var multiply = require('../function/multiply');
-    var lifeCycle = require('../function/lifeCycle');
 
+    var lifeCycle = require('../util/lifeCycle');
     var orientationMap = require('../util/orientation');
 
     var Slider = require('./Slider');
@@ -77,8 +76,8 @@ define(function (require, exports, module) {
         var panelElement = me.option('panelElement');
 
         var slider = new Slider({
-            min: 0,
-            max: 100,
+            minValue: 0,
+            maxValue: 100,
             value: me.option('value'),
             mainElement: mainElement,
             mainTemplate: me.option('mainTemplate'),
@@ -193,9 +192,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;

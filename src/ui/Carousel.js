@@ -6,13 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 90%
-     */
-
-    var lifeCycle = require('../function/lifeCycle');
     var Switchable = require('../helper/Switchable');
+    var Iterator = require('../helper/Iterator');
 
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 轮播
@@ -21,25 +18,30 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      *
-     * @property {number=} options.index 从第几个开始播放，默认是 0
+     * @property {number} options.index 从第几个开始播放，默认是 0
+     * @property {number=} options.minIndex index 的最小值
+     * @property {number=} options.maxIndex index 的最大值
+     *
      * @property {number=} options.step 每次滚动几个，默认是 1
-     * @property {number=} options.showCount 显示个数，默认是 1
      *
      * @property {number=} options.interval 自动播放时，切换的时间间隔，默认 5000
-     * @property {boolean=} options.autoPlay 是否自动播放，默认 true
+     * @property {boolean=} options.autoplay 是否自动播放，默认 true
      * @property {boolean=} options.loop 是否循环播放，默认为 true
      * @property {boolean=} options.pauseOnHover 是否鼠标 hover 时暂停播放，默认为 true
      *
-     * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 over click， 默认是 over
-     * @property {string=} options.navActiveClass 转场时会为 icon 切换这个 class
+     * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click， 默认是 enter
+     * @property {string=} options.navDelay 当 navTrigger 是 enter 时，可以设置延时
+     *
      * @property {string=} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
+     * @property {string=} options.navActiveClass 转场时会为当前 navItem 切换这个 className
+     * @property {Function} options.navAnimate
+     *
+     * @property {string} options.itemSelector 幻灯片选择器
+     * @property {string=} options.itemActiveClass
+     * @property {Function} options.itemAnimate 切换动画，必传，否则不会动
      *
      * @property {string=} options.prevSelector 上一页的选择器
      * @property {string=} options.nextSelector 下一页的选择器
-     * @property {string} options.itemSelector 幻灯片选择器
-     *
-     * @property {Function} options.navAnimate
-     * @property {Function} options.contentAnimate 切换动画，必传，否则不会动
      *
      */
     function Carousel(options) {
@@ -48,12 +50,8 @@ define(function (require, exports, module) {
 
     var proto = Carousel.prototype;
 
-
     proto.type = 'Carousel';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -65,19 +63,26 @@ define(function (require, exports, module) {
 
         var prevSelector = me.option('prevSelector');
         if (prevSelector) {
-            mainElement
-                .on(clickType, prevSelector, $.proxy(me.prev, me));
+            mainElement.on(
+                clickType,
+                prevSelector,
+                $.proxy(me.prev, me)
+            );
         }
 
         var nextSelector = me.option('nextSelector');
         if (nextSelector) {
-            mainElement
-                .on(clickType, nextSelector, $.proxy(me.next, me));
+            mainElement.on(
+                clickType,
+                nextSelector,
+                $.proxy(me.next, me)
+            );
         }
 
-        var autoPlay = me.option('autoPlay');
-        var itemSelector = me.option('itemSelector');
-        if (autoPlay && me.option('pauseOnHover')) {
+        if (me.option('autoplay')
+            && me.option('pauseOnHover')
+        ) {
+            var itemSelector = me.option('itemSelector');
             mainElement
                 .on(
                     'mouseenter' + namespace,
@@ -91,21 +96,18 @@ define(function (require, exports, module) {
                 );
         }
 
-        me.set({
-            minIndex: 0,
-            maxIndex: mainElement.find(itemSelector).length - 1
-                    - (me.option('showCount') - 1)
-        });
 
+
+        var navTrigger = me.option('navTrigger');
         var navSelector = me.option('navSelector');
         var navActiveClass = me.option('navActiveClass');
 
         var switcher = new Switchable({
-            element: mainElement,
-            index: me.option('index'),
-            trigger: me.option('navTrigger'),
-            selector: navSelector,
-            activeClass: navActiveClass,
+            mainElement: mainElement,
+            switchTrigger: navTrigger,
+            switchDelay: me.option('navDelay'),
+            itemSelector: navSelector,
+            itemActiveClass: navActiveClass,
             change: {
                 index: function (toIndex, fromIndex) {
 
@@ -117,119 +119,92 @@ define(function (require, exports, module) {
                         toIndex: toIndex
                     });
 
-                    me.execute('contentAnimate', {
+                    me.execute('itemAnimate', {
                         mainElement: mainElement,
-                        contentSelector: me.option('contentSelector'),
-                        contentActiveClass: me.option('contentActiveClass'),
+                        itemSelector: me.option('itemSelector'),
+                        itemActiveClass: me.option('itemActiveClass'),
                         fromIndex: fromIndex,
                         toIndex: toIndex
                     });
 
-                    me.set('index', toIndex);
+                    me.set('index', toIndex, { action: navTrigger });
 
+                }
+            }
+        });
+
+        var iterator = new Iterator({
+            interval: me.option('interval'),
+            loop: me.option('loop'),
+            step: me.option('step'),
+            change: {
+                index: function (newIndex, oldIndex, changes) {
+                    me.set('index', newIndex, changes.index);
+                },
+                minIndex: function (minIndex) {
+                    me.set('minIndex', minIndex);
+                },
+                maxIndex: function (maxIndex) {
+                    me.set('maxIndex', maxIndex);
                 }
             }
         });
 
         me.inner({
             main: mainElement,
-            switcher: switcher
+            switcher: switcher,
+            iterator: iterator
+        });
+
+        me.set({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex')
         });
 
     };
 
-    /**
-     * 上一个
-     */
     proto.prev = function () {
-
-        var me = this;
-
-        var index = me.get('index') - me.option('step');
-        if (index < me.get('minIndex')) {
-            if (me.option('loop')) {
-                index = me.get('maxIndex');
-            }
-            else {
-                return;
-            }
-        }
-
-        me.set('index', index);
-
+        this.inner('iterator').prev();
     };
 
-    /**
-     * 下一个
-     */
     proto.next = function () {
-
-        var me = this;
-
-        var index = me.get('index') + me.option('step');
-        if (index > me.get('maxIndex')) {
-            if (me.option('loop')) {
-                index = me.get('minIndex');
-            }
-            else {
-                return;
-            }
-        }
-
-        me.set('index', index);
-
+        this.inner('iterator').next();
     };
 
-    /**
-     * 开始自动播放
-     */
     proto.play = function () {
-        this.set('playing', true);
+        this.inner('iterator').start();
     };
 
-    /**
-     * 暂停自动播放
-     */
     proto.pause = function () {
-        this.set('playing', false);
+        this.inner('iterator').pause();
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
 
         lifeCycle.dispose(me);
 
-        if (me.get('playing')) {
-            me.pause();
-        }
+        me.inner('iterator').dispose();
+        me.inner('switcher').dispose();
 
         me.inner('main').off(
             me.namespace()
         );
-        me.inner('switcher').dispose();
 
     };
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Carousel.defaultOptions = {
         index: 0,
+        minIndex: 0,
         step: 1,
-        interval: 5000,
-        showCount: 1,
         loop: true,
-        autoPlay: true,
+        autoplay: true,
         pauseOnHover: true,
+        interval: 5000,
         navTrigger: 'enter',
         navAnimate: function (options) {
 
@@ -262,82 +237,42 @@ define(function (require, exports, module) {
 
             me.inner('switcher').set('index', index);
 
-            if (me.get('playing')) {
-                startPlayTimer(me);
+            var iterator = me.inner('iterator');
+            iterator.set('index', index);
+console.log('index',index)
+            if (me.option('autoplay')) {
+                iterator.start();
             }
 
         },
-
-        playing: function (playing) {
-
-            var me = this;
-
-            clearPlayTimer(me);
-
-            if (playing) {
-                startPlayTimer(me);
-            }
-
+        minIndex: function (minIndex) {
+            this.inner('iterator').set('minIndex', minIndex);
+        },
+        maxIndex: function (maxIndex) {
+            this.inner('iterator').set('maxIndex', maxIndex);
         }
 
     };
 
     Carousel.propertyValidator = {
 
-        playing: function (playing) {
+        maxIndex: function (maxIndex) {
 
-            var me = this;
+            if ($.type(maxIndex) !== 'number') {
 
-            if ($.type(playing) !== 'boolean') {
-                playing = false;
+                var me = this;
+                var itemSelector = me.option('itemSelector');
+                var itemElements = me.inner('main').find(itemSelector);
+
+                maxIndex = itemElements.length - 1;
+
             }
 
-            if (playing && !me.option('autoPlay')) {
-                playing = false;
-            }
-
-            return playing;
+            return maxIndex;
 
         }
 
     };
-
-    /**
-     * 开始自动播放的 timer
-     *
-     * @inner
-     * @param {Carousel} instance
-     */
-    function startPlayTimer(instance) {
-
-        clearPlayTimer(instance);
-
-        instance.inner(
-            'playTimer',
-            setTimeout(
-                $.proxy(instance.next, instance),
-                instance.option('interval')
-            )
-        );
-
-    }
-
-    /**
-     * 清除自动播放的 timer
-     *
-     * @inner
-     * @param {Carousel} instance
-     */
-    function clearPlayTimer(instance) {
-
-        var playTimer = instance.inner('playTimer');
-
-        if (playTimer) {
-            clearTimeout(playTimer);
-            instance.inner('playTimer', null);
-        }
-
-    }
 
 
     return Carousel;
