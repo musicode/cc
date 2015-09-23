@@ -102,7 +102,9 @@ define(function (require, exports, module) {
         if (labelSelector) {
             mainElement.on(clickType, labelSelector, function (e) {
                 var nodeElement = findNodeElement(me, $(this));
-                me.set('value', nodeElement.data('id'));
+                me.select(
+                    nodeElement.data('id')
+                );
             });
         }
 
@@ -339,6 +341,17 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 选中节点
+     *
+     * @param {string} id
+     */
+    proto.select = function (id) {
+
+        this.set('value', id);
+
+    };
+
+    /**
      * 展开节点
      *
      * @param {string} id
@@ -380,6 +393,7 @@ define(function (require, exports, module) {
 
     };
 
+    proto._select =
     proto._expand =
     proto._collapse = function (id) {
 
@@ -414,7 +428,7 @@ define(function (require, exports, module) {
         }
     };
 
-
+    proto.select_ =
     proto.expand_ =
     proto.collapse_ = function (id) {
         return {
