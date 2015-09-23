@@ -68,9 +68,11 @@
 
             function (Tree, etpl) {
 
+                var mainElement = $('.tree');
+
                 window.tree = new Tree({
 
-                    mainElement: $('.tree'),
+                    mainElement: mainElement,
 
                     data: [
                         {
@@ -157,11 +159,21 @@
                     nodeSelector: '.tree',
 
                     nodeTemplate: '<div class="tree'
+
+                                + '<!-- if: ${node.expanded} -->'
+                                +     ' expanded'
+                                + '<!-- /if -->'
+
+                                + '<!-- if: ${node.active} -->'
+                                +     ' active'
+                                + '<!-- /if -->'
+
                                 + '<!-- if: ${cache.parent} -->'
                                 +     ' sub-tree" data-parent-id="${cache.parent.id}"'
                                 + '<!-- else -->'
                                 +     '"'
                                 + '<!-- /if -->'
+
                                 + ' data-id="${node.id}" data-level="${cache.level}">'
                                 +     '<div class="node">'
                                 +         '<i class="glyphicon glyphicon-chevron-up"></i>'
@@ -176,17 +188,110 @@
                         return etpl.compile(tpl)(data);
                     },
 
+                    loadData: function (node, callback) {
+
+                        setTimeout(
+                            function () {
+                                callback(
+                                    null,
+                                    [
+                                        {
+                                            id: Math.random(),
+                                            text: Math.random()
+                                        }
+                                    ]
+                                );
+                            },
+                            1000
+                        );
+                    },
+
+                    onbeforerender: function (e, data) {
+                        console.log('before render', data);
+                    },
+                    onafterrender: function (e, data) {
+                        console.log('after render', data);
+                    },
+
                     onbeforeexpand: function (e, data) {
+
                         console.log('before expand', data);
+
+                        var nodeId = data.node.id;
+
+                        if (nodeId) {
+                            var node = tree.find(nodeId);
+                            if (node) {
+
+                                var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
+                                var subTreeElement = nodeElement.find('.sub-tree');
+
+                                if (!node.children) {
+
+
+                                    if (!subTreeElement.length) {
+                                        subTreeElement = $('<div class="tree sub-tree"></div>').appendTo(nodeElement);
+                                    }
+
+                                    subTreeElement.html('loading');
+
+                                    tree
+                                    .load(nodeId)
+                                    .then(function (data) {
+
+                                        node.children = data;
+
+                                        tree.render(nodeId);
+
+                                    });
+
+                                }
+                                else if (!node.children.length) {
+                                    subTreeElement.html('empty');
+                                }
+
+                            }
+
+                        }
                     },
                     onafterexpand: function (e, data) {
+
                         console.log('after expand', data);
+
+                        var nodeId = data.node.id;
+                        if (nodeId) {
+                            var node = tree.find(nodeId);
+                            if (node) {
+                                var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
+                                var toggleElement = nodeElement.find('.glyphicon-chevron-up').eq(0);
+                                if (toggleElement.length) {
+                                    toggleElement
+                                        .removeClass('glyphicon-chevron-up')
+                                        .addClass('glyphicon-chevron-down');
+                                }
+                            }
+                        }
                     },
                     onbeforecollapse: function (e, data) {
                         console.log('before collapse', data);
                     },
                     onaftercollapse: function (e, data) {
+
                         console.log('after collapse', data);
+
+                        var nodeId = data.node.id;
+                        if (nodeId) {
+                            var node = tree.find(nodeId);
+                            if (node) {
+                                var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
+                                var toggleElement = nodeElement.find('.glyphicon-chevron-down').eq(0);
+                                if (toggleElement.length) {
+                                    toggleElement
+                                        .removeClass('glyphicon-chevron-down')
+                                        .addClass('glyphicon-chevron-up');
+                                }
+                            }
+                        }
                     },
 
                     onchange: function (event, data) {

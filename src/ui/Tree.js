@@ -31,9 +31,16 @@ define(function (require, exports, module) {
      * {
      *     id: '',
      *     text: '',
-     *     children: []
+     *     children: [],
+     *
+     *     为了方便渲染，在交互过程中的状态也会记录到这里
+     *     expanded: true,
+     *     active: true
      * }
      * ```
+     *
+     * 更新子树是一件比较蛋疼的事，因为 data 始终是一个引用，因此 data 的改变只能是单向的，
+     * 即修改了 data，需要手动调用一下 render(id)
      *
      * new Tree({
      *     data: [
@@ -62,16 +69,17 @@ define(function (require, exports, module) {
      * @property {Object} options.data 节点数据
      *
      * @property {string} options.nodeSelector 节点选择器，如果以每个节点都是一棵子树来看，叫做 treeSelector 似乎也可以
+     *
      * @property {string} options.labelSelector 节点文本的选择器
      * @property {string} options.toggleSelector 节点展开收起开关选择器
      *
-     * @property {string} options.activeClass
-     * @property {string} options.expandedClass
-     * @property {string} options.collapsedClass
-     * @property {string} options.loadingClass
+     * @property {string} options.activeClass 节点选中状态时添加的 className
+     * @property {string} options.expandedClass 节点展开状态时添加的 className
+     * @property {string} options.collapsedClass 节点收起状态时添加的 className
      *
-     * @property {string} options.nodeTemplate
-     * @property {string} options.renderTemplate
+     * @property {string} options.nodeTemplate 节点模板
+     * @property {Function} options.renderTemplate 渲染模板
+     * @property {Function} options.loadData 加载子节点数据
      */
     function Tree(options) {
         lifeCycle.init(this, options);
@@ -134,54 +142,71 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 渲染整棵树
+     * 渲染树
+     *
+     * @param {string} id 子树 id，如果未传 id，渲染整棵树
      */
-    proto.render = function () {
+    proto.render = function (id) {
 
         var me = this;
 
         var html = '';
 
-        me.walk({
-            leave: function (node, cache) {
+        me.walk(
+            {
+                leave: function (node, cache) {
 
-                var childrenView = '';
+                    var childrenView = '';
 
-                if (node.children) {
-                    $.each(
-                        node.children,
-                        function (index, node) {
-                            childrenView += cache[ node.id ].view;
-                        }
+                    if (node.children) {
+                        $.each(
+                            node.children,
+                            function (index, node) {
+                                childrenView += cache[ node.id ].view;
+                            }
+                        );
+                    }
+
+                    var nodeCache = cache[ node.id ];
+
+                    nodeCache.view = me.execute(
+                        'renderTemplate',
+                        [
+                            {
+                                node: node,
+                                cache: nodeCache,
+                                childrenView: childrenView
+                            },
+                            me.option('nodeTemplate')
+                        ]
                     );
+
+                    if (id == null) {
+                        if (!nodeCache.level) {
+                            html += nodeCache.view;
+                        }
+                    }
+                    else if (id === node.id) {
+                        html += nodeCache.view;
+                        return false;
+                    }
+
+
                 }
-
-                var nodeCache = cache[ node.id ];
-
-                nodeCache.view = me.execute(
-                    'renderTemplate',
-                    [
-                        {
-                            node: node,
-                            cache: nodeCache,
-                            childrenView: childrenView
-                        },
-                        me.option('nodeTemplate')
-                    ]
-                );
-
-
-                if (!nodeCache.level) {
-                    html += nodeCache.view;
-                }
-
             }
-        });
+        );
 
-        me.inner('main').html(html);
+        if (id == null) {
+            me.inner('main').html(html);
+        }
+        else {
+            var nodeElement = findNodeElement(me, id);
+            if (nodeElement) {
+                nodeElement.replaceWith(html);
+            }
+        }
 
     };
-
 
     /**
      * 加载 id 节点的数据
@@ -196,13 +221,11 @@ define(function (require, exports, module) {
         var deferred = $.Deferred();
 
         var target;
-        var level;
 
         me.walk({
             enter: function (node, cache) {
                 if (node.id === id) {
                     target = node;
-                    level = cache[ id ].level;
                     return false;
                 }
             }
@@ -227,9 +250,8 @@ define(function (require, exports, module) {
             );
         }
         else {
-            deferred.reject();
+            deferred.reject('node[' + id + '] not found.');
         }
-
 
         return deferred;
 
@@ -294,6 +316,29 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 查找节点数据
+     *
+     * @param {string} id
+     * @return {Object?}
+     */
+    proto.find = function (id) {
+
+        var result;
+
+        this.walk({
+            enter: function (node) {
+                if (node.id === id) {
+                    result = node;
+                    return false;
+                }
+            }
+        });
+
+        return result;
+
+    };
+
+    /**
      * 展开节点
      *
      * @param {string} id
@@ -301,6 +346,8 @@ define(function (require, exports, module) {
     proto.expand = function (id) {
 
         var me = this;
+
+        me.find(id).expanded = true;
 
         findNodeElement(me, id)
             .removeClass(
@@ -321,6 +368,8 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.find(id).expanded = false;
+
         findNodeElement(me, id)
             .removeClass(
                 me.option('expandedClass')
@@ -334,9 +383,12 @@ define(function (require, exports, module) {
     proto._expand =
     proto._collapse = function (id) {
 
-        if (findNodeElement(this, id)) {
+        var me = this;
+
+        var nodeData = me.find(id);
+        if (nodeData && findNodeElement(me, id)) {
             return {
-                id: id
+                node: nodeData
             };
         }
         else {
@@ -345,13 +397,37 @@ define(function (require, exports, module) {
 
     };
 
+    proto._render = function (id) {
+        if (id != null) {
+
+            var me = this;
+
+            var nodeData = me.find(id);
+            if (nodeData && findNodeElement(me, id)) {
+                return {
+                    node: nodeData
+                };
+            }
+            else {
+                return false;
+            }
+        }
+    };
+
+
     proto.expand_ =
     proto.collapse_ = function (id) {
-
         return {
-            id: id
+            node: this.find(id)
         };
+    };
 
+    proto.render_ = function (id) {
+        if (id != null) {
+            return {
+                node: this.find(id)
+            };
+        }
     };
 
     lifeCycle.extend(proto);
@@ -372,18 +448,23 @@ define(function (require, exports, module) {
                 return;
             }
 
+            var nodeData;
             var nodeElement;
 
             if (oldValue) {
+                nodeData = me.find(oldValue);
                 nodeElement = findNodeElement(me, oldValue);
-                if (nodeElement) {
+                if (nodeData && nodeElement) {
+                    nodeData.active = false;
                     nodeElement.removeClass(activeClass);
                 }
             }
 
             if (newValue) {
+                nodeData = me.find(newValue);
                 nodeElement = findNodeElement(me, newValue);
-                if (nodeElement) {
+                if (nodeData && nodeElement) {
+                    nodeData.active = true;
                     nodeElement.addClass(activeClass);
                 }
             }
@@ -447,20 +528,26 @@ define(function (require, exports, module) {
      */
     function walkTree(node, parent, enter, leave) {
 
-        if (enter(node, parent) === false) {
-            return false;
+        var status = enter(node, parent)
+
+        if (status !== false) {
+
+            if ($.isArray(node.children)) {
+                $.each(
+                    node.children,
+                    function (index, child) {
+                        return status = walkTree(child, node, enter, leave);
+                    }
+                );
+            }
+
+            if (status !== false) {
+                status = leave(node, parent);
+            }
+
         }
 
-        if ($.isArray(node.children)) {
-            $.each(
-                node.children,
-                function (index, child) {
-                    return walkTree(child, node, enter, leave);
-                }
-            );
-        }
-
-        return leave(node, parent);
+        return status;
 
     }
 
