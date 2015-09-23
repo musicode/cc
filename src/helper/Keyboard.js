@@ -20,17 +20,11 @@ define(function (require, exports, module) {
      *
      *    shift + ctrl + alt + x
      *
-     * ## 事件列表
-     *
-     * 1. keydown
-     * 2. keyup
-     * 3. beforelongpress
-     * 4. afterlongpress
      */
 
     var split = require('../function/split');
-    var lifeCycle = require('../function/lifeCycle');
 
+    var lifeCycle = require('../util/lifeCycle');
     var keyboard = require('../util/keyboard');
 
     /**
@@ -40,16 +34,16 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.watchElement 需要监听键盘事件的元素
      *
-     * @property {Object} options.action 配置键盘事件，action 事件会在 onKeyDown 之前触发
-     *                                   组合键使用 + 连接，如 'ctrl+c',
-     *                                   支持键可看 Keyboard.map
-     *                                   小键盘键统一加 $ 前缀，如 $+ 表示加号按键
+     * @property {Object} options.shortcut 配置快捷键
+     *                                     组合键使用 + 连接，如 'ctrl+c',
+     *                                     支持键可看 Keyboard.map
+     *                                     小键盘键统一加 $ 前缀，如 '$+' 表示加号键
      *
      * @example
      *
      * new Keyboard({
      *    watchElement: $('textarea'),
-     *    action: {
+     *    shortcut: {
      *        'ctrl+enter': function () {
      *            // send message
      *        },
@@ -73,46 +67,67 @@ define(function (require, exports, module) {
 
     proto.type = 'Keyboard';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
-        var action = parseAction(me.option('action') || { });
+        var shortcut = me.option('shortcut');
+        if ($.isPlainObject(shortcut)) {
+            shortcut = parseShortcut(shortcut);
+        }
 
-        var pressCounter = 0;
-        var longPressDefine = 1;
         var prevKeyCode;
+        var pressCounter = 0;
+        var longPressCounterDefine = 1;
+
+        var isLongPress = function () {
+            return pressCounter > longPressCounterDefine;
+        };
 
         var namespace = me.namespace();
 
-        me.option('watchElement')
+        me
+        .option('watchElement')
         .on('keydown' + namespace, function (e) {
 
             var currentKeyCode = e.keyCode;
 
+
             if (prevKeyCode === currentKeyCode && pressCounter > 0) {
-                if (pressCounter === longPressDefine) {
-                    me.emit({
-                        type: 'beforelongpress',
-                        keyCode: e.keyCode
-                    });
+                if (pressCounter === longPressCounterDefine) {
+                    me.emit(
+                        'beforelongpress',
+                        {
+                            keyCode: currentKeyCode
+                        }
+                    );
                 }
+                pressCounter++;
             }
             else {
                 prevKeyCode = currentKeyCode;
+                pressCounter = 1;
             }
 
-            pressCounter++;
 
-            var args = [ e, pressCounter > longPressDefine ];
+
+
 
             me.emit(e);
 
+
+
+            if (!shortcut) {
+                return;
+            }
+
+            var data = {
+                isLongPress: isLongPress()
+            };
+            var args = [ e, data ];
+
             $.each(
-                action,
+                shortcut,
                 function (index, item) {
                     if (item.test(e)) {
                         me.execute(item.handler, args);
@@ -123,13 +138,13 @@ define(function (require, exports, module) {
         })
         .on('keyup' + namespace, function (e) {
 
-            if (pressCounter > longPressDefine) {
-
-                me.emit({
-                    type: 'afterlongpress',
-                    keyCode: e.keyCode
-                });
-
+            if (isLongPress()) {
+                me.emit(
+                    'afterlongpress',
+                    {
+                        keyCode: e.keyCode
+                    }
+                );
             }
 
             pressCounter = 0;
@@ -141,9 +156,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -156,21 +168,22 @@ define(function (require, exports, module) {
 
     };
 
+
     lifeCycle.extend(proto);
 
     /**
      * 解析出按键组合
      *
      * @inner
-     * @param {Object} action
+     * @param {Object} shortcut
      * @return {Array}
      */
-    function parseAction(action) {
+    function parseShortcut(shortcut) {
 
         var result = [ ];
 
         $.each(
-            action,
+            shortcut,
             function (key, handler) {
 
                 // 收集判断表达式
@@ -240,6 +253,7 @@ define(function (require, exports, module) {
         );
 
         return result;
+
     }
 
 

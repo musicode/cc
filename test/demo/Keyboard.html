@@ -19,63 +19,70 @@
 
             function (Keyboard) {
 
-                var keyboard = new Keyboard({
+                window.keyboard = new Keyboard({
                     watchElement: $(document.body),
+
                     onbeforelongpress: function (event, data) {
-                        console.log('>>>>>>>>>> longPress start: ', event, data);
+                        console.log('>>>>>>>>>> before longpress: ', data, this);
                     },
                     onafterlongpress: function (event, data) {
-                        console.log('<<<<<<<<<< longPress end: ', event, data);
+                        console.log('<<<<<<<<<< after longpress: ', data, this);
                     },
                     onkeydown: function (event, data) {
-                        console.log('onkeydown');
+                        console.log('onkeydown', this);
                     },
                     onkeyup: function (event, data) {
-                        console.log('onkeyup');
+                        console.log('onkeyup', this);
                     },
-                    action: {
+
+                    onbeforeinit: function () {
+                        console.log('before init', this);
+                    },
+                    onafterinit: function () {
+                        console.log('after init', this);
+                    },
+
+                    onbeforedispose: function () {
+                        console.log('before dispose', this);
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose', this);
+                    },
+                    shortcut: {
                         'ctrl+c': function () {
-                            console.log('ctrl + c');
+                            console.log('ctrl + c', this);
                         },
                         'shift+c': function () {
-                            console.log('shift + c');
+                            console.log('shift + c', this);
                         },
                         'meta+c': function () {
-                            console.log('meta + c');
+                            console.log('meta + c', this);
                         },
                         'alt+c': function () {
-                            console.log('alt + c');
+                            console.log('alt + c', this);
                         },
                         'shift+ctrl+c': function () {
-                            console.log('shift + ctrl + c');
+                            console.log('shift + ctrl + c', this);
                         },
                         'shift+alt+c': function () {
-                            console.log('shift + alt + c');
+                            console.log('shift + alt + c', this);
                         },
                         'ctrl+alt+c': function () {
-                            console.log('ctrl + alt + c');
+                            console.log('ctrl + alt + c', this);
                         },
                         'shift+ctrl+alt+c': function () {
-                            console.log('shift + ctrl + alt + c');
+                            console.log('shift + ctrl + alt + c', this);
                         },
-                        'enter': function () {
-                            console.log('enter', this);
+                        'enter': function (e, data) {
+                            if (!data.isLongPress) {
+                                console.log('enter', this);
+                            }
                         },
                         '$+': function () {
-                            console.log('+');
+                            console.log('+', this);
                         }
                     }
                 });
-
-                var handler = function (e, data) {
-                    console.log('===============');
-                    console.log(e.target, e.type, data, this);
-                };
-
-                keyboard.on('keyup', handler);
-                keyboard.on('keydown', handler);
-                keyboard.before('longpress', handler);
-                keyboard.after('longpress', handler);
 
 
             }

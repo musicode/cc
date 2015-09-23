@@ -20,7 +20,13 @@
 
     <input type="text" class="form-text" placeholder="请输入用户名" value="" />
     <input type="text" class="form-text" placeholder="请输入用户名" value="" />
-    <input type="text" class="form-text" placeholder="请输入用户名" value="" />
+
+    <div class="placeholder-wrapper">
+        <input type="text" class="form-text" placeholder="请输入用户名" value="" />
+        <div class="placeholder"></div>
+    </div>
+
+
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -38,24 +44,78 @@
                 window.nativePlaceholder = new Placeholder({
                     mainElement: element.eq(0),
                     nativeFirst: true,
-                    onchange: function (e, data) {
-                        console.log(data, this);
-                    }
-                });
-
-                window.simplePlaceholder = new Placeholder({
-                    mainElement: element.eq(1),
-                    nativeFirst: false,
-                    simple: true,
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+                    onbeforeshow: function () {
+                        console.log('before show');
+                    },
+                    onaftershow: function () {
+                        console.log('after show');
+                    },
+                    onbeforehide: function () {
+                        console.log('before hide');
+                    },
+                    onafterhide: function () {
+                        console.log('after hide');
+                    },
+                    onbeforerender: function () {
+                        console.log('before render');
+                    },
+                    onafterrender: function () {
+                        console.log('after render');
+                    },
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
+                    },
                     onchange: function (e, data) {
                         console.log(data, this);
                     }
                 });
 
                 window.complexPlaceholder = new Placeholder({
-                    mainElement: element.eq(2),
+                    mainElement: $('.placeholder-wrapper'),
                     nativeFirst: false,
-                    simple: false,
+                    complexTemplate: '<div class="placeholder-wrapper">'
+                                   +    '<input type="text" />'
+                                   +    '<div class="placeholder"></div>'
+                                   + '</div>',
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+                    onbeforeshow: function () {
+                        console.log('before show');
+                    },
+                    onaftershow: function () {
+                        console.log('after show');
+                    },
+                    onbeforehide: function () {
+                        console.log('before hide');
+                    },
+                    onafterhide: function () {
+                        console.log('after hide');
+                    },
+                    onbeforerender: function () {
+                        console.log('before render');
+                    },
+                    onafterrender: function () {
+                        console.log('after render');
+                    },
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
+                    },
                     onchange: function (e, data) {
                         console.log(data, this);
                     }

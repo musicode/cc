@@ -104,22 +104,34 @@
                     },
 
                     onbeforeopen: function (e) {
-                        console.log(e)
-                        //console.log('beforeShow');
-                        //return false;
+                        console.log('before open');
                     },
                     onafteropen: function () {
+                        console.log('before open');
                         $('#select-trigger i').removeClass('icon-arrow-down')
                                               .addClass('icon-arrow-up');
-                        //console.log('afterShow');
                     },
                     onbeforeclose:function () {
-                        //console.log('beforeHide');
+                        console.log('before close');
                     },
                     onafterclose: function () {
+                        console.log('after close');
                         $('#select-trigger i').removeClass('icon-arrow-up')
                                               .addClass('icon-arrow-down');
-                        //console.log('afterHide');
+                    },
+
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
                     }
                 });
 

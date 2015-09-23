@@ -7,8 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     /**
-     * 90%
-     *
      * 1. 兼容 input 事件
      *
      * IE9+ 和 其他标准浏览器都支持 input 事件
@@ -22,48 +20,47 @@ define(function (require, exports, module) {
      * IE8-的 propertychange 事件触发方式和 input 标准方式相同
      * IE8-改写 value 会触发 propertychange
      *
-     * 为了避免和原生 input 事件重名，而初学者又较容易理解 change 事件
-     * 因此统一向外广播 change 事件
-     *
      * 2. 长按是否触发 change 事件
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      */
 
-    var lifeCycle = require('../function/lifeCycle');
 
     var input = require('../util/input');
+    var lifeCycle = require('../util/lifeCycle');
     var keyboardUtil = require('../util/keyboard');
 
     var Keyboard = require('./Keyboard');
+
 
     /**
      * 封装一些输入功能，包括兼容最常用的 input 事件
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.mainElement 输入框元素
+     * @property {jQuery} options.mainElement 主元素（<input> 或 <textarea>）
+     * @property {string=} options.value 输入框的值
      *
      * @property {boolean=} options.smart 是否能够聪明的在长按时不触发 change 事件，默认为 true
      *                                    因为长按产生的一般是无效输入
      *
-     * @property {Object=} options.action 按下某键，发出某事件
-     *                                    组合键只支持 shift/ctrl/alt/meta + 字母/数字
-     *                                    举个例子：
-     *                                    {
-     *                                        'enter': function () {
-     *                                            // submit
-     *                                        },
-     *                                        'up': function () {
-     *                                            // up
-     *                                        },
-     *                                        'ctrl+c': function () {
-     *                                            // copy
-     *                                        },
-     *                                        'ctrl+alt+a': function () {
-     *                                            // 截图
-     *                                        }
-     *                                    }
+     * @property {Object=} options.shortcut 配置快捷键
+     *                                      组合键只支持 shift/ctrl/alt/meta + 字母/数字
+     *                                      举个例子：
+     *                                      {
+     *                                          'enter': function () {
+     *                                              // submit
+     *                                          },
+     *                                          'up': function () {
+     *                                              // up
+     *                                          },
+     *                                          'ctrl+c': function () {
+     *                                              // copy
+     *                                          },
+     *                                          'ctrl+alt+a': function () {
+     *                                              // 截图
+     *                                          }
+     *                                      }
      *
      */
     function Input(options) {
@@ -74,48 +71,52 @@ define(function (require, exports, module) {
 
     proto.type = 'Input';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
-
         input.init(mainElement);
 
-        var context = me.getContext();
 
-        var updateValue = function () {
-            me.set('value', mainElement.val());
-        };
 
-        updateValue();
 
         var keyboard = new Keyboard({
             watchElement: mainElement,
-            action: me.option('action'),
-            context: context
+            shortcut: me.option('shortcut')
         });
 
-        var isLongPressing;
-        var longPressType = 'longpress';
+        var isLongPress;
 
-        context
+        var dispatchEvent = function (e) {
+            me.emit(e);
+        };
+
+        var updateValue = function (value) {
+            if (value == null) {
+                value = mainElement.val();
+            }
+            me.set('value', value);
+        };
+
+        keyboard
+        .on('keydown', dispatchEvent)
+        .on('keyup', dispatchEvent)
         .before(
-            longPressType,
+            'longpress',
             function () {
-                isLongPressing = true;
+                isLongPress = true;
             }
         )
         .after(
-            longPressType,
+            'longpress',
             function (e) {
 
-                isLongPressing = false;
+                isLongPress = false;
 
-                if (keyboardUtil.isCharKey(e.keyCode) || keyboardUtil.isDeleteKey()) {
+                if (keyboardUtil.isCharKey(e.keyCode)
+                    || keyboardUtil.isDeleteKey()
+                ) {
                     updateValue();
                 }
 
@@ -123,25 +124,23 @@ define(function (require, exports, module) {
         );
 
         mainElement
-        .on(
-            'input' + me.namespace(),
-            function () {
-                if (!isLongPressing || !me.option('smart')) {
-                    updateValue();
-                }
+        .on('input' + me.namespace(), function () {
+            if (!isLongPress || !me.option('smart')) {
+                updateValue();
             }
-        );
+        });
 
         me.inner({
             keyboard: keyboard,
             main: mainElement
         });
 
+        updateValue(
+            me.option('value')
+        );
+
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -149,7 +148,6 @@ define(function (require, exports, module) {
         lifeCycle.dispose(me);
 
         var mainElement = me.inner('main');
-
         input.dispose(mainElement);
         mainElement.off(
             me.namespace()
@@ -161,6 +159,7 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
+
     Input.defaultOptions = {
         smart: true
     };
@@ -169,6 +168,19 @@ define(function (require, exports, module) {
 
         value: function (value) {
             this.inner('main').val(value);
+        }
+
+    };
+
+    Input.propertyValidator = {
+
+        value: function (value) {
+            switch ($.type(value)) {
+                case 'string':
+                case 'number':
+                    return value;
+            }
+            return '';
         }
 
     };

@@ -6,10 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var guid = require('./guid');
-    var around = require('./around');
-    var extend = require('./extend');
-    var ucFirst = require('./ucFirst');
+    var guid = require('../function/guid');
+    var around = require('../function/around');
+    var extend = require('../function/extend');
+    var ucFirst = require('../function/ucFirst');
     var createTimer = require('./timer');
 
     /**
@@ -126,7 +126,7 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 触发事件，trigger 比较常用（比如触发元素取名叫 trigger），为了避免重名，换为 emit
+         * 触发事件
          *
          * @param {Event|string} event 事件对象或事件名称
          * @param {Object=} data 事件数据
@@ -134,11 +134,12 @@ define(function (require, exports, module) {
          */
         emit: function (event, data) {
 
-            var me = this.getContext();
+            var me = this;
+            var context = me.option('context') || me;
 
             event = createEvent(event);
 
-            event.origin = me;
+            event.origin = context;
 
             // 经由 apply(me) 之后，currentTarget 会变成 me.$
             // 因此需要新增一个属性来存储最初的元素
@@ -156,15 +157,13 @@ define(function (require, exports, module) {
 
             event.type = event.type.toLowerCase();
 
-            var context = me.$;
-
-            context.trigger.apply(context, args);
+            context.$.trigger.apply(context.$, args);
 
             if (event.isPropagationStopped()) {
                 return event;
             }
 
-            if (me.execute('on' + event.type, args) === false) {
+            if (context.execute('on' + event.type, args) === false) {
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -225,21 +224,18 @@ define(function (require, exports, module) {
             }
         },
 
-        getContext: function () {
-            return this.option('context') || this;
-        },
-
         execute: function (name, args) {
 
+            var me = this;
             var fn = name;
 
             if ($.type(name) === 'string') {
-                fn = this[ name ] || this.option(name);
+                fn = me[ name ] || me.option(name);
             }
 
             if ($.isFunction(fn)) {
 
-                var context = this.getContext();
+                var context = me.option('context') || me;
 
                 if ($.isArray(args)) {
                     return fn.apply(context, args);

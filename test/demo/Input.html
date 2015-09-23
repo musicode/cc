@@ -28,25 +28,39 @@
                     mainElement: $('input'),
                     smart: false,
 
-                    action: {
-                        enter: function (e, longPress) {
-                            if (!longPress) {
-                                console.log('onEnter', this);
+                    shortcut: {
+                        enter: function (e, data) {
+                            if (!data.isLongPress) {
+                                console.log('onEnter');
                             }
                         },
                         left: function () {
-                            console.log('onLeft', this);
+                            console.log('onLeft');
                         }
                     },
 
+                    onbeforeinit: function () {
+                        console.log('before init');
+                    },
+                    onafterinit: function () {
+                        console.log('after init');
+                    },
+
+                    onbeforedispose: function () {
+                        console.log('before dispose');
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose');
+                    },
+
                     onkeydown: function (e) {
-                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+                        console.log('<<<<<<<<<<<<<');
                     },
                     onkeyup: function (e) {
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                        console.log('>>>>>>>>>>>>>');
                     },
-                    onchange: function (e) {
-                        console.log('change', this);
+                    onchange: function (e, data) {
+                        console.log('change', data);
                     }
                 });
 
@@ -54,7 +68,7 @@
                     mainElement: $('textarea'),
                     smart: true,
 
-                    action: {
+                    shortcut: {
                         enter: function () {
                             console.log('onEnter', this);
                         },
@@ -63,11 +77,25 @@
                         }
                     },
 
+                    onbeforeinit: function () {
+                        console.log('before init', this);
+                    },
+                    onafterinit: function () {
+                        console.log('after init', this);
+                    },
+
+                    onbeforedispose: function () {
+                        console.log('before dispose', this);
+                    },
+                    onafterdispose: function () {
+                        console.log('after dispose', this);
+                    },
+
                     onkeydown: function (e) {
-                        console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<');
+                        console.log('<<<<<<<<<<<<<', this);
                     },
                     onkeyup: function (e) {
-                        console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>');
+                        console.log('>>>>>>>>>>>>>', this);
                     },
                     onchange: function () {
                         console.log('change', this);

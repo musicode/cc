@@ -6,13 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 90%
-     *
-     */
-
     var contains = require('../function/contains');
-    var lifeCycle = require('../function/lifeCycle');
     var autoScrollUp = require('../function/autoScrollUp');
     var autoScrollDown = require('../function/autoScrollDown');
 
@@ -21,6 +15,7 @@ define(function (require, exports, module) {
     var Iterator = require('../helper/Iterator');
 
     var browser = require('../util/browser');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 自动补全
@@ -29,7 +24,7 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.inputElement 输入框元素
      *
-     * @property {jQuery} options.menuElement 补全菜单，菜单最好使用绝对定位，这样直接 show 出来，无需涉及定位逻辑
+     * @property {jQuery} options.menuElement 菜单元素，菜单最好用样式设置好位置，这样直接 show 出来，无需涉及定位逻辑
      * @property {string=} options.menuTemplate 菜单模板
      *
      * @property {string=} options.itemSelector 菜单项选择器，默认是 li
@@ -210,7 +205,7 @@ define(function (require, exports, module) {
         var input = new Input({
             mainElement: inputElement,
             smart: true,
-            action: keyboardAction,
+            shortcut: keyboardAction,
             change: {
                 value: function (value) {
                     iteratorData[ 0 ].data.text = value;

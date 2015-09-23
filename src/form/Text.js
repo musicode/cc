@@ -21,9 +21,8 @@ define(function (require, exports) {
      * @property {string} options.placeholderTemplate
      * @property {string} options.placeholderSelector
      * @property {boolean=} options.placeholderNativeFirst
-     * @property {boolean=} options.placeholderSimple
      *
-     * @property {Object=} options.action 键盘事件
+     * @property {Object=} options.shortcut 配置快捷键
      */
     function Text(options) {
         lifeCycle.init(this, options);
@@ -44,15 +43,14 @@ define(function (require, exports) {
 
         var placeholder = new Placeholder({
             mainElement: mainElement,
-            simple: me.option('placeholderSimple'),
             nativeFirst: me.option('placeholderNativeFirst'),
             placeholderSelector: me.option('placeholderSelector'),
-            complexTemplate: me.option('placeholderTemplate')
+            placeholderTemplate: me.option('placeholderTemplate')
         });
 
         var input = new Input({
             mainElement: mainElement,
-            action: me.option('action'),
+            shortcut: me.option('shortcut'),
             context: me,
             change: {
                 value: function (value) {
@@ -88,7 +86,6 @@ define(function (require, exports) {
 
 
     Text.defaultOptions = {
-        placeholderSimple: false,
         placeholderNativeFirst: true,
         placeholderSelector: '.placeholder',
         placeholderTemplate: '<div class="placeholder-wrapper">'

@@ -192,12 +192,15 @@
 
                         setTimeout(
                             function () {
+
+                                var random = Math.random();
+
                                 callback(
                                     null,
                                     [
                                         {
-                                            id: Math.random(),
-                                            text: Math.random()
+                                            id: random,
+                                            text: random
                                         }
                                     ]
                                 );

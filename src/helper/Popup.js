@@ -60,16 +60,15 @@ define(function (require, exports, module) {
      *
      * ## 事件代理
      *
-     *    当多个 element 共享一个 layer 元素时，可转为事件代理，而无需为每个 element 绑定事件
+     *    当多个 triggerElement 共享一个 layerElement 元素时，可转为事件代理，而无需为每个 triggerElement 绑定事件
      *
      *
      */
 
-    var call = require('../function/call');
-    var split = require('../function/split');
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
-    var lifeCycle = require('../function/lifeCycle');
+
+    var lifeCycle = require('../util/lifeCycle');
     var instance = require('../util/instance');
     var trigger = require('../util/trigger');
 
@@ -104,9 +103,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Popup';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -155,65 +151,63 @@ define(function (require, exports, module) {
         var hasShowEvent = false;
         var hasHideEvent = false;
 
-        me.getContext()
+        var context = me.option('context') || me;
+
+        context
         .before('open', function () {
             if (!hasShowEvent && hasHideEvent) {
                 return false;
             }
         })
-        .after('open', function (e) {
-
-            // 解绑 show event
-            if (hasShowEvent) {
-                if (!me.option('triggerSelector')) {
-                    showEvent(me, 'off');
-                    hasShowEvent = false;
-                }
-            }
-
-            if (hasHideEvent) {
-                return;
-            }
-
-            // 等冒泡结束
-            setTimeout(
-                function () {
-                    hideEvent(me, 'on');
-                    hasHideEvent = true;
-                }
-            );
-
-        })
         .before('close', function () {
             if (!hasHideEvent && hasShowEvent) {
                 return false;
             }
-        })
-        .after('close', function () {
-
-            if (hasHideEvent) {
-                hideEvent(me, 'off');
-                hasHideEvent = false;
-            }
-
-            if (!hasShowEvent) {
-                showEvent(me, 'on');
-                hasShowEvent = true;
-            }
-
         });
 
-        var hidden = me.option('hidden');
-        if ($.type('hidden') !== 'boolean') {
-            hidden = isHidden(me.option('layerElement'));
-        }
+        me.on('change', function (e, data) {
+            var hidden = data.hidden;
+            if (hidden) {
+                if (hidden.newValue) {
 
-        if (hidden) {
-            me.close();
-        }
-        else {
-            me.open();
-        }
+                    if (hasHideEvent) {
+                        hideEvent(me, 'off');
+                        hasHideEvent = false;
+                    }
+
+                    if (!hasShowEvent) {
+                        showEvent(me, 'on');
+                        hasShowEvent = true;
+                    }
+
+                }
+                else {
+
+                    if (hasShowEvent
+                        && !me.option('triggerSelector')
+                    ) {
+                        showEvent(me, 'off');
+                        hasShowEvent = false;
+                    }
+
+                    if (!hasHideEvent) {
+                        // 不论是否交互产生，都异步一下
+                        // 避免有事件冒泡
+                        setTimeout(
+                            function () {
+                                hideEvent(me, 'on');
+                                hasHideEvent = true;
+                            }
+                        );
+                    }
+
+                }
+            }
+        });
+
+        me.set({
+            hidden: me.option('hidden')
+        });
 
     };
 
@@ -253,12 +247,6 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Popup.defaultOptions = {
         // 可以不传 triggerElement，为了少写 if，这里给个默认值
         triggerElement: $({}),
@@ -272,12 +260,6 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * 视图更新
-     *
-     * @static
-     * @type {Object}
-     */
     Popup.propertyUpdater = {
         hidden: function (hidden) {
             this.execute(
@@ -286,6 +268,17 @@ define(function (require, exports, module) {
                     layerElement: this.option('layerElement')
                 }
             );
+        }
+    };
+
+    Popup.propertyValidator = {
+        hidden: function (hidden) {
+            if ($.type(hidden) !== 'boolean') {
+                hidden = isHidden(
+                    this.option('layerElement')
+                );
+            }
+            return hidden;
         }
     };
 

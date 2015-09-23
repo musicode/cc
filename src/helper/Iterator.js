@@ -8,21 +8,22 @@ define(function (require, exports, module) {
 
     var Keyboard = require('./Keyboard');
 
-    var timer = require('../function/timer');
-    var lifeCycle = require('../function/lifeCycle');
+    var timer = require('../util/timer');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      *
+     * @constrctor
      * @param {Object} options
      * @property {jQuery} options.watchElement 监听键盘事件的元素
-     * @property {Object} options.index 当前索引，默认是 0
-     * @property {number=} options.defaultIndex 默认索引
+     * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
-     * @property {string=} options.prevKey 上一个键名，默认是方向键上（up）
-     * @property {string=} options.nextKey 下一个键名，默认是方向键下（down）
-     * @property {boolean=} options.loop 是否可循环遍历
-     * @property {number=} options.interval 长按时的遍历时间间隔，值越小速度越快
+     * @property {number=} options.defaultIndex 默认索引，默认是 -1
+     * @property {string=} options.prevKey prev 操作对应的键名，默认是方向键上（up）
+     * @property {string=} options.nextKey next 操作对应的键名，默认是方向键下（down）
+     * @property {boolean=} options.loop 是否可循环遍历，默认循环
+     * @property {number=} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
      *
      */
     function Iterator(options) {
@@ -35,84 +36,89 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.option('index');
-        if ($.type(index) !== 'number') {
-            index = me.option('defaultIndex');
-        }
-
-        me.set({
-            index: index,
-            minIndex: me.option('minIndex'),
-            maxIndex: me.option('maxIndex')
-        });
-
         var prev = $.proxy(me.prev, me);
         var next = $.proxy(me.next, me);
-        var start = $.proxy(me.start, me);
-        var pause = $.proxy(me.pause, me);
 
-        var interval = me.option('interval');
-        var prevTimer = timer(prev, interval);
-        var nextTimer = timer(next, interval);
+        var shortcut = { };
 
-        var action = { };
-
-        action[ me.option('prevKey') ] = function (e, longPress) {
-
-            if (longPress) {
+        shortcut[ me.option('prevKey') ] = function (e, data) {
+            if (data.isLongPress) {
                 return;
             }
-
             prev();
-
-            me.inner('timer', prevTimer);
-
         };
 
-        action[ me.option('nextKey') ] = function (e, longPress) {
-
-            if (longPress) {
+        shortcut[ me.option('nextKey') ] = function (e, data) {
+            if (data.isLongPress) {
                 return;
             }
-
             next();
-
-            me.inner('timer', nextTimer);
-
         };
 
         var keyboard = new Keyboard({
             watchElement: me.option('watchElement'),
-            action: action
+            shortcut: shortcut
         });
+
+
+
+
+        var start = $.proxy(me.start, me);
+        var pause = $.proxy(me.pause, me);
 
         keyboard
         .before('longpress', start)
         .after('longpress', pause);
 
+
+
+
+        var interval = me.option('interval');
+        var prevTimer = timer(prev, interval);
+        var nextTimer = timer(next, interval);
+
+        me
+        .after('prev', function () {
+            me.inner('timer', prevTimer);
+        })
+        .after('next', function () {
+            me.inner('timer', nextTimer);
+        });
+
+
+
+
         me.inner('keyboard', keyboard);
+
+        me.set({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex')
+        });
+
 
     };
 
     proto.start = function () {
 
-        var timer = this.inner('timer');
-
-        if (timer) {
-            timer.start();
-        }
+        this.inner('timer').start();
 
     };
 
     proto.pause = function () {
 
-        var timer = this.inner('timer');
+        var me = this;
 
-        if (timer) {
-            timer.stop();
-            this.inner('timer', null);
+        me.inner('timer').stop();
+        me.inner('timer', null);
+
+    };
+
+    proto._start =
+    proto._pause = function () {
+        if (!this.inner('timer')) {
+            return false;
         }
-
     };
 
     proto.stop = function () {
@@ -120,7 +126,6 @@ define(function (require, exports, module) {
         var me = this;
 
         me.pause();
-
         me.set(
             'index',
             me.option('defaultIndex')
@@ -133,18 +138,21 @@ define(function (require, exports, module) {
         var me = this;
 
         var index = me.get('index') - 1;
-
         if (index < me.get('minIndex')) {
-            if (me.option('loop')) {
-                index = me.get('maxIndex');
-            }
-            else {
-                return;
-            }
+            index = me.get('maxIndex');
         }
 
         me.set('index', index, { action: 'prev' });
 
+    };
+
+    proto._prev = function () {
+        var me = this;
+        if (me.get('index') - 1 < me.get('minIndex')) {
+            if (!me.option('loop')) {
+                return false;
+            }
+        }
     };
 
     proto.next = function () {
@@ -152,17 +160,23 @@ define(function (require, exports, module) {
         var me = this;
 
         var index = me.get('index') + 1;
-
         if (index > me.get('maxIndex')) {
-            if (me.option('loop')) {
-                index = me.get('minIndex');
-            }
-            else {
-                return;
-            }
+            index = me.get('minIndex');
         }
 
         me.set('index', index, { action: 'next' });
+
+    };
+
+    proto._prev = function () {
+
+        var me = this;
+
+        if (me.get('index') + 1 < me.get('maxIndex')) {
+            if (!me.option('loop')) {
+                return false;
+            }
+        }
 
     };
 
@@ -171,20 +185,38 @@ define(function (require, exports, module) {
         var me = this;
 
         me.stop();
-
         me.inner('keyboard').dispose();
 
     };
 
     lifeCycle.extend(proto);
 
+
     Iterator.defaultOptions = {
-        interval: 60,
         loop: true,
+        interval: 60,
         minIndex: 0,
         defaultIndex: -1,
         prevKey: 'up',
         nextKey: 'down'
+    };
+
+    Iterator.propertyValidator = {
+
+        index: function (index) {
+
+            if ($.type(index) !== 'number') {
+
+                index = this.option('defaultIndex');
+
+                if ($.type(index) !== 'number') {
+                    throw new Erro('[Cobble Error] Iterator index is not a number.');
+                }
+            }
+
+            return index;
+
+        }
     };
 
 
