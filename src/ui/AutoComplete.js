@@ -139,9 +139,9 @@ define(function (require, exports, module) {
 
 
         var keyboardAction = {
-            enter: function (e, longPress) {
+            enter: function (e, data) {
 
-                if (longPress) {
+                if (data.isLongPress) {
                     return;
                 }
 
