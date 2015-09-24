@@ -17,6 +17,10 @@ define(function (require, exports, module) {
 
         var result = [ ];
 
+        if ($.type(str) === 'number') {
+            str = '' + str;
+        }
+
         if (str && $.type(str) === 'string') {
             $.each(
                 str.split(sep),

@@ -135,7 +135,7 @@ define(function (require, exports, module) {
      * @param {string} setter setter 方法
      * @param {string} getter getter 方法
      */
-    function createSettter(singular, complex, setter, getter) {
+    function createSettter(singular, complex, setter, getter, validate) {
 
         return function (name, value, options) {
 
@@ -163,6 +163,10 @@ define(function (require, exports, module) {
                 if ($.isFunction(validator[ name ])) {
                     value = validator[ name ].call(me, value);
                 }
+            }
+
+            if (validate) {
+                value = validate(me, name, value);
             }
 
             var oldValue = me[ getter ](name);
@@ -377,14 +381,20 @@ define(function (require, exports, module) {
          * @return {boolean}
          */
         is: function (name) {
-            // must be boolean
-            return this.states[ name ] ? true : false;
+            return this.states[ name ];
         },
 
         /**
          * state setter
          */
-        state: createSettter('state', 'states', 'state', 'is'),
+        state: createSettter('state', 'states', 'state', 'is',
+            function (instance, name, value) {
+                if ($.type(value) !== 'boolean') {
+                    value = false;
+                }
+                return value;
+            }
+        ),
 
         /**
          * property getter

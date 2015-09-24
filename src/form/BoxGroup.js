@@ -6,10 +6,11 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
+    var createValues = require('../function/values');
 
-    var Checkbox = require('./Checkbox');
-    var Radio = require('./Radio');
+    var lifeCycle = require('../util/lifeCycle');
+
+    var Box = require('./Box');
 
     /**
      * 单/复选框分组
@@ -18,7 +19,8 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
-     * @property {boolean=} options.multiple 是否可以多选
+     * @property {boolean=} options.multiple 是否可多选
+     * @property {boolean=} options.toggle 是否可反选
      * @property {string} options.boxSelector
      * @property {string=} options.boxCheckedClass
      * @property {string=} options.boxDisabledClass
@@ -31,48 +33,56 @@ define(function (require, exports, module) {
 
     proto.type = 'BoxGroup';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
-        var boxSelector = me.option('boxSelector');
 
-        var boxElement = mainElement.find(boxSelector);
 
-        if (!boxElement.length) {
-
-            mainElement.html(
-                me.option('mainTemplate')
-            );
-
-            boxElement = mainElement.find(boxSelector);
-
+        var mainTemplate = me.option('mainTemplate');
+        if (mainTemplate) {
+            mainElement.html(mainTemplate);
         }
 
-        var boxes = [ ];
 
-        var multiple = me.option('multiple');
-        var BoxClass = multiple ? Checkbox : Radio;
+        var boxSelector = me.option('boxSelector');
+        var boxElement = mainElement.find(boxSelector);
+
+        var boxes = [ ];
 
         $.each(
             boxElement,
             function (index) {
 
-                var instance = new BoxClass({
+                var instance = new Box({
                     mainElement: boxElement.eq(index),
+                    toggle: me.option('toggle'),
                     checkedClass: me.option('boxCheckedClass'),
                     disabledClass: me.option('boxDisabledClass'),
-                    propertyChange: {
+                    stateChange: {
                         checked: function (checked) {
 
-                           // [TODO]
+                            if (checked && !me.option('multiple')) {
 
+                                $.each(
+                                    boxes,
+                                    function (index, box) {
+                                        if (box !== instance) {
+                                            box.state('checked', false);
+                                        }
+                                    }
+                                );
 
-                            me.set('value', value);
+                            }
+
+                            me.set(
+                                'value',
+                                me.inner('processValue')(
+                                    instance.get('value'),
+                                    checked
+                                )
+                            );
 
                         }
                     }
@@ -89,14 +99,11 @@ define(function (require, exports, module) {
         });
 
         me.set({
-
+            value: me.option('value')
         });
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -114,7 +121,39 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
+    BoxGroup.propertyValidator = {
 
+        value: function (value) {
+
+            var type = $.type(value);
+            if (type !== 'string' && type !== 'number') {
+                value = '';
+            }
+
+            var me = this;
+            var processValue = createValues(
+                value,
+                me.option('multiple'),
+                me.option('toggle'),
+                function (a, b) {
+                    if (a > b) {
+                        return 1;
+                    }
+                    else if (a < b) {
+                        return -1;
+                    }
+                    else {
+                        return 0;
+                    }
+                }
+            );
+
+            me.inner('processValue', processValue);
+
+            return processValue();
+
+        }
+    };
 
 
     return BoxGroup;

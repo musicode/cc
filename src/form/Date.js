@@ -25,13 +25,6 @@ define(function (require, exports, module) {
      * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      * @property {string=} options.value 选中的日期
-     * @property {RegExp=} options.pattern 日期的格式，默认是 YYYY-mm-dd
-     *
-     *                                     如果需要改写，请注意，正则必须包含三个分组（方便取值）
-     *
-     *                                     分组 1 表示年份
-     *                                     分组 2 表示月份
-     *                                     分组 3 表示日期
      *
      * @property {string=} options.showCalendarTrigger 显示的触发方式
      * @property {number=} options.showCalendarDelay 显示延时
@@ -51,6 +44,7 @@ define(function (require, exports, module) {
      * @property {string=} options.nextSelector 下个月的按钮选择器
      *
      * @property {Function=} options.renderTemplate 渲染模板函数
+     * @property {Function=} options.parseDate 把 value 解析成 Date
      */
     function Date(options) {
         lifeCycle.init(this, options);
@@ -89,6 +83,7 @@ define(function (require, exports, module) {
 
 
         var calendar = new Calendar({
+            multiple: false,
             mainElement: calendarElement,
             mainTemplate: me.option('calendarTemplate'),
             mode: me.option('mode'),
@@ -98,20 +93,17 @@ define(function (require, exports, module) {
             itemActiveClass: me.option('itemActiveClass'),
             prevSelector: me.option('prevSelector'),
             nextSelector: me.option('nextSelector'),
+            onselect: function () {
+                popup.close();
+            },
             renderTemplate: function (data, tpl) {
                 calendarElement.html(
                     me.execute('renderTemplate', [ data, tpl ])
                 );
             },
             propertyChange: {
-                value: function (newValue, oldValue, changes) {
-
-                    me.set('value', newValue);
-
-                    if (changes.value.action === 'click') {
-                        me.close();
-                    }
-
+                value: function (value) {
+                    me.set('value', value);
                 }
             }
         });
@@ -247,7 +239,6 @@ define(function (require, exports, module) {
         inputSelector: ':text',
         calendarSelector: '.calendar',
 
-        pattern: /^(\d{4})-(\d{2})-(\d{2})$/,
         itemActiveClass: 'active',
 
         showCalendarTrigger: 'focus',
@@ -258,7 +249,9 @@ define(function (require, exports, module) {
         },
         hideCalendarAnimate: function (options) {
             options.calendarElement.hide();
-        }
+        },
+
+        parseDate: dateUtil.parse
 
     };
 
@@ -276,15 +269,7 @@ define(function (require, exports, module) {
 
             if (value) {
 
-                var matches = value.match(
-                    me.option('pattern')
-                );
-
-                var date = dateUtil.parse(
-                    parseInt(matches[ 1 ], 10),
-                    parseInt(matches[ 2 ], 10),
-                    parseInt(matches[ 3 ], 10)
-                );
+                var date = me.execute('parseDate', value);
 
                 if (date && !calendar.inRange(date)) {
                     properties.date = date;
@@ -309,11 +294,7 @@ define(function (require, exports, module) {
                   ? $.trim(value)
                   : '';
 
-            var matches = value.match(
-                this.option('pattern')
-            );
-
-            return matches && matches.length === 4
+            return this.execute('parseDate', value)
                  ? value
                  : '';
 

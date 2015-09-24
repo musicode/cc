@@ -11,8 +11,9 @@ define(function (require) {
      *
      */
 
-    var split = require('../function/split');
     var lpad = require('../function/lpad');
+    var split = require('../function/split');
+    var createValues = require('../function/values');
 
     var dateUtil = require('../util/date');
     var lifeCycle = require('../util/lifeCycle');
@@ -65,28 +66,19 @@ define(function (require) {
             '[' + ATTR_VALUE + ']',
             function () {
 
-                var value = me.get('value');
+                var itemValue = $(this).attr(ATTR_VALUE);
 
-                var list = splitValue(value);
-                var item = $(this).attr(ATTR_VALUE);
+                var oldValue = me.get('value');
+                var newValue = me.inner('processValue')(itemValue, true);
 
-                var index = $.inArray(item, list);
-
-                if (item
-                    && index >= 0
-                    && me.option('toggle')
-                ) {
-                    list.splice(index, 1);
-                }
-                else {
-                    list.push(item);
-                }
-
-                me.set(
-                    'value',
-                    joinValues(list, me.option('multiple')),
-                    { action: 'click' }
+                me.emit(
+                    newValue.length > oldValue.length ? 'select': 'unselect',
+                    {
+                        value: itemValue
+                    }
                 );
+
+                me.set('value', newValue, { action: 'click' });
 
             }
         );
@@ -172,7 +164,7 @@ define(function (require) {
         }
 
         return date >= dateUtil.parse(data.start)
-            && date < dateUtil.parse(data.end) + dateUtil.DAY;
+            && date < (dateUtil.parse(data.end).getTime() + dateUtil.DAY);
 
     };
 
@@ -228,7 +220,7 @@ define(function (require) {
             weekLastDay,
             normalizeDate(me.get('today')),
             $.map(
-                splitValue(me.get('value')),
+                split(me.get('value'), ','),
                 function (literal) {
                     if (literal) {
                         var date = me.execute('parseDate', literal);
@@ -349,7 +341,7 @@ define(function (require) {
                 .removeClass(itemActiveClass);
 
                 $.each(
-                    splitValue(changes.value.newValue),
+                    split(changes.value.newValue, ','),
                     function (index, value) {
 
                         if (!value) {
@@ -373,10 +365,30 @@ define(function (require) {
 
     Calendar.propertyValidator = {
         value: function (value) {
-            return joinValues(
-                splitValue(value),
-                this.option('multiple')
+
+            var me = this;
+
+            var processValue = createValues(
+                value,
+                me.option('multiple'),
+                me.option('toggle'),
+                function (a, b) {
+                    if (a > b) {
+                        return 1;
+                    }
+                    else if (a < b) {
+                        return -1;
+                    }
+                    else {
+                        return 0;
+                    }
+                }
             );
+
+            this.inner('processValue', processValue);
+
+            return processValue();
+
         }
     };
 
@@ -387,55 +399,6 @@ define(function (require) {
      * @type {number}
      */
     var stableDuration = 41 * dateUtil.DAY;
-
-    /**
-     * 多选值分隔符
-     *
-     * @inner
-     * @type {string}
-     */
-    var VALUE_SEPARATE = ',';
-
-    /**
-     * 按 , 拆分 value
-     *
-     * @inner
-     * @param {string} value
-     * @return {Array}
-     */
-    function splitValue(value) {
-        return split(value, VALUE_SEPARATE);
-    }
-
-    /**
-     * 组合 values
-     *
-     * @inner
-     * @param {Array} values
-     * @param {boolean} multiple
-     * @return {string}
-     */
-    function joinValues(values, multiple) {
-
-        if (!multiple) {
-            return values.pop();
-        }
-
-        values.sort(function (a, b) {
-            if (a > b) {
-                return 1;
-            }
-            else if (a < b) {
-                return -1;
-            }
-            else {
-                return 0;
-            }
-        });
-
-        return values.join(VALUE_SEPARATE);
-
-    }
 
     /**
      * 获得渲染模板的数据
