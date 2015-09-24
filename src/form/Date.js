@@ -20,10 +20,14 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
+     * @property {string=} options.name
+     * @property {string=} options.value
+     *
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
      * @property {Date=} options.date 打开面板所在月份
      * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
+     * @property {boolean=} options.multiple 是否可多选
      * @property {string=} options.value 选中的日期
      *
      * @property {string=} options.showCalendarTrigger 显示的触发方式
@@ -79,17 +83,17 @@ define(function (require, exports, module) {
 
         }
 
-
+        inputElement.removeAttr('name');
 
 
         var calendar = new Calendar({
-            multiple: false,
             mainElement: calendarElement,
             mainTemplate: me.option('calendarTemplate'),
             mode: me.option('mode'),
             date: me.option('date'),
             today: me.option('today'),
             stable: me.option('stable'),
+            multiple: me.option('multiple'),
             itemActiveClass: me.option('itemActiveClass'),
             prevSelector: me.option('prevSelector'),
             nextSelector: me.option('nextSelector'),
@@ -175,6 +179,7 @@ define(function (require, exports, module) {
         });
 
         me.set({
+            name: me.option('name'),
             value: me.option('value')
         });
 
@@ -257,30 +262,16 @@ define(function (require, exports, module) {
 
     Date.propertyUpdater = {
 
+        name: function (name) {
+
+            this.inner('main').attr('name', name);
+
+        },
+
         value: function (value) {
 
-            var me = this;
-
-            var calendar = me.inner('calendar');
-
-            var properties = {
-                value: value
-            };
-
-            if (value) {
-
-                var date = me.execute('parseDate', value);
-
-                if (date && !calendar.inRange(date)) {
-                    properties.date = date;
-                    properties.data = calendar.createRenderData(date)
-                }
-
-            }
-
-            calendar.set(properties);
-
-            me.inner('input').val(value);
+            this.inner('calendar').set('value', value);
+            this.inner('input').val(value);
 
         }
 
@@ -288,15 +279,45 @@ define(function (require, exports, module) {
 
     Date.propertyValidator = {
 
+        name: function (name) {
+
+            if ($.type(name) !== 'string') {
+
+                name = this.inner('main').attr('name');
+
+                if ($.type(name) !== 'string') {
+                    throw new Error('[CC Error] form/Date mainElement must have the name attribute.')
+                }
+
+            }
+
+            return name;
+
+        },
+
         value: function (value) {
 
-            value = $.type(value) === 'string'
-                  ? $.trim(value)
-                  : '';
+            if ($.type(value) === 'string') {
 
-            return this.execute('parseDate', value)
-                 ? value
-                 : '';
+                var list = [ ];
+
+                $.each(
+                    split(value, ','),
+                    function (index, value) {
+                        if (this.execute('parseDate', value)) {
+                            list.push(value);
+                        }
+                    }
+                );
+
+                value = list.join(',');
+
+            }
+            else {
+                value = '';
+            }
+
+            return value;
 
         }
     };

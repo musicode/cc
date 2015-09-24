@@ -16,6 +16,8 @@ define(function (require, exports) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement
+     * @property {string=} options.name
+     * @property {string=} options.value
      *
      * @property {string} options.placeholderTemplate
      * @property {string} options.placeholderSelector
@@ -52,8 +54,11 @@ define(function (require, exports) {
         // mainElement 可能被 Placeholder 改写过
         mainElement = placeholder.inner('main');
 
+        var inputElement = placeholder.inner('input');
+        inputElement.removeAttr('name');
+
         var input = new Input({
-            mainElement: placeholder.inner('input'),
+            mainElement: inputElement,
             shortcut: me.option('shortcut'),
             context: me,
             propertyChange: {
@@ -93,18 +98,42 @@ define(function (require, exports) {
 
     Text.propertyUpdater = {
 
+        name: function (name) {
+
+            this.inner('main').attr('name', name);
+
+        },
+
         value: function (value) {
 
-            var me = this;
-
-            me.inner('input').set('value', value);
-            me.inner('placeholder').render();
+            this.inner('input').set('value', value);
+            this.inner('placeholder').render();
 
         },
 
         placeholder: function (placeholder) {
 
             this.inner('placeholder').set('value', placeholder);
+
+        }
+
+    };
+
+    Text.propertyValidator = {
+
+        name: function (name) {
+
+            if ($.type(name) !== 'string') {
+
+                name = this.inner('main').attr('name');
+
+                if ($.type(name) !== 'string') {
+                    throw new Error('[CC Error] form/Text mainElement must have the name attribute.')
+                }
+
+            }
+
+            return name;
 
         }
 

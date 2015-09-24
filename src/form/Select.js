@@ -29,8 +29,10 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery=} options.mainElement 主元素，结构必须完整
      *
-     * @property {Array=} options.data 下拉菜单的数据
+     * @property {string=} options.name
      * @property {string=} options.value 当前选中的值
+     *
+     * @property {Array=} options.data 下拉菜单的数据
      *
      * @property {string=} options.buttonSelector 点击触发下拉菜单显示的元素
      * @property {string=} options.menuSelector 下拉菜单元素
@@ -113,6 +115,7 @@ define(function (require, exports, module) {
 
         me.set({
             data: me.option('data'),
+            name: me.option('name'),
             value: me.option('value')
         });
 
@@ -177,7 +180,16 @@ define(function (require, exports, module) {
         }
     };
 
-    Select.propertyUpdater = { };
+    Select.propertyUpdater = {
+
+        name: function (name) {
+
+            this.inner('main').attr('name', name);
+
+        }
+
+    };
+
     Select.propertyUpdater.data =
     Select.propertyUpdater.value = function (newValue, oldValue, changes) {
 
@@ -208,6 +220,22 @@ define(function (require, exports, module) {
     };
 
     Select.propertyValidator = {
+
+        name: function (name) {
+
+            if ($.type(name) !== 'string') {
+
+                name = this.inner('main').attr('name');
+
+                if ($.type(name) !== 'string') {
+                    throw new Error('[CC Error] form/Select mainElement must have the name attribute.')
+                }
+
+            }
+
+            return name;
+
+        },
 
         value: function (value) {
 

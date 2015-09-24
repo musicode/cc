@@ -7,9 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var createValues = require('../function/values');
-
     var lifeCycle = require('../util/lifeCycle');
-
     var Box = require('./Box');
 
     /**
@@ -19,6 +17,8 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
+     * @property {string=} options.name
+     * @property {string=} options.value
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否可反选
      * @property {string} options.boxSelector
@@ -46,8 +46,9 @@ define(function (require, exports, module) {
         }
 
 
-        var boxSelector = me.option('boxSelector');
-        var boxElement = mainElement.find(boxSelector);
+        var boxElement = mainElement.find(
+            me.option('boxSelector')
+        );
 
         var boxes = [ ];
 
@@ -78,7 +79,7 @@ define(function (require, exports, module) {
 
                             me.set(
                                 'value',
-                                me.inner('processValue')(
+                                me.inner('values')(
                                     instance.get('value'),
                                     checked
                                 )
@@ -99,6 +100,7 @@ define(function (require, exports, module) {
         });
 
         me.set({
+            name: me.option('name'),
             value: me.option('value')
         });
 
@@ -121,7 +123,32 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
+    BoxGroup.propertyUpdater = {
+
+        name: function (name) {
+            this.inner('main').attr('name', name);
+        },
+
+        value: function (value) {
+            this.inner('main').attr('value', value);
+        }
+
+    };
+
     BoxGroup.propertyValidator = {
+
+        name: function (name) {
+
+            if ($.type(name) !== 'string') {
+                name = this.inner('main').attr('name');
+                if (name == null) {
+                    throw new Error('[CC Error] BoxGroup name is missing.');
+                }
+            }
+
+            return name;
+
+        },
 
         value: function (value) {
 
@@ -131,7 +158,7 @@ define(function (require, exports, module) {
             }
 
             var me = this;
-            var processValue = createValues(
+            var values = createValues(
                 value,
                 me.option('multiple'),
                 me.option('toggle'),
@@ -148,9 +175,9 @@ define(function (require, exports, module) {
                 }
             );
 
-            me.inner('processValue', processValue);
+            me.inner('values', values);
 
-            return processValue();
+            return values();
 
         }
     };

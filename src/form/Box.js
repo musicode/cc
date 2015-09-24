@@ -10,25 +10,35 @@ define(function (require, exports, module) {
      *
      * ## 结构
      *
-     * 复选框的结构通常如下：
+     * 不支持原生 radio 和 checkbox，如下：
      *
      * <label>
-     *     <input type="radio" name="city" /> 北京
+     *     <input type="radio" name="name" value="value" checked disabled />
+     *     text
      * </label>
      *
-     * 好处是点击 `北京` 或 复选框，都能选中
+     * 只支持模拟实现，如下：
      *
-     * ## 默认选中
+     * <label name="name" name="name" value="value" checked disabled>
+     *     <i class="icon icon-radio"></i>
+     *     text
+     * </label>
      *
-     * 如果需要默认选中，input 可以设置为 checked，如下：
      *
-     * <input type="radio" name="city" checked="checked" />
+     * 理由如下：
      *
-     * ## 默认禁用
+     * 1. 原生 box 必须加 name，在设计表单验证时，表单字段的选择器是 [name]
      *
-     * 如果需要默认禁用，input 可以设置为 disabled，如下：
+     *    通过选择器找到原生 box，一些定位逻辑其实不太好处理（因为它太小了）
      *
-     * <input type="radio" name="city" disabled="disabled" />
+     * 2. 如果支持原生 box，那么 mainElement 是否要加这些 attribute 呢？
+     *
+     *    如果加，两个元素（mainElement 和 checkbox/radio）有相同的 attribute
+     *    如果不加，从 name 对应表单字段来讲，语义上不是很好
+     *
+     * 3. 从用户体验一致性来讲，肯定是模拟实现更好看啊！
+     *
+     *
      *
      * ## 特殊性
      *
@@ -36,7 +46,9 @@ define(function (require, exports, module) {
      *
      * 不能处理一个单选框，而是处理 name 属性相同的一组单选框
      *
-     * 所以 Radio 必须和 BoxGroup 一起使用
+     * 所以单选框必须和 BoxGroup 一起使用
+     *
+     *
      */
 
     var debounce = require('../function/debounce');
@@ -50,6 +62,8 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
+     * @property {string=} options.name
+     * @property {string=} options.value
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
      * @property {boolean=} options.toggle 是否可反选
@@ -73,6 +87,11 @@ define(function (require, exports, module) {
             mainElemen.html(mainTemplate);
         }
 
+        var nativeElement = mainElement.find(':radio,:checkbox');
+        if (nativeElement.length > 0) {
+            throw new Error('[CC Error] form/Box mainElement 不能包含 radio 或 checkbox.');
+        }
+
         mainElement.on(
             'click' + me.namespace(),
             // 有时候会连续触发两次，因此用 debounce 解决
@@ -83,11 +102,9 @@ define(function (require, exports, module) {
                         return;
                     }
 
-                    var toggle = me.option('toggle');
-
                     var checked = me.is('checked');
                     if (checked) {
-                        if (toggle) {
+                        if (me.option('toggle')) {
                             checked = false;
                         }
                     }
@@ -102,14 +119,10 @@ define(function (require, exports, module) {
             )
         );
 
-        var nativeElement = mainElement.find(':radio,:checkbox');
-        if (nativeElement.length !== 1) {
-            nativeElement = null;
-        }
+
 
         me.inner({
-            main: mainElement,
-            native: nativeElement
+            main: mainElement
         });
 
         me.set({
@@ -141,40 +154,17 @@ define(function (require, exports, module) {
 
     function setBoxAttribute(instance, name, value) {
 
-        $.each(
-            [
-                instance.inner('main'),
-                instance.inner('native')
-            ],
-            function (index, element) {
-                setAttribute(
-                    element,
-                    name,
-                    value
-                );
-            }
+        setAttribute(
+            instance.inner('main'),
+            name,
+            value
         );
 
     }
 
     function getBoxAttribute(instance, name) {
 
-        var result;
-
-        $.each(
-            [
-                instance.inner('main'),
-                instance.inner('native')
-            ],
-            function (index, element) {
-                result = element && element.attr(name);
-                if (result != null) {
-                    return false;
-                }
-            }
-        );
-
-        return result;
+        return instance.inner('main').attr(name);
 
     }
 
@@ -188,8 +178,6 @@ define(function (require, exports, module) {
         }
 
     }
-
-
 
 
 
@@ -242,14 +230,24 @@ define(function (require, exports, module) {
         checked: function (checked) {
 
             setBoxAttribute(this, 'checked', checked);
-            setBoxClass(this, 'checkedClass', checked ? 'addClass' : 'removeClass');
+
+            setBoxClass(
+                this,
+                'checkedClass',
+                checked ? 'addClass' : 'removeClass'
+            );
 
         },
 
         disabled: function (disabled) {
 
             setBoxAttribute(this, 'disabled', disabled);
-            setBoxClass(this, 'disabledClass', disabled ? 'addClass' : 'removeClass');
+
+            setBoxClass(
+                this,
+                'disabledClass',
+                disabled ? 'addClass' : 'removeClass'
+            );
 
         }
 

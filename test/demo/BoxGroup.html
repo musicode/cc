@@ -5,52 +5,58 @@
     <title>BoxGroup</title>
     <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
     <style>
-        .icon {
+        .icon-checkbox,
+        .icon-radio {
 
             display: inline-block;
-            width: 16px;
-            height: 16px;
+            width: 14px;
+            height: 14px;
 
             border: 1px solid #DDD;
         }
-        .checked .icon {
-            border-color: red;
-            background-color: lightblue;
+
+        .checked .icon-checkbox,
+        .checked .icon-radio {
+            background-color: red;
         }
-        .disabled .icon {
+
+        .disabled .icon-checkbox,
+        .disabled .icon-radio {
             background-color: #EEE;
         }
+
+
 
     </style>
 </head>
 <body>
 
     <div class="checkbox-group">
-        <label class="checkbox">
-            <input type="checkbox" name="city" value="beijing" />北京
+        <label class="checkbox" name="city" value="beijing">
+            <i class="icon-checkbox"></i> 北京
         </label>
 
-        <label class="checkbox">
-            <input type="checkbox" name="city" value="shanghai" checked />上海
+        <label class="checkbox" name="city" value="shanghai">
+            <i class="icon-checkbox"></i> 上海
         </label>
 
-        <label class="checkbox">
-            <input type="checkbox" name="city" value="guangzhou" disabled />广州
+        <label class="checkbox" name="city" value="guangzhou" disabled>
+            <i class="icon-checkbox"></i> 广州
         </label>
 
     </div>
 
     <div class="radio-group">
-        <label class="radio">
-            <input type="radio" name="city" value="beijing" />北京
+        <label class="radio" name="city" value="beijing">
+            <i class="icon-radio"></i> 北京
         </label>
 
-        <label class="radio">
-            <input type="radio" name="city" value="shanghai" checked />上海
+        <label class="radio" name="city" value="shanghai">
+            <i class="icon-radio"></i> 上海
         </label>
 
-        <label class="radio">
-            <input type="radio" name="city" value="guangzhou"/>广州
+        <label class="radio" name="city" value="guangzhou">
+            <i class="icon-radio"></i> 广州
         </label>
     </div>
 
@@ -69,6 +75,7 @@
                     mainElement: $('.checkbox-group'),
                     multiple: true,
                     toggle: true,
+                    name: 'checkbox',
                     boxSelector: '.checkbox',
                     boxCheckedClass: 'checked',
                     boxDisabledClass: 'disabled',
@@ -82,6 +89,7 @@
                 window.radioGroup = new BoxGroup({
                     mainElement: $('.radio-group'),
                     multiple: false,
+                    name: 'radio',
                     boxSelector: '.radio',
                     boxCheckedClass: 'checked',
                     boxDisabledClass: 'disabled',
