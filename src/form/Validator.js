@@ -76,6 +76,14 @@ define(function (require, exports, module) {
      *         }
      *     }
      * }
+     *
+     *
+     * 表单一定会有 <input>，它有一个标准 attribute 叫做 name
+     * 对于封装过的表单字段组件，也许是多个标签组合而成，比如 <div class="select"><input type="hidden" /></div>
+     *
+     * 为了和 <input> 这种标准组件保持一致，选择器都使用 [name]，否则一个用 data-name，另一个用 name 会很奇怪
+     *
+     * 也就是说，具有 name attribute 的元素必须要有 value attribute，否则无法验证
      */
 
     /**
@@ -96,10 +104,6 @@ define(function (require, exports, module) {
      *
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
-     *
-     * @property {string} options.fieldSelector 有些表单组件是封装过的，比如 div > input:hidden
-     *                                          当我们取到 input 时，需要通过 componentSelector 往上找组件元素
-     *                                          默认是 '[name]'
      *
      * @property {Object=} options.fields 配置字段
      *
@@ -222,7 +226,7 @@ define(function (require, exports, module) {
             fields = [ fields ];
         }
 
-        if ($.isArray(fields)) {
+        if ($.isArray(fields) && fields.length > 0) {
 
             var elementArray = [ ];
 
@@ -319,6 +323,20 @@ define(function (require, exports, module) {
 
             return errors.length === 0;
 
+        }
+
+    };
+
+    proto._validate = function (fields) {
+
+        if ($.type(fields) === 'string') {
+            fields = [ fields ];
+        }
+
+        if ($.isArray(fields) && fields.length > 0) {
+            return {
+                fields: fields
+            };
         }
 
     };
@@ -517,9 +535,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;

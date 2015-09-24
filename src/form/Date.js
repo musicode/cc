@@ -6,16 +6,14 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
     var contains = require('../function/contains');
-    var setValue = require('../function/setValue');
-    var isHidden = require('../function/isHidden');
-    var lpad = require('../function/lpad');
     var replaceWith = require('../function/replaceWith');
 
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
+
     var dateUtil = require('../util/date');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 表单日期选择器
@@ -90,12 +88,6 @@ define(function (require, exports, module) {
 
 
 
-        var value = me.option('value');
-
-        if ($.type(value) !== 'string') {
-            value = inputElement.val();
-        }
-
         var calendar = new Calendar({
             mainElement: calendarElement,
             mainTemplate: me.option('calendarTemplate'),
@@ -103,6 +95,7 @@ define(function (require, exports, module) {
             date: me.option('date'),
             today: me.option('today'),
             stable: me.option('stable'),
+            itemActiveClass: me.option('itemActiveClass'),
             prevSelector: me.option('prevSelector'),
             nextSelector: me.option('nextSelector'),
             renderTemplate: function (data, tpl) {
@@ -113,7 +106,7 @@ define(function (require, exports, module) {
             propertyChange: {
                 value: function (newValue, oldValue, changes) {
 
-                    me.set('value', value);
+                    me.set('value', newValue);
 
                     if (changes.value.action === 'click') {
                         me.close();
@@ -123,10 +116,10 @@ define(function (require, exports, module) {
             }
         });
 
+
         var popup = new Popup({
             triggerElement: inputElement,
             layerElement: calendarElement,
-            hidden: true,
             showLayerTrigger: me.option('showCalendarTrigger'),
             showLayerDelay: me.option('showCalendarDelay'),
             hideLayerTrigger: me.option('hideCalendarTrigger'),
@@ -178,6 +171,10 @@ define(function (require, exports, module) {
         })
         .after('close', dispatchEvent);
 
+
+
+
+
         me.inner({
             main: mainElement,
             input: inputElement,
@@ -186,35 +183,40 @@ define(function (require, exports, module) {
         });
 
         me.set({
-            value: value
+            value: me.option('value')
         });
+
 
     };
 
-    /**
-     * 打开日历面板
-     */
+
     proto.open = function () {
         this.inner('popup').open();
     };
 
-    /**
-     * 关闭日历面板
-     */
+    proto._open = function () {
+        if (!this.inner('popup').is('hidden')) {
+            return false;
+        }
+    };
+
+
     proto.close = function () {
         this.inner('popup').close();
     };
 
-    /**
-     * 渲染日历
-     */
+    proto._close = function () {
+        if (this.inner('popup').is('hidden')) {
+            return false;
+        }
+    };
+
+
     proto.render = function () {
         this.inner('calendar').render();
     };
 
-    /**
-     * 销毁对象
-     */
+
     proto.dispose = function () {
 
         var me = this;
@@ -228,13 +230,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Date.defaultOptions = {
 
         mainTemplate: '<div class="form-date">'
@@ -253,6 +248,7 @@ define(function (require, exports, module) {
         calendarSelector: '.calendar',
 
         pattern: /^(\d{4})-(\d{2})-(\d{2})$/,
+        itemActiveClass: 'active',
 
         showCalendarTrigger: 'focus',
         hideCalendarTrigger: 'click',

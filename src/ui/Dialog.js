@@ -231,19 +231,34 @@ define(function (require, exports, module) {
             mask: maskElement
         });
 
-        me.set({
+        me.state({
             hidden: me.option('hidden')
         });
 
     };
 
+
     proto.show = function () {
-        this.set('hidden', false);
+        this.state('hidden', false);
     };
 
-    proto.hide = function () {
-        this.set('hidden', true);
+    proto._show = function () {
+        if (!this.is('hidden')) {
+            return false;
+        }
     };
+
+
+    proto.hide = function () {
+        this.state('hidden', true);
+    };
+
+    proto._hide = function () {
+        if (this.is('hidden')) {
+            return false;
+        }
+    };
+
 
     proto.refresh = function () {
 
@@ -291,7 +306,7 @@ define(function (require, exports, module) {
 
         lifeCycle.dispose(me);
 
-        if (!me.get('hidden')) {
+        if (!me.is('hidden')) {
             me.hide();
         }
 
@@ -379,7 +394,7 @@ define(function (require, exports, module) {
 
     };
 
-    Dialog.propertyUpdater = {
+    Dialog.stateUpdater = {
 
         hidden: function (hidden) {
 
@@ -471,7 +486,7 @@ define(function (require, exports, module) {
         }
     };
 
-    Dialog.propertyValidator = {
+    Dialog.stateValidator = {
 
         hidden: function (hidden) {
             if ($.type(hidden) !== 'boolean') {

@@ -9,12 +9,11 @@ define(function (require, exports) {
     var Input = require('../helper/Input');
     var Placeholder = require('../helper/Placeholder');
 
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
 
     /**
-     * 文本输入框构造函数
-     *
+     * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement
      *
@@ -32,9 +31,6 @@ define(function (require, exports) {
 
     proto.type = 'Text';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -45,9 +41,15 @@ define(function (require, exports) {
             mainElement: mainElement,
             nativeFirst: me.option('placeholderNativeFirst'),
             placeholderSelector: me.option('placeholderSelector'),
-            placeholderTemplate: me.option('placeholderTemplate')
+            placeholderTemplate: me.option('placeholderTemplate'),
+            propertyChange: {
+                value: function (value) {
+                    me.set('placeholder', value);
+                }
+            }
         });
 
+        // mainElement 可能被 Placeholder 改写过
         mainElement = placeholder.inner('main');
 
         var input = new Input({
@@ -69,9 +71,6 @@ define(function (require, exports) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -88,11 +87,7 @@ define(function (require, exports) {
 
 
     Text.defaultOptions = {
-        placeholderNativeFirst: true,
-        placeholderSelector: '.placeholder',
-        placeholderTemplate: '<div class="placeholder-wrapper">'
-                           +    '<div class="placeholder"></div>'
-                           + '</div>'
+        placeholderNativeFirst: true
     };
 
 
@@ -103,9 +98,16 @@ define(function (require, exports) {
             var me = this;
 
             me.inner('input').set('value', value);
-            me.inner('placeholder').refresh();
+            me.inner('placeholder').render();
+
+        },
+
+        placeholder: function (placeholder) {
+
+            this.inner('placeholder').set('value', placeholder);
 
         }
+
     };
 
 

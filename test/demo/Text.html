@@ -33,14 +33,14 @@
 
                 function (Text) {
 
-                    new Text({
+                    window.inputText = new Text({
                         mainElement: $(':text'),
                         onpropertychange: function () {
                             console.log(this.get('value'));
                         }
                     });
 
-                    new Text({
+                    window.textareaText = new Text({
                         mainElement: $('textarea'),
                         onpropertychange: function () {
                             console.log(this.get('value'));

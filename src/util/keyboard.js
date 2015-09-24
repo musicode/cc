@@ -160,16 +160,13 @@ define(function (require, exports, module) {
      * @param {Object} obj
      * @return {Object}
      */
-    function reserve(obj) {
+    function reverse(obj) {
 
         var result = { };
 
-        $.each(
-            obj,
-            function (key, value) {
-                result[value] = key;
-            }
-        );
+        $.each(obj, function (key, value) {
+            result[ value ] = key;
+        });
 
         return result;
 
@@ -183,19 +180,19 @@ define(function (require, exports, module) {
     exports.combinationKey = combinationKey;
 
     exports.isCharKey = function (keyCode) {
-        return keyCode in reserve(charKey);
+        return keyCode in reverse(charKey);
     };
 
     exports.isDeleteKey = function (keyCode) {
-        return keyCode in reserve(deleteKey);
+        return keyCode in reverse(deleteKey);
     };
 
     exports.isFunctionKey = function (keyCode) {
-        return keyCode in reserve(functionKey);
+        return keyCode in reverse(functionKey);
     };
 
     exports.isCombinationKey = function (keyCode) {
-        return keyCode in reserve(combinationKey);
+        return keyCode in reverse(combinationKey);
     };
 
 });

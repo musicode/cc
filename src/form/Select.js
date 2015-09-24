@@ -20,7 +20,7 @@ define(function (require, exports, module) {
 
     var ComboBox = require('../ui/ComboBox');
 
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 下拉菜单
@@ -28,7 +28,6 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.mainElement 主元素，结构必须完整
-     * @property {string} options.name
      *
      * @property {Array=} options.data 下拉菜单的数据
      * @property {string=} options.value 当前选中的值
@@ -47,8 +46,6 @@ define(function (require, exports, module) {
      * @property {string=} options.hideMenuTrigger 隐藏的触发方式
      * @property {number=} options.hideMenuDelay 隐藏延时
      * @property {Function=} options.hideMenuAnimate 隐藏动画
-     *
-     * @property {Function=} options.setText 把选中的菜单项文本写入到按钮上
      */
     function Select(options) {
         lifeCycle.init(this, options);
@@ -58,37 +55,11 @@ define(function (require, exports, module) {
 
     proto.type = 'Select';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
-
-
-
-
-
-        var value = me.option('value');
-
-        var html = '<input type="hidden" name="' + me.option('name') + '"';
-        if (value != null) {
-            html += ' value="' + value + '"';
-        }
-        if (mainElement.attr('required')) {
-            html += ' required';
-        }
-
-        html += ' />';
-
-        var inputElement = $(html);
-
-        mainElement.append(inputElement);
-
-
-
 
 
         var combobox = new ComboBox({
@@ -123,6 +94,7 @@ define(function (require, exports, module) {
             }
         });
 
+        // 模拟 focus/blur，便于表单验证
         combobox
         .after('open', function () {
             mainElement.trigger('focusin');
@@ -136,7 +108,6 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
-            input: inputElement,
             combobox: combobox
         });
 
@@ -147,9 +118,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -222,9 +190,7 @@ define(function (require, exports, module) {
 
             var value = valueChange.newValue;
 
-            value = value == null ? '' : value;
-
-            me.inner('input').val(value);
+            me.inner('main').attr('value', value);
 
             properties.value = value;
 
@@ -236,6 +202,24 @@ define(function (require, exports, module) {
         }
 
         me.inner('combobox').set(properties);
+
+        return false;
+
+    };
+
+    Select.propertyValidator = {
+
+        value: function (value) {
+
+            switch ($.type(value)) {
+                case 'string':
+                case 'number':
+                    return value;
+            }
+
+            return '';
+
+        }
 
     };
 

@@ -55,7 +55,7 @@
 
             var validator = new Validator({
                 mainElement: $('.form'),
-                realtime: true,
+                validateOnBlur: true,
                 fields: {
                     mobile: {
                         type: 'mobile',
@@ -129,14 +129,14 @@
                     });
 
                 },
-                onbeforevalidate: function (e) {
-                    console.log(data);
+                onbeforevalidate: function (e, data) {
+                    console.log('before validate', data);
                 },
-                onaftervalidate: function (e) {
-                    console.log(data);
+                onaftervalidate: function (e, data) {
+                    console.log('after validate', data);
                 },
                 onvalidatecomplete: function (e, data) {
-                    console.log(data);
+                    console.log('validate complete', data);
                 }
             });
 

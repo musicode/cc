@@ -6,8 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      *
@@ -59,12 +59,8 @@ define(function (require, exports, module) {
 
     var proto = Radio.prototype;
 
-
     proto.type = 'Radio';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -85,15 +81,15 @@ define(function (require, exports, module) {
 
         mainElement.on(
             'click' + me.namespace(),
-            // 有时候会连续触发两次
+            // 有时候会连续触发两次，因此用 debounce 解决
             debounce(
                 function (e) {
 
-                    if (me.get('disabled')) {
+                    if (me.is('disabled')) {
                         return;
                     }
 
-                    me.set('checked', true);
+                    me.state('checked', true);
 
                 },
                 50
@@ -106,17 +102,16 @@ define(function (require, exports, module) {
         });
 
         me.set({
-            value: radioElement.val(),
+            value: radioElement.val()
+        });
+
+        me.state({
             checked: radioElement.prop('checked'),
             disabled: radioElement.prop('disabled')
         });
 
-
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -131,8 +126,15 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-
     Radio.propertyUpdater = {
+
+        value: function (value) {
+            this.inner('radio').val(value);
+        }
+
+    };
+
+    Radio.stateUpdater = {
 
         checked: function (checked) {
 
@@ -175,12 +177,6 @@ define(function (require, exports, module) {
                 );
 
             }
-
-        },
-
-        value: function (value) {
-
-            this.inner('radio').val(value);
 
         }
 

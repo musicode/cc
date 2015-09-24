@@ -32,8 +32,8 @@ define(function (require, exports, module) {
      *
      */
 
-    var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
+    var lifeCycle = require('../util/lifeCycle');
 
 
     /**
