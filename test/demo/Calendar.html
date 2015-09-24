@@ -218,16 +218,16 @@
             multiple: true,
 
             firstDay: 1,
-            activeClass: 'active',
             value: '2015-09-27,2015-09-28,2015-09-29',
 
+            itemActiveClass: 'active',
             prevSelector: '.icon-prev',
             nextSelector: '.icon-next',
 
             renderTemplate: function (data) {
                 return monthRender(data);
             },
-            onchange: function (e) {
+            onpropertychange: function (e) {
                 console.log(this.get('value'));
             }
         });
@@ -266,7 +266,7 @@
         +                     '<!-- for: ${list} as ${item}, ${index} -->'
         +                     '<td class="${item.phase}'
         +                     '<!-- if: ${item.morning} --> active<!-- /if -->'
-        +                     '" data-year="${item.year}" data-month="${item.month}" data-date="${item.date}" data-type="1">上</td>'
+        +                     '" data-year="${item.year}" data-month="${item.month}" data-date="${item.date}" data-type="1" data-value="${item.year}-${item.month}-${item.date}">上</td>'
         +                     '<!-- /for -->'
         +                 '</tr>'
         +                 '<tr>'
@@ -294,11 +294,11 @@
 
             mainElement: $('#week-calendar'),
 
-            multiple: true,
+            multiple: false,
             mode: 'week',
 
             firstDay: 1,
-            activeClass: 'active',
+            itemActiveClass: 'active',
 
             prevSelector: '.icon-prev',
             nextSelector: '.icon-next',
@@ -306,7 +306,7 @@
             renderTemplate: function (data) {
                 return weekRender(data);
             },
-            onchange: function () {
+            onpropertychange: function () {
                 console.log(this.get('value'));
             }
         });

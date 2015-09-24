@@ -26,7 +26,7 @@ define(function (require, exports, module) {
      * @property {string} options.imageUrl 原始图片地址
      */
     function Zoom(options) {
-        return lifeCycle.init(this, options);
+        lifeCycle.init(this, options);
     }
 
     var proto = Zoom.prototype;
@@ -253,9 +253,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -263,7 +260,9 @@ define(function (require, exports, module) {
         lifeCycle.dispose(me);
 
         var namespace = me.namespace();
+
         instance.document.off(namespace);
+
         me.option('thumbnailElement').off(
             namespace
         );
@@ -272,12 +271,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Zoom.defaultOptions = {
         showFinderAnimate: function (options) {
             options.finderElement.show();

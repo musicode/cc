@@ -148,43 +148,47 @@ define(function (require, exports, module) {
     proto.render = function () {
 
         var me = this;
-        var data = me.get('data');
 
-        if (data) {
-
-            me.option('menuElement').html(
-                me.execute(
-                    'renderTemplate',
-                    [
-                        data,
-                        me.option('menuTemplate')
-                    ]
-                )
-            );
-
-        }
+        me.option('menuElement').html(
+            me.execute(
+                'renderTemplate',
+                [
+                    me.get('data'),
+                    me.option('menuTemplate')
+                ]
+            )
+        );
 
     };
+
+    proto._render = function () {
+        if (!this.get('data')) {
+            return false;
+        }
+    };
+
 
     proto.open = function () {
         this.inner('popup').open();
     };
 
     proto._open = function () {
-        if (!this.inner('popup').get('hidden')) {
+        if (!this.inner('popup').is('hidden')) {
             return false;
         }
     };
+
 
     proto.close = function () {
         this.inner('popup').close();
     };
 
     proto._close = function () {
-        if (this.inner('popup').get('hidden')) {
+        if (this.inner('popup').is('hidden')) {
             return false;
         }
     };
+
 
     proto.dispose = function () {
 
@@ -252,6 +256,7 @@ define(function (require, exports, module) {
     };
 
     ComboBox.propertyValidator = {
+
         value: function (value) {
 
             var me = this;

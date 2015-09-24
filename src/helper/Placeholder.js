@@ -21,10 +21,6 @@ define(function (require, exports, module) {
      * 2. 为了保证浏览器之间有相同的体验，最好使用模拟实现
      * 3. 如果希望修改 placeholder 颜色，必须使用模拟实现
      *
-     * 为了满足简单需求，加入 简单模式 和 复杂模式
-     *
-     * 1. 简单模式：通过 simpleClass 和 value 来实现（取值需要判断 input.hasClass(simpleClass)）
-     * 2. 复杂模式：通过包装输入框元素，用新的元素飘在输入框元素上来实现（取值不受影响）
      */
 
     var isHidden = require('../function/isHidden');
@@ -83,28 +79,31 @@ define(function (require, exports, module) {
         executeProxyMethod(me, 'init');
 
         me.set({
-            hidden: me.option('hidden'),
             value: me.option('value')
+        });
+
+        me.state({
+            hidden: me.option('hidden')
         });
 
     };
 
     proto.show = function () {
-        this.set('hidden', false);
+        this.state('hidden', false);
     };
 
     proto._show = function () {
-        if (!this.get('hidden')) {
+        if (!this.is('hidden')) {
             return false;
         }
     };
 
     proto.hide = function () {
-        this.set('hidden', true);
+        this.state('hidden', true);
     };
 
     proto._hide = function () {
-        if (this.get('hidden')) {
+        if (this.is('hidden')) {
             return false;
         }
     };
@@ -140,28 +139,11 @@ define(function (require, exports, module) {
         }
     };
 
-    Placeholder.propertyUpdater = { };
+    Placeholder.propertyUpdater = {
 
-    Placeholder.propertyUpdater.value =
-    Placeholder.propertyUpdater.hidden = function (newValue, oldValue, changes) {
-
-        var me = this;
-
-        var valueChange = changes.value;
-        var hiddenChange = changes.hidden;
-
-        if (valueChange) {
-            me.render(me);
+        value: function () {
+            this.render();
         }
-        else if (hiddenChange) {
-            executeProxyMethod(
-                me,
-                hiddenChange.newValue ? 'hide' : 'show'
-            );
-        }
-
-        return false;
-
     };
 
     Placeholder.propertyValidator = {
@@ -173,7 +155,11 @@ define(function (require, exports, module) {
                     return value;
             }
             return this.inner('input').attr('placeholder') || '';
-        },
+        }
+
+    };
+
+    Placeholder.stateValidator = {
 
         hidden: function (hidden) {
             if ($.type(hidden) !== 'boolean') {
@@ -183,6 +169,19 @@ define(function (require, exports, module) {
                 }
             }
             return hidden;
+        }
+
+    };
+
+    Placeholder.stateUpdater = {
+
+        hidden: function (hidden) {
+
+            executeProxyMethod(
+                this,
+                hidden ? 'hide' : 'show'
+            );
+
         }
 
     };
@@ -242,7 +241,7 @@ define(function (require, exports, module) {
             inputElement
                 .on('input' + namespace, function () {
                     var hidden = $.trim(inputElement.val()).length > 0;
-                    if (hidden !== instance.get('hidden')) {
+                    if (hidden !== instance.is('hidden')) {
                         if (hidden) {
                             instance.hide();
                         }
@@ -281,7 +280,7 @@ define(function (require, exports, module) {
         },
         render: function (instance) {
 
-            if (instance.get('hidden')) {
+            if (instance.is('hidden')) {
                 return;
             }
 

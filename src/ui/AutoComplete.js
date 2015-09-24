@@ -92,12 +92,10 @@ define(function (require, exports, module) {
             defaultIndex: 0,
             minIndex: me.option('includeInput') ? 0 : 1,
             interval: me.option('interval'),
-            change: {
+            propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
 
-                    var diff = changes.index;
-
-                    var action = diff.action;
+                    var action = changes.index.action;
 
                     processIndex(activeIndex, function (itemElement) {
                         if (itemActiveClass
@@ -145,7 +143,7 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                if (!popup.get('hidden')) {
+                if (!popup.is('hidden')) {
                     me.close();
                 }
 
@@ -203,7 +201,7 @@ define(function (require, exports, module) {
             mainElement: inputElement,
             smart: true,
             shortcut: keyboardAction,
-            change: {
+            propertyChange: {
                 value: function (value) {
                     iteratorData[ 0 ].data.text = value;
                     suggest();
@@ -464,7 +462,9 @@ define(function (require, exports, module) {
     };
 
     proto._open = function () {
-        if (!this.inner('popup').get('hidden')) {
+        if (!this.inner('popup').is('hidden')
+            || !this.get('data')
+        ) {
             return false;
         }
     };
@@ -474,7 +474,7 @@ define(function (require, exports, module) {
     };
 
     proto._close = function () {
-        if (this.inner('popup').get('hidden')) {
+        if (this.inner('popup').is('hidden')) {
             return false;
         }
     };

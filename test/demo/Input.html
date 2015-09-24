@@ -59,7 +59,7 @@
                     onkeyup: function (e) {
                         console.log('>>>>>>>>>>>>>');
                     },
-                    onchange: function (e, data) {
+                    onpropertychange: function (e, data) {
                         console.log('change', data);
                     }
                 });
@@ -97,7 +97,7 @@
                     onkeyup: function (e) {
                         console.log('>>>>>>>>>>>>>', this);
                     },
-                    onchange: function () {
+                    onpropertychange: function () {
                         console.log('change', this);
                     }
                 });

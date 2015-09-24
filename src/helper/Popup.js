@@ -35,28 +35,7 @@ define(function (require, exports, module) {
      *    比较常用的组合是 'leave,click'，即 鼠标移出 和 元素失焦 都会触发隐藏
      *
      *    如果没有隐藏延时，这个组合是不可能实现的，因为一旦移出，肯定是 leave 率先生效，click 等于没写
-     *    如果设置隐藏延时，为了避免问题复杂化，需要把隐藏延时的方式写在首位（后面会说理由）
-     *
-     * ## 可配置的触发方式
-     *
-     *    因为触发显示和隐藏的方式的配置需求太强了，所以暴露了一个接口：
-     *
-     *    Popup.trigger
-     *
-     *    它们的结构都是
-     *
-     *    {
-     *        on: function (popup) { },             // 传入 popup 实例，绑定触发事件
-     *        off: function (popup) { },            // 传入 popup 实例，解绑触发事件
-     *        handler: function (e) { }
-     *    }
-     *
-     *    构造函数的 show.trigger 可选的值取决于 Popup.trigger.show 的键值
-     *
-     *    理论上来说，每种触发方式都能配置 delay，但从需求上来说，不可能存在这种情况
-     *
-     *    在配置 delay 时，只作用于第一个触发方式，
-     *    如 trigger.show 配置为 'enter,click'，只有 enter 才会 delay
+     *    如果设置隐藏延时，为了避免问题复杂化，需要把隐藏延时的方式写在首位
      *
      * ## 事件代理
      *
@@ -68,9 +47,9 @@ define(function (require, exports, module) {
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
 
-    var lifeCycle = require('../util/lifeCycle');
-    var instance = require('../util/instance');
     var trigger = require('../util/trigger');
+    var lifeCycle = require('../util/lifeCycle');
+    var instanceUtil = require('../util/instance');
 
     /**
      * 简单的弹出式交互
@@ -85,6 +64,7 @@ define(function (require, exports, module) {
      *                                             即触发了 triggerElement 中的 triggerSelector，会弹出 layerElement
      *
      * @property {jQuery} options.layerElement 弹出的元素
+     * @property {boolean} options.hidden 弹出的元素是否默认隐藏，如果不传，会自动根据 DOM 判断
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
      * @property {number=} options.showLayerDelay 显示延时
@@ -165,7 +145,7 @@ define(function (require, exports, module) {
             }
         });
 
-        me.on('change', function (e, data) {
+        me.on('statechange', function (e, data) {
             var hidden = data.hidden;
             if (hidden) {
                 if (hidden.newValue) {
@@ -205,29 +185,35 @@ define(function (require, exports, module) {
             }
         });
 
-        me.set({
+        me.state({
             hidden: me.option('hidden')
         });
 
     };
 
-    /**
-     * 显示
-     */
+
     proto.open = function () {
-        this.set('hidden', false);
+        this.state('hidden', false);
     };
 
-    /**
-     * 隐藏
-     */
+    proto._open = function () {
+        if (!this.is('hidden')) {
+            return false;
+        }
+    };
+
+
     proto.close = function () {
-        this.set('hidden', true);
+        this.state('hidden', true);
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._close = function () {
+        if (this.is('hidden')) {
+            return false;
+        }
+    };
+
+
     proto.dispose = function () {
 
         var me = this;
@@ -243,6 +229,7 @@ define(function (require, exports, module) {
         lifeCycle.dispose(me);
 
     };
+
 
     lifeCycle.extend(proto);
 
@@ -260,7 +247,7 @@ define(function (require, exports, module) {
         }
     };
 
-    Popup.propertyUpdater = {
+    Popup.stateUpdater = {
         hidden: function (hidden) {
             this.execute(
                 hidden ? 'hideLayerAnimate' : 'showLayerAnimate',
@@ -271,7 +258,7 @@ define(function (require, exports, module) {
         }
     };
 
-    Popup.propertyValidator = {
+    Popup.stateValidator = {
         hidden: function (hidden) {
             if ($.type(hidden) !== 'boolean') {
                 hidden = isHidden(
@@ -286,14 +273,14 @@ define(function (require, exports, module) {
      * 处理 显示事件
      *
      * @inner
-     * @param {Popup} popup
+     * @param {Popup} instance
      * @param {string} action 可选值有 on off
      */
-    function showEvent(popup, action) {
+    function showEvent(instance, action) {
         $.each(
-            popup.inner('showConfigs'),
+            instance.inner('showConfigs'),
             function (trigger, config) {
-                triggers.show[ trigger ][ action ](popup, config);
+                triggers.show[ trigger ][ action ](instance, config);
             }
         );
     }
@@ -302,14 +289,14 @@ define(function (require, exports, module) {
      * 处理 隐藏事件
      *
      * @inner
-     * @param {Popup} popup
+     * @param {Popup} instance
      * @param {string} action 可选值有 on off
      */
-    function hideEvent(popup, action) {
+    function hideEvent(instance, action) {
         $.each(
-            popup.inner('hideConfigs'),
+            instance.inner('hideConfigs'),
             function (trigger, config) {
-                triggers.hide[ trigger ][ action ](popup, config);
+                triggers.hide[ trigger ][ action ](instance, config);
             }
         );
     }
@@ -318,13 +305,13 @@ define(function (require, exports, module) {
      * 通用的绑定事件
      *
      * @inner
-     * @param {Object} popup
+     * @param {Object} instance
      * @param {Object} config
      */
-    function on(popup, config) {
-        popup.option('triggerElement').on(
+    function on(instance, config) {
+        instance.option('triggerElement').on(
             config.type,
-            popup.option('triggerSelector'),
+            instance.option('triggerSelector'),
             config.handler
         );
     }
@@ -333,11 +320,11 @@ define(function (require, exports, module) {
      * 通用的解绑事件
      *
      * @inner
-     * @param {Object} popup
+     * @param {Object} instance
      * @param {Object} config
      */
-    function off(popup, config) {
-        popup.option('triggerElement').off(
+    function off(instance, config) {
+        instance.option('triggerElement').off(
             config.type,
             config.handler
         );
@@ -347,11 +334,11 @@ define(function (require, exports, module) {
      * 创建响应 show 事件的事件处理函数
      *
      * @inner
-     * @param {Popup} popup
+     * @param {Popup} instance
      * @param {Function=} before 需要满足什么前置条件才可往下执行
      * @return {Function}
      */
-    function createShowHandler(popup, before) {
+    function createShowHandler(instance, before) {
         return function (e) {
 
             if ($.isFunction(before)) {
@@ -360,7 +347,7 @@ define(function (require, exports, module) {
                 }
             }
 
-            popup.open(e);
+            instance.open(e);
 
         };
     }
@@ -369,11 +356,11 @@ define(function (require, exports, module) {
      * 创建响应 hide 事件的事件处理函数
      *
      * @inner
-     * @param {Popup} popup
+     * @param {Popup} instance
      * @param {Function=} before 需要满足什么前置条件才可往下执行
      * @return {Function}
      */
-    function createHideHandler(popup, before) {
+    function createHideHandler(instance, before) {
         return function (e) {
 
             if ($.isFunction(before)) {
@@ -382,20 +369,20 @@ define(function (require, exports, module) {
                 }
             }
 
-            popup.close(e);
+            instance.close(e);
 
         };
     }
 
-    function onDocument(popup, config) {
-        instance.document.on(
+    function onDocument(instance, config) {
+        instanceUtil.document.on(
             config.type,
             config.handler
         );
     }
 
-    function offDocument(popup, config) {
-        instance.document.off(
+    function offDocument(instance, config) {
+        instanceUtil.document.off(
             config.type,
             config.handler
         );
@@ -405,16 +392,16 @@ define(function (require, exports, module) {
      * 创建响应 hide 失焦的事件处理函数
      *
      * @inner
-     * @param {Popup} popup
+     * @param {Popup} instance
      * @param {Function=} before 需要满足什么前置条件才可往下执行
      * @return {Function}
      */
-    function createDocumentHideHandler(popup) {
+    function createDocumentHideHandler(instance) {
         return createHideHandler(
-            popup,
+            instance,
             function (e) {
                 return !contains(
-                    popup.option('layerElement'),
+                    instance.option('layerElement'),
                     e.target
                 );
             }
@@ -439,18 +426,18 @@ define(function (require, exports, module) {
                 on: on,
                 off: off,
                 handler: createShowHandler,
-                startDelay: function (popup) {
+                startDelay: function (instance) {
                     return function (fn) {
-                        popup.option('triggerElement').on(
+                        instance.option('triggerElement').on(
                             trigger.leave.type,
-                            popup.option('triggerSelector'),
+                            instance.option('triggerSelector'),
                             fn
                         );
                     };
                 },
-                endDelay: function (popup) {
+                endDelay: function (instance) {
                     return function (fn) {
-                        popup.option('triggerElement').off(
+                        instance.option('triggerElement').off(
                             trigger.leave.type,
                             fn
                         );
@@ -476,48 +463,48 @@ define(function (require, exports, module) {
                 handler: createDocumentHideHandler
             },
             leave: {
-                on: function (popup, config) {
-                    popup.option('triggerElement').on(
+                on: function (instance, config) {
+                    instance.option('triggerElement').on(
                         config.type,
-                        popup.option('triggerSelector'),
+                        instance.option('triggerSelector'),
                         config.handler
                     );
-                    popup.option('layerElement').on(
+                    instance.option('layerElement').on(
                         config.type,
                         config.handler
                     );
                 },
-                off: function (popup, config) {
-                    popup.option('triggerElement').off(
+                off: function (instance, config) {
+                    instance.option('triggerElement').off(
                         config.type,
                         config.handler
                     );
-                    popup.option('layerElement').off(
+                    instance.option('layerElement').off(
                         config.type,
                         config.handler
                     );
                 },
                 handler: createHideHandler,
-                startDelay: function (popup) {
+                startDelay: function (instance) {
                     return function (fn) {
-                        popup.option('triggerElement').on(
+                        instance.option('triggerElement').on(
                             trigger.enter.type,
-                            popup.option('triggerSelector'),
+                            instance.option('triggerSelector'),
                             fn
                         );
-                        popup.option('layerElement').on(
+                        instance.option('layerElement').on(
                             trigger.enter.type,
                             fn
                         );
                     };
                 },
-                endDelay: function (popup) {
+                endDelay: function (instance) {
                     return function (fn) {
-                        popup.option('triggerElement').off(
+                        instance.option('triggerElement').off(
                             trigger.enter.type,
                             fn
                         );
-                        popup.option('layerElement').off(
+                        instance.option('layerElement').off(
                             trigger.enter.type,
                             fn
                         );

@@ -83,19 +83,15 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 渲染
-     */
     proto.render = function () {
 
         var me = this;
 
-        var firstPage = 1;
         var count = me.get('count');
         var mainElement = me.inner('main');
 
         if (count < 2 && me.option('hideOnSingle')) {
-            me.execute('hideAnimate');
+            me.state('hidden', true);
             return;
         }
 
@@ -119,11 +115,11 @@ define(function (require, exports, module) {
 
 
         // 以当前选中的页码为界，先处理左边的，再处理右边的
-        var start = Math.max(firstPage, page - Math.ceil(showCount / 2));
+        var start = Math.max(FIRST_PAGE, page - Math.ceil(showCount / 2));
         var end = Math.min(count, start + showCount - 1);
 
         if (end === count && end - start < showCount) {
-            start = Math.max(firstPage, end - showCount + 1);
+            start = Math.max(FIRST_PAGE, end - showCount + 1);
         }
 
         // 选中页面左侧
@@ -154,14 +150,14 @@ define(function (require, exports, module) {
         // startCount
         var offset;
 
-        if (startCount > 0 && start > firstPage) {
+        if (startCount > 0 && start > FIRST_PAGE) {
 
             offset = start - startCount;
 
             if (offset > 1) {
                 datasource.unshift(
                     {
-                        range: [ firstPage, startCount ],
+                        range: [ FIRST_PAGE, startCount ],
                         tpl: pageTemplate
                     },
                     {
@@ -171,7 +167,7 @@ define(function (require, exports, module) {
             }
             else {
                 datasource.unshift({
-                    range: [ firstPage, start - 1 ],
+                    range: [ FIRST_PAGE, start - 1 ],
                     tpl: pageTemplate
                 });
             }
@@ -236,7 +232,7 @@ define(function (require, exports, module) {
                 };
 
                 var data = {
-                    first: firstPage,
+                    first: FIRST_PAGE,
                     last: count,
                     active: page
                 };
@@ -259,36 +255,76 @@ define(function (require, exports, module) {
 
         mainElement.html(html);
 
-        me.execute(
-            'showAnimate',
-            {
-                mainElement: mainElement
-            }
-        );
+        me.state('hidden', false);
 
     };
+
 
     proto.prev = function () {
 
         var me = this;
-        var page = me.get('page');
 
-        if (page > 1) {
-            me.set('page', page - 1);
+        me.set(
+            'page',
+            me.get('page') - 1
+        );
+
+    };
+
+    proto._prev = function () {
+
+        if (this.get('page') > FIRST_PAGE) {}
+        else {
+            return false;
         }
 
     };
+
 
     proto.next = function () {
 
         var me = this;
-        var page = me.get('page');
 
-        if (page < me.get('count')) {
-            me.set('page', page + 1);
+        me.set(
+            'page',
+            me.get('page') + 1
+        );
+
+    };
+
+    proto._next = function () {
+
+        var me = this;
+
+        if (me.get('page') < me.get('count')) {}
+        else {
+            return false;
         }
 
     };
+
+
+    proto.show = function () {
+        this.state('hidden', false);
+    };
+
+    proto._show = function () {
+        if (!this.is('hidden')) {
+            return false;
+        }
+    };
+
+
+    proto.hide = function () {
+        this.state('hidden', true);
+    };
+
+    proto._hide = function () {
+        if (this.is('hidden')) {
+            return false;
+        }
+    };
+
 
     proto.dispose = function () {
 
@@ -327,22 +363,38 @@ define(function (require, exports, module) {
 
     Pager.propertyUpdater.page =
     Pager.propertyUpdater.count = function () {
-
         this.render();
-
         return false;
-
     };
 
     Pager.propertyValidator = {
 
         page: function (page) {
-            return toNumber(page, 1);
+            return toNumber(page, FIRST_PAGE);
+        }
+
+    };
+
+    Pager.stateUpdater = {
+
+        hidden: function (hidden) {
+
+            var me = this;
+
+            me.execute(
+                hidden ? 'hideAnimate' : 'showAnimate',
+                {
+                    mainElement: me.inner('main')
+                }
+            );
+
         }
 
     };
 
     var ATTR_PAGE = 'data-page';
+
+    var FIRST_PAGE = 1;
 
 
     return Pager;

@@ -178,18 +178,22 @@ define(function (require, exports, module) {
     };
 
     Iterator.propertyValidator = {
+
         index: function (index) {
 
+            var me = this;
+
             if ($.type(index) !== 'number') {
-                index = this.option('defaultIndex');
+                index = me.option('defaultIndex');
                 if ($.type(index) !== 'number') {
-                    throw new Error('[Cobble Error] Iterator index is not a number.');
+                    throw new Error('[CC Error] Iterator index is not a number.');
                 }
             }
 
             return index;
 
         }
+
     };
 
 

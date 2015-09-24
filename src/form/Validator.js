@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
-    var lifeCycle = require('../function/lifeCycle');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 表单验证通常包括 required, min, max 等
@@ -84,7 +84,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 表单元素
-     * @property {boolean=} options.realtime 是否实时验证（元素失焦验证），默认为 false
+     * @property {boolean=} options.validateOnBlur 是否实时验证（元素失焦验证），默认为 false
      *
      * @property {number=} options.scrollOffset 使用 autoScroll 时，为了避免顶部贴边，最好加上一些间距
      *
@@ -97,6 +97,9 @@ define(function (require, exports, module) {
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
      *
+     * @property {string} options.fieldSelector 有些表单组件是封装过的，比如 div > input:hidden
+     *                                          当我们取到 input 时，需要通过 componentSelector 往上找组件元素
+     *                                          默认是 '[name]'
      *
      * @property {Object=} options.fields 配置字段
      *
@@ -111,9 +114,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Validator';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -163,7 +163,7 @@ define(function (require, exports, module) {
             }
         );
 
-        if (me.option('realtime')) {
+        if (me.option('validateOnBlur')) {
             mainElement.on(
                 'focusout' + namespace,
                 function (e) {
@@ -535,9 +535,10 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
     Validator.defaultOptions = {
-        realtime: false,
+        validateOnBlur: false,
         scrollOffset: -100,
         groupSelector: '.form-group',
+        fieldSelector: '[name]',
         successClass: 'has-success',
         errorClass: 'has-error',
         errorSelector: '.error',

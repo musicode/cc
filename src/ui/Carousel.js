@@ -108,7 +108,7 @@ define(function (require, exports, module) {
             switchDelay: me.option('navDelay'),
             itemSelector: navSelector,
             itemActiveClass: navActiveClass,
-            change: {
+            propertyChange: {
                 index: function (toIndex, fromIndex) {
 
                     me.execute('navAnimate', {
@@ -137,7 +137,7 @@ define(function (require, exports, module) {
             interval: me.option('interval'),
             loop: me.option('loop'),
             step: me.option('step'),
-            change: {
+            propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
                     me.set('index', newIndex, changes.index);
                 },

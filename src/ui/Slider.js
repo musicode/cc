@@ -195,7 +195,7 @@ define(function (require, exports, module) {
 
             wheels = [ ];
 
-            var scrollHandler = function (e, data) {
+            var wheelHandler = function (e, data) {
 
                 var delta = data.delta;
 
@@ -234,7 +234,7 @@ define(function (require, exports, module) {
             wheels.push(
                 new Wheel({
                     watchElement: trackElement,
-                    onscroll: scrollHandler
+                    onwheel: wheelHandler
                 })
             );
 
@@ -243,7 +243,7 @@ define(function (require, exports, module) {
                 wheels.push(
                     new Wheel({
                         watchElement: scrollElement,
-                        onscroll: scrollHandler
+                        onwheel: wheelHandler
                     })
                 );
             }
@@ -254,6 +254,7 @@ define(function (require, exports, module) {
             main: mainElement,
             track: trackElement,
             thumb: thumbElement,
+            bar: barElement,
             drager: drager,
             wheels: wheels
         });

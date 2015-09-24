@@ -353,7 +353,7 @@ define(function (require, exports, module) {
     };
 
     proto._open = function () {
-        if (!this.inner('popup').get('hidden')) {
+        if (!this.inner('popup').is('hidden')) {
             return false;
         }
     };
@@ -363,7 +363,7 @@ define(function (require, exports, module) {
     };
 
     proto._close = function () {
-        if (this.inner('popup').get('hidden')) {
+        if (this.inner('popup').is('hidden')) {
             return false;
         }
     };

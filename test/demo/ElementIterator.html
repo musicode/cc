@@ -39,8 +39,10 @@
                 window.iterator = new ElementIterator({
                     watchElement: $(document),
                     defaultIndex: -1,
+                    index: 3,
                     minIndex: 2,
                     maxIndex: 5,
+                    interval: 3000,
                     loop: true,
 
                     onbeforestart: function () {
@@ -89,15 +91,15 @@
                         console.log('after dispose');
                     },
 
-                    onchange: function (e, data) {
-                        var diff = data.index;
-                        if (diff) {
-                            console.log('change', diff)
-                            if ($.type(diff.oldValue) === 'number') {
-                                $('li').eq(diff.oldValue).removeClass('active');
+                    onpropertychange: function (e, data) {
+                        var change = data.index;
+                        if (change) {
+                            console.log('change', change)
+                            if ($.type(change.oldValue) === 'number') {
+                                $('li').eq(change.oldValue).removeClass('active');
                             }
-                            if ($.type(diff.newValue) === 'number') {
-                                $('li').eq(diff.newValue).addClass('active');
+                            if ($.type(change.newValue) === 'number') {
+                                $('li').eq(change.newValue).addClass('active');
                             }
                         }
                     }

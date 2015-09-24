@@ -116,7 +116,7 @@ define(function (require, exports, module) {
                 var labelSelector = me.option('labelSelector');
                 mainElement.find(labelSelector).html(options.text);
             },
-            change: {
+            propertyChange: {
                 value: function (value) {
                     me.set('value', value);
                 }

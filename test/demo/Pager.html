@@ -50,7 +50,7 @@
                     startCount: 2,
                     endCount: 1,
 
-                    autoHide: true,
+                    hideOnSingle: true,
 
                     // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
                     // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
@@ -72,8 +72,11 @@
                         return etpl.compile(tpl)(data);
                     },
 
-                    onchange: function (event, data) {
-                        console.log(data);
+                    onpropertychange: function (event, data) {
+                        console.log('property', data);
+                    },
+                    onstatechange: function (event, data) {
+                        console.log('state', data);
                     }
                 });
 

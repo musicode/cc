@@ -48,11 +48,13 @@ define(function (require, exports) {
             placeholderTemplate: me.option('placeholderTemplate')
         });
 
+        mainElement = placeholder.inner('main');
+
         var input = new Input({
-            mainElement: mainElement,
+            mainElement: placeholder.inner('input'),
             shortcut: me.option('shortcut'),
             context: me,
-            change: {
+            propertyChange: {
                 value: function (value) {
                     me.set('value', value);
                 }

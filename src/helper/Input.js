@@ -20,7 +20,7 @@ define(function (require, exports, module) {
      * IE8-的 propertychange 事件触发方式和 input 标准方式相同
      * IE8-改写 value 会触发 propertychange
      *
-     * 2. 长按是否触发 change 事件
+     * 2. 长按是否触发 propertychange 事件
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      */
@@ -102,26 +102,21 @@ define(function (require, exports, module) {
         keyboard
         .on('keydown', dispatchEvent)
         .on('keyup', dispatchEvent)
-        .before(
-            'longpress',
-            function () {
-                isLongPress = true;
+        .before('longpress', function () {
+            isLongPress = true;
+        })
+        .after('longpress', function (e) {
+
+            isLongPress = false;
+
+            if (keyboardUtil.isCharKey(e.keyCode)
+                || keyboardUtil.isDeleteKey()
+            ) {
+                updateValue();
             }
-        )
-        .after(
-            'longpress',
-            function (e) {
 
-                isLongPress = false;
+        });
 
-                if (keyboardUtil.isCharKey(e.keyCode)
-                    || keyboardUtil.isDeleteKey()
-                ) {
-                    updateValue();
-                }
-
-            }
-        );
 
         mainElement
         .on('input' + me.namespace(), function () {
@@ -129,6 +124,7 @@ define(function (require, exports, module) {
                 updateValue();
             }
         });
+
 
         me.inner({
             keyboard: keyboard,
@@ -158,7 +154,6 @@ define(function (require, exports, module) {
     };
 
     lifeCycle.extend(proto);
-
 
     Input.defaultOptions = {
         smart: true

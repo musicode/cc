@@ -7,16 +7,15 @@ define(function (require) {
     'use strict';
 
     /**
-     * 90%
-     *
      * 只有具有 data-value 属性的元素才支持点击选中
      *
      */
 
-    var lifeCycle = require('../function/lifeCycle');
     var split = require('../function/split');
     var lpad = require('../function/lpad');
+
     var dateUtil = require('../util/date');
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      *
@@ -36,7 +35,7 @@ define(function (require) {
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      *
      * @property {string=} options.mode 视图类型，可选值包括 month, week
-     * @property {string} options.activeClass 日期被选中的 className
+     * @property {string} options.itemActiveClass 日期被选中的 className
      *
      * @property {string} options.prevSelector 上月/上周 选择器
      * @property {string} options.nextSelector 下月/下周 选择器
@@ -54,27 +53,11 @@ define(function (require) {
 
     proto.type = 'Calendar';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
-
-        var multiple = me.option('multiple');
-
-        var today = me.option('today') || new Date();
-        var date = me.option('date') || today;
-        var value = me.option('value');
-
-        me.set({
-            today: today,
-            date: date,
-            value: value
-        });
-
         var clickType = 'click' + me.namespace();
 
         mainElement.on(
@@ -101,7 +84,7 @@ define(function (require) {
 
                 me.set(
                     'value',
-                    joinValues(list, multiple),
+                    joinValues(list, me.option('multiple')),
                     { action: 'click' }
                 );
 
@@ -126,13 +109,22 @@ define(function (require) {
             );
         }
 
-        me.inner('main', mainElement);
+
+        me.inner({
+            main: mainElement
+        });
+
+
+        var today = me.option('today') || new Date();
+
+        me.set({
+            today: today,
+            date: me.option('date') || today,
+            value: me.option('value')
+        });
 
     };
 
-    /**
-     * 上月/周
-     */
     proto.prev = function () {
 
         var me = this;
@@ -149,9 +141,6 @@ define(function (require) {
 
     };
 
-    /**
-     * 下月/周
-     */
     proto.next = function () {
 
         var me = this;
@@ -262,9 +251,6 @@ define(function (require) {
 
     };
 
-    /**
-     * 渲染
-     */
     proto.render = function () {
 
         var me = this;
@@ -281,9 +267,12 @@ define(function (require) {
 
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._render = function () {
+        if (!this.get('data')) {
+            return false;
+        }
+    };
+
     proto.dispose = function () {
 
         var me = this;
@@ -304,19 +293,13 @@ define(function (require) {
 
     var ATTR_VALUE = 'data-value';
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Calendar.defaultOptions = {
         firstDay: 1,
         mode: MODE_MONTH,
         toggle: false,
         multiple: false,
         stable: true,
-        activeClass: 'active',
+        itemActiveClass: 'active',
         parseDate: dateUtil.parse
     };
 
@@ -356,33 +339,35 @@ define(function (require) {
         }
         else if (changes.value) {
 
-            var activeClass = me.option('activeClass');
-            if (!activeClass) {
-                return;
+            var itemActiveClass = me.option('itemActiveClass');
+            if (itemActiveClass) {
+
+                var mainElement = me.inner('main');
+
+                mainElement
+                .find('.' + itemActiveClass + '[' + ATTR_VALUE + ']')
+                .removeClass(itemActiveClass);
+
+                $.each(
+                    splitValue(changes.value.newValue),
+                    function (index, value) {
+
+                        if (!value) {
+                            return;
+                        }
+
+                        mainElement
+                        .find('[' + ATTR_VALUE + '="' + value + '"]')
+                        .addClass(itemActiveClass);
+
+                    }
+                );
+
             }
 
-            var mainElement = me.inner('main');
-
-            mainElement
-            .find('.' + activeClass + '[' + ATTR_VALUE + ']')
-            .removeClass(activeClass);
-
-            $.each(
-                splitValue(changes.value.newValue),
-                function (index, value) {
-
-                    if (!value) {
-                        return;
-                    }
-
-                    mainElement
-                    .find('[' + ATTR_VALUE + '="' + value + '"]')
-                    .addClass(activeClass);
-
-                }
-            );
-
         }
+
+        return false;
 
     };
 

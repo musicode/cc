@@ -66,7 +66,7 @@ define(function (require, exports, module) {
                     mainElement: boxElement.eq(index),
                     checkedClass: me.option('boxCheckedClass'),
                     disabledClass: me.option('boxDisabledClass'),
-                    change: {
+                    propertyChange: {
                         checked: function (checked) {
 
                            // [TODO]

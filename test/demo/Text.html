@@ -35,14 +35,14 @@
 
                     new Text({
                         mainElement: $(':text'),
-                        onchange: function () {
+                        onpropertychange: function () {
                             console.log(this.get('value'));
                         }
                     });
 
                     new Text({
                         mainElement: $('textarea'),
-                        onchange: function () {
+                        onpropertychange: function () {
                             console.log(this.get('value'));
                         }
                     });

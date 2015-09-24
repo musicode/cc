@@ -23,7 +23,6 @@ define(function (require, exports, module) {
      */
 
     var page = require('../function/page');
-    var toNumber = require('../function/toNumber');
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
@@ -67,9 +66,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Draggable';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -94,7 +90,6 @@ define(function (require, exports, module) {
             mainElement.on(
                 event.down + namespace,
                 function (e) {
-
 
                     // 这里本想使用 not 选择器来实现 cancal
                     // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
@@ -200,9 +195,8 @@ define(function (require, exports, module) {
 
                     instance.document
                         .off(namespace)
-                        .on(event.move + namespace, onDrag)
-                        .on(event.up + namespace, onAfterDrag);
-
+                        .on(event.move + namespace, dragHandler)
+                        .on(event.up + namespace, afterDragHandler);
 
                 }
             );
@@ -213,7 +207,7 @@ define(function (require, exports, module) {
         var containerDraggingClass = me.option('containerDraggingClass');
         var bodyDraggingClass = me.option('bodyDraggingClass');
 
-        var onDrag = function (e) {
+        var dragHandler = function (e) {
 
             var x = xCalculator(e);
             var y = yCalculator(e);
@@ -259,7 +253,7 @@ define(function (require, exports, module) {
 
         };
 
-        var onAfterDrag = function (e) {
+        var afterDragHandler = function (e) {
 
             instance.document.off(namespace);
 
@@ -289,9 +283,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
     proto.dispose = function () {
 
         var me = this;
@@ -306,12 +297,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     Draggable.defaultOptions = {
         bodyDraggingClass: 'no-selection',
         dragAnimate: function (options) {

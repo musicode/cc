@@ -97,7 +97,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-
     Switchable.defaultOptions = {
         index: 0,
         switchTrigger: 'click',
@@ -108,13 +107,14 @@ define(function (require, exports, module) {
 
         index: function (index) {
 
-            var me = this;
+            index = toNumber(index, null);
 
-            index = toNumber(index, defaultIndex);
+            if (index == null) {
 
-            if (index === defaultIndex) {
+                var me = this;
                 var itemSelector = me.option('itemSelector');
                 var itemActiveClass = me.option('itemActiveClass');
+
                 if (itemSelector && itemActiveClass) {
                     var mainElement = me.inner('main');
                     index = mainElement.find(itemSelector).index(
@@ -127,8 +127,6 @@ define(function (require, exports, module) {
 
         }
     };
-
-    var defaultIndex = -1;
 
     var triggers = {
 

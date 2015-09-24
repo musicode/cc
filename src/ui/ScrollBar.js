@@ -93,7 +93,7 @@ define(function (require, exports, module) {
                     options
                 );
             },
-            change: {
+            propertyChange: {
                 value: function (value) {
 
                     var pixel = slider.valueToPixel(value);

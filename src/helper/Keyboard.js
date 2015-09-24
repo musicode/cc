@@ -168,8 +168,8 @@ define(function (require, exports, module) {
 
     };
 
-
     lifeCycle.extend(proto);
+
 
     /**
      * 解析出按键组合

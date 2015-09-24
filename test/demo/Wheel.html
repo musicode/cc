@@ -42,13 +42,13 @@
             onafterdispose: function () {
                 console.log('after dispose');
             },
-            onscroll: function (event, data) {
-                console.log('onscroll', data);
+            onwheel: function (event, data) {
+                console.log('onwheel', data);
                 return false;
             }
         });
 
-        wheel.on('scroll', function (event) {
+        wheel.on('wheel', function (event) {
 
             console.log(arguments);
             //event.preventDefault();

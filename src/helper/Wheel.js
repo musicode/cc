@@ -13,7 +13,7 @@ define(function (require, exports, module) {
      * event.detail 向上滚动为负值，向下滚动为正值，值为 3 的倍数
      * event.wheelDelta 向下滚动为正值，向上滚动为负值，值为 120 的倍数
      *
-     * 此模块统一使用 scroll 事件
+     * 此模块统一使用 wheel 事件
      *      统一使用 data.delta
      *      统一为向上为负值，向下为正值，值为 1 的倍数
      */
@@ -44,10 +44,9 @@ define(function (require, exports, module) {
             support + me.namespace(),
             function (e) {
 
-                var event = e.originalEvent;
-
                 var delta;
 
+                var event = e.originalEvent;
                 var wheelDelta = event.wheelDelta;
 
                 if (wheelDelta % 120 === 0) {
@@ -63,7 +62,7 @@ define(function (require, exports, module) {
                     delta = event.delta || 0;
                 }
 
-                e.type = 'scroll';
+                e.type = 'wheel';
 
                 me.emit(e, { delta: delta });
 
@@ -90,13 +89,9 @@ define(function (require, exports, module) {
         watchElement: instance.document
     };
 
-    var MOUSE_SCROLL = 'DOMMouseScroll';
-
-    var MOUSE_WHEEL = 'mousewheel';
-
-    var support = ('on' + MOUSE_WHEEL) in instance.body[0]
-                ? MOUSE_WHEEL               // Webkit 和 IE 支持 mousewheel
-                : MOUSE_SCROLL;             // 火狐的老版本
+    var support = 'onmousewheel' in instance.body[0]
+                ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
+                : 'DOMMouseScroll';          // 火狐的老版本
 
 
     return Wheel;

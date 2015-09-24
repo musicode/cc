@@ -6,10 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../function/lifeCycle');
     var debounce = require('../function/debounce');
     var restrain = require('../function/restrain');
+    var toNumber = require('../function/toNumber');
     var eventOffset = require('../function/eventOffset');
+
+    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 星级评分
@@ -19,8 +21,8 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement 主元素
      * @property {number} options.value 当前星级
      * @property {number=} options.count 星星总数
-     * @property {number=} options.min 可选最小值，默认为 1
-     * @property {number=} options.max 可选最大值，默认和 count 相同
+     * @property {number=} options.minValue 可选最小值，默认为 1
+     * @property {number=} options.maxValue 可选最大值，默认和 count 相同
      * @property {boolean=} options.half 是否允许半选中
      * @property {boolean=} options.readOnly 是否只读，不可改变星星的选中状态
      *
@@ -48,7 +50,7 @@ define(function (require, exports, module) {
      *     count: 5,                        // 总共有 5 颗星
      *     onClass: 'icon on',
      *     offClass: 'icon off',
-     *     change: {
+     *     propertyChange: {
      *         value: function (value) {
      *             console.log('value change');
      *         }
@@ -70,15 +72,6 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var count = me.option('count');
-        var value = me.option('value');
-        var min = me.option('min');
-        var max = me.option('max');
-
-        if ($.type(max) !== 'number') {
-            max = count;
-        }
-
         var mainElement = me.option('mainElement');
 
         if (!me.option('readOnly')) {
@@ -99,7 +92,11 @@ define(function (require, exports, module) {
                     }
                 }
 
-                return restrain(value, min, max);
+                return restrain(
+                    value,
+                    me.option('minValue'),
+                    me.option('maxValue')
+                );
 
             };
 
@@ -160,8 +157,10 @@ define(function (require, exports, module) {
         });
 
         me.set({
-            count: count,
-            value: value
+            count: me.option('count'),
+            value: me.option('value'),
+            minValue: me.option('minValue'),
+            maxValue: me.option('maxValue')
         });
 
     };
@@ -208,10 +207,6 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        if (value === me.inner('previewValue')) {
-            return;
-        }
-
         me.inner('previewValue', value);
 
         if ($.type(value) !== 'number') {
@@ -222,9 +217,15 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 销毁对象
-     */
+    proto._preview = function (value) {
+        if (value === this.inner('previewValue')) {
+            return false;
+        }
+        return {
+            value: value
+        };
+    };
+
     proto.dispose = function () {
 
         var me = this;
@@ -240,7 +241,7 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
     Rater.defaultOptions = {
-        min: 1,
+        minValue: 1,
         half: false,
         readOnly: false,
         itemSelector: 'i',
@@ -270,6 +271,17 @@ define(function (require, exports, module) {
         }
 
         return false;
+
+    };
+
+    Rater.propertyValidator = {
+
+        maxValue: function (maxValue) {
+            return toNumber(
+                maxValue,
+                this.option('count')
+            );
+        }
 
     };
 

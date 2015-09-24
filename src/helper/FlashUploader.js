@@ -14,14 +14,13 @@ define(function (require, exports, module) {
      *
      */
 
+    var ucFirst = require('../function/ucFirst');
+    var ratio = require('../function/ratio');
 
+    var lifeCycle = require('../util/lifeCycle');
     require('../util/supload/supload');
 
     var Supload = window.Supload;
-
-    var lifeCycle = require('../function/lifeCycle');
-    var ucFirst = require('../function/ucFirst');
-    var ratio = require('../function/ratio');
 
     /**
      * 使用 flash 上传
@@ -47,16 +46,13 @@ define(function (require, exports, module) {
 
     proto.type = 'FlashUploader';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
 
-        var swfOptions = {
+        var options = {
             element: mainElement[0],
             flashUrl: me.option('flashUrl'),
             action: me.option('action'),
@@ -73,14 +69,13 @@ define(function (require, exports, module) {
         $.each(
             eventHandler,
             function (type, handler) {
-                swfOptions[ 'on' + ucFirst(type) ] = handler;
+                options[ 'on' + ucFirst(type) ] = handler;
             }
         );
 
-        me.inner(
-            'supload',
-            new Supload(swfOptions)
-        );
+        me.inner({
+            supload: new Supload(options)
+        });
 
     };
 

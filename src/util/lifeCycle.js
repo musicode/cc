@@ -31,56 +31,75 @@ define(function (require, exports, module) {
         function () {
             $.each(instances, function (id, instance) {
 
-                var changes = instance.changes;
-                if (instance.$ && changes) {
+                if (!instance.$) {
+                    return;
+                }
 
-                    var propertyUpdater = instance.constructor.propertyUpdater;
-                    if (propertyUpdater) {
+                var createUpdater = function (updater, changes) {
+                    return function (name, change) {
+                        var fn = updater[ name ];
+                        if ($.isFunction(fn)) {
+                            return fn.call(
+                                instance,
+                                change.newValue,
+                                change.oldValue,
+                                changes
+                            );
+                        }
+                    };
+                };
+
+                var staticUpdater;
+                var instanceUpdater;
+
+                var propertyChanges = instance.inner('propertyChanges');
+                if (propertyChanges) {
+
+                    staticUpdater = instance.constructor.propertyUpdater;
+                    if (staticUpdater) {
                         $.each(
-                            changes,
-                            function (property, diff) {
-
-                                var fn = propertyUpdater[ property ];
-
-                                if ($.isFunction(fn)) {
-                                    return fn.call(
-                                        instance,
-                                        diff.newValue,
-                                        diff.oldValue,
-                                        changes
-                                    );
-                                }
-
-                            }
+                            propertyChanges,
+                            createUpdater(staticUpdater, propertyChanges)
                         );
                     }
 
-                    var instanceUpdater = instance.option('change');
+                    instanceUpdater = instance.option('propertyChange');
                     if (instanceUpdater) {
                         $.each(
-                            changes,
-                            function (property, diff) {
-
-                                var fn = instanceUpdater[ property ];
-
-                                if ($.isFunction(fn)) {
-                                    return fn.call(
-                                        instance,
-                                        diff.newValue,
-                                        diff.oldValue,
-                                        changes
-                                    );
-                                }
-
-                            }
+                            propertyChanges,
+                            createUpdater(instanceUpdater, propertyChanges)
                         );
                     }
 
-                    instance.emit('change', changes);
-
-                    delete instance.changes;
+                    instance.emit('propertychange', propertyChanges);
+                    instance.inner('propertyChanges', null);
 
                 }
+
+                var stateChanges = instance.inner('stateChanges');
+                if (stateChanges) {
+
+                    staticUpdater = instance.constructor.stateUpdater;
+                    if (staticUpdater) {
+                        $.each(
+                            stateChanges,
+                            createUpdater(staticUpdater, stateChanges)
+                        );
+                    }
+
+                    instanceUpdater = instance.option('stateChange');
+                    if (instanceUpdater) {
+                        $.each(
+                            stateChanges,
+                            createUpdater(instanceUpdater, stateChanges)
+                        );
+                    }
+
+                    instance.emit('statechange', stateChanges);
+                    instance.inner('stateChanges', null);
+
+                }
+
             });
         },
         0
@@ -104,6 +123,83 @@ define(function (require, exports, module) {
         }
 
         return event || $.Event();
+
+    }
+
+    /**
+     * setter 构造器
+     *
+     * @inner
+     * @param {string} singular 单数形式
+     * @param {string} complex 复数形式
+     * @param {string} setter setter 方法
+     * @param {string} getter getter 方法
+     */
+    function createSettter(singular, complex, setter, getter) {
+
+        return function (name, value, options) {
+
+            var me = this;
+
+            if ($.isPlainObject(name)) {
+
+                options = value;
+
+                $.each(
+                    name,
+                    function (name, value) {
+                        me[ setter ](name, value, options);
+                    }
+                );
+
+                return;
+
+            }
+
+            options = options || { };
+
+            var validator = me.constructor[ singular + 'Validator' ];
+            if (validator) {
+                if ($.isFunction(validator[ name ])) {
+                    value = validator[ name ].call(me, value);
+                }
+            }
+
+            var oldValue = me[ getter ](name);
+            if (oldValue === value && !options.force) {
+                return;
+            }
+
+            me[ complex ][ name ] = value;
+
+            if (options.silent) {
+                return;
+            }
+
+            // 批量更新
+            var record = { };
+            extend(record, options);
+
+            record.newValue = me[ getter ](name);
+            record.oldValue = oldValue;
+
+            var changes = me.inner(singular + 'Changes');
+            if (!changes) {
+                changes = { };
+                me.inner(singular + 'Changes', changes);
+            }
+
+            var oldRecord = changes[ name ];
+            if (oldRecord) {
+                if (oldRecord.oldValue === record.newValue) {
+                    delete changes[ name ];
+                    return;
+                }
+            }
+
+            changes[ name ] = record;
+
+        };
 
     }
 
@@ -180,12 +276,10 @@ define(function (require, exports, module) {
          * @return {Object}
          */
         before: function (event, handler) {
-
             return this.on(
-                'before' + event,
+                'before' + event.toLowerCase(),
                 handler
             );
-
         },
 
         /**
@@ -196,12 +290,10 @@ define(function (require, exports, module) {
          * @return {Object}
          */
         after: function (event, handler) {
-
             return this.on(
-                'after' + event,
+                'after' + event.toLowerCase(),
                 handler
             );
-
         },
 
         /**
@@ -264,111 +356,49 @@ define(function (require, exports, module) {
                 return me.inners[ name ];
             }
             else {
+
                 if ($.isPlainObject(name)) {
                     $.each(name, function (name, value) {
                         me.inner(name, value);
                     });
-                }
-                else {
-                    me.inners[ name ] = value;
-                }
-            }
-
-        },
-
-        get: function (name) {
-
-            var me = this;
-            var method = 'get' + ucFirst(name);
-
-            if ($.isFunction(me[ method ])) {
-                return me[ method ]();
-            }
-
-            return me.properties[ name ];
-
-        },
-
-        set: function (name, value, options) {
-
-            var me = this;
-
-            if ($.isPlainObject(name)) {
-
-                options = value;
-
-                $.each(
-                    name,
-                    function (name, value) {
-                        me.set(name, value, options);
-                    }
-                );
-
-                return;
-
-            }
-
-            options = options || { };
-
-            var propertyValidator = me.constructor.propertyValidator;
-            if (propertyValidator) {
-                if ($.isFunction(propertyValidator[ name ])) {
-                    value = propertyValidator[ name ].call(me, value);
-                }
-            }
-
-            var oldValue = me.get(name);
-            if (!me.$ || (oldValue === value && !options.force)) {
-                return;
-            }
-
-            var method = 'set' + ucFirst(name);
-            if ($.isFunction(me[ method ])) {
-                me[ method ](value);
-            }
-            else {
-                me.properties[ name ] = value;
-            }
-
-            if (options.silent) {
-                return;
-            }
-
-            // 批量更新
-            var record = { };
-            extend(record, options);
-
-            record.newValue = me.get(name);
-            record.oldValue = oldValue;
-
-            var changes = me.changes;
-            if (!changes) {
-                changes = me.changes = { };
-            }
-
-            var oldRecord = changes[ name ];
-            if (oldRecord) {
-                if (oldRecord.oldValue === record.newValue) {
-                    delete changes[ name ];
                     return;
                 }
+
+                me.inners[ name ] = value;
+
             }
 
-            changes[ name ] = record;
+        },
 
-        }
+        /**
+         * state getter
+         *
+         * @param {string} name
+         * @return {boolean}
+         */
+        is: function (name) {
+            // must be boolean
+            return this.states[ name ] ? true : false;
+        },
+
+        /**
+         * state setter
+         */
+        state: createSettter('state', 'states', 'state', 'is'),
+
+        /**
+         * property getter
+         */
+        get: function (name) {
+            return this.properties[ name ];
+        },
+
+        /**
+         * property setter
+         */
+        set: createSettter('property', 'properties', 'set', 'get')
 
     };
-
-    function parseAspect(result) {
-        if ($.isPlainObject(result)) {
-            if (result.validate === false) {
-                return false;
-            }
-            return result.data || result;
-        }
-        return result;
-    }
 
     /**
      * 扩展原型
@@ -381,16 +411,11 @@ define(function (require, exports, module) {
         // 为了实现统一拦截，必须规定一些用法：
 
         // 方法如果有前置校验，比如判断参数不合法直接返回，应该不用触发 before 事件
-        // 我们规定，方法的前置校验方法叫做 _method
-        // 比如 setValue 方法的前置校验方法叫做 _setValue（后置方法是不是叫 setValue_ 比较对此...）
+        // 我们规定，方法的前置校验方法叫做 _method，后置方法叫做 method_
+        // 比如 open 方法的前置校验方法叫做 _open，后置方法叫做 open_
         //
-        // 前置方法除了做校验，还可以返回一个事件数据，便于通知外部，返回的结构如下：
-        // {
-        //     validate: true,
-        //     data: { }
-        // }
-
-        // 如果不需要带事件数据，也可以返回一个布尔值
+        // 前置方法除了做校验，还可以返回一个事件数据，便于通知外部
+        // 返回 false 表示阻止执行，返回 Object 会作为事件数据发出去
 
         $.each(
             proto,
@@ -412,15 +437,10 @@ define(function (require, exports, module) {
 
                         var preMethod = proto[ '_' + name ];
                         if ($.isFunction(preMethod)) {
-
-                            eventData = parseAspect(
-                                preMethod.apply(me, arguments)
-                            );
-
+                            eventData = preMethod.apply(me, arguments);
                             if (eventData === false) {
                                 return false;
                             }
-
                         }
 
                         event = createEvent(event);
@@ -445,11 +465,7 @@ define(function (require, exports, module) {
 
                             var postMethod = proto[ name + '_' ];
                             if ($.isFunction(postMethod)) {
-
-                                eventData = parseAspect(
-                                    postMethod.apply(me, args)
-                                );
-
+                                eventData = postMethod.apply(me, args);
                                 if (eventData === false) {
                                     return;
                                 }

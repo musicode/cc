@@ -42,7 +42,7 @@ define(function (require, exports, module) {
             defaultIndex: me.option('defaultIndex'),
             interval: me.option('interval'),
             loop: me.option('loop'),
-            change: {
+            propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
                     me.set('index', newIndex, changes.index);
                 },
@@ -76,8 +76,7 @@ define(function (require, exports, module) {
             shortcut: shortcut
         });
 
-        var prevKeyCode = keyboardUtil[ prevKey ];
-        var nextKeyCode = keyboardUtil[ nextKey ];
+        var playing = false;
 
         keyboard
         .before('longpress', function (e, data) {
@@ -85,21 +84,25 @@ define(function (require, exports, module) {
             var reserve;
             var keyCode = data.keyCode;
 
-            if (keyCode === prevKeyCode) {
+            if (keyCode === keyboardUtil[ prevKey ]) {
                 reserve = true;
             }
-            else if (keyCode === nextKeyCode) {
+            else if (keyCode === keyboardUtil[ nextKey ]) {
                 reserve = false;
             }
 
             if (reserve != null) {
+                playing = true;
                 iterator.start(reserve);
             }
 
         })
         .after('longpress', function () {
 
-            iterator.pause();
+            if (playing) {
+                playing = false;
+                iterator.pause();
+            }
 
         });
 

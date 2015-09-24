@@ -110,7 +110,7 @@ define(function (require, exports, module) {
                     me.execute('renderTemplate', [ data, tpl ])
                 );
             },
-            change: {
+            propertyChange: {
                 value: function (newValue, oldValue, changes) {
 
                     me.set('value', value);

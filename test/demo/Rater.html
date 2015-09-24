@@ -43,15 +43,23 @@
                     mainElement: $('#main'),
                     value: 3.5,
                     count: 6,
-                    min: 2,
-                    //max: 4,
+                    minValue: 2,
+                    //maxValue: 4,
 
                     onClass: 'on',
                     offClass: 'off',
                     halfClass: 'half',
 
                     half: true,
-                    onchange: function () {
+
+                    onbeforepreview: function (e, data) {
+                        console.log('before preview', data);
+                    },
+                    onafterpreview: function (e, data) {
+                        console.log('after preview', data);
+                    },
+
+                    onpropertychange: function () {
                         console.log(this.get('value'));
                     }
                 });

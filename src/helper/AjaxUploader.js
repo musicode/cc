@@ -19,9 +19,9 @@ define(function (require, exports, module) {
      *     但鉴于这种方式不直观(小白可能都没听过 MIME type)，还是用扩展名好了
      */
 
-    var lifeCycle = require('../function/lifeCycle');
-    var ratio = require('../function/ratio');
+    var getRatio = require('../function/ratio');
 
+    var lifeCycle = require('../util/lifeCycle');
     var ext2MimeType = require('../util/mimeType');
 
     /**
@@ -49,26 +49,23 @@ define(function (require, exports, module) {
 
     proto.type = 'AjaxUploader';
 
-    /**
-     * 初始化元素和事件
-     */
     proto.init = function () {
 
         var me = this;
 
-        var inputElement = me.option('mainElement');
+        var fileElement = me.option('mainElement');
 
 
         // 确保是文件上传控件
-        if (!inputElement.is(':file')) {
-            throw new Error('AjaxUploader mainElement must be <input type="file" />');
+        if (!fileElement.is(':file')) {
+            throw new Error('[CC Error] AjaxUploader mainElement must be <input type="file" />.');
         }
 
         // 用一个 form 元素包着，便于重置
         var mainElement = $('<form></form>');
 
-        inputElement.replaceWith(mainElement);
-        mainElement.append(inputElement);
+        fileElement.replaceWith(mainElement);
+        mainElement.append(fileElement);
 
 
 
@@ -85,17 +82,15 @@ define(function (require, exports, module) {
 
 
 
-        inputElement
+        fileElement
         .prop(properties)
         .on(
             'change' + me.namespace(),
             function () {
 
-                setFiles(me, inputElement.prop('files'));
+                setFiles(me, fileElement.prop('files'));
 
-                me.emit(
-                    AjaxUploader.FILE_CHANGE
-                );
+                me.emit('filechange');
 
             }
         );
@@ -111,13 +106,11 @@ define(function (require, exports, module) {
          */
         me.inner({
             main: mainElement,
-            input: inputElement,
+            file: fileElement,
             fileQueue: { }
         });
 
-        me.emit(
-            AjaxUploader.READY
-        );
+        me.emit('ready');
 
     };
 
@@ -238,14 +231,14 @@ define(function (require, exports, module) {
      * 启用
      */
     proto.enable = function () {
-        this.option('input').prop('disabled', false);
+        this.option('file').prop('disabled', false);
     };
 
     /**
      * 禁用
      */
     proto.disable = function () {
-        this.option('input').prop('disabled', true);
+        this.option('file').prop('disabled', true);
     };
 
     /**
@@ -259,7 +252,7 @@ define(function (require, exports, module) {
 
         me.stop();
 
-        me.inner('input').off(
+        me.inner('file').off(
             me.namespace()
         );
 
@@ -267,12 +260,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
     AjaxUploader.defaultOptions = {
         data: { },
         multiple: false,
@@ -287,22 +274,6 @@ define(function (require, exports, module) {
      * @type {boolean}
      */
     AjaxUploader.supportChunk = typeof FileReader !== 'undefined';
-
-    AjaxUploader.READY = 'ready';
-
-    AjaxUploader.FILE_CHANGE = 'filechange';
-
-    AjaxUploader.UPLOAD_START = 'uploadstart';
-
-    AjaxUploader.UPLOAD_SUCCESS = 'uploadsuccess';
-
-    AjaxUploader.CHUNK_UPLOAD_SUCCESS = 'chunkuploadsuccess';
-
-    AjaxUploader.UPLOAD_ERROR = 'uploaderror';
-
-    AjaxUploader.UPLOAD_PROGRESS = 'uploadprogress';
-
-    AjaxUploader.UPLOAD_COMPLETE = 'uploadcomplete';
 
     /**
      * 等待上传状态
@@ -426,7 +397,7 @@ define(function (require, exports, module) {
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
 
                 uploader.emit(
-                    AjaxUploader.UPLOAD_START,
+                    'uploadstart',
                     {
                         fileItem: fileItem
                     }
@@ -453,10 +424,7 @@ define(function (require, exports, module) {
                     if (chunkInfo.uploaded < fileItem.file.size) {
 
                         // 分片上传成功
-                        uploader.emit(
-                            AjaxUploader.CHUNK_UPLOAD_SUCCESS,
-                            data
-                        );
+                        uploader.emit('chunkuploadsuccess', data);
 
                         chunkInfo.index++;
                         uploader.upload();
@@ -467,10 +435,7 @@ define(function (require, exports, module) {
 
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
 
-                uploader.emit(
-                    AjaxUploader.UPLOAD_SUCCESS,
-                    data
-                );
+                uploader.emit('uploadsuccess', data);
 
                 uploadComplete(uploader, fileItem);
 
@@ -485,7 +450,7 @@ define(function (require, exports, module) {
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
                 uploader.emit(
-                    AjaxUploader.UPLOAD_ERROR,
+                    'uploaderror',
                     {
                         fileItem: fileItem,
                         errorCode: errorCode
@@ -523,12 +488,12 @@ define(function (require, exports, module) {
                 }
 
                 uploader.emit(
-                    AjaxUploader.UPLOAD_PROGRESS,
+                    'uploadprogress',
                     {
                         fileItem: fileItem,
                         uploaded: uploaded,
                         total: total,
-                        percent: 100 * ratio(uploaded, total) + '%'
+                        percent: 100 * getRatio(uploaded, total) + '%'
                     }
                 );
 
@@ -568,7 +533,7 @@ define(function (require, exports, module) {
         }
 
         uploader.emit(
-            AjaxUploader.UPLOAD_COMPLETE,
+            'uploadcomplete',
             {
                 fileItem: fileItem
             }

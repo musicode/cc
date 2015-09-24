@@ -53,7 +53,7 @@ define(function (require, exports, module) {
             switchDelay: me.option('navDelay'),
             itemSelector: navSelector,
             itemActiveClass: navActiveClass,
-            change: {
+            propertyChange: {
                 index: function (toIndex, fromIndex) {
 
                     me.execute('navAnimate', {

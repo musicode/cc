@@ -24,6 +24,7 @@
                 window.iterator = new Iterator({
 
                     defaultIndex: -1,
+                    index: 2,
                     minIndex: 2,
                     maxIndex: 5,
                     loop: false,
@@ -75,7 +76,7 @@
                         console.log('after dispose');
                     },
 
-                    onchange: function (e, data) {
+                    onpropertychange: function (e, data) {
                         var diff = data.index;
                         if (diff) {
                             console.log('change', diff);

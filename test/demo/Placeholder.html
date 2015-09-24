@@ -19,7 +19,6 @@
 <body>
 
     <input type="text" class="form-text" placeholder="请输入用户名" value="" />
-    <input type="text" class="form-text" placeholder="请输入用户名" value="" />
 
     <div class="placeholder-wrapper">
         <input type="text" class="form-text" placeholder="请输入用户名" value="" />
@@ -74,18 +73,18 @@
                     onafterdispose: function () {
                         console.log('after dispose');
                     },
-                    onchange: function (e, data) {
+                    onpropertychange: function (e, data) {
                         console.log(data, this);
                     }
                 });
 
-                window.complexPlaceholder = new Placeholder({
+                window.fakePlaceholder = new Placeholder({
                     mainElement: $('.placeholder-wrapper'),
                     nativeFirst: false,
-                    complexTemplate: '<div class="placeholder-wrapper">'
-                                   +    '<input type="text" />'
-                                   +    '<div class="placeholder"></div>'
-                                   + '</div>',
+                    mainTemplate: '<div class="placeholder-wrapper">'
+                                +    '<input type="text" />'
+                                +    '<div class="placeholder"></div>'
+                                + '</div>',
                     onbeforeinit: function () {
                         console.log('before init');
                     },
@@ -116,7 +115,7 @@
                     onafterdispose: function () {
                         console.log('after dispose');
                     },
-                    onchange: function (e, data) {
+                    onpropertychange: function (e, data) {
                         console.log(data, this);
                     }
                 });

@@ -132,6 +132,13 @@
                     },
                     onafterdispose: function () {
                         console.log('after dispose');
+                    },
+
+                    onpropertychange: function (e, data) {
+                        console.log('propertychange', data);
+                    },
+                    onstatechange: function (e, data) {
+                        console.log('statechange', data);
                     }
                 });
 

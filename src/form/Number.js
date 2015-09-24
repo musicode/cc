@@ -30,7 +30,6 @@ define(function (require, exports, module) {
      * @property {string=} options.template 模拟 <input type="number" /> 的模版，一般有一个输入框，一个向上的按钮，一个向下的按钮
      * @property {string=} options.upSelector 向上按钮的选择器
      * @property {string=} options.downSelector 向下按钮的选择器
-     * @property {Function=} options.onChange 数值变化时调用的接口
      */
     function Number(options) {
         lifeCycle.init(this, options);
