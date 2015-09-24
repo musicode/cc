@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Number</title>
+        <title>SpinBox</title>
         <style>
             .input-number {
                 position: relative;
@@ -38,11 +38,11 @@
 
             require(
 
-                [ 'cobble/form/Number' ],
+                [ 'cobble/ui/SpinBox' ],
 
-                function (Number) {
+                function (SpinBox) {
 
-                    var number = new Number({
+                    var number = new SpinBox({
 
                         mainElement: $('.input-number'),
 
@@ -50,7 +50,6 @@
                                     + '<i class="btn-up"></i>'
                                     + '<i class="btn-down"></i>',
 
-                        name: 'name',
                         defaultValue: '',
                         maxValue: 10,
                         minValue: 0,

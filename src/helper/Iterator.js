@@ -109,8 +109,8 @@ define(function (require, exports, module) {
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
-        if (index < minIndex
-            || index > maxIndex
+        if ($.type(index) !== 'number'
+            || (index < minIndex || index > maxIndex)
         ) {
             index = maxIndex;
         }
@@ -139,8 +139,8 @@ define(function (require, exports, module) {
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
-        if (index > maxIndex
-            || index < minIndex
+        if ($.type(index) !== 'number'
+            || (index > maxIndex || index < minIndex)
         ) {
             index = minIndex;
         }

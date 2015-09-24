@@ -14,7 +14,6 @@ define(function (require, exports, module) {
     var Popup = require('../helper/Popup');
     var Iterator = require('../helper/ElementIterator');
 
-    var browser = require('../util/browser');
     var lifeCycle = require('../util/lifeCycle');
 
     /**
@@ -153,13 +152,6 @@ define(function (require, exports, module) {
 
             }
         };
-
-        // chrome 按方向键上会导致光标跑到最左侧
-        if (browser.chrome) {
-            keyboardAction.up = function (e) {
-                e.preventDefault();
-            };
-        }
 
         var cache;
 

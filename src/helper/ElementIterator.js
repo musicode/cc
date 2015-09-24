@@ -12,6 +12,8 @@ define(function (require, exports, module) {
     var lifeCycle = require('../util/lifeCycle');
     var keyboardUtil = require('../util/keyboard');
 
+    var browser = require('../util/browser');
+
     /**
      *
      * @constrctor
@@ -71,10 +73,20 @@ define(function (require, exports, module) {
             }
         };
 
+        var watchElement = me.option('watchElement');
         var keyboard = new Keyboard({
-            watchElement: me.option('watchElement'),
+            watchElement: watchElement,
             shortcut: shortcut
         });
+
+        // chrome 按方向键上会导致光标跑到最左侧
+        if (watchElement.is(':text') && browser.chrome) {
+            keyboard.on('keydown', function (e) {
+                if (e.keyCode === keyboardUtil.up) {
+                    e.preventDefault();
+                }
+            });
+        }
 
         var playing = false;
 
