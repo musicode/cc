@@ -320,6 +320,13 @@ define(function (require, exports, module) {
             }
         },
 
+        /**
+         * 以组件的身份执行一个函数
+         *
+         * @param {string|Function} name
+         * @param {*} args
+         * @return {*}
+         */
         execute: function (name, args) {
 
             var me = this;
@@ -344,14 +351,32 @@ define(function (require, exports, module) {
 
         },
 
+        /**
+         * jquery 事件的命名空间
+         *
+         * @return {string}
+         */
         namespace: function () {
             return '.' + this.guid;
         },
 
+        /**
+         * options 只提供单个读取，不支持改写
+         *
+         * @param {string} name
+         * @return {*}
+         */
         option: function (name) {
             return this.options[ name ];
         },
 
+        /**
+         * 私有属性的 getter/setter
+         *
+         * @param {string} name
+         * @param {*?} value
+         * @return {*?}
+         */
         inner: function (name, value) {
 
             var me = this;
@@ -378,7 +403,7 @@ define(function (require, exports, module) {
          * state getter
          *
          * @param {string} name
-         * @return {boolean}
+         * @return {boolean?}
          */
         is: function (name) {
             return this.states[ name ];
@@ -417,15 +442,15 @@ define(function (require, exports, module) {
      */
     exports.extend = function (proto) {
 
-        //
-        // 为了实现统一拦截，必须规定一些用法：
+        // 方法前后的拦截基于 function/around.js
 
-        // 方法如果有前置校验，比如判断参数不合法直接返回，应该不用触发 before 事件
-        // 我们规定，方法的前置校验方法叫做 _method，后置方法叫做 method_
-        // 比如 open 方法的前置校验方法叫做 _open，后置方法叫做 open_
+        // 前置方法可拦截方法执行，只需要返回 false 即可
         //
-        // 前置方法除了做校验，还可以返回一个事件数据，便于通知外部
-        // 返回 false 表示阻止执行，返回 Object 会作为事件数据发出去
+        // 前置和后置方法都可以返回 Object，作为 beforemethod 和 aftermethod 事件的数据，即 trigger(type, data);
+        //
+        // 拦截方法的写法来自某一天的灵光咋现，因为我不喜欢私有属性和方法带上下划线前缀，但是下划线用来标识前后似乎非常优雅
+        //
+        // 比如 _show 表示显示之前，show_ 表示显示之后，非常直白
 
         $.each(
             proto,
@@ -445,11 +470,14 @@ define(function (require, exports, module) {
 
                         var eventData;
 
-                        var preMethod = proto[ '_' + name ];
-                        if ($.isFunction(preMethod)) {
-                            eventData = preMethod.apply(me, arguments);
+                        var aspect = proto[ '_' + name ];
+                        if ($.isFunction(aspect)) {
+                            eventData = aspect.apply(me, arguments);
                             if (eventData === false) {
                                 return false;
+                            }
+                            if (!$.isPlainObject(eventData)) {
+                                eventData = null;
                             }
                         }
 
@@ -458,7 +486,7 @@ define(function (require, exports, module) {
 
                         event = this.emit(event, eventData);
 
-                        // 阻止默认行为也就不在执行后续的方法
+                        // 阻止默认行为就不执行方法
                         if (event.isDefaultPrevented()) {
                             return false;
                         }
@@ -473,11 +501,15 @@ define(function (require, exports, module) {
 
                             var eventData;
 
-                            var postMethod = proto[ name + '_' ];
-                            if ($.isFunction(postMethod)) {
-                                eventData = postMethod.apply(me, args);
+                            var aspect = proto[ name + '_' ];
+                            if ($.isFunction(aspect)) {
+                                eventData = aspect.apply(me, args);
+                                // 拦截 after 事件
                                 if (eventData === false) {
                                     return;
+                                }
+                                if (!$.isPlainObject(eventData)) {
+                                    eventData = null;
                                 }
                             }
 
@@ -488,6 +520,7 @@ define(function (require, exports, module) {
 
                         };
 
+                        // 最后一个参数是方法执行结果
                         var executeResult = args[ args.length - 1 ];
 
                         if (executeResult && executeResult.then) {
@@ -561,7 +594,7 @@ define(function (require, exports, module) {
             });
 
         });
-console.log(instance)
+
         return instance;
 
     };
