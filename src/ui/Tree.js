@@ -33,7 +33,7 @@ define(function (require, exports, module) {
      *     text: '',
      *     children: [],
      *
-     *     为了方便渲染，在交互过程中的状态也会记录到这里
+     *     为了方便渲染，在交互过程中产生的状态也会记录到这里，renderTemplate 可以根据这些状态去渲染节点
      *     expanded: true,
      *     active: true
      * }

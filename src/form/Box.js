@@ -80,13 +80,9 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
         var mainElement = me.option('mainElement');
-
-        var mainTemplate = me.option('mainTemplate');
-        if (mainTemplate) {
-            mainElemen.html(mainTemplate);
-        }
-
         var nativeElement = mainElement.find(':radio,:checkbox');
         if (nativeElement.length > 0) {
             throw new Error('[CC Error] form/Box mainElement 不能包含 radio 或 checkbox.');

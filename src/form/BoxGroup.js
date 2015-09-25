@@ -37,15 +37,9 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
         var mainElement = me.option('mainElement');
-
-
-        var mainTemplate = me.option('mainTemplate');
-        if (mainTemplate) {
-            mainElement.html(mainTemplate);
-        }
-
-
         var boxElement = mainElement.find(
             me.option('boxSelector')
         );

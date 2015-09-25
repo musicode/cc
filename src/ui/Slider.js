@@ -87,27 +87,12 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
         var mainElement = me.option('mainElement');
-
-        var thumbSelector = me.option('thumbSelector');
-        var thumbElement;
-
-        if (thumbSelector) {
-
-            thumbElement = mainElement.find(thumbSelector);
-
-            if (!thumbElement.length) {
-                var mainTemplate = me.option('mainTemplate');
-                if (mainTemplate) {
-                    mainElement.html(mainTemplate);
-                    thumbElement = mainElement.find(thumbSelector);
-                }
-                else {
-                    throw new Error('Slider thumb is missing.');
-                }
-            }
-
-        }
+        var thumbElement = mainElement.find(
+            me.option('thumbSelector')
+        );
 
         var trackSelector = me.option('trackSelector');
         var trackElement = trackSelector

@@ -62,6 +62,8 @@ define(function (require, exports, module) {
             }
         });
 
+        mainElement = spinbox.inner('main');
+
         var inputElement = spinbox.inner('input');
         inputElement.removeAttr('name');
 

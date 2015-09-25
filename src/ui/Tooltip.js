@@ -90,6 +90,7 @@ define(function (require, exports, module) {
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      *
      * @property {string=} options.maxWidth 提示元素的最大宽度
+     * @property {boolean=} options.share 是否共享一个元素，默认是 true
      *
      * @property {Function} options.updateContent 更新提示浮层的内容
      *
@@ -143,18 +144,24 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
+
         var triggerElement = me.option('triggerElement');
 
         var mainElement = me.option('mainElement');
         if (!mainElement) {
 
+            var share = me.option('share');
             var mainTemplate = me.option('mainTemplate');
 
-            mainElement = templateElementMap[ mainTemplate ];
+            if (share) {
+                mainElement = templateElementMap[ mainTemplate ];
+            }
 
             if (!mainElement) {
-                mainElement =
-                templateElementMap[ mainTemplate ] = $(mainTemplate);
+                mainElement = $(mainTemplate);
+                if (share) {
+                    templateElementMap[ mainTemplate ] = mainElement;
+                }
             }
 
         }
@@ -468,6 +475,7 @@ define(function (require, exports, module) {
 
         mainTemplate: '<div class="tooltip tooltip-inverted"></div>',
 
+        share: true,
         placement: 'auto',
 
         topClass: 'tooltip-top',

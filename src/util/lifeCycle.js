@@ -10,6 +10,7 @@ define(function (require, exports, module) {
     var around = require('../function/around');
     var extend = require('../function/extend');
     var ucFirst = require('../function/ucFirst');
+    var replaceWith = require('../function/replaceWith');
     var createTimer = require('./timer');
 
     /**
@@ -208,6 +209,46 @@ define(function (require, exports, module) {
     }
 
     var methods = {
+
+        /**
+         * 处理模板替换
+         */
+        initStructure: function () {
+
+            var me = this;
+
+            var mainElement = me.option('mainElement');
+            var mainTemplate = me.option('mainTemplate');
+
+            if ($.type(mainTemplate) === 'string') {
+
+                var tempElement;
+
+                if (!mainElement) {
+                    tempElement = $(mainTemplate);
+                }
+                else {
+                    if (me.option('replace')) {
+                        replaceWith(
+                            mainElement,
+                            tempElement = $(mainTemplate)
+                        );
+                    }
+                    else {
+                        mainElement.html(mainTemplate);
+                    }
+                }
+
+                if (tempElement) {
+                    me.option('mainElement', tempElement);
+                }
+
+            }
+
+            // 只能执行一次
+            me.initStructure = $.noop;
+
+        },
 
         /**
          * 绑定事件

@@ -62,9 +62,6 @@ define(function (require, exports, module) {
 
     proto.type = 'ScrollBar';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -112,7 +109,7 @@ define(function (require, exports, module) {
         });
 
         me.inner({
-            main: mainElement,
+            main: slider.inner('main'),
             slider: slider
         });
 

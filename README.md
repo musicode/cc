@@ -39,20 +39,25 @@
 ``` javascript
 {
     // 主元素，即组件最外层容器元素
-    mainElement: $(), 
+    mainElement: {jQuery},
+    // 主元素模板
+    mainTemplate: {string},
+    // true 表示 mainTemplate 创建的元素替换 mainElement
+    // false 表示 mainTemplate 赋值给 mainElement.innerHTML
+    replace: {boolean},
+    // 配置模板引擎
     renderTemplate: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl
         // 也可以使用模板引擎
         // 如果需要模板预编译，可以先缓存编译结果，这里直接调用编译结果的 render(data)
     },
+    // 加载数据，不关心是远程或是本地数据
     loadData: function (value, callback) {
-
-        // 加载数据，懒加载常用
         // callback 使用 node 风格
+        // 第一个参数是 error
         post(function (data) {
             callback(null, data);
         });
-
     }
 }
 ```

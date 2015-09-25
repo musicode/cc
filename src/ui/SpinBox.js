@@ -42,29 +42,12 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var inputSelector = me.option('inputSelector');
-        var upSelector = me.option('upSelector');
-        var downSelector = me.option('downSelector');
+        me.initStructure();
 
         var mainElement = me.option('mainElement');
-        var inputElement = mainElement.find(inputSelector);
-
-        if (inputElement.length === 1
-            && mainElement.find(upSelector).length === 1
-            && mainElement.find(downSelector).length === 1
-        ) {
-            // 结构完整
-        }
-        else {
-            mainElement.html(
-                me.option('mainTemplate')
-            );
-            inputElement = mainElement.find(inputSelector);
-        }
-
-
-
-
+        var inputElement = mainElement.find(
+            me.option('inputSelector')
+        );
 
         var iterator = new Iterator({
             watchElement: inputElement,
@@ -84,6 +67,8 @@ define(function (require, exports, module) {
 
 
         var namespace = me.namespace();
+        var upSelector = me.option('upSelector');
+        var downSelector = me.option('downSelector');
         var mousedown = 'mousedown' + namespace;
 
         mainElement

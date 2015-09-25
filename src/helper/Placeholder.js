@@ -211,20 +211,12 @@ define(function (require, exports, module) {
     var fakeProxy = {
         init: function (instance) {
 
+            instance.initStructure();
+
             var mainElement = instance.option('mainElement');
-            var inputSelector = instance.option('inputSelector');
-            var inputElement = mainElement.find(inputSelector);
-
-            if (inputElement.length !== 1) {
-
-                var tempElement = $(instance.option('complexTemplate'));
-                replaceWith(mainElement, tempElement);
-
-                mainElement = tempElement;
-                inputElement = mainElement.find(inputSelector);
-
-            }
-
+            var inputElement = mainElement.find(
+                instance.option('inputSelector')
+            );
 
             instance.inner({
                 main: mainElement,

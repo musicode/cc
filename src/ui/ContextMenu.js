@@ -51,96 +51,81 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
+        var mainElement = me.option('mainElement');
+        if (!offsetParent(mainElement).is('body')) {
+            body.append(mainElement);
+        }
+
+        // 绑定点击事件
         var contextEvent;
         var namespace = me.namespace();
 
-        var initMenu = function (mainElement) {
+        var action = me.option('action');
+        if (action) {
+            $.each(
+                action,
+                function (selector, handler) {
+                    mainElement.on(
+                        'click' + namespace,
+                        selector,
+                        function () {
+                            me.execute(
+                                handler,
+                                contextEvent
+                            );
+                        }
+                    );
+                }
+            );
+        }
 
-            // body 必须是定位容器
-            if (!offsetParent(mainElement).is('body')) {
-                body.append(mainElement);
-            }
-
-            // 绑定点击事件
-            var action = me.option('action');
-            if (action) {
-                $.each(
-                    action,
-                    function (selector, handler) {
-                        mainElement.on(
-                            'click' + namespace,
-                            selector,
-                            function () {
-                                me.execute(
-                                    handler,
-                                    contextEvent
-                                );
-                            }
-                        );
+        var popup = new Popup({
+            hidden: true,
+            layerElement: mainElement,
+            showLayerTrigger: me.option('showTrigger'),
+            showLayerDelay: me.option('showDelay'),
+            hideLayerTrigger: me.option('hideTrigger'),
+            hideLayerDelay: me.option('hideDelay'),
+            showLayerAnimate: function () {
+                me.execute(
+                    'showAnimate',
+                    {
+                        mainElement: mainElement
+                    }
+                );
+            },
+            hideLayerAnimate: function () {
+                me.execute(
+                    'hideAnimate',
+                    {
+                        mainElement: mainElement
                     }
                 );
             }
-
-            var popup = new Popup({
-                hidden: true,
-                layerElement: mainElement,
-                showLayerTrigger: me.option('showTrigger'),
-                showLayerDelay: me.option('showDelay'),
-                hideLayerTrigger: me.option('hideTrigger'),
-                hideLayerDelay: me.option('hideDelay'),
-                showLayerAnimate: function () {
-                    me.execute(
-                        'showAnimate',
-                        {
-                            mainElement: mainElement
-                        }
-                    );
-                },
-                hideLayerAnimate: function () {
-                    me.execute(
-                        'hideAnimate',
-                        {
-                            mainElement: mainElement
-                        }
-                    );
-                }
-            });
+        });
 
 
-            var dispatchEvent = function (e) {
-                if (e.target.tagName) {
-                    me.emit(e);
-                }
-            };
-
-            popup
-            .before('open', dispatchEvent)
-            .after('open', dispatchEvent)
-            .before('close', dispatchEvent)
-            .after('close', dispatchEvent);
-
-            me.inner({
-                popup: popup,
-                main: mainElement
-            });
-
+        var dispatchEvent = function (e) {
+            if (e.target.tagName) {
+                me.emit(e);
+            }
         };
 
-        var mainElement = me.option('mainElement');
-        if (mainElement) {
-            initMenu(mainElement);
-        }
+        popup
+        .before('open', dispatchEvent)
+        .after('open', dispatchEvent)
+        .before('close', dispatchEvent)
+        .after('close', dispatchEvent);
+
+        me.inner({
+            popup: popup,
+            main: mainElement
+        });
 
         me.option('watchElement')
         .on('contextmenu' + namespace, function (e) {
-
-            var mainTemplate = me.option('mainTemplate');
-
-            // 惰性初始化
-            if (!mainElement && mainTemplate) {
-                mainElement = $(mainTemplate);
-                initMenu(mainElement);
-            }
 
             // [TODO] 可以优化成 if (activeMenu) {}
             // 保证流程是 close => open

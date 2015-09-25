@@ -6,16 +6,24 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var lifeCycle = require('../util/lifeCycle');
+
     /**
      * {
-     *    fields: [
+     *    columns: [
      *        {
      *            title: '',
-     *            field: '',
+     *            key: '',
      *            sortable: true,
      *            content: function () {
      *
      *            }
+     *        }
+     *    ],
+     *    data: [
+     *        {
+     *            name: '',
+     *            value: ''
      *        }
      *    ]
      * }
@@ -24,20 +32,30 @@ define(function (require, exports, module) {
      * @property {Array.<Object>} options.fields
      */
     function Grid(options) {
-
+        lifeCycle.init(this, options);
     }
 
-    Grid.prototype = {
+    var proto = Grid.prototype;
 
-        constructor: Grid,
+    proto.type = 'Grid';
 
-        type: 'Grid',
-
-        init: function () {
-
-        }
+    proto.init = function () {
 
     };
+
+    proto.render = function () {
+
+    };
+
+    proto.dispose = function () {
+
+        var me = this;
+
+        lifeCycle.dispose(me);
+
+    };
+
+    lifeCycle.extend(proto);
 
     Grid.defaultOptions = {
 
@@ -47,8 +65,8 @@ define(function (require, exports, module) {
                 +     '<div class="grid-footer"></div>'
                 + '</div>'
 
-
     };
+
 
     return Grid;
 

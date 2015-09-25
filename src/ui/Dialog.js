@@ -81,12 +81,9 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
 
         var mainElement = me.option('mainElement');
-        if (!mainElement) {
-            mainElement = $(me.option('mainTemplate'));
-        }
-
         if (!offsetParent(mainElement).is('body')) {
             instance.body.append(mainElement);
         }

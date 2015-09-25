@@ -62,26 +62,14 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
         var mainElement = me.option('mainElement');
-
-
-
         var inputSelector = me.option('inputSelector');
         var calendarSelector = me.option('calendarSelector');
 
         var inputElement = mainElement.find(inputSelector);
         var calendarElement = mainElement.find(calendarSelector);
-
-        if (inputElement.length !== 1 || calendarElement.length !== 1) {
-
-            mainElement.html(
-                me.option('mainTemplate')
-            );
-
-            inputElement = mainElement.find(inputSelector);
-            calendarElement = mainElement.find(calendarSelector);
-
-        }
 
         inputElement.removeAttr('name');
 
