@@ -12,7 +12,6 @@ define(function (require, exports, module) {
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
-    var offsetParent = require('../function/offsetParent');
 
     var pinGlobal = require('../function/pinGlobal');
     var dragGlobal = require('../function/dragGlobal');
@@ -84,12 +83,6 @@ define(function (require, exports, module) {
         me.initStructure();
 
         var mainElement = me.option('mainElement');
-        if (!offsetParent(mainElement).is('body')) {
-            instance.body.append(mainElement);
-        }
-
-
-
         var maskElement = me.option('maskElement');
 
         if (me.option('modal')) {
@@ -343,6 +336,7 @@ define(function (require, exports, module) {
         fixed: true,
         hidden: false,
         draggable: true,
+        underBody: true,
         hideOnBlur: false,
         removeOnEmpty: true,
         disposeOnHide: true,

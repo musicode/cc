@@ -129,7 +129,7 @@ define(function (require, exports, module) {
 
             if (scaleImageParent[0] !== finderParent[0]) {
                 if (!finderParent.is('body')) {
-                    finder.appendTo('body');
+                    finderElement.appendTo('body');
                 }
                 finderOffset = pageOffset;
             }

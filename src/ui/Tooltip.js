@@ -145,33 +145,10 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStructure();
+
         var triggerElement = me.option('triggerElement');
-
         var mainElement = me.option('mainElement');
-        if (!mainElement) {
-
-            var share = me.option('share');
-            var mainTemplate = me.option('mainTemplate');
-
-            if (share) {
-                mainElement = templateElementMap[ mainTemplate ];
-            }
-
-            if (!mainElement) {
-                mainElement = $(mainTemplate);
-                if (share) {
-                    templateElementMap[ mainTemplate ] = mainElement;
-                }
-            }
-
-        }
-
-        if (!offsetParent(mainElement).is('body')) {
-            instance.body.append(mainElement);
-        }
-
-
-
 
         var popup = new Popup({
             hidden: true,
@@ -476,6 +453,7 @@ define(function (require, exports, module) {
         mainTemplate: '<div class="tooltip tooltip-inverted"></div>',
 
         share: true,
+        underBody: true,
         placement: 'auto',
 
         topClass: 'tooltip-top',

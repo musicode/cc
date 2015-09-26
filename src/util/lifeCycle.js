@@ -11,7 +11,10 @@ define(function (require, exports, module) {
     var extend = require('../function/extend');
     var ucFirst = require('../function/ucFirst');
     var replaceWith = require('../function/replaceWith');
+    var offsetParent = require('../function/offsetParent');
+
     var createTimer = require('./timer');
+    var instance = require('./instance');
 
     /**
      * 为了更好的性能，以及彻底解决初始化触发 change 事件带来的同步问题
@@ -208,6 +211,18 @@ define(function (require, exports, module) {
 
     }
 
+    /**
+     * 元素共享池
+     *
+     * key 是元素模板字符串，value 是 jQuery 对象
+     *
+     * @inner
+     * @type {Object}
+     */
+    var elementSharePool = {
+
+    };
+
     var methods = {
 
         /**
@@ -222,10 +237,18 @@ define(function (require, exports, module) {
 
             if ($.type(mainTemplate) === 'string') {
 
-                var tempElement;
+                var share = me.option('share');
+                var cacheKey = me.type + mainTemplate;
+                if (share) {
+                    mainElement = elementSharePool[ cacheKey ];
+                }
 
+                var tempElement;
                 if (!mainElement) {
                     tempElement = $(mainTemplate);
+                    if (share) {
+                        elementSharePool[ cacheKey ] = tempElement;
+                    }
                 }
                 else {
                     if (me.option('replace')) {
@@ -240,13 +263,22 @@ define(function (require, exports, module) {
                 }
 
                 if (tempElement) {
-                    me.option('mainElement', tempElement);
+                    mainElement = tempElement;
+                    me.option('mainElement', mainElement);
                 }
 
             }
 
+            if (me.inner('underBody')
+                && !offsetParent(mainElement).is('body')
+            ) {
+                instance.body.append(mainElement);
+            }
+
             // 只能执行一次
-            me.initStructure = $.noop;
+            me.initStructure = function () {
+                throw new Error('[CC Error] initStructure() can just call one time.');
+            };
 
         },
 

@@ -342,20 +342,6 @@ define(function (require, exports, module) {
 
     Pager.defaultOptions = {
 
-        hideOnSingle: true,
-
-        showCount: 6,
-        startCount: 1,
-        endCount: 2,
-
-        showAnimate: function (options) {
-            options.mainElement.show();
-        },
-
-        hideAnimate: function (options) {
-            options.mainElement.hide();
-        }
-
     };
 
 

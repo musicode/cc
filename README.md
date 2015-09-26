@@ -45,6 +45,10 @@
     // true 表示 mainTemplate 创建的元素替换 mainElement
     // false 表示 mainTemplate 赋值给 mainElement.innerHTML
     replace: {boolean},
+    // 是否共享主元素，比如 Tooltip 应该设为 true，这样可以节省很多 DOM
+    share: {boolean},
+    // 主元素是否是 body 的第一级子元素，比如 Dialog 应该设为 true，定位才不会错
+    underBody: {boolean},
     // 配置模板引擎
     renderTemplate: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl

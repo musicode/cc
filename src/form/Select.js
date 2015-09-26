@@ -134,50 +134,7 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
     Select.defaultOptions = {
-        defaultText: '请选择',
-        buttonSelector: '.btn-default',
-        menuSelector: '.dropdown-menu',
-        labelSelector: '.btn-default span',
-        itemActiveClass: 'active',
-        menuActiveClass: 'open',
-        showMenuTrigger: 'click',
-        hideMenuTrigger: 'click',
-        showMenuAnimate: function (options) {
-            options.menuElement.show();
-        },
-        hideMenuAnimate: function (options) {
-            options.menuElement.hide();
-        },
-        renderTemplate: function (data) {
 
-            var html = [ ];
-
-            $.each(
-                data,
-                function (index, item) {
-
-                    var data = [ ];
-
-                    $.each(
-                        item,
-                        function (key, value) {
-                            if (key !== 'text' && value != null) {
-                                data.push(
-                                    'data-' + key + '="' + value + '"'
-                                );
-                            }
-                        }
-                    );
-
-                    html.push(
-                        '<li ' + data.join(' ') + '>' + item.text + '</li>'
-                    );
-                }
-            );
-
-            return html.join('');
-
-        }
     };
 
     Select.propertyUpdater = {

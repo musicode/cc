@@ -54,9 +54,6 @@ define(function (require, exports, module) {
         me.initStructure();
 
         var mainElement = me.option('mainElement');
-        if (!offsetParent(mainElement).is('body')) {
-            body.append(mainElement);
-        }
 
         // 绑定点击事件
         var contextEvent;
@@ -207,6 +204,7 @@ define(function (require, exports, module) {
 
     ContextMenu.defaultOptions = {
         watchElement: body,
+        underBody: true,
         hideTrigger: 'click,context',
         showAnimate: function (options) {
             options.mainElement.show();
