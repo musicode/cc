@@ -13,7 +13,6 @@ define(function (require, exports, module) {
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
 
-    var dateUtil = require('../util/date');
     var lifeCycle = require('../util/lifeCycle');
 
     var common = require('./common');
@@ -82,9 +81,9 @@ define(function (require, exports, module) {
             today: me.option('today'),
             stable: me.option('stable'),
             multiple: me.option('multiple'),
-            itemActiveClass: me.option('itemActiveClass'),
             prevSelector: me.option('prevSelector'),
             nextSelector: me.option('nextSelector'),
+            itemActiveClass: me.option('itemActiveClass'),
             onselect: function () {
                 popup.close();
             },
@@ -216,38 +215,7 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Date.defaultOptions = {
-
-        mainTemplate: '<div class="form-date">'
-                    +     '<input type="text" name="date" />'
-                    +     '<div class="calendar"></div>'
-                    + '</div>',
-
-        calendarTemplate: '',
-
-        mode: 'week',
-
-        prevSelector: '.icon-chevron-left',
-        nextSelector: '.icon-chevron-right',
-
-        inputSelector: ':text',
-        calendarSelector: '.calendar',
-
-        itemActiveClass: 'active',
-
-        showCalendarTrigger: 'focus',
-        hideCalendarTrigger: 'click',
-
-        showCalendarAnimate: function (options) {
-            options.calendarElement.show();
-        },
-        hideCalendarAnimate: function (options) {
-            options.calendarElement.hide();
-        },
-
-        parseDate: dateUtil.parse
-
-    };
+    Date.defaultOptions = { };
 
     Date.propertyUpdater = {
 

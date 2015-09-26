@@ -117,7 +117,7 @@ define(function (require, exports, module) {
         },
         value: function (value) {
             common.prop(this, 'value', value);
-        },
+        }
 
     };
 
@@ -182,7 +182,7 @@ define(function (require, exports, module) {
 
         }
 
-    }
+    };
 
 
     return Box;

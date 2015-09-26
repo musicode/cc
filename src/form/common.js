@@ -29,6 +29,10 @@ define(function (require, exports, module) {
             }
             else {
                 nativeElement.prop(name, value);
+                // 触发 change 事件，便于 mvvm 框架捕获
+                if (name === 'value') {
+                    nativeElement.trigger('change');
+                }
             }
         }
 
