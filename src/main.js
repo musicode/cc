@@ -15,7 +15,6 @@ define(function (require, exports, module) {
     require('./form/Validator');
 
     require('./function/around');
-    require('./function/attr');
     require('./function/autoScrollDown');
     require('./function/autoScrollUp');
     require('./function/contains');

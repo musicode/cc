@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var SpinBox = require('../ui/SpinBox');
     var lifeCycle = require('../util/lifeCycle');
+    var common = require('./common');
 
     /**
      * 构造函数
@@ -62,13 +63,9 @@ define(function (require, exports, module) {
             }
         });
 
-        mainElement = spinbox.inner('main');
-
-        var inputElement = spinbox.inner('input');
-        inputElement.removeAttr('name');
-
         me.inner({
-            main: mainElement,
+            main: spinbox.inner('main'),
+            native: spinbox.inner('input'),
             spinbox: spinbox
         });
 
@@ -101,16 +98,11 @@ define(function (require, exports, module) {
     Number.propertyUpdater = {
 
         name: function (name) {
-
-            this.inner('main').attr('name', name);
-
+            common.prop(this, 'name', name);
         },
 
         value: function (value) {
-
-            this.inner('main').attr('value', value);
             this.inner('spinbox').set('value', value);
-
         }
 
     };
@@ -118,19 +110,7 @@ define(function (require, exports, module) {
     Number.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-
-                name = this.inner('main').attr('name');
-
-                if ($.type(name) !== 'string') {
-                    throw new Error('[CC Error] form/Number mainElement must have the name attribute.')
-                }
-
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         }
 
     };

@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var split = require('../function/split');
     var contains = require('../function/contains');
     var replaceWith = require('../function/replaceWith');
 
@@ -14,6 +15,8 @@ define(function (require, exports, module) {
 
     var dateUtil = require('../util/date');
     var lifeCycle = require('../util/lifeCycle');
+
+    var common = require('./common');
 
     /**
      * 表单日期选择器
@@ -28,7 +31,6 @@ define(function (require, exports, module) {
      * @property {string=} options.mode 视图类型，可选值包括 month, week
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      * @property {boolean=} options.multiple 是否可多选
-     * @property {string=} options.value 选中的日期
      *
      * @property {string=} options.showCalendarTrigger 显示的触发方式
      * @property {number=} options.showCalendarDelay 显示延时
@@ -65,14 +67,12 @@ define(function (require, exports, module) {
         me.initStructure();
 
         var mainElement = me.option('mainElement');
-        var inputSelector = me.option('inputSelector');
-        var calendarSelector = me.option('calendarSelector');
-
-        var inputElement = mainElement.find(inputSelector);
-        var calendarElement = mainElement.find(calendarSelector);
-
-        inputElement.removeAttr('name');
-
+        var inputElement = mainElement.find(
+            me.option('inputSelector')
+        );
+        var calendarElement = mainElement.find(
+            me.option('calendarSelector')
+        );
 
         var calendar = new Calendar({
             mainElement: calendarElement,
@@ -161,6 +161,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
+            native: inputElement,
             input: inputElement,
             popup: popup,
             calendar: calendar
@@ -218,7 +219,7 @@ define(function (require, exports, module) {
     Date.defaultOptions = {
 
         mainTemplate: '<div class="form-date">'
-                    +     '<input type="text" />'
+                    +     '<input type="text" name="date" />'
                     +     '<div class="calendar"></div>'
                     + '</div>',
 
@@ -251,16 +252,12 @@ define(function (require, exports, module) {
     Date.propertyUpdater = {
 
         name: function (name) {
-
-            this.inner('main').attr('name', name);
-
+            common.prop(this, 'name', name);
         },
 
         value: function (value) {
-
+            common.prop(this, 'value', value);
             this.inner('calendar').set('value', value);
-            this.inner('input').val(value);
-
         }
 
     };
@@ -268,22 +265,14 @@ define(function (require, exports, module) {
     Date.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-
-                name = this.inner('main').attr('name');
-
-                if ($.type(name) !== 'string') {
-                    throw new Error('[CC Error] form/Date mainElement must have the name attribute.')
-                }
-
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         },
 
         value: function (value) {
+
+            var me = this;
+
+            value = common.validateValue(me, value);
 
             if ($.type(value) === 'string') {
 
@@ -292,7 +281,7 @@ define(function (require, exports, module) {
                 $.each(
                     split(value, ','),
                     function (index, value) {
-                        if (this.execute('parseDate', value)) {
+                        if (me.execute('parseDate', value)) {
                             list.push(value);
                         }
                     }
@@ -300,9 +289,6 @@ define(function (require, exports, module) {
 
                 value = list.join(',');
 
-            }
-            else {
-                value = '';
             }
 
             return value;

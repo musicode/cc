@@ -71,8 +71,9 @@ define(function (require) {
                 var oldValue = me.get('value');
                 var newValue = me.inner('processValue')(itemValue, true);
 
+                // 长度相等是替换，也是 select
                 me.emit(
-                    newValue.length > oldValue.length ? 'select': 'unselect',
+                    newValue.length < oldValue.length ? 'unselect' : 'select',
                     {
                         value: itemValue
                     }

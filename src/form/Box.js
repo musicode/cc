@@ -8,54 +8,16 @@ define(function (require, exports, module) {
 
     /**
      *
-     * ## 结构
-     *
-     * 不支持原生 radio 和 checkbox，如下：
-     *
-     * <label>
-     *     <input type="radio" name="name" value="value" checked disabled />
-     *     text
-     * </label>
-     *
-     * 只支持模拟实现，如下：
-     *
-     * <label name="name" name="name" value="value" checked disabled>
-     *     <i class="icon icon-radio"></i>
-     *     text
-     * </label>
-     *
-     *
-     * 理由如下：
-     *
-     * 1. 原生 box 必须加 name，在设计表单验证时，表单字段的选择器是 [name]
-     *
-     *    通过选择器找到原生 box，一些定位逻辑其实不太好处理（因为它太小了）
-     *
-     * 2. 如果支持原生 box，那么 mainElement 是否要加这些 attribute 呢？
-     *
-     *    如果加，两个元素（mainElement 和 checkbox/radio）有相同的 attribute
-     *    如果不加，从 name 对应表单字段来讲，语义上不是很好
-     *
-     * 3. 从用户体验一致性来讲，肯定是模拟实现更好看啊！
-     *
-     *
-     *
-     * ## 特殊性
-     *
      * 单选框不同于复选框的一个地方是：
      *
      * 不能处理一个单选框，而是处理 name 属性相同的一组单选框
      *
      * 所以单选框必须和 BoxGroup 一起使用
-     *
-     *
      */
 
     var debounce = require('../function/debounce');
-    var setAttribute = require('../function/attr');
-
     var lifeCycle = require('../util/lifeCycle');
-
+    var common = require('./common');
 
     /**
      * @constructor
@@ -64,9 +26,11 @@ define(function (require, exports, module) {
      * @property {string=} options.mainTemplate 主元素若结构不完整，可传入模板
      * @property {string=} options.name
      * @property {string=} options.value
+     * @property {boolean=} options.checked 是否选中
+     * @property {boolean=} options.disabled 是否禁用
+     * @property {boolean=} options.toggle 是否可反选
      * @property {string=} options.checkedClass 选中的 className
      * @property {string=} options.disabledClass 禁用的 className
-     * @property {boolean=} options.toggle 是否可反选
      */
     function Box(options) {
         lifeCycle.init(this, options);
@@ -83,10 +47,7 @@ define(function (require, exports, module) {
         me.initStructure();
 
         var mainElement = me.option('mainElement');
-        var nativeElement = mainElement.find(':radio,:checkbox');
-        if (nativeElement.length > 0) {
-            throw new Error('[CC Error] form/Box mainElement 不能包含 radio 或 checkbox.');
-        }
+        var toggle = me.option('toggle');
 
         mainElement.on(
             'click' + me.namespace(),
@@ -100,7 +61,7 @@ define(function (require, exports, module) {
 
                     var checked = me.is('checked');
                     if (checked) {
-                        if (me.option('toggle')) {
+                        if (toggle) {
                             checked = false;
                         }
                     }
@@ -118,12 +79,13 @@ define(function (require, exports, module) {
 
 
         me.inner({
-            main: mainElement
+            main: mainElement,
+            native: common.findNative(me, toggle ? ':checkbox' : ':radio')
         });
 
         me.set({
             name: me.option('name'),
-            value: me.option('value')
+            value: me.option('value'),
         });
 
         me.state({
@@ -148,75 +110,24 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
 
-    function setBoxAttribute(instance, name, value) {
-
-        setAttribute(
-            instance.inner('main'),
-            name,
-            value
-        );
-
-    }
-
-    function getBoxAttribute(instance, name) {
-
-        return instance.inner('main').attr(name);
-
-    }
-
-    function setBoxClass(instance, name, action) {
-
-        var className = instance.option(name);
-        if (className) {
-            instance.inner('main')[ action ](
-                className
-            );
-        }
-
-    }
-
-
-
     Box.propertyUpdater = {
 
         name: function (name) {
-            setBoxAttribute(this, 'name', name);
+            common.prop(this, 'name', name);
         },
-
         value: function (value) {
-            setBoxAttribute(this, 'value', value);
-        }
+            common.prop(this, 'value', value);
+        },
 
     };
 
     Box.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-
-                name = getBoxAttribute(this, 'name');
-
-                if ($.type(name) !== 'string') {
-                    throw new Error('[CC Error] form/Box mainElement must have the name attribute.')
-                }
-
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         },
-
         value: function (value) {
-
-            switch ($.type(value)) {
-                case 'string':
-                case 'number':
-                    return value;
-            }
-
-            return getBoxAttribute(this, 'value') || '';
-
+            return common.validateValue(this, value);
         }
 
     };
@@ -225,24 +136,24 @@ define(function (require, exports, module) {
 
         checked: function (checked) {
 
-            setBoxAttribute(this, 'checked', checked);
+            common.prop(this, 'checked', checked);
 
-            setBoxClass(
+            common.setClass(
                 this,
                 'checkedClass',
-                checked ? 'addClass' : 'removeClass'
+                checked ? 'add' : 'remove'
             );
 
         },
 
         disabled: function (disabled) {
 
-            setBoxAttribute(this, 'disabled', disabled);
+            common.prop(this, 'disabled', disabled);
 
-            setBoxClass(
+            common.setClass(
                 this,
                 'disabledClass',
-                disabled ? 'addClass' : 'removeClass'
+                disabled ? 'add' : 'remove'
             );
 
         }
@@ -254,7 +165,7 @@ define(function (require, exports, module) {
         checked: function (checked) {
 
             if ($.type(checked) !== 'boolean') {
-                checked = getBoxAttribute(this, 'checked') === 'checked';
+                checked = common.prop(this, 'checked') === 'checked';
             }
 
             return checked;
@@ -264,7 +175,7 @@ define(function (require, exports, module) {
         disabled: function (disabled) {
 
             if ($.type(disabled) !== 'boolean') {
-                disabled = getBoxAttribute(this, 'disabled') === 'disabled';
+                disabled = common.prop(this, 'disabled') === 'disabled';
             }
 
             return disabled;

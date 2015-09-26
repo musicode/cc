@@ -35,6 +35,7 @@
 
                     window.inputText = new Text({
                         mainElement: $(':text'),
+                        placeholderNativeFirst: true
                         onpropertychange: function () {
                             console.log(this.get('value'));
                         }
@@ -42,6 +43,7 @@
 
                     window.textareaText = new Text({
                         mainElement: $('textarea'),
+                        placeholderNativeFirst: false,
                         onpropertychange: function () {
                             console.log(this.get('value'));
                         }

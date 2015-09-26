@@ -19,8 +19,8 @@ define(function (require, exports, module) {
      */
 
     var ComboBox = require('../ui/ComboBox');
-
     var lifeCycle = require('../util/lifeCycle');
+    var common = require('./common');
 
     /**
      * 下拉菜单
@@ -61,8 +61,9 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var mainElement = me.option('mainElement');
+        me.initStructure();
 
+        var mainElement = me.option('mainElement');
 
         var combobox = new ComboBox({
             mainElement: mainElement,
@@ -110,6 +111,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
+            native: common.findNative(me, 'input:hidden'),
             combobox: combobox
         });
 
@@ -140,9 +142,7 @@ define(function (require, exports, module) {
     Select.propertyUpdater = {
 
         name: function (name) {
-
-            this.inner('main').attr('name', name);
-
+            common.prop(this, 'name', name);
         }
 
     };
@@ -156,13 +156,9 @@ define(function (require, exports, module) {
 
         var valueChange = changes.value;
         if (valueChange) {
-
             var value = valueChange.newValue;
-
-            me.inner('main').attr('value', value);
-
+            common.prop(me, 'value', value);
             properties.value = value;
-
         }
 
         var dataChange = changes.data;
@@ -179,31 +175,11 @@ define(function (require, exports, module) {
     Select.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-
-                name = this.inner('main').attr('name');
-
-                if ($.type(name) !== 'string') {
-                    throw new Error('[CC Error] form/Select mainElement must have the name attribute.')
-                }
-
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         },
 
         value: function (value) {
-
-            switch ($.type(value)) {
-                case 'string':
-                case 'number':
-                    return value;
-            }
-
-            return '';
-
+            return common.validateValue(this, value);
         }
 
     };

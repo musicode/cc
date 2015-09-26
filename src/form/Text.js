@@ -10,7 +10,7 @@ define(function (require, exports) {
     var Placeholder = require('../helper/Placeholder');
 
     var lifeCycle = require('../util/lifeCycle');
-
+    var common = require('./common');
 
     /**
      * @constructor
@@ -37,10 +37,8 @@ define(function (require, exports) {
 
         var me = this;
 
-        var mainElement = me.option('mainElement');
-
         var placeholder = new Placeholder({
-            mainElement: mainElement,
+            mainElement: me.option('mainElement'),
             nativeFirst: me.option('placeholderNativeFirst'),
             placeholderSelector: me.option('placeholderSelector'),
             placeholderTemplate: me.option('placeholderTemplate'),
@@ -51,11 +49,7 @@ define(function (require, exports) {
             }
         });
 
-        // mainElement 可能被 Placeholder 改写过
-        mainElement = placeholder.inner('main');
-
         var inputElement = placeholder.inner('input');
-        inputElement.removeAttr('name');
 
         var input = new Input({
             mainElement: inputElement,
@@ -69,7 +63,9 @@ define(function (require, exports) {
         });
 
         me.inner({
-            main: mainElement,
+            // mainElement 可能被 Placeholder 改写过
+            main: placeholder.inner('main'),
+            native: inputElement,
             input: input,
             placeholder: placeholder
         });
@@ -91,30 +87,22 @@ define(function (require, exports) {
     lifeCycle.extend(proto);
 
 
-    Text.defaultOptions = {
-        placeholderNativeFirst: true
-    };
+    Text.defaultOptions = { };
 
 
     Text.propertyUpdater = {
 
         name: function (name) {
-
-            this.inner('main').attr('name', name);
-
+            common.prop(this, 'name', name);
         },
 
         value: function (value) {
-
             this.inner('input').set('value', value);
             this.inner('placeholder').render();
-
         },
 
         placeholder: function (placeholder) {
-
             this.inner('placeholder').set('value', placeholder);
-
         }
 
     };
@@ -122,19 +110,7 @@ define(function (require, exports) {
     Text.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-
-                name = this.inner('main').attr('name');
-
-                if ($.type(name) !== 'string') {
-                    throw new Error('[CC Error] form/Text mainElement must have the name attribute.')
-                }
-
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         }
 
     };

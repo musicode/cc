@@ -527,10 +527,14 @@ define(function (require, exports, module) {
 
         $.each(
             proto,
-            function (name) {
+            function (name, method) {
 
-                var _index = name.indexOf('_');
-                if (_index === 0 || _index === name.length - 1) {
+                var index = name.indexOf('_');
+
+                if (!$.isFunction(method)
+                    || index === 0
+                    || index === name.length - 1
+                ) {
                     return;
                 }
 

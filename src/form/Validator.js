@@ -78,12 +78,6 @@ define(function (require, exports, module) {
      * }
      *
      *
-     * 表单一定会有 <input>，它有一个标准 attribute 叫做 name
-     * 对于封装过的表单字段组件，也许是多个标签组合而成，比如 <div class="select"><input type="hidden" /></div>
-     *
-     * 为了和 <input> 这种标准组件保持一致，选择器都使用 [name]，否则一个用 data-name，另一个用 name 会很奇怪
-     *
-     * 也就是说，具有 name attribute 的元素必须要有 value attribute，否则无法验证
      */
 
     /**
@@ -174,12 +168,12 @@ define(function (require, exports, module) {
 
                     var target = $(e.target);
 
-                    var name = target.attr('name');
+                    var name = target.prop('name');
                     if (!name) {
                         // 便于封装组件
                         target = target.find('[name]');
                         if (target.length === 1) {
-                            name = target.attr('name');
+                            name = target.prop('name');
                         }
                     }
 

@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var createValues = require('../function/values');
     var lifeCycle = require('../util/lifeCycle');
+    var common = require('./common');
     var Box = require('./Box');
 
     /**
@@ -90,6 +91,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
+            native: common.findNative(me, 'input:hidden'),
             boxes: boxes
         });
 
@@ -120,11 +122,11 @@ define(function (require, exports, module) {
     BoxGroup.propertyUpdater = {
 
         name: function (name) {
-            this.inner('main').attr('name', name);
+            common.prop(this, 'name', name);
         },
 
         value: function (value) {
-            this.inner('main').attr('value', value);
+            common.prop(this, 'value', value);
         }
 
     };
@@ -132,28 +134,15 @@ define(function (require, exports, module) {
     BoxGroup.propertyValidator = {
 
         name: function (name) {
-
-            if ($.type(name) !== 'string') {
-                name = this.inner('main').attr('name');
-                if (name == null) {
-                    throw new Error('[CC Error] BoxGroup name is missing.');
-                }
-            }
-
-            return name;
-
+            return common.validateName(this, name);
         },
 
         value: function (value) {
 
-            var type = $.type(value);
-            if (type !== 'string' && type !== 'number') {
-                value = '';
-            }
-
             var me = this;
+
             var values = createValues(
-                value,
+                common.validateValue(me, value),
                 me.option('multiple'),
                 me.option('toggle'),
                 function (a, b) {
