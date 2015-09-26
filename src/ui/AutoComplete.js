@@ -30,7 +30,6 @@ define(function (require, exports, module) {
      * @property {string=} options.itemActiveClass 菜单项 active 时的 className
      *
      * @property {number=} options.interval 长按上下键遍历的等待间隔时间，默认 60ms
-     * @property {boolean=} options.cache 是否开启缓存
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框，默认包含
      * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启，默认不开启
      *
@@ -153,40 +152,22 @@ define(function (require, exports, module) {
             }
         };
 
-        var cache;
-
-        if (me.option('cache')) {
-            cache = { };
-        }
-
         var suggest = function () {
-
-            var query = $.trim(iteratorData[ 0 ].data.text);
-
-            if (!cache || !cache[ query ]) {
-                me.execute(
-                    'loadData',
-                    [
-                        query,
-                        function (error, data) {
-
-                            if (data) {
-                                me.set('data', data);
-                                me.open();
-                            }
-                            else {
-                                me.close();
-                            }
-
+            me.execute(
+                'loadData',
+                [
+                    $.trim(iteratorData[ 0 ].data.text),
+                    function (error, data) {
+                        if (data) {
+                            me.set('data', data);
+                            me.open();
                         }
-                    ]
-                );
-            }
-            else {
-                me.set('data', cache[ query ]);
-                me.open();
-            }
-
+                        else {
+                            me.close();
+                        }
+                    }
+                ]
+            );
         };
 
         var input = new Input({
@@ -490,7 +471,6 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
     AutoComplete.defaultOptions = {
-        cache: true,
         interval: 60,
         includeInput: true,
         itemSelector: 'li',

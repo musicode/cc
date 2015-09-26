@@ -374,6 +374,22 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 在主元素中查找子元素
+         *
+         * @param {string} selector
+         * @return {jQuery?}
+         */
+        find: function (selector) {
+            var mainElement = this.inner('main');
+            if (mainElement) {
+                var result = mainElement.find(selector);
+                if (result.length) {
+                    return result;
+                }
+            }
+        },
+
+        /**
          * 把组件元素加到 target 内部结束位置
          */
         appendTo: function (target) {

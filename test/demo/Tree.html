@@ -77,39 +77,39 @@
                     data: [
                         {
                             id: '1-0',
-                            text: '1-0',
+                            name: '1-0',
                             children: [
                                 {
                                     id: '1-1',
-                                    text: '1-1'
+                                    name: '1-1'
                                 },
                                 {
                                     id: '1-2',
-                                    text: '1-2',
+                                    name: '1-2',
                                     children: [
                                         {
                                             id: '1-2-1',
-                                            text: '1-2-1'
+                                            name: '1-2-1'
                                         },
                                         {
                                             id: '1-2-2',
-                                            text: '1-2-2',
+                                            name: '1-2-2',
                                             children: [
                                                 {
                                                     id: '1-2-2-1',
-                                                    text: '1-2-2-1'
+                                                    name: '1-2-2-1'
                                                 },
                                                 {
                                                     id: '1-2-2-2',
-                                                    text: '1-2-2-2'
+                                                    name: '1-2-2-2'
                                                 },
                                                 {
                                                     id: '1-2-2-3',
-                                                    text: '1-2-2-3'
+                                                    name: '1-2-2-3'
                                                 },
                                                 {
                                                     id: '1-2-2-4',
-                                                    text: '1-2-2-4'
+                                                    name: '1-2-2-4'
                                                 },
                                             ]
                                         }
@@ -117,33 +117,33 @@
                                 },
                                 {
                                     id: '1-3',
-                                    text: '1-3'
+                                    name: '1-3'
                                 },
                                 {
                                     id: '1-4',
-                                    text: '1-4'
+                                    name: '1-4'
                                 }
                             ]
                         },
                         {
                             id: '2-0',
-                            text: '2-0',
+                            name: '2-0',
                             children: [
                                 {
                                     id: '2-1',
-                                    text: '2-1'
+                                    name: '2-1'
                                 },
                                 {
                                     id: '2-2',
-                                    text: '2-2'
+                                    name: '2-2'
                                 },
                                 {
                                     id: '2-3',
-                                    text: '2-3'
+                                    name: '2-3'
                                 },
                                 {
                                     id: '2-4',
-                                    text: '2-4'
+                                    name: '2-4'
                                 }
                             ]
                         }
@@ -177,7 +177,7 @@
                                 + ' data-id="${node.id}" data-level="${cache.level}">'
                                 +     '<div class="node">'
                                 +         '<i class="glyphicon glyphicon-chevron-up"></i>'
-                                +         '<label>${node.text}</label>'
+                                +         '<label>${node.name}</label>'
                                 +     '</div>'
                                 +     '<!-- if: ${node.children} -->'
                                 +     '<div class="tree sub-tree">${childrenView|raw}</div>'
@@ -200,7 +200,7 @@
                                     [
                                         {
                                             id: random,
-                                            text: random
+                                            name: random
                                         }
                                     ]
                                 );
@@ -229,7 +229,7 @@
                         var nodeId = data.node.id;
 
                         if (nodeId) {
-                            var node = tree.find(nodeId);
+                            var node = tree.grep(nodeId);
                             if (node) {
 
                                 var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
@@ -269,7 +269,7 @@
 
                         var nodeId = data.node.id;
                         if (nodeId) {
-                            var node = tree.find(nodeId);
+                            var node = tree.grep(nodeId);
                             if (node) {
                                 var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
                                 var toggleElement = nodeElement.find('.glyphicon-chevron-up').eq(0);
@@ -290,7 +290,7 @@
 
                         var nodeId = data.node.id;
                         if (nodeId) {
-                            var node = tree.find(nodeId);
+                            var node = tree.grep(nodeId);
                             if (node) {
                                 var nodeElement = mainElement.find('[data-id="' + nodeId + '"]');
                                 var toggleElement = nodeElement.find('.glyphicon-chevron-down').eq(0);

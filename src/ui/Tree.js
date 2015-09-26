@@ -30,7 +30,7 @@ define(function (require, exports, module) {
      * ```
      * {
      *     id: '',
-     *     text: '',
+     *     name: '',
      *     children: [],
      *
      *     为了方便渲染，在交互过程中产生的状态也会记录到这里，renderTemplate 可以根据这些状态去渲染节点
@@ -46,11 +46,11 @@ define(function (require, exports, module) {
      *     data: [
      *         {
      *             id: '',
-     *             text: '',
+     *             name: '',
      *             children: [
      *                 {
      *                     id: '',
-     *                     text: ''
+     *                     name: ''
      *                 }
      *             ]
      *         }
@@ -64,7 +64,7 @@ define(function (require, exports, module) {
     /**
      *
      * @param {Object} options
-     *
+     * @property {jQuery} options.mainElement
      * @property {string} options.value 选中的节点，值是节点 id
      * @property {Object} options.data 节点数据
      *
@@ -322,7 +322,7 @@ define(function (require, exports, module) {
      * @param {string} id
      * @return {Object?}
      */
-    proto.find = function (id) {
+    proto.grep = function (id) {
 
         var result;
 
@@ -351,6 +351,17 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 取消选中节点
+     *
+     * @param {string} id
+     */
+    proto.unselect = function (id) {
+
+        this.set('value', '');
+
+    };
+
+    /**
      * 展开节点
      *
      * @param {string} id
@@ -359,7 +370,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.find(id).expanded = true;
+        me.grep(id).expanded = true;
 
         findNodeElement(me, id)
             .removeClass(
@@ -380,7 +391,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.find(id).expanded = false;
+        me.grep(id).expanded = false;
 
         findNodeElement(me, id)
             .removeClass(
@@ -398,7 +409,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var nodeData = me.find(id);
+        var nodeData = me.grep(id);
         if (nodeData && findNodeElement(me, id)) {
             return {
                 node: nodeData
@@ -415,7 +426,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var nodeData = me.find(id);
+            var nodeData = me.grep(id);
             if (nodeData && findNodeElement(me, id)) {
                 return {
                     node: nodeData
@@ -431,14 +442,14 @@ define(function (require, exports, module) {
     proto.expand_ =
     proto.collapse_ = function (id) {
         return {
-            node: this.find(id)
+            node: this.grep(id)
         };
     };
 
     proto.render_ = function (id) {
         if (id != null) {
             return {
-                node: this.find(id)
+                node: this.grep(id)
             };
         }
     };
@@ -478,7 +489,7 @@ define(function (require, exports, module) {
             var nodeElement;
 
             if (oldValue) {
-                nodeData = me.find(oldValue);
+                nodeData = me.grep(oldValue);
                 nodeElement = findNodeElement(me, oldValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = false;
@@ -487,7 +498,7 @@ define(function (require, exports, module) {
             }
 
             if (newValue) {
-                nodeData = me.find(newValue);
+                nodeData = me.grep(newValue);
                 nodeElement = findNodeElement(me, newValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = true;

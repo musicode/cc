@@ -66,9 +66,6 @@ define(function (require, exports, module) {
         me.initStructure();
 
         var mainElement = me.option('mainElement');
-        var inputElement = mainElement.find(
-            me.option('inputSelector')
-        );
         var calendarElement = mainElement.find(
             me.option('calendarSelector')
         );
@@ -101,8 +98,9 @@ define(function (require, exports, module) {
 
 
         var popup = new Popup({
-            triggerElement: inputElement,
+            triggerElement: mainElement,
             layerElement: calendarElement,
+            triggerSelector: me.option('triggerSelector'),
             showLayerTrigger: me.option('showCalendarTrigger'),
             showLayerDelay: me.option('showCalendarDelay'),
             hideLayerTrigger: me.option('hideCalendarTrigger'),
@@ -130,6 +128,10 @@ define(function (require, exports, module) {
                 me.emit(e);
             }
         };
+
+        var inputElement = mainElement.find(
+            me.option('inputSelector')
+        );
 
         popup
         .before('open', dispatchEvent)
