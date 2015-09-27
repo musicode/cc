@@ -453,13 +453,32 @@ define(function (require, exports, module) {
         },
 
         /**
-         * options 只提供单个读取，不支持改写
+         * option 的 getter/setter
          *
          * @param {string} name
-         * @return {*}
+         * @param {*?} value
+         * @return {*?}
          */
-        option: function (name) {
-            return this.options[ name ];
+        option: function (name, value) {
+
+            var me = this;
+
+            if (arguments.length === 1 && $.type(name) === 'string') {
+                return me.options[ name ];
+            }
+            else {
+
+                if ($.isPlainObject(name)) {
+                    $.each(name, function (name, value) {
+                        me.option(name, value);
+                    });
+                    return;
+                }
+
+                me.options[ name ] = value;
+
+            }
+
         },
 
         /**

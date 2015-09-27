@@ -1,3 +1,7 @@
+/**
+ * file 表单组件的通用逻辑
+ * @author musicode
+ */
 define(function (require, exports, module) {
 
     'use strict';
