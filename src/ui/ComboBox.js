@@ -125,8 +125,11 @@ define(function (require, exports, module) {
                 var value = $(this).attr(ATTR_VALUE);
 
                 me.set('value', value, { action: 'click' });
-
                 me.close();
+
+                e.type = 'select';
+
+                me.emit(e);
 
             }
         );
@@ -206,16 +209,7 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    ComboBox.defaultOptions = {
-        showMenuTrigger: 'click',
-        hideMenuTrigger: 'click',
-        showMenuAnimate: function (options) {
-            options.menuElement.show();
-        },
-        hideMenuAnimate: function (options) {
-            options.menuElement.hide();
-        }
-    };
+    ComboBox.defaultOptions = { };
 
     ComboBox.propertyUpdater = { };
     ComboBox.propertyUpdater.data =
@@ -240,7 +234,7 @@ define(function (require, exports, module) {
 
         if (value !== null) {
             item = findItem(menuElement, '[' + ATTR_VALUE + '=' + value + ']');
-            if (itemActiveClass) {
+            if (item && itemActiveClass) {
                 item.element.addClass(itemActiveClass);
             }
         }
@@ -270,12 +264,6 @@ define(function (require, exports, module) {
                     value = itemData.value;
                 }
             }
-            else {
-                itemSelector = '[' + ATTR_VALUE + '="' + value + '"]';
-                if (!findItem(menuElement, itemSelector)) {
-                    value = null;
-                }
-            }
 
             return value;
 
@@ -286,9 +274,14 @@ define(function (require, exports, module) {
 
     function findItem(menuElement, itemSelector) {
 
-        var target = menuElement.find(itemSelector);
+        var target;
 
-        if (target.length === 1) {
+        try {
+            target = menuElement.find(itemSelector);
+        }
+        catch (e) { }
+
+        if (target && target.length === 1) {
 
             var data = target.data();
 

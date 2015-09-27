@@ -71,20 +71,21 @@ define(function (require) {
         mainElement.on(
             clickType,
             '[' + ATTR_VALUE + ']',
-            function () {
+            function (e) {
 
                 var itemValue = $(this).attr(ATTR_VALUE);
 
                 var oldValue = me.get('value');
                 var newValue = me.inner('processValue')(itemValue, true);
 
-                // 长度相等是替换，也是 select
-                me.emit(
-                    newValue.length < oldValue.length ? 'unselect' : 'select',
-                    {
-                        value: itemValue
-                    }
-                );
+                var oldCount = split(oldValue, ',').length;
+                var newCount = split(newValue, ',').length;
+
+                e.type = newCount < oldCount
+                       ? 'unselect'
+                       : 'select';
+
+                me.emit(e, { value: itemValue });
 
                 me.set('value', newValue, { action: 'click' });
 

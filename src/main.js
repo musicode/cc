@@ -91,7 +91,6 @@ define(function (require, exports, module) {
 
     require('./util/browser');
     require('./util/cookie');
-    require('./util/date');
     require('./util/detection');
     require('./util/etpl');
     require('./util/FiniteArray');

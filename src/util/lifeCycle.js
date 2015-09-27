@@ -43,12 +43,27 @@ define(function (require, exports, module) {
                     return function (name, change) {
                         var fn = updater[ name ];
                         if ($.isFunction(fn)) {
-                            return fn.call(
-                                instance,
-                                change.newValue,
-                                change.oldValue,
-                                changes
-                            );
+
+                            var result;
+
+                            try {
+                                result = fn.call(
+                                    instance,
+                                    change.newValue,
+                                    change.oldValue,
+                                    changes
+                                );
+                            }
+                            catch (e) {
+                                instance.inner({
+                                    propertyChanges: null,
+                                    stateChanges: null
+                                });
+                                throw e;
+                            }
+
+                            return result;
+
                         }
                     };
                 };
