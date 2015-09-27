@@ -49,7 +49,7 @@ define(function (require, exports, module) {
      * @property {string=} options.nextSelector 下个月的按钮选择器
      *
      * @property {Function=} options.render 渲染模板函数
-     * @property {Function=} options.parseDate 把 value 解析成 Date
+     * @property {Function=} options.parse 把 value 解析成 Date
      */
     function Date(options) {
         lifeCycle.init(this, options);
@@ -251,7 +251,7 @@ define(function (require, exports, module) {
                 $.each(
                     split(value, ','),
                     function (index, value) {
-                        if (me.execute('parseDate', value)) {
+                        if (me.execute('parse', value)) {
                             list.push(value);
                         }
                     }

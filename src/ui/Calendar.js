@@ -49,7 +49,7 @@ define(function (require) {
      * @property {string} options.nextSelector 下月/下周 选择器
      *
      * @property {Function} options.render
-     * @property {Function=} options.parseDate 把字符串类型的 value 解析成 Date 类型
+     * @property {Function=} options.parse 把字符串类型的 value 解析成 Date 类型
      *
      */
     function Calendar(options) {
@@ -232,7 +232,7 @@ define(function (require) {
                 split(me.get('value'), ','),
                 function (literal) {
                     if (literal) {
-                        var date = me.execute('parseDate', literal);
+                        var date = me.execute('parse', literal);
                         if (date) {
                             return normalizeDate(date);
                         }
@@ -301,7 +301,7 @@ define(function (require) {
         multiple: false,
         stable: true,
         itemActiveClass: 'active',
-        parseDate: parseDate
+        parse: parseDate
     };
 
 

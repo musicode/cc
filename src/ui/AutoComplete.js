@@ -43,7 +43,7 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.render 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
      *
-     * @property {Function} options.load 加载数据，可以是远程或本地数据
+     * @property {Function} options.load 加载数据，可以是远程或本地数据，方法签名是 (query, callback)
      *
      */
     function AutoComplete(options) {
