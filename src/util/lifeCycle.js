@@ -437,7 +437,7 @@ define(function (require, exports, module) {
             var fn = name;
 
             if ($.type(name) === 'string') {
-                fn = me[ name ] || me.option(name);
+                fn = me.option(name);
             }
 
             if ($.isFunction(fn)) {
