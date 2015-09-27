@@ -14,8 +14,15 @@ define(function (require) {
     var lpad = require('../function/lpad');
     var split = require('../function/split');
     var createValues = require('../function/values');
+    var weekOffset = require('../function/weekOffset');
+    var monthOffset = require('../function/monthOffset');
+    var weekFirst = require('../function/weekFirst');
+    var weekLast = require('../function/weekLast');
+    var monthFirst = require('../function/monthFirst');
+    var monthLast = require('../function/monthLast');
+    var parseDate = require('../function/parseDate');
+    var simplifyDate = require('../function/simplifyDate');
 
-    var dateUtil = require('../util/date');
     var lifeCycle = require('../util/lifeCycle');
 
     /**
@@ -124,8 +131,8 @@ define(function (require) {
         var date = me.get('date');
 
         date = me.option('mode') === MODE_WEEK
-             ? dateUtil.prevWeek(date)
-             : dateUtil.prevMonth(date);
+             ? weekOffset(date, -1)
+             : monthOffset(date, -1);
 
         me.set({
             date: date,
@@ -140,8 +147,8 @@ define(function (require) {
         var date = me.get('date');
 
         date = me.option('mode') === MODE_WEEK
-             ? dateUtil.nextWeek(date)
-             : dateUtil.nextMonth(date);
+             ? weekOffset(date, 1)
+             : monthOffset(date, 1);
 
         me.set({
             date: date,
@@ -164,8 +171,8 @@ define(function (require) {
             return false;
         }
 
-        return date >= dateUtil.parse(data.start)
-            && date < (dateUtil.parse(data.end).getTime() + dateUtil.DAY);
+        return date >= parseDate(data.start)
+            && date < (parseDate(data.end).getTime() + DAY);
 
     };
 
@@ -188,17 +195,17 @@ define(function (require) {
 
         if (isMonthMode) {
 
-            var monthFirstDay = dateUtil.getMonthFirstDay(date);
-            var monthLastDay = dateUtil.getMonthLastDay(date);
+            var monthFirstDay = monthFirst(date);
+            var monthLastDay = monthLast(date);
 
-            weekFirstDay = dateUtil.getWeekFirstDay(monthFirstDay, firstDay);
-            weekLastDay = dateUtil.getWeekLastDay(monthLastDay, firstDay);
+            weekFirstDay = weekFirst(monthFirstDay, firstDay);
+            weekLastDay = weekLast(monthLastDay, firstDay);
 
         }
         else {
 
-            weekFirstDay = dateUtil.getWeekFirstDay(date, firstDay);
-            weekLastDay = dateUtil.getWeekLastDay(date, firstDay);
+            weekFirstDay = weekFirst(date, firstDay);
+            weekLastDay = weekLast(date, firstDay);
 
         }
 
@@ -234,7 +241,7 @@ define(function (require) {
         );
 
         return $.extend(
-            dateUtil.simplify(date),
+            simplifyDate(date),
             {
                 start: list[ 0 ],
                 end: list[ list.length - 1 ],
@@ -293,7 +300,7 @@ define(function (require) {
         multiple: false,
         stable: true,
         itemActiveClass: 'active',
-        parseDate: dateUtil.parse
+        parseDate: parseDate
     };
 
 
@@ -393,13 +400,15 @@ define(function (require) {
         }
     };
 
+    var DAY = 24 * 60 * 60 * 1000;
+
     /**
      * 6 周才能稳定（跨度需要减一天，所以是 41 天）
      *
      * @inner
      * @type {number}
      */
-    var stableDuration = 41 * dateUtil.DAY;
+    var stableDuration = 41 * DAY;
 
     /**
      * 获得渲染模板的数据
@@ -414,9 +423,9 @@ define(function (require) {
 
         var data = [ ];
 
-        for (var time = start, date, item; time <= end; time += dateUtil.DAY) {
+        for (var time = start, date, item; time <= end; time += DAY) {
 
-            item = dateUtil.simplify(time);
+            item = simplifyDate(time);
 
             item.month = lpad(item.month);
             item.date = lpad(item.date);
