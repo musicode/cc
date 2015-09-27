@@ -82,7 +82,7 @@ define(function (require, exports, module) {
      * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
      *
      * @property {jQuery=} options.mainElement 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
-     *                                          简单场景可用 mainTemplate 配置搞定
+     *                                         简单场景可用 mainTemplate 配置搞定
      * @property {string=} options.mainTemplate 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
      *
      * @property {string=} options.placement 提示元素出现的位置
@@ -92,7 +92,7 @@ define(function (require, exports, module) {
      * @property {string=} options.maxWidth 提示元素的最大宽度
      * @property {boolean=} options.share 是否共享一个元素，默认是 true
      *
-     * @property {Function} options.updateContent 更新提示浮层的内容
+     * @property {Function} options.updateMainElement 更新提示浮层的内容
      *
      * @property {string=} options.showTrigger 显示的触发方式
      * @property {number=} options.showDelay 显示延时
@@ -293,7 +293,7 @@ define(function (require, exports, module) {
             };
 
             var promise = me.execute(
-                'updateContent',
+                'updateMainElement',
                 {
                     mainElement: mainElement,
                     triggerElement: sourceElement
@@ -468,7 +468,7 @@ define(function (require, exports, module) {
         gapX: 10,
         gapY: 10,
 
-        updateContent: function (options) {
+        updateMainElement: function (options) {
 
             options.mainElement.html(
                 options.triggerElement.attr('data-title')

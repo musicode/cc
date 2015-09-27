@@ -8,7 +8,7 @@
 
 ## 为什么基于 jQuery
 
-基于 jQuery 可以节省很多代码，比如 Event、Deferred，直接拿来使用即可，而且非常好用。
+基于 jQuery 可以节省很多代码，比如 **Event**、**Deferred**，jQuery 的事件模块做的很好用，比如模拟事件冒泡、自定义事件、命名空间等，如果自己实现一套，代码量会增加很多。
 
 如果你非常介意 jQuery 的体积也没关系，可以了解一下我的思路。
 
@@ -32,7 +32,7 @@
 
 为了适应尽可能多的使用场景，**cc** 在设计之初，定位的用户不是前端小白，而是具有一定前端基础的开发者。
 
-介于我非常不喜欢写文档，因此不论在代码组织，或是 options 字段设计上，都尽可能地简单直白，一目了然（如果你觉得哪里不够直白，提 issue 我改！）。
+介于我非常不喜欢写文档，因此不论在代码组织，或是 options 字段设计上，都尽可能地简单直白，一目了然（如果你觉得哪里不够简单，或有更好的实现方式，提 issue 我改啊！）。
 
 ## 超细粒度
 
@@ -42,14 +42,14 @@
 
 **cc** 的早期版本不支持双向绑定，在我接手一个管理系统之后，意识到通过适当的改造，让 **cc** 支持双向绑定，便可以覆盖前端绝大部分的使用场景。
 
-**Vue** 在 <input> 元素上使用 `v-model` 指令可以创建双向绑定，因此在 form/* 组件中，所有组件必须包含如下元素中的一种：
+比如 **Vue** 在 <input> 元素上使用 `v-model` 指令可以创建双向绑定，因此在 `cc/form/*` ，所有表单组件必须包含如下元素中的一种：
 
 - <input type="*" />
 - <textrea></textarea>
 
 在用户交互中产生的 value 变化，组件会自动同步到表单元素的 value 属性，从而支持 mvvm 框架的指令。
 
-下拉菜单的例子如下：
+看一个下拉菜单的例子：
 
 ``` 
 <div class="dropdown">
@@ -66,17 +66,29 @@
 
 ``` javascript
 {
-    // 主元素，即组件最外层容器元素
+    // 主元素，即组件最外层容器元素，或者说根元素
     mainElement: {jQuery},
-    // 主元素模板
+    // 主元素模板，如果是后端渲染出来的模板，即组件结构已完整，则不用这个选项
     mainTemplate: {string},
+    // 当传入 mainTemplate 选项时，可以配置 replace，默认是 false
     // true 表示 mainTemplate 创建的元素替换 mainElement
     // false 表示 mainTemplate 赋值给 mainElement.innerHTML
     replace: {boolean},
-    // 是否共享主元素，比如 Tooltip 应该设为 true，这样可以节省很多 DOM
-    share: {boolean},
     // 主元素是否是 body 的第一级子元素，比如 Dialog 应该设为 true，定位才不会错
     underBody: {boolean},
+    // 是否共享主元素
+    // 共享主元素是为了减少 DOM 数量，提升性能
+    // 比如 Tooltip 应该设为 true，这样可以节省很多 DOM
+    // 因为多个实例共享一个主元素，那么就必须提供根据不同的组件实例动态更新主元素的方法
+    share: {boolean},
+    // 更新主元素
+    updateMainElement: function (options) {
+        // options.mainElement 必定存在
+        // 其他数据项则取决于组件的特点，比如 Tooltip 会传入 triggerElement
+        options.mainElement.html(
+            options.triggerElement.attr('data-title')
+        );
+    },
     // 配置模板引擎
     renderTemplate: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl
@@ -92,6 +104,21 @@
         post(function (data) {
             callback(null, data);
         });
+    },
+
+    // 交互方式配置通常由三项组成
+    // 比如点击一个按钮弹出一个浮层，对应配置如下：
+    // {
+    //     showTrigger: 'click',
+    //     showDelay: 100,  // delay 只有当 trigger 为 enter、leave 时可用
+    //     showAnimate: function (options) {
+    //         
+    //     }
+    // }
+    xxTrigger: 'click,enter,leave,focus,blur,context',
+    xxDelay: {number},
+    xxAnimate: function (options) {
+
     }
 }
 ```
