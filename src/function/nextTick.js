@@ -34,7 +34,7 @@ define(function (require, exports, module) {
             observer.observe(element, { attributes: true });
 
             result = function (fn) {
-                callbacks.push(fn);
+                callbacks.add(fn);
                 element.setAttribute(FLAG, $.now());
             };
         }

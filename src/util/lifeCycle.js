@@ -10,19 +10,20 @@ define(function (require, exports, module) {
     var around = require('../function/around');
     var extend = require('../function/extend');
     var ucFirst = require('../function/ucFirst');
+    var nextTick = require('../function/nextTick');
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
 
-    var createTimer = require('./timer');
-    var instance = require('./instance');
+    var body = require('./instance').body;
+
+    var instances = { };
 
     /**
      * 为了更好的性能，以及彻底解决初始化触发 change 事件带来的同步问题
      * 新版把 change 事件做成了单独时间片触发
      *
      */
-
-    var instances = { };
+    var hasUpdateTimer;
 
     /**
      * 批量更新的 timer
@@ -31,100 +32,82 @@ define(function (require, exports, module) {
      *
      * @inner
      */
-    var updateTimer = createTimer(
-        function () {
-            $.each(instances, function (id, instance) {
+    function updateAsync() {
+        $.each(instances, function (id, instance) {
 
-                if (!instance.$) {
-                    return;
-                }
+            hasUpdateTimer = false;
 
-                var createUpdater = function (updater, changes) {
-                    return function (name, change) {
-                        var fn = updater[ name ];
-                        if ($.isFunction(fn)) {
+            if (!instance.$) {
+                return;
+            }
 
-                            var result;
-
-                            try {
-                                result = fn.call(
-                                    instance,
-                                    change.newValue,
-                                    change.oldValue,
-                                    changes
-                                );
-                            }
-                            catch (e) {
-                                instance.inner({
-                                    propertyChanges: null,
-                                    stateChanges: null
-                                });
-                                throw e;
-                            }
-
-                            return result;
-
-                        }
-                    };
+            var createUpdater = function (updater, changes) {
+                return function (name, change) {
+                    var fn = updater[ name ];
+                    if ($.isFunction(fn)) {
+                        return fn.call(
+                            instance,
+                            change.newValue,
+                            change.oldValue,
+                            changes
+                        );
+                    }
                 };
+            };
 
-                var staticUpdater;
-                var instanceUpdater;
+            var staticUpdater;
+            var instanceUpdater;
 
-                var propertyChanges = instance.inner('propertyChanges');
-                if (propertyChanges) {
+            var propertyChanges = instance.inner('propertyChanges');
+            if (propertyChanges) {
 
-                    staticUpdater = instance.constructor.propertyUpdater;
-                    if (staticUpdater) {
-                        $.each(
-                            propertyChanges,
-                            createUpdater(staticUpdater, propertyChanges)
-                        );
-                    }
-
-                    instanceUpdater = instance.option('propertyChange');
-                    if (instanceUpdater) {
-                        $.each(
-                            propertyChanges,
-                            createUpdater(instanceUpdater, propertyChanges)
-                        );
-                    }
-
-                    instance.emit('propertychange', propertyChanges);
-                    instance.inner('propertyChanges', null);
-
+                staticUpdater = instance.constructor.propertyUpdater;
+                if (staticUpdater) {
+                    $.each(
+                        propertyChanges,
+                        createUpdater(staticUpdater, propertyChanges)
+                    );
                 }
 
-                var stateChanges = instance.inner('stateChanges');
-                if (stateChanges) {
-
-                    staticUpdater = instance.constructor.stateUpdater;
-                    if (staticUpdater) {
-                        $.each(
-                            stateChanges,
-                            createUpdater(staticUpdater, stateChanges)
-                        );
-                    }
-
-                    instanceUpdater = instance.option('stateChange');
-                    if (instanceUpdater) {
-                        $.each(
-                            stateChanges,
-                            createUpdater(instanceUpdater, stateChanges)
-                        );
-                    }
-
-                    instance.emit('statechange', stateChanges);
-                    instance.inner('stateChanges', null);
-
+                instanceUpdater = instance.option('propertyChange');
+                if (instanceUpdater) {
+                    $.each(
+                        propertyChanges,
+                        createUpdater(instanceUpdater, propertyChanges)
+                    );
                 }
 
-            });
-        },
-        0
-    );
+                instance.emit('propertychange', propertyChanges);
+                instance.inner('propertyChanges', null);
 
-    updateTimer.start();
+            }
+
+            var stateChanges = instance.inner('stateChanges');
+            if (stateChanges) {
+
+                staticUpdater = instance.constructor.stateUpdater;
+                if (staticUpdater) {
+                    $.each(
+                        stateChanges,
+                        createUpdater(staticUpdater, stateChanges)
+                    );
+                }
+
+                instanceUpdater = instance.option('stateChange');
+                if (instanceUpdater) {
+                    $.each(
+                        stateChanges,
+                        createUpdater(instanceUpdater, stateChanges)
+                    );
+                }
+
+                instance.emit('statechange', stateChanges);
+                instance.inner('stateChanges', null);
+
+            }
+
+        });
+    }
 
     /**
      * 创建 jQuery Event 对象
@@ -222,6 +205,11 @@ define(function (require, exports, module) {
 
             changes[ name ] = record;
 
+            if (!hasUpdateTimer) {
+                hasUpdateTimer = true;
+                nextTick(updateAsync);
+            }
+
         };
 
     }
@@ -287,7 +275,7 @@ define(function (require, exports, module) {
             if (me.inner('underBody')
                 && !offsetParent(mainElement).is('body')
             ) {
-                instance.body.append(mainElement);
+                body.append(mainElement);
             }
 
             // 只能执行一次
@@ -689,7 +677,7 @@ define(function (require, exports, module) {
 
             // 因为调用 dispose 需要发事件
             // 用延时确保在最后执行才不会报错
-            setTimeout(function () {
+            nextTick(function () {
 
                 instance.properties =
                 instance.options =
