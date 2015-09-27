@@ -42,15 +42,7 @@ define(function (require, exports, module) {
         }
     );
 
-    /**
-     * 是否支持
-     *
-     * @inner
-     * @type {boolean}
-     */
-    var support = prefix != null;
-
-    exports.support = support;
+    exports.support = prefix != null;
 
     exports.hidden = function () {
         return document[camelize(prefix, 'hidden')];

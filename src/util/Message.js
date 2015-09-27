@@ -55,7 +55,7 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {string} options.agentUrl 代理页面，必须和最终产品页域名保持一致
      * @property {number=} options.interval 间隔时间，默认 100 ms 发送一次信息
-     * @property {Function():Object} options.reader 读取当前页面信息的函数
+     * @property {Function} options.reader 读取当前页面信息的函数
      */
     function Message(options) {
         $.extend(this, Message.defaultOptions, options);
@@ -66,9 +66,6 @@ define(function (require, exports, module) {
 
     proto.type = 'Message';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
@@ -88,9 +85,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 发送信息
-     */
     proto.send = $.isFunction(window.postMessage)
         && 'onmessage' in window
 
@@ -120,9 +114,7 @@ define(function (require, exports, module) {
 
         };
 
-    /**
-     * 销毁对象
-     */
+
     proto.dispose = function () {
 
         var me = this;
@@ -132,11 +124,6 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 默认配置
-     *
-     * @type {Object}
-     */
     Message.defaultOptions = {
         interval: 100
     };

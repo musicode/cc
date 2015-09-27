@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     var index = 0;
 
     return function () {
-        return 'cobble_' + index++;
+        return 'cc_' + index++;
     };
 
 });
