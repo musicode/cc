@@ -16,14 +16,16 @@ define(function (require, exports, module) {
      */
     return function (to, from) {
 
-        $.each(
-            from,
-            function (name, fn) {
-                if (!(name in to)) {
-                    to[ name ] = fn;
+        if ($.isPlainObject(from)) {
+            $.each(
+                from,
+                function (name, fn) {
+                    if (!(name in to)) {
+                        to[ name ] = fn;
+                    }
                 }
-            }
-        );
+            );
+        }
 
     };
 

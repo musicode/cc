@@ -528,110 +528,114 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 执行实例的拦截方法
+     *
+     * 返回 false 可以阻止方法执行，返回 Object 可作为 before after 的事件数据
+     *
+     * @inner
+     * @param {Object} instance 组件实例
+     * @param {Object} aspect 拦截方法名称
+     * @param {Object} args 拦截方法参数
+     * @return {Object|boolean}
+     */
+    function executeAspect(instance, aspect, args) {
+        var method = instance[ aspect ];
+        if ($.isFunction(method)) {
+            var result = method.apply(method, args);
+            if (result === false) {
+                return false;
+            }
+            if ($.isPlainObject(result)) {
+                return result;
+            }
+        }
+    }
+
+    /**
      * 扩展原型
      *
      * @param {Object} proto
      */
     exports.extend = function (proto) {
 
-        // 方法前后的拦截基于 function/around.js
-
-        // 前置方法可拦截方法执行，只需要返回 false 即可
+        // 前置方法返回 false 可拦截方法执行，后置方法返回 false 可阻止广播 after 事件
         //
-        // 前置和后置方法都可以返回 Object，作为 beforemethod 和 aftermethod 事件的数据，即 trigger(type, data);
+        // 前置和后置方法都可以返回 Object，作为 before 和 after 事件的数据，即 trigger(type, data);
         //
         // 拦截方法的写法来自某一天的灵光咋现，因为我不喜欢私有属性和方法带上下划线前缀，但是下划线用来标识前后似乎非常优雅
         //
         // 比如 _show 表示显示之前，show_ 表示显示之后，非常直白
 
-        $.each(
-            proto,
-            function (name, method) {
+        $.each(proto, function (name, method) {
 
-                var index = name.indexOf('_');
+            var index = name.indexOf('_');
 
-                if (!$.isFunction(method)
-                    || index === 0
-                    || index === name.length - 1
-                ) {
-                    return;
+            // 前置和后置方法不用拦截
+            if (!$.isFunction(method)
+                || index === 0
+                || index === name.length - 1
+            ) {
+                return;
+            }
+
+
+
+            var beforeHandler = function (event) {
+
+                var me = this;
+
+                var aspectResult = executeAspect(me, '_' + name, arguments);
+                if (aspectResult === false) {
+                    return false;
                 }
 
-                around(
-                    proto,
-                    name,
-                    function (event) {
+                event = createEvent(event);
+                event.type = 'before' + name;
 
-                        var me = this;
+                event = this.emit(event, aspectResult);
 
-                        var eventData;
+                // 如果阻止默认行为
+                // 方法执行流程到此结束
+                if (event.isDefaultPrevented()) {
+                    return false;
+                }
 
-                        var aspect = proto[ '_' + name ];
-                        if ($.isFunction(aspect)) {
-                            eventData = aspect.apply(me, arguments);
-                            if (eventData === false) {
-                                return false;
-                            }
-                            if (!$.isPlainObject(eventData)) {
-                                eventData = null;
-                            }
-                        }
+            };
 
-                        event = createEvent(event);
-                        event.type = 'before' + name;
+            var afterHandler = function (event) {
 
-                        event = this.emit(event, eventData);
+                var me = this;
+                var args = arguments;
 
-                        // 阻止默认行为就不执行方法
-                        if (event.isDefaultPrevented()) {
-                            return false;
-                        }
+                var emitAfterEvent = function () {
 
-                    },
-                    function (event) {
-
-                        var me = this;
-                        var args = arguments;
-
-                        var emitAfterEvent = function () {
-
-                            var eventData;
-
-                            var aspect = proto[ name + '_' ];
-                            if ($.isFunction(aspect)) {
-                                eventData = aspect.apply(me, args);
-                                // 拦截 after 事件
-                                if (eventData === false) {
-                                    return;
-                                }
-                                if (!$.isPlainObject(eventData)) {
-                                    eventData = null;
-                                }
-                            }
-
-                            event = createEvent(event);
-                            event.type = 'after' + name;
-
-                            me.emit(event, eventData);
-
-                        };
-
-                        // 最后一个参数是方法执行结果
-                        var executeResult = args[ args.length - 1 ];
-
-                        if (executeResult && executeResult.then) {
-                            executeResult.then(emitAfterEvent);
-                        }
-                        else {
-                            emitAfterEvent();
-                        }
-
+                    var aspectResult = executeAspect(me, name + '_', args);
+                    if (aspectResult === false) {
+                        return;
                     }
-                );
 
+                    event = createEvent(event);
+                    event.type = 'after' + name;
 
-            }
-        );
+                    me.emit(event, aspectResult);
+
+                };
+
+                // 最后一个参数是方法执行结果
+                // 如果返回了 promise，等待它完成
+                var executeResult = args[ args.length - 1 ];
+                if (executeResult && $.isFunction(executeResult.then)) {
+                    executeResult.then(emitAfterEvent);
+                }
+                else {
+                    emitAfterEvent();
+                }
+
+            };
+
+            around(proto, name, beforeHandler, afterHandler);
+
+        });
 
         extend(proto, methods);
 
@@ -648,11 +652,7 @@ define(function (require, exports, module) {
 
         // options 不要污染 instance，避免 API 的设计自由因 options 字段名受到影响
 
-        var defaultOptions = instance.constructor.defaultOptions;
-
-        if ($.isPlainObject(defaultOptions)) {
-            extend(options, defaultOptions);
-        }
+        extend(options, instance.constructor.defaultOptions);
 
         instances[ instance.guid = guid() ] = instance;
 
