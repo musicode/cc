@@ -48,7 +48,7 @@ define(function (require, exports, module) {
      * @property {string=} options.prevSelector 上个月的按钮选择器
      * @property {string=} options.nextSelector 下个月的按钮选择器
      *
-     * @property {Function=} options.renderTemplate 渲染模板函数
+     * @property {Function=} options.render 渲染模板函数
      * @property {Function=} options.parseDate 把 value 解析成 Date
      */
     function Date(options) {
@@ -84,9 +84,9 @@ define(function (require, exports, module) {
             onselect: function () {
                 popup.close();
             },
-            renderTemplate: function (data, tpl) {
+            render: function (data, tpl) {
                 calendarElement.html(
-                    me.execute('renderTemplate', [ data, tpl ])
+                    me.execute('render', [ data, tpl ])
                 );
             },
             propertyChange: {

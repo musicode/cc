@@ -31,7 +31,7 @@ define(function (require, exports, module) {
      *
      * @property {Array=} options.data 下拉菜单的数据
      * @property {string=} options.menuTemplate 菜单模板
-     * @property {Function=} options.renderTemplate 渲染模板的函数
+     * @property {Function=} options.render 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
      * @property {string=} options.defaultText 未选中值时默认显示的文本，如 请选择
@@ -154,7 +154,7 @@ define(function (require, exports, module) {
 
         me.option('menuElement').html(
             me.execute(
-                'renderTemplate',
+                'render',
                 [
                     me.get('data'),
                     me.option('menuTemplate')

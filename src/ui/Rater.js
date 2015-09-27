@@ -180,7 +180,7 @@ define(function (require, exports, module) {
                 index++;
 
                 html += me.execute(
-                            'renderTemplate',
+                            'render',
                             [
                                 {
                                     'class': me.option(className),
@@ -246,7 +246,7 @@ define(function (require, exports, module) {
         readOnly: false,
         itemSelector: 'i',
         itemTemplate: '<i class="${class}" data-value="${value}" title="${hint}"></i>',
-        renderTemplate: function (data, tpl) {
+        render: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] != null ? data[$1] : '';
             });

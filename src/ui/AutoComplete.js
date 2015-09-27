@@ -41,9 +41,9 @@ define(function (require, exports, module) {
      * @property {number=} options.hideMenuDelay 隐藏延时
      * @property {Function=} options.hideMenuAnimate 隐藏动画
      *
-     * @property {Function=} options.renderTemplate 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
+     * @property {Function=} options.render 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
      *
-     * @property {Function} options.loadData 加载数据，可以是远程或本地数据
+     * @property {Function} options.load 加载数据，可以是远程或本地数据
      *
      */
     function AutoComplete(options) {
@@ -154,7 +154,7 @@ define(function (require, exports, module) {
 
         var suggest = function () {
             me.execute(
-                'loadData',
+                'load',
                 [
                     $.trim(iteratorData[ 0 ].data.text),
                     function (error, data) {
@@ -414,7 +414,7 @@ define(function (require, exports, module) {
 
         me.option('menuElement').html(
             me.execute(
-                'renderTemplate',
+                'render',
                 [
                     me.get('data'),
                     me.option('menuTemplate')

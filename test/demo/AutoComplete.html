@@ -77,7 +77,7 @@
                     inputElement: input,
                     menuElement: menu,
 
-                    renderTemplate: function (data) {
+                    render: function (data) {
 
                         var html = [];
 
@@ -112,7 +112,7 @@
                         console.log('onAfterOpen', this)
                     },
 
-                    loadData: function (value, callback) {
+                    load: function (value, callback) {
 
                         if (!value) {
                             return;

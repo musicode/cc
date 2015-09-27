@@ -48,7 +48,7 @@ define(function (require) {
      * @property {string} options.prevSelector 上月/上周 选择器
      * @property {string} options.nextSelector 下月/下周 选择器
      *
-     * @property {Function} options.renderTemplate
+     * @property {Function} options.render
      * @property {Function=} options.parseDate 把字符串类型的 value 解析成 Date 类型
      *
      */
@@ -258,7 +258,7 @@ define(function (require) {
 
         me.inner('main').html(
             me.execute(
-                'renderTemplate',
+                'render',
                 [
                     me.get('data'),
                     me.option('mainTemplate')

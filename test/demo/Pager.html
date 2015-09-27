@@ -68,7 +68,7 @@
                     ellipsisTemplate: '<a class="pager-ellipsis">...</a>',
                     activeTemplate: '<a class="pager-selected" href="#" onclick="return false;">${active}</a>',
 
-                    renderTemplate: function (data, tpl) {
+                    render: function (data, tpl) {
                         return etpl.compile(tpl)(data);
                     },
 

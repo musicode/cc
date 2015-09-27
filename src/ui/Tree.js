@@ -33,7 +33,7 @@ define(function (require, exports, module) {
      *     name: '',
      *     children: [],
      *
-     *     为了方便渲染，在交互过程中产生的状态也会记录到这里，renderTemplate 可以根据这些状态去渲染节点
+     *     为了方便渲染，在交互过程中产生的状态也会记录到这里，render 可以根据这些状态去渲染节点
      *     expanded: true,
      *     active: true
      * }
@@ -78,8 +78,8 @@ define(function (require, exports, module) {
      * @property {string} options.collapsedClass 节点收起状态时添加的 className
      *
      * @property {string} options.nodeTemplate 节点模板
-     * @property {Function} options.renderTemplate 渲染模板
-     * @property {Function} options.loadData 加载子节点数据
+     * @property {Function} options.render 渲染模板
+     * @property {Function} options.load 加载子节点数据
      */
     function Tree(options) {
         lifeCycle.init(this, options);
@@ -171,7 +171,7 @@ define(function (require, exports, module) {
                     var nodeCache = cache[ node.id ];
 
                     nodeCache.view = me.execute(
-                        'renderTemplate',
+                        'render',
                         [
                             {
                                 node: node,
@@ -234,7 +234,7 @@ define(function (require, exports, module) {
 
         if (target) {
             me.execute(
-                'loadData',
+                'load',
                 [
                     target,
                     function (error, data) {

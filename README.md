@@ -82,7 +82,7 @@
     // 因为多个实例共享一个主元素，那么就必须提供根据不同的组件实例动态更新主元素的方法
     share: {boolean},
     // 更新主元素
-    updateMainElement: function (options) {
+    update: function (options) {
         // options.mainElement 必定存在
         // 其他数据项则取决于组件的特点，比如 Tooltip 会传入 triggerElement
         options.mainElement.html(
@@ -90,15 +90,15 @@
         );
     },
     // 配置模板引擎
-    renderTemplate: function (data, tpl) {
+    render: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl
         // 也可以使用模板引擎
         // 如果需要模板预编译，可以先缓存编译结果，这里直接调用编译结果的 render(data)
     },
     // 加载数据，不关心是远程或是本地数据
-    // 组件内部不做数据缓存，需要数据的时候都会调用 loadData
-    // 如果对性能要求比较高，可以自行在 loadData 中实现缓存
-    loadData: function (value, callback) {
+    // 组件内部不做数据缓存，需要数据的时候都会调用 load
+    // 如果对性能要求比较高，可以自行在 load 中实现缓存
+    load: function (value, callback) {
         // callback 使用 node 风格
         // 第一个参数是 error
         post(function (data) {

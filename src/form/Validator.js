@@ -101,7 +101,7 @@ define(function (require, exports, module) {
      *
      * @property {Object=} options.fields 配置字段
      *
-     * @property {Function} options.renderTemplate
+     * @property {Function} options.render
      *
      */
     function Validator(options) {
@@ -551,7 +551,7 @@ define(function (require, exports, module) {
         successClass: 'has-success',
         errorClass: 'has-error',
         errorSelector: '.error',
-        renderTemplate: function (data, tpl) {
+        render: function (data, tpl) {
             return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
                 return data[$1] || '';
             });
@@ -833,7 +833,7 @@ define(function (require, exports, module) {
                     ) {
 
                         var html = validator.execute(
-                            'renderTemplate',
+                            'render',
                             [
                                 {
                                     error: error

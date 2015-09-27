@@ -184,11 +184,11 @@
                                 +     '<!-- /if -->'
                                 + '</div>',
 
-                    renderTemplate: function (data, tpl) {
+                    render: function (data, tpl) {
                         return etpl.compile(tpl)(data);
                     },
 
-                    loadData: function (node, callback) {
+                    load: function (node, callback) {
 
                         setTimeout(
                             function () {

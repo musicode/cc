@@ -92,7 +92,7 @@ define(function (require, exports, module) {
      * @property {string=} options.maxWidth 提示元素的最大宽度
      * @property {boolean=} options.share 是否共享一个元素，默认是 true
      *
-     * @property {Function} options.updateMainElement 更新提示浮层的内容
+     * @property {Function} options.update 更新提示浮层的内容
      *
      * @property {string=} options.showTrigger 显示的触发方式
      * @property {number=} options.showDelay 显示延时
@@ -293,7 +293,7 @@ define(function (require, exports, module) {
             };
 
             var promise = me.execute(
-                'updateMainElement',
+                'update',
                 {
                     mainElement: mainElement,
                     triggerElement: sourceElement
@@ -468,7 +468,7 @@ define(function (require, exports, module) {
         gapX: 10,
         gapY: 10,
 
-        updateMainElement: function (options) {
+        update: function (options) {
 
             options.mainElement.html(
                 options.triggerElement.attr('data-title')

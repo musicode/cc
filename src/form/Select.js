@@ -83,8 +83,8 @@ define(function (require, exports, module) {
             hideMenuAnimate: function (options) {
                 me.execute('hideMenuAnimate', options);
             },
-            renderTemplate: function (data, tpl) {
-                return me.execute('renderTemplate', [ data, tpl ]);
+            render: function (data, tpl) {
+                return me.execute('render', [ data, tpl ]);
             },
             setText: function (options) {
                 var labelSelector = me.option('labelSelector');

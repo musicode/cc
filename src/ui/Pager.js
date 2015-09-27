@@ -41,7 +41,7 @@ define(function (require, exports, module) {
      * @property {string=} options.ellipsisTemplate 省略号模板
      * @property {string=} options.activeTemplate 页码选中状态的模板
      *
-     * @property {Function=} options.renderTemplate 渲染方法
+     * @property {Function=} options.render 渲染方法
      *
      */
     function Pager(options) {
@@ -226,7 +226,7 @@ define(function (require, exports, module) {
 
                 var append = function () {
                     html += me.execute(
-                        'renderTemplate',
+                        'render',
                         [ data, tpl ]
                     );
                 };
