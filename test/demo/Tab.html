@@ -44,13 +44,13 @@
 
         require(
 
-            [ 'cobble/ui/Tab' ],
+            [ 'custom/ui/Tab' ],
 
             function (Tab) {
 
                 window.tab = new Tab({
                     mainElement: $('#main'),
-                    //index: 1,
+                    index: 2,
 
                     navTrigger: 'enter',
                     navDelay: 1000,
@@ -68,21 +68,13 @@
 
                     },
 
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
-                    },
-                    onpropertychange: function (event, data) {
-                        console.log(data);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 

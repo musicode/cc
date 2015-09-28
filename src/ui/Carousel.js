@@ -197,38 +197,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Carousel.defaultOptions = {
-        index: 0,
-        minIndex: 0,
-        step: 1,
-        loop: true,
-        autoplay: true,
-        pauseOnHover: true,
-        interval: 5000,
-        navTrigger: 'enter',
-        navAnimation: function (options) {
-
-            var activeClass = options.navActiveClass;
-            if (!activeClass) {
-                return;
-            }
-
-            var navItems = options.mainElement.find(
-                options.navSelector
-            );
-
-            if (navItems.length > 1) {
-                if (options.fromIndex >= 0) {
-                    navItems.eq(options.fromIndex).removeClass(activeClass);
-                }
-                if (options.toIndex >= 0) {
-                    navItems.eq(options.toIndex).addClass(activeClass);
-                }
-            }
-
-        }
-    };
-
     Carousel.propertyUpdater = {
 
         index: function (index) {
@@ -239,7 +207,7 @@ define(function (require, exports, module) {
 
             var iterator = me.inner('iterator');
             iterator.set('index', index);
-console.log('index',index)
+
             if (me.option('autoplay')) {
                 iterator.start();
             }

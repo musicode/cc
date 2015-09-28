@@ -127,7 +127,7 @@
         require(
 
             [
-                'cobble/ui/Carousel'
+                'custom/ui/Carousel'
             ],
 
             function (Carousel) {
@@ -155,8 +155,13 @@
                         );
                     },
 
-                    onpropertychange: function (event, data) {
-                        console.log(data);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 

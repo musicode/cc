@@ -206,16 +206,6 @@ define(function (require, exports, module) {
         var context = me.option('context') || me;
 
         context
-        .before('open', function () {
-            if (!hasShowEvent && hasHideEvent) {
-                return false;
-            }
-        })
-        .before('close', function () {
-            if (!hasHideEvent && hasShowEvent) {
-                return false;
-            }
-        })
         .before('dispose', function () {
 
             context.off('statechange', stateChangeHandler);

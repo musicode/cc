@@ -9,7 +9,7 @@ define(function (require, exports, module) {
     var toNumber = require('../function/toNumber');
 
     var lifeCycle = require('../util/lifeCycle');
-    var trigger = require('../util/trigger');
+    var triggerUtil = require('../util/trigger');
 
     /**
      * 可切换组件
@@ -17,11 +17,11 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement
-     * @property {number=} options.index 当前选中索引，默认是 0
-     * @property {string=} options.switchTrigger 触发方式，可选值有 enter click，默认是 click
-     * @property {number=} options.switchDelay 延时时间
-     * @property {string} options.itemSelector 触发器的选择器
-     * @property {string=} options.itemActiveClass 触发元素被激活时的 class
+     * @property {number=} options.index 当前选中索引
+     * @property {string=} options.switchTrigger 触发切换方式，可选值有 enter click
+     * @property {number=} options.switchDelay 触发延时时间
+     * @property {string} options.itemSelector 触发元素的选择器
+     * @property {string=} options.itemActiveClass 触发元素被激活时的 className
      */
     function Switchable(options) {
         lifeCycle.init(this, options);
@@ -40,14 +40,14 @@ define(function (require, exports, module) {
 
         if (itemSelector) {
 
-            var executeProxy = function (proxy, name) {
+            var curry = function (proxy, name) {
                 if ($.isFunction(proxy[ name ])) {
                     return proxy[ name ](me);
                 }
             };
 
             $.each(
-                trigger.parse(
+                triggerUtil.parse(
                     me.option('switchTrigger'),
                     function (trigger) {
 
@@ -55,9 +55,9 @@ define(function (require, exports, module) {
 
                         return {
                             delay: me.option('switchDelay'),
-                            startDelay: executeProxy(proxy, 'startDelay'),
-                            endDelay: executeProxy(proxy, 'endDelay'),
-                            handler: executeProxy(proxy, 'handler')
+                            startDelay: curry(proxy, 'startDelay'),
+                            endDelay: curry(proxy, 'endDelay'),
+                            handler: curry(proxy, 'handler')
                         };
 
                     }
@@ -97,12 +97,6 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Switchable.defaultOptions = {
-        index: 0,
-        switchTrigger: 'click',
-        switchDelay: 100
-    };
-
     Switchable.propertyValidator = {
 
         index: function (index) {
@@ -134,7 +128,7 @@ define(function (require, exports, module) {
             startDelay: function (instance) {
                 return function (fn) {
                     instance.inner('main').on(
-                        trigger.leave.type,
+                        triggerUtil.leave.type,
                         instance.option('itemSelector'),
                         fn
                     );
@@ -143,7 +137,7 @@ define(function (require, exports, module) {
             endDelay: function (instance) {
                 return function (fn) {
                     instance.inner('main').off(
-                        trigger.leave.type,
+                        triggerUtil.leave.type,
                         fn
                     );
                 };
