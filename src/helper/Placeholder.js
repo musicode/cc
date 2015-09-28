@@ -24,28 +24,36 @@ define(function (require, exports, module) {
      */
 
     var isHidden = require('../function/isHidden');
-    var replaceWith = require('../function/replaceWith');
-    var isActiveElement = require('../function/isActiveElement');
+    var toString = require('../function/toString');
 
-    var input = require('../util/input');
-    var detection = require('../util/detection');
+    var inputUtil = require('../util/input');
+    var detectionUtil = require('../util/detection');
     var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 使输入框元素具有 placeholder 功能
      *
      * @constructor
-     * @param {Object} options 配置对象
-     * @property {jQuery} options.mainElement 输入框元素，如文本框、密码框、文本域
-     * @property {string=} options.value 如果文字不写在元素属性上，也可以直接传值
+     * @param {Object} options
+     * @property {jQuery} options.mainElement 主元素，如文本框、密码框、文本域
+     * @property {string=} options.mainTemplate 非模拟实现，此选项用处不大
+     *                                          模拟实现时，如果 mainElement 结构不完整，可传入模版完善结构
      *
-     * @property {boolean=} options.nativeFirst 是否原生优先
+     * @property {string=} options.value 如果文字没写在元素属性（placeholder attribute）上，也可以传值
      *
-     * @property {string=} options.mainTemplate 模拟实现时，使用的模版
-     * @property {string=} options.placeholderSelector 模拟实现时，查找占位符元素的选择器
+     * @property {boolean=} options.nativeFirst 是否原生优先。支持 placeholder 的浏览器，不管其表现如何，优先使用原生
+     *
+     * @property {string=} options.labelSelector 模拟实现时，查找显示占位文本元素的选择器
      * @property {string=} options.inputSelector 模拟实现时，查找输入框元素的选择器
      * @property {Function=} options.showAnimation 模拟实现时，使用的显示动画
      * @property {Function=} options.hideAnimation 模拟实现时，使用的隐藏动画
+     *
+     * @property {Function=} options.onbeforeshow
+     * @property {Function=} options.onaftershow
+     * @property {Function=} options.onbeforehide
+     * @property {Function=} options.onafterhide
+     * @property {Function=} options.onbeforerender
+     * @property {Function=} options.onafterrender
      */
     function Placeholder(options) {
         lifeCycle.init(this, options);
@@ -59,21 +67,10 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var proxy;
-
-        if (detection.supportPlaceholder()
-            && me.option('nativeFirst')
-        ) {
-            proxy = nativeProxy
-        }
-        else {
-            proxy = fakeProxy;
-        }
-
-
         me.inner({
-            input: me.option('mainElement'),
-            proxy: proxy
+            proxy: me.option('nativeFirst') && detectionUtil.supportPlaceholder()
+                 ? nativeProxy
+                 : fakeProxy
         });
 
         executeProxyMethod(me, 'init');
@@ -113,98 +110,84 @@ define(function (require, exports, module) {
     };
 
     proto.dispose = function () {
-
-        var me = this;
-
-        executeProxyMethod(me, 'dispose');
-
-        lifeCycle.dispose(me);
-
+        executeProxyMethod(this, 'dispose');
+        lifeCycle.dispose(this);
     };
 
     lifeCycle.extend(proto);
 
-    Placeholder.defaultOptions = {
-
-        nativeFirst: true,
-
-        placeholderSelector: '.placeholder',
-        inputSelector: ':text',
-
-        showAnimation: function (options) {
-            options.placeholderElement.fadeIn(500);
-        },
-        hideAnimation: function (options) {
-            options.placeholderElement.hide();
-        }
-    };
-
     Placeholder.propertyUpdater = {
-
         value: function () {
             this.render();
         }
     };
 
     Placeholder.propertyValidator = {
-
         value: function (value) {
-            switch ($.type(value)) {
-                case 'string':
-                case 'number':
-                    return value;
+            value = toString(value, null);
+            if (value == null) {
+                value = this.inner('input').attr('placeholder');
             }
-            return this.inner('input').attr('placeholder') || '';
+            return value || '';
         }
-
-    };
-
-    Placeholder.stateValidator = {
-
-        hidden: function (hidden) {
-            if ($.type(hidden) !== 'boolean') {
-                var isHidden = getProxyMethod(this, 'isHidden');
-                if (isHidden) {
-                    hidden = isHidden(this);
-                }
-            }
-            return hidden;
-        }
-
     };
 
     Placeholder.stateUpdater = {
-
         hidden: function (hidden) {
-
             executeProxyMethod(
                 this,
                 hidden ? 'hide' : 'show'
             );
-
         }
+    };
 
+    Placeholder.stateValidator = {
+        hidden: function (hidden) {
+            if ($.type(hidden) !== 'boolean') {
+                hidden = executeProxyMethod(this, 'isHidden');
+            }
+            return hidden;
+        }
     };
 
 
+
+
+
+
+
     function executeProxyMethod(instance, method) {
-        var fn = getProxyMethod(instance, method);
+        var proxy = instance.inner('proxy');
+        var fn = proxy[ method ];
         if (fn) {
-            fn(instance);
+            return fn(instance);
         }
     }
 
-    function getProxyMethod(instance, method) {
-        var proxy = instance.inner('proxy');
-        return proxy && proxy[ method ];
-    }
-
     var nativeProxy = {
+        init: function (instance) {
+
+            instance.initStructure();
+
+            var mainElement = instance.option('mainElement');
+            instance.inner({
+                main: mainElement,
+                input: mainElement
+            });
+
+        },
         render: function (instance) {
+
             instance.inner('input').attr(
                 'placeholder',
                 instance.get('value')
             );
+
+        },
+        isHidden: function (instance) {
+
+            return instance.inner('input').val().length > 0;
+
         }
     };
 
@@ -221,19 +204,19 @@ define(function (require, exports, module) {
             instance.inner({
                 main: mainElement,
                 input: inputElement,
-                placeholder: mainElement.find(
-                    instance.option('placeholderSelector')
+                label: mainElement.find(
+                    instance.option('labelSelector')
                 )
             });
 
-            input.init(inputElement);
-
-            var namespace = instance.namespace();
+            inputUtil.init(inputElement);
 
             inputElement
-                .on('input' + namespace, function () {
+                .on('input' + instance.namespace(), function () {
                     var hidden = $.trim(inputElement.val()).length > 0;
                     if (hidden !== instance.is('hidden')) {
+                        // 为了触发 before 和 after 事件才调用实例方法
+                        // 而不是 instance.state(hidden)
                         if (hidden) {
                             instance.hide();
                         }
@@ -246,16 +229,10 @@ define(function (require, exports, module) {
         },
         show: function (instance) {
 
-            var placeholderElement = instance.inner('placeholder');
-
-            placeholderElement.html(
-                instance.get('value')
-            );
-
             instance.execute(
                 'showAnimation',
                 {
-                    placeholderElement: placeholderElement
+                    labelElement: instance.inner('label')
                 }
             );
 
@@ -265,21 +242,17 @@ define(function (require, exports, module) {
             instance.execute(
                 'hideAnimation',
                 {
-                    placeholderElement: instance.inner('placeholder')
+                    labelElement: instance.inner('label')
                 }
             );
 
         },
         render: function (instance) {
 
-            if (instance.is('hidden')) {
-                return;
-            }
-
             var inputElement = instance.inner('input');
             inputElement.removeAttr('placeholder');
 
-            instance.inner('placeholder').html(
+            instance.inner('label').html(
                 instance.get('value')
             );
 
@@ -288,16 +261,15 @@ define(function (require, exports, module) {
 
             var inputElement = instance.inner('input');
 
-            input.dispose(inputElement);
+            inputUtil.dispose(inputElement);
             inputElement.off(
                 instance.namespace()
             );
 
         },
-
         isHidden: function (instance) {
             return isHidden(
-                instance.inner('placeholder')
+                instance.inner('label')
             );
         }
     };

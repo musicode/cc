@@ -20,7 +20,7 @@ define(function (require, exports) {
      * @property {string=} options.value
      *
      * @property {string} options.placeholderTemplate
-     * @property {string} options.placeholderSelector
+     * @property {string} options.placeholderLabelSelector
      * @property {boolean=} options.placeholderNativeFirst
      *
      * @property {Object=} options.shortcut 配置快捷键
@@ -40,8 +40,8 @@ define(function (require, exports) {
         var placeholder = new Placeholder({
             mainElement: me.option('mainElement'),
             nativeFirst: me.option('placeholderNativeFirst'),
-            placeholderSelector: me.option('placeholderSelector'),
-            placeholderTemplate: me.option('placeholderTemplate'),
+            labelSelector: me.option('placeholderLabelSelector'),
+            mainTemplate: me.option('placeholderTemplate'),
             propertyChange: {
                 value: function (value) {
                     me.set('placeholder', value);

@@ -28,7 +28,9 @@ define(function (require, exports, module) {
     var keyboard = require('../util/keyboard');
 
     /**
-     * 处理键盘相关的操作
+     * 处理键盘事件，提供快捷键支持
+     *
+     * 本组件没有主元素，只是监听事件
      *
      * @constructor
      * @param {Object} options
@@ -36,8 +38,13 @@ define(function (require, exports, module) {
      *
      * @property {Object} options.shortcut 配置快捷键
      *                                     组合键使用 + 连接，如 'ctrl+c',
-     *                                     支持键可看 Keyboard.map
+     *                                     支持键可看 util/keyboard exports
      *                                     小键盘键统一加 $ 前缀，如 '$+' 表示加号键
+     *
+     * @property {Function=} options.onkeydown
+     * @property {Function=} options.onkeyup
+     * @property {Function=} options.onbeforelongpress
+     * @property {Function=} options.onafterlongpress
      *
      * @example
      *
@@ -86,8 +93,7 @@ define(function (require, exports, module) {
 
         var namespace = me.namespace();
 
-        me
-        .option('watchElement')
+        me.option('watchElement')
         .on('keydown' + namespace, function (e) {
 
             var currentKeyCode = e.keyCode;

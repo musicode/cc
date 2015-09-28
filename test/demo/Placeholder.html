@@ -34,85 +34,35 @@
 
         require(
 
-            [ 'cobble/helper/Placeholder' ],
+            [ 'custom/helper/Placeholder' ],
 
             function (Placeholder) {
 
-                var element = $(':text');
+                // window.nativePlaceholder = new Placeholder({
+                //     mainElement: $(':text').eq(0),
+                //     nativeFirst: true,
 
-                window.nativePlaceholder = new Placeholder({
-                    mainElement: element.eq(0),
-                    nativeFirst: true,
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-                    onbeforeshow: function () {
-                        console.log('before show');
-                    },
-                    onaftershow: function () {
-                        console.log('after show');
-                    },
-                    onbeforehide: function () {
-                        console.log('before hide');
-                    },
-                    onafterhide: function () {
-                        console.log('after hide');
-                    },
-                    onbeforerender: function () {
-                        console.log('before render');
-                    },
-                    onafterrender: function () {
-                        console.log('after render');
-                    },
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
-                    },
-                    onpropertychange: function (e, data) {
-                        console.log(data, this);
-                    }
-                });
+                //     ondebug: function (event, data) {
+                //         console.log(
+                //             event.type,
+                //             event.target.tagName ? true : false, // 是否原生
+                //             data,
+                //             this
+                //         );
+                //     }
+                // });
 
                 window.fakePlaceholder = new Placeholder({
                     mainElement: $('.placeholder-wrapper'),
                     nativeFirst: false,
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-                    onbeforeshow: function () {
-                        console.log('before show');
-                    },
-                    onaftershow: function () {
-                        console.log('after show');
-                    },
-                    onbeforehide: function () {
-                        console.log('before hide');
-                    },
-                    onafterhide: function () {
-                        console.log('after hide');
-                    },
-                    onbeforerender: function () {
-                        console.log('before render');
-                    },
-                    onafterrender: function () {
-                        console.log('after render');
-                    },
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
-                    },
-                    onpropertychange: function (e, data) {
-                        console.log(data, this);
+
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 

@@ -20,13 +20,13 @@
 
         require(
 
-            [ 'cobble/helper/Input' ],
+            [ 'custom/helper/Input' ],
 
             function (Input) {
 
                 window.input1 = new Input({
                     mainElement: $('input'),
-                    smart: false,
+                    silentOnLongPress: false,
 
                     shortcut: {
                         enter: function (e, data) {
@@ -39,34 +39,24 @@
                         }
                     },
 
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
 
-                    onkeydown: function (e) {
-                        console.log('<<<<<<<<<<<<<');
-                    },
-                    onkeyup: function (e) {
-                        console.log('>>>>>>>>>>>>>');
-                    },
                     onpropertychange: function (e, data) {
                         console.log('change', data);
                     }
+
                 });
 
                 window.input2 = new Input({
                     mainElement: $('textarea'),
-                    smart: true,
+                    silentOnLongPress: true,
 
                     shortcut: {
                         enter: function () {
@@ -77,18 +67,13 @@
                         }
                     },
 
-                    onbeforeinit: function () {
-                        console.log('before init', this);
-                    },
-                    onafterinit: function () {
-                        console.log('after init', this);
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose', this);
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose', this);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
 
                     onkeydown: function (e) {

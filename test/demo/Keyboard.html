@@ -15,38 +15,34 @@
 
         require(
 
-            [ 'cobble/helper/Keyboard' ],
+            [ 'custom/helper/Keyboard' ],
 
             function (Keyboard) {
 
                 window.keyboard = new Keyboard({
+
                     watchElement: $(document.body),
 
                     onbeforelongpress: function (event, data) {
-                        console.log('>>>>>>>>>> before longpress: ', data, this);
+                        console.log('>>>>>>>>>> before longpress: ');
                     },
                     onafterlongpress: function (event, data) {
-                        console.log('<<<<<<<<<< after longpress: ', data, this);
+                        console.log('<<<<<<<<<< after longpress: ');
                     },
                     onkeydown: function (event, data) {
-                        console.log('onkeydown', this);
+                        console.log('onkeydown');
                     },
                     onkeyup: function (event, data) {
-                        console.log('onkeyup', this);
+                        console.log('onkeyup');
                     },
 
-                    onbeforeinit: function () {
-                        console.log('before init', this);
-                    },
-                    onafterinit: function () {
-                        console.log('after init', this);
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose', this);
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose', this);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
                     shortcut: {
                         'ctrl+c': function () {

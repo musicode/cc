@@ -81,7 +81,7 @@
 
         require(
 
-            [ 'cobble/helper/Popup' ],
+            [ 'custom/helper/Popup' ],
 
             function (Popup) {
 
@@ -103,49 +103,26 @@
                         options.layerElement.slideUp(10);
                     },
 
-                    onbeforeopen: function (e) {
-                        console.log('before open');
-                    },
                     onafteropen: function () {
-                        console.log('before open');
                         $('#select-trigger i').removeClass('icon-arrow-down')
                                               .addClass('icon-arrow-up');
                     },
-                    onbeforeclose:function () {
-                        console.log('before close');
-                    },
                     onafterclose: function () {
-                        console.log('after close');
                         $('#select-trigger i').removeClass('icon-arrow-up')
                                               .addClass('icon-arrow-down');
                     },
 
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
-                    },
-
-                    onpropertychange: function (e, data) {
-                        console.log('propertychange', data);
-                    },
-                    onstatechange: function (e, data) {
-                        console.log('statechange', data);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 
-                popup.before('open', function (e, data) {
-                    //console.log(e, data);
-                    //return false;
-                });
+
 
                 layer.on('click', 'li', function (e) {
                     popup.close();

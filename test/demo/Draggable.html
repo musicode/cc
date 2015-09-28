@@ -91,45 +91,50 @@
 
         require(
 
-            [ 'cobble/helper/Draggable' ],
+            [ 'custom/helper/Draggable' ],
 
             function (Draggable) {
 
-                var scrollbar = new Draggable({
+                window.scrollbar = new Draggable({
                     mainElement: $('#scrollbar i'),
                     containerElement: $('#scrollbar-track'),
                     axis: 'x',
                     draggingClass: 'dragging',
-                    onbeforedrag: function (e, data) {
-                        console.log('beforedrag', data);
-                    },
-                    ondrag: function (e, data) {
-                        console.log('drag', data);
-                    },
-                    onafterdrag: function (e, data) {
-                        console.log('afterdrag', data);
+                    containerDraggingClass: 'c-dragging',
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
-
-                scrollbar.on({
-                    beforedrag: function (e, data) {
-                        console.log(e.origin, 'dragStart');
-                    },
-                    drag: function (e, data) {
-                        console.log(e.origin, 'drag');
-                    },
-                    afterdrag: function (e, data) {
-                        console.log(e.origin, 'dragEnd');
-                    }
-                })
 
                 new Draggable({
                     mainElement: $('#target'),
-                    containerElement: $('#container')
+                    containerElement: $('#container'),
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
+                    }
                 });
 
                 new Draggable({
-                    mainElement: $('#fixed')
+                    mainElement: $('#fixed'),
+                    containerElement: $('#container'),
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
+                    }
                 });
 
             }

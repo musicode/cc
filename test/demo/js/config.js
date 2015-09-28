@@ -1,6 +1,7 @@
 require.config({
     baseUrl: '/src',
     paths: {
-        cobble: './'
+        cc: './',
+        custom: '../custom'
     }
 });

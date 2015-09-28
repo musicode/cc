@@ -20,29 +20,31 @@ define(function (require, exports, module) {
      * IE8-的 propertychange 事件触发方式和 input 标准方式相同
      * IE8-改写 value 会触发 propertychange
      *
-     * 2. 长按是否触发 propertychange 事件
+     * 2. 长按是否触发 value property 变化
      *
      * 长按大多产生一串相同的字符串，这种属于无效输入
      */
 
 
-    var input = require('../util/input');
+    var toString = require('../function/toString');
+
     var lifeCycle = require('../util/lifeCycle');
+
+    var inputUtil = require('../util/input');
     var keyboardUtil = require('../util/keyboard');
 
     var Keyboard = require('./Keyboard');
 
 
     /**
-     * 封装一些输入功能，包括兼容最常用的 input 事件
+     * 封装一些输入功能，包括兼容最常用的 input 事件（以 propertychange 事件对外广播）
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素（<input> 或 <textarea>）
      * @property {string=} options.value 输入框的值
      *
-     * @property {boolean=} options.smart 是否能够聪明的在长按时不触发 change 事件，默认为 true
-     *                                    因为长按产生的一般是无效输入
+     * @property {boolean=} options.silentOnLongPress 长按时是否保持沉默，不触发 property change 事件
      *
      * @property {Object=} options.shortcut 配置快捷键
      *                                      组合键只支持 shift/ctrl/alt/meta + 字母/数字
@@ -62,6 +64,10 @@ define(function (require, exports, module) {
      *                                          }
      *                                      }
      *
+     * @property {Function=} options.onkeydown
+     * @property {Function=} options.onkeyup
+     * @property {Function=} options.onbeforelongpress
+     * @property {Function=} options.onafterlongpress
      */
     function Input(options) {
         lifeCycle.init(this, options);
@@ -76,7 +82,7 @@ define(function (require, exports, module) {
         var me = this;
 
         var mainElement = me.option('mainElement');
-        input.init(mainElement);
+        inputUtil.init(mainElement);
 
 
 
@@ -88,8 +94,8 @@ define(function (require, exports, module) {
 
         var isLongPress;
 
-        var dispatchEvent = function (e) {
-            me.emit(e);
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
         };
 
         var updateValue = function (value) {
@@ -102,25 +108,28 @@ define(function (require, exports, module) {
         keyboard
         .on('keydown', dispatchEvent)
         .on('keyup', dispatchEvent)
-        .before('longpress', function () {
+        .before('longpress', function (e, data) {
             isLongPress = true;
+            dispatchEvent(e, data);
         })
-        .after('longpress', function (e) {
+        .after('longpress', function (e, data) {
 
             isLongPress = false;
 
-            if (keyboardUtil.isCharKey(e.keyCode)
+            if (keyboardUtil.isCharKey(data.keyCode)
                 || keyboardUtil.isDeleteKey()
             ) {
                 updateValue();
             }
+
+            dispatchEvent(e, data);
 
         });
 
 
         mainElement
         .on('input' + me.namespace(), function () {
-            if (!isLongPress || !me.option('smart')) {
+            if (!isLongPress || !me.option('silentOnLongPress')) {
                 updateValue();
             }
         });
@@ -144,10 +153,11 @@ define(function (require, exports, module) {
         lifeCycle.dispose(me);
 
         var mainElement = me.inner('main');
-        input.dispose(mainElement);
         mainElement.off(
             me.namespace()
         );
+
+        inputUtil.dispose(mainElement);
 
         me.inner('keyboard').dispose();
 
@@ -155,29 +165,14 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Input.defaultOptions = {
-        smart: true
-    };
-
     Input.propertyUpdater = {
-
         value: function (value) {
             this.inner('main').val(value);
         }
-
     };
 
     Input.propertyValidator = {
-
-        value: function (value) {
-            switch ($.type(value)) {
-                case 'string':
-                case 'number':
-                    return value;
-            }
-            return '';
-        }
-
+        value: toString
     };
 
 

@@ -77,9 +77,6 @@ define(function (require, exports, module) {
                     );
                 }
 
-                instance.emit('propertychange', propertyChanges);
-                instance.inner('propertyChanges', null);
-
             }
 
             var stateChanges = instance.inner('stateChanges');
@@ -101,11 +98,17 @@ define(function (require, exports, module) {
                     );
                 }
 
-                instance.emit('statechange', stateChanges);
-                instance.inner('stateChanges', null);
-
             }
 
+            // 最后对外广播
+            if (propertyChanges) {
+                instance.inner('propertyChanges', null);
+                instance.emit('propertychange', propertyChanges);
+            }
+            if (stateChanges) {
+                instance.inner('stateChanges', null);
+                instance.emit('statechange', stateChanges);
+            }
         });
     }
 
@@ -335,6 +338,8 @@ define(function (require, exports, module) {
 
             context.$.trigger.apply(context.$, args);
 
+context.execute('ondebug', args);
+
             if (event.isPropagationStopped()) {
                 return event;
             }
@@ -560,7 +565,7 @@ define(function (require, exports, module) {
     function executeAspect(instance, aspect, args) {
         var method = instance[ aspect ];
         if ($.isFunction(method)) {
-            var result = method.apply(method, args);
+            var result = method.apply(instance, args);
             if (result === false) {
                 return false;
             }

@@ -23,6 +23,7 @@ define(function (require, exports, module) {
      *
      *    常见的触发方式包括：
      *
+     *    blur 专用于输入框
      *    click （点击元素之外的地方触发隐藏）
      *    leave
      *
@@ -46,9 +47,10 @@ define(function (require, exports, module) {
 
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
+    var nextTick = require('../function/nextTick');
 
-    var trigger = require('../util/trigger');
     var lifeCycle = require('../util/lifeCycle');
+    var triggerUtil = require('../util/trigger');
     var instanceUtil = require('../util/instance');
 
     /**
@@ -59,7 +61,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      *
-     * @property {jQuery=} options.triggerElement 触发的元素，如果是调用方法触发显示，可不传
+     * @property {jQuery=} options.triggerElement 触发元素，如果是调用方法显示，可不传
      * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
      *                                             即触发了 triggerElement 中的 triggerSelector，会弹出 layerElement
      *
@@ -94,7 +96,7 @@ define(function (require, exports, module) {
         };
 
         me.inner({
-            showConfigs: trigger.parse(
+            showConfigs: triggerUtil.parse(
                 me.option('showLayerTrigger'),
                 function (trigger) {
 
@@ -109,7 +111,7 @@ define(function (require, exports, module) {
 
                 }
             ),
-            hideConfigs: trigger.parse(
+            hideConfigs: triggerUtil.parse(
                 me.option('hideLayerTrigger'),
                 function (trigger) {
 
@@ -222,30 +224,15 @@ define(function (require, exports, module) {
         // 确保解绑了事件
         me.close();
 
-        // 因为 close 会加上 showEvent 事件
-        // 这里再次解绑
-        showEvent(me, 'off');
+        if (me.inner('hasShowEvent')) {
+            showEvent(me, 'off');
+        }
 
         lifeCycle.dispose(me);
 
     };
 
-
     lifeCycle.extend(proto);
-
-
-    Popup.defaultOptions = {
-        // 可以不传 triggerElement，为了少写 if，这里给个默认值
-        triggerElement: $({}),
-        showLayerTrigger: 'click',
-        hideLayerTrigger: 'click',
-        showLayerAnimation: function (options) {
-            options.layerElement.show();
-        },
-        hideLayerAnimation: function (options) {
-            options.layerElement.hide();
-        }
-    };
 
     Popup.stateUpdater = {
         hidden: function (hidden) {
@@ -429,7 +416,7 @@ define(function (require, exports, module) {
                 startDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').on(
-                            trigger.leave.type,
+                            triggerUtil.leave.type,
                             instance.option('triggerSelector'),
                             fn
                         );
@@ -438,7 +425,7 @@ define(function (require, exports, module) {
                 endDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').off(
-                            trigger.leave.type,
+                            triggerUtil.leave.type,
                             fn
                         );
                     };
@@ -488,12 +475,12 @@ define(function (require, exports, module) {
                 startDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').on(
-                            trigger.enter.type,
+                            triggerUtil.enter.type,
                             instance.option('triggerSelector'),
                             fn
                         );
                         instance.option('layerElement').on(
-                            trigger.enter.type,
+                            triggerUtil.enter.type,
                             fn
                         );
                     };
@@ -501,11 +488,11 @@ define(function (require, exports, module) {
                 endDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').off(
-                            trigger.enter.type,
+                            triggerUtil.enter.type,
                             fn
                         );
                         instance.option('layerElement').off(
-                            trigger.enter.type,
+                            triggerUtil.enter.type,
                             fn
                         );
                     };

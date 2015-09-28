@@ -8,18 +8,19 @@ define(function (require, exports, module) {
 
     /**
      *
-     * 拖拽有三种场景：
+     * 拖拽元素和容器元素有两种关系：
      *
-     * 1. 拖拽元素跟 body 是 body > element 关系，常见于 Dialog
-     * 2. 拖拽元素有一个单独的容器，常见于自定义滚动条
-     * 3. 拖拽元素跟 body 是 body > element 关系，而它的容器元素却不是 body
+     * 1. 拖拽元素是容器的子元素，比如对话框是 body 的子元素
+     * 2. 拖拽元素不是容器的子元素，比如二者是同级关系，但是视觉上一个比较大，一个比较小，大的看着像容器
      *
      * 拖拽的过程就是不断计算相对于父元素的绝对定位坐标
      *
-     *     mousedown 记录鼠标点击位置和元素左上角的偏移坐标，记录拖拽范围
-     *     mousemove 获取当前鼠标位置并转换到相对父元素的坐标
+     *    mousedown 记录鼠标点击位置和元素左上角的偏移坐标，记录拖拽范围
+     *    mousemove 获取当前鼠标位置并转换到相对父元素的坐标
      *
      * 元素在容器内拖拽，可拖拽盒模型范围不包括 margin 和 border
+     *
+     * 拖拽通常会产生大块选区，因为兼容问题，js 无法做到完美解决，必须有 css 配合，因此提供 bodyDraggingClass 选项
      */
 
     var page = require('../function/page');
@@ -45,10 +46,10 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 需要拖拽的元素
-     * @property {jQuery=} options.containerElement 限制拖拽范围的容器，默认是 网页元素（元素取决于浏览器）
-     * @property {string=} options.draggingClass 拖拽时给 mainElement 加上的 className
-     * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 加上的的 className
-     * @property {string=} options.bodyDraggingClass 拖拽时给 document.body 加上的 className，用样式避免出现选区
+     * @property {jQuery=} options.containerElement 限制拖拽范围的容器
+     * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 className
+     * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 添加的 className
+     * @property {string=} options.bodyDraggingClass 拖拽时给 bodyElement 添加的 className，用样式避免出现选区
      *
      * @property {string=} options.axis 限制方向，可选值包括 x y
      *
@@ -56,6 +57,10 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
      * @property {Function=} options.dragAnimation
+     *
+     * @property {Function=} options.onbeforedrag
+     * @property {Function=} options.ondrag
+     * @property {Function=} options.onafterdrag
      *
      */
     function Draggable(options) {
@@ -71,13 +76,19 @@ define(function (require, exports, module) {
         var me = this;
 
         var mainElement = me.option('mainElement');
-        me.inner('main', mainElement);
-
-        var containerElement = me.option('containerElement') || page();
 
         mainElement.css(
             position(mainElement)
         );
+
+        me.inner({
+            main: mainElement
+        });
+
+        var containerElement = me.option('containerElement');
+        var pageElement = page();
+
+        var rectElement = containerElement || pageElement;
 
         var namespace = me.namespace();
 
@@ -123,19 +134,19 @@ define(function (require, exports, module) {
                     var coord = globalCoord[ key ];
 
                     var mainOuterOffset = outerOffset(mainElement);
-                    var containerInnerOffset = innerOffset(containerElement);
+                    var rectInnerOffset = innerOffset(rectElement);
 
-                    // 因为 offset() 包含 margin
-                    // 所以减去 margin 才是真正的坐标值
+                    // offset() 包含 margin
+                    // 减去 margin 才是真正的坐标值
                     var offsetX = coord.absoluteX(e) - mainOuterOffset.x;
                     var offsetY = coord.absoluteY(e) - mainOuterOffset.y;
 
                     // 因为 onDrag 是用`全局坐标`减去`偏移量`
                     // 所以偏移量应该是全局坐标的偏移量
-                    var containerContainsElement = contains(containerElement, mainElement);
-                    if (containerContainsElement) {
-                        offsetX += containerInnerOffset.x;
-                        offsetY += containerInnerOffset.y;
+                    var rectContainsElement = contains(rectElement, mainElement);
+                    if (rectContainsElement) {
+                        offsetX += rectInnerOffset.x;
+                        offsetY += rectInnerOffset.y;
                     }
 
 
@@ -150,18 +161,36 @@ define(function (require, exports, module) {
                     point.left = style.left;
                     point.top = style.top;
 
-                    var isFixed = style.position === 'fixed';
-
                     // 计算拖拽范围
-                    var rect = {
-                        x: containerContainsElement ? 0 : containerInnerOffset.x,
-                        y: containerContainsElement ? 0 : containerInnerOffset.y,
-                        width: isFixed ? viewportWidth() : containerElement.innerWidth(),
-                        height: isFixed ? viewportHeight() : containerElement.innerHeight()
-                    };
+                    var width;
+                    var height;
 
-                    rect.width = Math.max(0, rect.width - mainElement.outerWidth(true));
-                    rect.height = Math.max(0, rect.height - mainElement.outerHeight(true));
+                    var isFixed = style.position === 'fixed';
+                    if (isFixed) {
+
+                        width = containerElement
+                            ? containerElement.innerWidth()
+                            : viewportWidth();
+
+                        height = containerElement
+                            ? containerElement.innerHeight()
+                            : viewportHeight();
+
+                    }
+                    else {
+                        width = rectElement.innerWidth();
+                        height = rectElement.innerHeight();
+                    }
+
+                    width = Math.max(0, width - mainElement.outerWidth(true));
+                    height = Math.max(0, height - mainElement.outerHeight(true));
+
+                    var rect = {
+                        x: rectContainsElement ? 0 : rectInnerOffset.x,
+                        y: rectContainsElement ? 0 : rectInnerOffset.y,
+                        width: width,
+                        height: height
+                    };
 
                     var axis = me.option('axis');
 
@@ -296,13 +325,6 @@ define(function (require, exports, module) {
     };
 
     lifeCycle.extend(proto);
-
-    Draggable.defaultOptions = {
-        bodyDraggingClass: 'no-selection',
-        dragAnimation: function (options) {
-            options.mainElement.css(options.mainStyle);
-        }
-    };
 
     //
     // =================================================
