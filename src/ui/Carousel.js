@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     var Switchable = require('../helper/Switchable');
     var Iterator = require('../helper/Iterator');
 
+    var toNumber = require('../function/toNumber');
     var lifeCycle = require('../util/lifeCycle');
 
     /**
@@ -18,30 +19,31 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      *
-     * @property {number} options.index 从第几个开始播放，默认是 0
-     * @property {number=} options.minIndex index 的最小值
-     * @property {number=} options.maxIndex index 的最大值
+     * @property {number} options.index 从第几个开始播放
+     * @property {number} options.minIndex index 的最小值
+     * @property {number} options.maxIndex index 的最大值
      *
-     * @property {number=} options.step 每次滚动几个，默认是 1
+     * @property {number} options.step 每次滚动几项（item）
      *
-     * @property {number=} options.interval 自动播放时，切换的时间间隔，默认 5000
-     * @property {boolean=} options.autoplay 是否自动播放，默认 true
-     * @property {boolean=} options.loop 是否循环播放，默认为 true
-     * @property {boolean=} options.pauseOnHover 是否鼠标 hover 时暂停播放，默认为 true
+     * @property {number} options.interval 自动播放时，切换的时间间隔，单位毫秒
+     * @property {boolean} options.loop 是否循环播放
+     * @property {boolean} options.reverse 是否反向，正向是从左到右，反向是从右到左
+     * @property {boolean} options.autoplay 是否自动播放
+     * @property {boolean} options.pauseOnHover 鼠标 hover item 时是否暂停播放，从用户体验来看，为 true 比较好
      *
-     * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click， 默认是 enter
-     * @property {string=} options.navDelay 当 navTrigger 是 enter 时，可以设置延时
-     *
-     * @property {string=} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
-     * @property {string=} options.navActiveClass 转场时会为当前 navItem 切换这个 className
+     * @property {string} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click
+     * @property {string} options.navDelay 当 navTrigger 是 enter 时，可以设置延时
      * @property {Function} options.navAnimation
+     *
+     * @property {string} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
+     * @property {string} options.navActiveClass
      *
      * @property {string} options.itemSelector 幻灯片选择器
      * @property {string=} options.itemActiveClass
      * @property {Function} options.itemAnimation 切换动画，必传，否则不会动
      *
-     * @property {string=} options.prevSelector 上一页的选择器
-     * @property {string=} options.nextSelector 下一页的选择器
+     * @property {string=} options.prevSelector 上一步按钮的选择器
+     * @property {string=} options.nextSelector 下一步按钮的选择器
      *
      */
     function Carousel(options) {
@@ -79,10 +81,10 @@ define(function (require, exports, module) {
             );
         }
 
+        var itemSelector = me.option('itemSelector');
         if (me.option('autoplay')
             && me.option('pauseOnHover')
         ) {
-            var itemSelector = me.option('itemSelector');
             mainElement
                 .on(
                     'mouseenter' + namespace,
@@ -111,6 +113,8 @@ define(function (require, exports, module) {
             propertyChange: {
                 index: function (toIndex, fromIndex) {
 
+                    me.set('index', toIndex, { action: navTrigger });
+
                     me.execute('navAnimation', {
                         mainElement: mainElement,
                         navSelector: navSelector,
@@ -121,13 +125,11 @@ define(function (require, exports, module) {
 
                     me.execute('itemAnimation', {
                         mainElement: mainElement,
-                        itemSelector: me.option('itemSelector'),
+                        itemSelector: itemSelector,
                         itemActiveClass: me.option('itemActiveClass'),
                         fromIndex: fromIndex,
                         toIndex: toIndex
                     });
-
-                    me.set('index', toIndex, { action: navTrigger });
 
                 }
             }
@@ -173,7 +175,9 @@ define(function (require, exports, module) {
     };
 
     proto.play = function () {
-        this.inner('iterator').start();
+        this.inner('iterator').start(
+            this.option('reverse')
+        );
     };
 
     proto.pause = function () {
@@ -204,12 +208,10 @@ define(function (require, exports, module) {
             var me = this;
 
             me.inner('switcher').set('index', index);
-
-            var iterator = me.inner('iterator');
-            iterator.set('index', index);
+            me.inner('iterator').set('index', index);
 
             if (me.option('autoplay')) {
-                iterator.start();
+                me.play();
             }
 
         },
@@ -224,20 +226,18 @@ define(function (require, exports, module) {
 
     Carousel.propertyValidator = {
 
+        minIndex: function (minIndex) {
+            return toNumber(minIndex, 0);
+        },
         maxIndex: function (maxIndex) {
-
             if ($.type(maxIndex) !== 'number') {
-
                 var me = this;
-                var itemSelector = me.option('itemSelector');
-                var itemElements = me.inner('main').find(itemSelector);
-
-                maxIndex = itemElements.length - 1;
-
+                var items = me.inner('main').find(
+                    me.option('itemSelector')
+                );
+                maxIndex = items.length - 1;
             }
-
             return maxIndex;
-
         }
 
     };

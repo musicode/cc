@@ -137,19 +137,24 @@
                     mainElement: $('#carousel'),
 
                     maxIndex: 10,
-                    step: 2,
+                    step: 3,
+                    reverse: true,
 
                     prevSelector: '#prev',
                     nextSelector: '#next',
                     itemSelector: '.item',
 
                     itemAnimation: function (options) {
-                        var from = options.fromIndex;
-                        var to = options.toIndex;
+
+                        var items = options.mainElement.find(
+                            options.itemSelector
+                        );
+
+                        var item = items.eq(options.toIndex);
 
                         $('.row').animate(
                             {
-                                left: -185 * to
+                                left: -1 * item.position().left
                             },
                             500
                         );
