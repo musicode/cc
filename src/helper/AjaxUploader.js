@@ -58,7 +58,7 @@ define(function (require, exports, module) {
 
         // 确保是文件上传控件
         if (!fileElement.is(':file')) {
-            throw new Error('[CC Error] AjaxUploader mainElement must be <input type="file" />.');
+            me.error('AjaxUploader mainElement must be <input type="file" />.');
         }
 
         // 用一个 form 元素包着，便于重置

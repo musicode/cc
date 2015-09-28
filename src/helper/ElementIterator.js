@@ -12,8 +12,6 @@ define(function (require, exports, module) {
     var lifeCycle = require('../util/lifeCycle');
     var keyboardUtil = require('../util/keyboard');
 
-    var browser = require('../util/browser');
-
     /**
      *
      * @constrctor
@@ -41,9 +39,13 @@ define(function (require, exports, module) {
         var me = this;
 
         var iterator = new Iterator({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex'),
             defaultIndex: me.option('defaultIndex'),
             interval: me.option('interval'),
             loop: me.option('loop'),
+            step: me.option('step'),
             propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
                     me.set('index', newIndex, changes.index);
@@ -78,15 +80,6 @@ define(function (require, exports, module) {
             watchElement: watchElement,
             shortcut: shortcut
         });
-
-        // chrome 按方向键上会导致光标跑到最左侧
-        if (watchElement.is(':text') && browser.chrome) {
-            keyboard.on('keydown', function (e) {
-                if (e.keyCode === keyboardUtil.up) {
-                    e.preventDefault();
-                }
-            });
-        }
 
         var playing = false;
 
@@ -124,12 +117,6 @@ define(function (require, exports, module) {
             keyboard: keyboard
         });
 
-        me.set({
-            index: me.option('index'),
-            minIndex: me.option('minIndex'),
-            maxIndex: me.option('maxIndex')
-        });
-
     };
 
     proto.start = function (reserve) {
@@ -162,18 +149,6 @@ define(function (require, exports, module) {
     };
 
     lifeCycle.extend(proto);
-
-
-    ElementIterator.defaultOptions = {
-        loop: true,
-        interval: 100,
-        step: 1,
-        index: 0,
-        minIndex: 0,
-        defaultIndex: -1,
-        prevKey: 'up',
-        nextKey: 'down'
-    };
 
     ElementIterator.propertyUpdater = {
 

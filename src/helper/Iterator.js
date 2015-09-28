@@ -16,10 +16,10 @@ define(function (require, exports, module) {
      * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
-     * @property {number=} options.defaultIndex 默认索引，默认是 -1
-     * @property {number=} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
-     * @property {number=} options.step prev 和 next 的步进值，默认是 1
-     * @property {boolean=} options.loop 是否可循环遍历，默认循环
+     * @property {number} options.defaultIndex 默认索引
+     * @property {number} options.step prev 和 next 的步进值
+     * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
+     * @property {boolean=} options.loop 是否循环遍历
      */
     function Iterator(options) {
         lifeCycle.init(this, options);
@@ -109,7 +109,7 @@ define(function (require, exports, module) {
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
-        if ($.type(index) !== 'number'
+        if (!$.isNumeric(index)
             || (index < minIndex || index > maxIndex)
         ) {
             index = maxIndex;
@@ -139,7 +139,7 @@ define(function (require, exports, module) {
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
-        if ($.type(index) !== 'number'
+        if (!$.isNumeric(index)
             || (index > maxIndex || index < minIndex)
         ) {
             index = minIndex;
@@ -169,24 +169,15 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Iterator.defaultOptions = {
-        loop: true,
-        step: 1,
-        minIndex: 0,
-        interval: 100,
-        defaultIndex: -1
-    };
-
     Iterator.propertyValidator = {
 
         index: function (index) {
 
-            var me = this;
-
             if ($.type(index) !== 'number') {
+                var me = this;
                 index = me.option('defaultIndex');
                 if ($.type(index) !== 'number') {
-                    throw new Error('[CC Error] Iterator index is not a number.');
+                    me.error('Iterator index is not a number.');
                 }
             }
 

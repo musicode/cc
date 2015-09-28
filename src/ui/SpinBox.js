@@ -164,14 +164,14 @@ define(function (require, exports, module) {
 
         minValue: function (minValue) {
             if ($.type(minValue) !== 'number') {
-                throw new Error('[CC Error] ui/SpinBox minValue is missing.');
+                this.error('ui/SpinBox minValue is missing.');
             }
             return minValue;
         },
 
         maxValue: function (maxValue) {
             if ($.type(maxValue) !== 'number') {
-                throw new Error('[CC Error] ui/SpinBox maxValue is missing.');
+                this.error('ui/SpinBox maxValue is missing.');
             }
             return maxValue;
         },

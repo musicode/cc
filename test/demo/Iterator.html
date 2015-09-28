@@ -17,7 +17,7 @@
 
         require(
 
-            [ 'cobble/helper/Iterator' ],
+            [ 'custom/helper/Iterator' ],
 
             function (Iterator) {
 
@@ -30,58 +30,14 @@
                     loop: false,
                     interval: 1000,
 
-                    onbeforestart: function () {
-                        console.log('before start');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
-                    onafterstart: function () {
-                        console.log('after start');
-                    },
-                    onbeforepause: function () {
-                        console.log('before pause');
-                    },
-                    onafterpause: function () {
-                        console.log('after pause');
-                    },
-                    onbeforestop: function () {
-                        console.log('before stop');
-                    },
-                    onafterstop: function () {
-                        console.log('after stop');
-                    },
-
-                    onbeforeprev: function () {
-                        console.log('before prev');
-                    },
-                    onafterprev: function () {
-                        console.log('after prev');
-                    },
-                    onbeforenext: function () {
-                        console.log('before next');
-                    },
-                    onafternext: function () {
-                        console.log('after next');
-                    },
-
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
-                    },
-
-                    onpropertychange: function (e, data) {
-                        var diff = data.index;
-                        if (diff) {
-                            console.log('change', diff);
-                        }
-                    }
                 });
             }
         );

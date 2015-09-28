@@ -54,7 +54,7 @@ define(function (require, exports, module) {
     exports.findNative = function (instance, selector) {
         var nativeElement = instance.option('mainElement').find(selector);
         if (nativeElement.length !== 1) {
-            throw new Error('[CC Error] form/' + instance.type + ' 必须包含一个 ' + selector + '.');
+            instance.error('form/' + instance.type + ' 必须包含一个 ' + selector + '.');
         }
         return nativeElement;
     };
@@ -66,7 +66,7 @@ define(function (require, exports, module) {
             name = exports.prop(instance, 'name');
 
             if (!name || $.type(name) !== 'string') {
-                throw new Error('[CC Error] form/' + instance.type + ' must have the name attribute.')
+                instance.error('form/' + instance.type + ' must have the name attribute.')
             }
 
         }

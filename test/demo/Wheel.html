@@ -22,7 +22,7 @@
 
     require(
 
-    [ 'cobble/helper/Wheel' ],
+    [ 'custom/helper/Wheel' ],
 
     function (Wheel) {
 
@@ -30,31 +30,15 @@
 
         var wheel = new Wheel({
             watchElement: element,
-            onbeforeinit: function () {
-                console.log('before init');
-            },
-            onafterinit: function () {
-                console.log('after init');
-            },
-            onbeforedispose: function () {
-                console.log('before dispose');
-            },
-            onafterdispose: function () {
-                console.log('after dispose');
-            },
-            onwheel: function (event, data) {
-                console.log('onwheel', data);
-                return false;
+            ondebug: function (event, data) {
+                console.log(
+                    event.type,
+                    event.target.tagName ? true : false, // 是否原生
+                    data,
+                    this
+                );
             }
         });
-
-        wheel.on('wheel', function (event) {
-
-            console.log(arguments);
-            //event.preventDefault();
-            //return false;
-        });
-
     }
     );
 </script>

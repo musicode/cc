@@ -19,14 +19,14 @@ define(function (require, exports, module) {
      */
 
     var lifeCycle = require('../util/lifeCycle');
-    var instance = require('../util/instance');
 
     /**
      * 处理鼠标滚轮事件
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.watchElement 需要监听鼠标滚轮事件的元素，默认是 document
+     * @property {jQuery=} options.watchElement 需要监听鼠标滚轮事件的元素
+     * @property {Function=} options.onwheel
      */
     function Wheel(options) {
         lifeCycle.init(this, options);
@@ -85,11 +85,7 @@ define(function (require, exports, module) {
 
     lifeCycle.extend(proto);
 
-    Wheel.defaultOptions = {
-        watchElement: instance.document
-    };
-
-    var support = 'onmousewheel' in instance.body[0]
+    var support = 'onmousewheel' in document.body
                 ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
                 : 'DOMMouseScroll';          // 火狐的老版本
 

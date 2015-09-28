@@ -31,6 +31,7 @@ define(function (require, exports, module) {
     var lifeCycle = require('../util/lifeCycle');
 
     var inputUtil = require('../util/input');
+    var browserUtil = require('../util/browser');
     var keyboardUtil = require('../util/keyboard');
 
     var Keyboard = require('./Keyboard');
@@ -105,8 +106,15 @@ define(function (require, exports, module) {
             me.set('value', value);
         };
 
+
         keyboard
-        .on('keydown', dispatchEvent)
+        .on('keydown', function (e, data) {
+            // chrome 按方向键上会导致光标跑到最左侧
+            if (browserUtil.chrome && e.keyCode === keyboardUtil.up) {
+                e.preventDefault();
+            }
+            dispatchEvent(e, data);
+        })
         .on('keyup', dispatchEvent)
         .before('longpress', function (e, data) {
             isLongPress = true;

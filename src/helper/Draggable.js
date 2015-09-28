@@ -56,7 +56,7 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
-     * @property {Function=} options.dragAnimation
+     * @property {Function} options.dragAnimation
      *
      * @property {Function=} options.onbeforedrag
      * @property {Function=} options.ondrag
