@@ -26,8 +26,8 @@ define(function (require, exports, module) {
      * @property {string} options.navActiveClass 导航项选中状态的 className
      * @property {string=} options.contentActiveClass 内容区选中状态的 className
      *
-     * @property {Function=} options.navAnimate 切换动画
-     * @property {Function=} options.contentAnimate 切换动画
+     * @property {Function=} options.navAnimation 切换动画
+     * @property {Function=} options.contentAnimation 切换动画
      */
     function Tab(options) {
         lifeCycle.init(this, options);
@@ -56,7 +56,7 @@ define(function (require, exports, module) {
             propertyChange: {
                 index: function (toIndex, fromIndex) {
 
-                    me.execute('navAnimate', {
+                    me.execute('navAnimation', {
                         mainElement: mainElement,
                         navSelector: navSelector,
                         navActiveClass: navActiveClass,
@@ -64,7 +64,7 @@ define(function (require, exports, module) {
                         toIndex: toIndex
                     });
 
-                    me.execute('contentAnimate', {
+                    me.execute('contentAnimation', {
                         mainElement: mainElement,
                         contentSelector: me.option('contentSelector'),
                         contentActiveClass: me.option('contentActiveClass'),
@@ -102,7 +102,7 @@ define(function (require, exports, module) {
         navActiveClass: 'active',
         navSelector: '.nav-item',
         contentSelector: '.tab-panel',
-        navAnimate: function (options) {
+        navAnimation: function (options) {
 
             var activeClass = options.navActiveClass;
             if (!activeClass) {
@@ -126,7 +126,7 @@ define(function (require, exports, module) {
             }
 
         },
-        contentAnimate: function (options) {
+        contentAnimation: function (options) {
 
             var contentItems = options.mainElement.find(
                 options.contentSelector

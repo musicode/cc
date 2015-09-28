@@ -51,7 +51,7 @@
 
 看一个下拉菜单的例子：
 
-``` 
+```
 <div class="dropdown">
     <div class="btn btn-default dropdown-toggle">
         <span></span>
@@ -111,13 +111,13 @@
     // {
     //     showTrigger: 'click',
     //     showDelay: 100,  // delay 只有当 trigger 为 enter、leave 时可用
-    //     showAnimate: function (options) {
-    //         
+    //     showAnimation: function (options) {
+    //
     //     }
     // }
     xxTrigger: 'click,enter,leave,focus,blur,context',
     xxDelay: {number},
-    xxAnimate: function (options) {
+    xxAnimation: function (options) {
 
     }
 }

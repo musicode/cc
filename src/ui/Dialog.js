@@ -45,15 +45,15 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框，默认为 false
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
-     * @property {Function=} options.showAnimate 显示对话框动画
-     * @property {Function=} options.hideAnimate 隐藏对话框动画
-     * @property {Function=} options.resizeAnimate 窗口 resize 时调整窗口位置的动画
-     * @property {Function=} options.resizeMaskAnimate 调整遮罩大小的动画
+     * @property {Function=} options.showAnimation 显示对话框动画
+     * @property {Function=} options.hideAnimation 隐藏对话框动画
+     * @property {Function=} options.resizeAnimation 窗口 resize 时调整窗口位置的动画
+     * @property {Function=} options.resizeMaskAnimation 调整遮罩大小的动画
      *
      * @property {jQuery=} options.maskElement 遮罩元素
      * @property {string=} options.maskTemplate 如果没传遮罩，可传模板动态创建
-     * @property {Function=} options.showMaskAnimate 显示遮罩动画
-     * @property {Function=} options.hideMaskAnimate 隐藏遮罩动画
+     * @property {Function=} options.showMaskAnimation 显示遮罩动画
+     * @property {Function=} options.hideMaskAnimation 隐藏遮罩动画
      *
      * @property {string=} options.skinClass 皮肤
      * @property {string=} options.draggableClass 可拖拽时给 mainElement 添加的 class
@@ -261,7 +261,7 @@ define(function (require, exports, module) {
             var mainElement = me.inner('main');
 
             me.execute(
-                isResize ? 'resizeAnimate' : 'refreshAnimate',
+                isResize ? 'resizeAnimation' : 'refreshAnimation',
                 {
                     mainElement: mainElement,
                     mainStyle: pinGlobal({
@@ -277,7 +277,7 @@ define(function (require, exports, module) {
         var maskElement = me.inner('mask');
         if (maskElement) {
             me.execute(
-                'resizeMaskAnimate',
+                'resizeMaskAnimation',
                 {
                     maskElement: maskElement,
                     maskStyle: {
@@ -361,25 +361,25 @@ define(function (require, exports, module) {
 
         maskTemplate: '<div class="dialog-mask"></div>',
 
-        showAnimate: function (options) {
+        showAnimation: function (options) {
             options.mainElement.show();
         },
-        hideAnimate: function (options) {
+        hideAnimation: function (options) {
             options.mainElement.hide();
         },
-        showMaskAnimate: function (options) {
+        showMaskAnimation: function (options) {
             options.maskElement.show();
         },
-        hideMaskAnimate: function (options) {
+        hideMaskAnimation: function (options) {
             options.maskElement.hide();
         },
-        resizeMaskAnimate: function (options) {
+        resizeMaskAnimation: function (options) {
             options.maskElement.css(options.maskStyle);
         },
-        resizeAnimate: function (options) {
+        resizeAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
         },
-        refreshAnimate: function (options) {
+        refreshAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
         }
 
@@ -409,7 +409,7 @@ define(function (require, exports, module) {
             if (hidden) {
 
                 me.execute(
-                    'hideAnimate',
+                    'hideAnimation',
                     {
                         mainElement: mainElement
                     }
@@ -417,7 +417,7 @@ define(function (require, exports, module) {
 
                 if (maskElement) {
                     me.execute(
-                        'hideMaskAnimate',
+                        'hideMaskAnimation',
                         {
                             maskElement: maskElement
                         }
@@ -452,7 +452,7 @@ define(function (require, exports, module) {
                 me.refresh();
 
                 me.execute(
-                    'showAnimate',
+                    'showAnimation',
                     {
                         mainElement: mainElement
                     }
@@ -460,7 +460,7 @@ define(function (require, exports, module) {
 
                 if (maskElement) {
                     me.execute(
-                        'showMaskAnimate',
+                        'showMaskAnimation',
                         {
                             maskElement: maskElement
                         }

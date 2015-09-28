@@ -66,7 +66,7 @@ define(function (require, exports, module) {
             // 默认隐藏，鼠标移入后显示
             if (!isHidden(finderElement)) {
                 me.execute(
-                    'hideFinderAnimate',
+                    'hideFinderAnimation',
                     {
                         finderElement: finderElement
                     }
@@ -74,7 +74,7 @@ define(function (require, exports, module) {
             }
             if (!isHidden(viewportElement)) {
                 me.execute(
-                    'hideViewportAnimate',
+                    'hideViewportAnimation',
                     {
                         viewportElement: viewportElement
                     }
@@ -143,13 +143,13 @@ define(function (require, exports, module) {
             .on(enterType, function (e) {
 
                 me.execute(
-                    'showFinderAnimate',
+                    'showFinderAnimation',
                     {
                         finderElement: finderElement
                     }
                 );
                 me.execute(
-                    'showViewportAnimate',
+                    'showViewportAnimation',
                     {
                         viewportElement: viewportElement
                     }
@@ -168,13 +168,13 @@ define(function (require, exports, module) {
                             || y < top || y > bottom
                         ) {
                             me.execute(
-                                'hideFinderAnimate',
+                                'hideFinderAnimation',
                                 {
                                     finderElement: finderElement
                                 }
                             );
                             me.execute(
-                                'hideViewportAnimate',
+                                'hideViewportAnimation',
                                 {
                                     viewportElement: viewportElement
                                 }
@@ -272,16 +272,16 @@ define(function (require, exports, module) {
     lifeCycle.extend(proto);
 
     Zoom.defaultOptions = {
-        showFinderAnimate: function (options) {
+        showFinderAnimation: function (options) {
             options.finderElement.show();
         },
-        hideFinderAnimate: function (options) {
+        hideFinderAnimation: function (options) {
             options.finderElement.hide();
         },
-        showViewportAnimate: function (options) {
+        showViewportAnimation: function (options) {
             options.viewportElement.show();
         },
-        hideViewportAnimate: function (options) {
+        hideViewportAnimation: function (options) {
             options.viewportElement.hide();
         }
     };

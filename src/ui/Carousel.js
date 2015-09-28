@@ -34,11 +34,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
      * @property {string=} options.navActiveClass 转场时会为当前 navItem 切换这个 className
-     * @property {Function} options.navAnimate
+     * @property {Function} options.navAnimation
      *
      * @property {string} options.itemSelector 幻灯片选择器
      * @property {string=} options.itemActiveClass
-     * @property {Function} options.itemAnimate 切换动画，必传，否则不会动
+     * @property {Function} options.itemAnimation 切换动画，必传，否则不会动
      *
      * @property {string=} options.prevSelector 上一页的选择器
      * @property {string=} options.nextSelector 下一页的选择器
@@ -111,7 +111,7 @@ define(function (require, exports, module) {
             propertyChange: {
                 index: function (toIndex, fromIndex) {
 
-                    me.execute('navAnimate', {
+                    me.execute('navAnimation', {
                         mainElement: mainElement,
                         navSelector: navSelector,
                         navActiveClass: navActiveClass,
@@ -119,7 +119,7 @@ define(function (require, exports, module) {
                         toIndex: toIndex
                     });
 
-                    me.execute('itemAnimate', {
+                    me.execute('itemAnimation', {
                         mainElement: mainElement,
                         itemSelector: me.option('itemSelector'),
                         itemActiveClass: me.option('itemActiveClass'),
@@ -206,7 +206,7 @@ define(function (require, exports, module) {
         pauseOnHover: true,
         interval: 5000,
         navTrigger: 'enter',
-        navAnimate: function (options) {
+        navAnimation: function (options) {
 
             var activeClass = options.navActiveClass;
             if (!activeClass) {

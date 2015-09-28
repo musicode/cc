@@ -60,10 +60,10 @@
 
                     maskTemplate: '<div class="modal"></div>',
 
-                    showMaskAnimate: function (options) {
+                    showMaskAnimation: function (options) {
                         options.maskElement.slideDown(1000);
                     },
-                    hideMaskAnimate: function (options) {
+                    hideMaskAnimation: function (options) {
                         options.maskElement.slideUp(1000);
                     },
 
@@ -83,13 +83,13 @@
                             +     '</div>'
                             + '</div>',
 
-                    showAnimate: function (options) {
+                    showAnimation: function (options) {
                         options.mainElement.fadeIn(400);
                     },
-                    hideAnimate: function (options) {
+                    hideAnimation: function (options) {
                         options.mainElement.fadeOut(400);
                     },
-                    resizeAnimate: function (options) {
+                    resizeAnimation: function (options) {
                         options.mainElement.animate(options.mainStyle, 100);
                     },
 

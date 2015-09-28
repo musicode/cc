@@ -55,7 +55,7 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
-     * @property {Function=} options.dragAnimate
+     * @property {Function=} options.dragAnimation
      *
      */
     function Draggable(options) {
@@ -242,7 +242,7 @@ define(function (require, exports, module) {
             }
 
             me.execute(
-                'dragAnimate',
+                'dragAnimation',
                 {
                     mainElement: mainElement,
                     mainStyle: point
@@ -299,7 +299,7 @@ define(function (require, exports, module) {
 
     Draggable.defaultOptions = {
         bodyDraggingClass: 'no-selection',
-        dragAnimate: function (options) {
+        dragAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
         }
     };

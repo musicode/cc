@@ -60,7 +60,7 @@ define(function (require, exports, module) {
      * @property {number=} options.minValue 允许的最小值，默认是 0
      * @property {number=} options.maxValue 允许的最大值，默认是 100
      * @property {number=} options.step 步进值，默认是 1
-     * @property {Function=} options.slideAnimate 滑动动画
+     * @property {Function=} options.slideAnimation 滑动动画
      *
      * @property {boolean=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数，表示单位步进值
      * @property {boolean=} options.scrollStepType 滚动步进类型，可选值是 value 或 pixel，默认是 value
@@ -147,7 +147,7 @@ define(function (require, exports, module) {
             containerDraggingClass: me.option('draggingClass'),
             axis: me.option('axis'),
             context: me,
-            dragAnimate: function (options) {
+            dragAnimation: function (options) {
                 setPixel(
                     options.mainStyle[ props.position ],
                     'drag'
@@ -401,7 +401,7 @@ define(function (require, exports, module) {
         scrollStepType: 'value',
         orientation: 'horizontal',
         mainTemplate: '<div class="slider-thumb"></div>',
-        slideAnimate: function (options) {
+        slideAnimation: function (options) {
             options.thumbElement.css(options.thumbStyle);
             if (options.barStyle) {
                 options.barElement.css(options.barStyle);
@@ -458,7 +458,7 @@ define(function (require, exports, module) {
             }
 
             me.execute(
-                'slideAnimate',
+                'slideAnimation',
                 options
             );
 

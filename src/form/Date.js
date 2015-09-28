@@ -33,11 +33,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showCalendarTrigger 显示的触发方式
      * @property {number=} options.showCalendarDelay 显示延时
-     * @property {Function=} options.showCalendarAnimate 显示动画
+     * @property {Function=} options.showCalendarAnimation 显示动画
      *
      * @property {string=} options.hideCalendarTrigger 隐藏的触发方式
      * @property {number=} options.hideCalendarDelay 隐藏延时
-     * @property {Function=} options.hideCalendarAnimate 隐藏动画
+     * @property {Function=} options.hideCalendarAnimation 隐藏动画
      *
      * @property {string=} options.mainTemplate 组件模板
      * @property {string=} options.calendarTemplate 日历模板
@@ -105,17 +105,17 @@ define(function (require, exports, module) {
             showLayerDelay: me.option('showCalendarDelay'),
             hideLayerTrigger: me.option('hideCalendarTrigger'),
             hideLayerDelay: me.option('hideCalendarDelay'),
-            showLayerAnimate: function () {
+            showLayerAnimation: function () {
                 me.execute(
-                    'showCalendarAnimate',
+                    'showCalendarAnimation',
                     {
                         calendarElement: calendarElement
                     }
                 );
             },
-            hideLayerAnimate: function () {
+            hideLayerAnimation: function () {
                 me.execute(
-                    'hideCalendarAnimate',
+                    'hideCalendarAnimation',
                     {
                         calendarElement: calendarElement
                     }

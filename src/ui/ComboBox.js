@@ -41,11 +41,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showMenuTrigger 显示的触发方式
      * @property {number=} options.showMenuDelay 显示延时
-     * @property {Function=} options.showMenuAnimate 显示动画
+     * @property {Function=} options.showMenuAnimation 显示动画
      *
      * @property {string=} options.hideMenuTrigger 隐藏的触发方式
      * @property {number=} options.hideMenuDelay 隐藏延时
-     * @property {Function=} options.hideMenuAnimate 隐藏动画
+     * @property {Function=} options.hideMenuAnimation 隐藏动画
      *
      * @property {Function} options.setText 设置选中菜单项文本
      */
@@ -73,17 +73,17 @@ define(function (require, exports, module) {
             showLayerDelay: me.option('showMenuDelay'),
             hideLayerTrigger: me.option('hideMenuTrigger'),
             hideLayerDelay: me.option('hideMenuDelay'),
-            showLayerAnimate: function () {
+            showLayerAnimation: function () {
                 me.execute(
-                    'showMenuAnimate',
+                    'showMenuAnimation',
                     {
                         menuElement: menuElement
                     }
                 );
             },
-            hideLayerAnimate: function () {
+            hideLayerAnimation: function () {
                 me.execute(
-                    'hideMenuAnimate',
+                    'hideMenuAnimation',
                     {
                         menuElement: menuElement
                     }

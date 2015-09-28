@@ -368,7 +368,7 @@ define(function (require, exports, module) {
             var me = this;
 
             me.execute(
-                hidden ? 'hideAnimate' : 'showAnimate',
+                hidden ? 'hideAnimation' : 'showAnimation',
                 {
                     mainElement: me.inner('main')
                 }

@@ -50,9 +50,9 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.draggingClass 拖拽滑块时的 class
      *
-     * @property {Function=} options.showAnimate
-     * @property {Function=} options.hideAnimate
-     * @property {Function=} options.scrollAnimate
+     * @property {Function=} options.showAnimation
+     * @property {Function=} options.hideAnimation
+     * @property {Function=} options.scrollAnimation
      */
     function ScrollBar(options) {
         lifeCycle.init(this, options);
@@ -84,9 +84,9 @@ define(function (require, exports, module) {
             scrollStepType: me.option('scrollStepType'),
             thumbSelector: me.option('thumbSelector'),
             draggingClass: me.option('draggingClass'),
-            slideAnimate: function (options) {
+            slideAnimation: function (options) {
                 me.execute(
-                    'scrollAnimate',
+                    'scrollAnimation',
                     options
                 );
             },
@@ -148,7 +148,7 @@ define(function (require, exports, module) {
         if (ratio > 0 && ratio < 1) {
 
             me.execute(
-                'showAnimate',
+                'showAnimation',
                 {
                     mainElement: mainElement
                 }
@@ -178,7 +178,7 @@ define(function (require, exports, module) {
         }
         else {
             me.execute(
-                'hideAnimate',
+                'hideAnimation',
                 {
                     mainElement: mainElement
                 }
@@ -209,13 +209,13 @@ define(function (require, exports, module) {
         minHeight: 10,
         mainTemplate: '<i class="scroll-thumb"></i>',
         thumbSelector: '.scroll-thumb',
-        showAnimate: function (options) {
+        showAnimation: function (options) {
             options.mainElement.show();
         },
-        hideAnimate: function (options) {
+        hideAnimation: function (options) {
             options.mainElement.hide();
         },
-        scrollAnimate: function (options) {
+        scrollAnimation: function (options) {
             options.thumbElement.css(
                 options.thumbStyle
             );

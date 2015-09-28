@@ -96,11 +96,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showTrigger 显示的触发方式
      * @property {number=} options.showDelay 显示延时
-     * @property {Function=} options.showAnimate 显示动画
+     * @property {Function=} options.showAnimation 显示动画
      *
      * @property {string=} options.hideTrigger 隐藏的触发方式
      * @property {number=} options.hideDelay 隐藏延时
-     * @property {Function=} options.hideAnimate 隐藏动画
+     * @property {Function=} options.hideAnimation 隐藏动画
      *
      * @property {number=} options.gapX 提示层和触发元素之间的横向间距，如果为 0，提示会和元素贴在一起
      * @property {number=} options.gapY 提示层和触发元素之间的纵向间距，如果为 0，提示会和元素贴在一起
@@ -159,20 +159,20 @@ define(function (require, exports, module) {
             showLayerDelay: me.option('showDelay'),
             hideLayerTrigger: me.option('hideTrigger'),
             hideLayerDelay: me.option('hideDelay'),
-            showLayerAnimate: function () {
+            showLayerAnimation: function () {
 
                 me.execute(
-                    'showAnimate',
+                    'showAnimation',
                     {
                         mainElement: mainElement
                     }
                 );
 
             },
-            hideLayerAnimate: function () {
+            hideLayerAnimation: function () {
 
                 me.execute(
-                    'hideAnimate',
+                    'hideAnimation',
                     {
                         mainElement: mainElement
                     }
@@ -440,13 +440,13 @@ define(function (require, exports, module) {
 
         showTrigger: 'enter',
         showDelay: 100,
-        showAnimate: function (options) {
+        showAnimation: function (options) {
             options.mainElement.show();
         },
 
         hideTrigger: 'leave,click',
         hideDelay: 100,
-        hideAnimate: function (options) {
+        hideAnimation: function (options) {
             options.mainElement.hide();
         },
 

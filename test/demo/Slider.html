@@ -94,7 +94,7 @@
                     barSelector: '.slider-bar',
                     draggingClass: 'slider-active',
 
-                    slideAnimate: function (options) {
+                    slideAnimation: function (options) {
 
                         var thumbElement = options.thumbElement;
                         var barElement = options.barElement;
@@ -124,7 +124,7 @@
                     mainElement: $('#vertical-slider'),
                     orientation: 'vertical',
                     thumbSelector: '.slider-thumb',
-                    slideAnimate: function (options) {
+                    slideAnimation: function (options) {
                         options.thumbElement.animate(options.thumbStyle, 10);
                     },
                     change: {

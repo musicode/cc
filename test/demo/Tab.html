@@ -61,7 +61,7 @@
                     navActiveClass: 'active',
                     contentActiveClass: 'active in',
 
-                    contentAnimate: function (options) {
+                    contentAnimation: function (options) {
                         var contents = options.mainElement.find(options.contentSelector);
                         contents.eq(options.fromIndex).removeClass('active in');
                         contents.eq(options.toIndex).addClass('active in');

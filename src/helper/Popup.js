@@ -68,11 +68,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
      * @property {number=} options.showLayerDelay 显示延时
-     * @property {Function=} options.showLayerAnimate 显示动画，如果未设置，默认是 layerElement.show()
+     * @property {Function=} options.showLayerAnimation 显示动画，如果未设置，默认是 layerElement.show()
      *
      * @property {string=} options.hideLayerTrigger 隐藏的触发方式，可选值有 click leave blur context，可组合使用，以逗号分隔
      * @property {number=} options.hideLayerDelay 隐藏延时
-     * @property {Function=} options.hideLayerAnimate 隐藏动画，如果未设置，默认是 layerElement.hide()
+     * @property {Function=} options.hideLayerAnimation 隐藏动画，如果未设置，默认是 layerElement.hide()
      *
      */
     function Popup(options) {
@@ -239,10 +239,10 @@ define(function (require, exports, module) {
         triggerElement: $({}),
         showLayerTrigger: 'click',
         hideLayerTrigger: 'click',
-        showLayerAnimate: function (options) {
+        showLayerAnimation: function (options) {
             options.layerElement.show();
         },
-        hideLayerAnimate: function (options) {
+        hideLayerAnimation: function (options) {
             options.layerElement.hide();
         }
     };
@@ -250,7 +250,7 @@ define(function (require, exports, module) {
     Popup.stateUpdater = {
         hidden: function (hidden) {
             this.execute(
-                hidden ? 'hideLayerAnimate' : 'showLayerAnimate',
+                hidden ? 'hideLayerAnimation' : 'showLayerAnimation',
                 {
                     layerElement: this.option('layerElement')
                 }

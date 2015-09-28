@@ -43,11 +43,11 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showMenuTrigger 显示的触发方式
      * @property {number=} options.showMenuDelay 显示延时
-     * @property {Function=} options.showMenuAnimate 显示动画
+     * @property {Function=} options.showMenuAnimation 显示动画
      *
      * @property {string=} options.hideMenuTrigger 隐藏的触发方式
      * @property {number=} options.hideMenuDelay 隐藏延时
-     * @property {Function=} options.hideMenuAnimate 隐藏动画
+     * @property {Function=} options.hideMenuAnimation 隐藏动画
      */
     function Select(options) {
         lifeCycle.init(this, options);
@@ -77,11 +77,11 @@ define(function (require, exports, module) {
             menuTemplate: me.option('menuTemplate'),
             itemActiveClass: me.option('itemActiveClass'),
             menuActiveClass: me.option('menuActiveClass'),
-            showMenuAnimate: function (options) {
-                me.execute('showMenuAnimate', options);
+            showMenuAnimation: function (options) {
+                me.execute('showMenuAnimation', options);
             },
-            hideMenuAnimate: function (options) {
-                me.execute('hideMenuAnimate', options);
+            hideMenuAnimation: function (options) {
+                me.execute('hideMenuAnimation', options);
             },
             render: function (data, tpl) {
                 return me.execute('render', [ data, tpl ]);

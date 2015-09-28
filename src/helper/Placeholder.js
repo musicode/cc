@@ -44,8 +44,8 @@ define(function (require, exports, module) {
      * @property {string=} options.mainTemplate 模拟实现时，使用的模版
      * @property {string=} options.placeholderSelector 模拟实现时，查找占位符元素的选择器
      * @property {string=} options.inputSelector 模拟实现时，查找输入框元素的选择器
-     * @property {Function=} options.showAnimate 模拟实现时，使用的显示动画
-     * @property {Function=} options.hideAnimate 模拟实现时，使用的隐藏动画
+     * @property {Function=} options.showAnimation 模拟实现时，使用的显示动画
+     * @property {Function=} options.hideAnimation 模拟实现时，使用的隐藏动画
      */
     function Placeholder(options) {
         lifeCycle.init(this, options);
@@ -131,10 +131,10 @@ define(function (require, exports, module) {
         placeholderSelector: '.placeholder',
         inputSelector: ':text',
 
-        showAnimate: function (options) {
+        showAnimation: function (options) {
             options.placeholderElement.fadeIn(500);
         },
-        hideAnimate: function (options) {
+        hideAnimation: function (options) {
             options.placeholderElement.hide();
         }
     };
@@ -253,7 +253,7 @@ define(function (require, exports, module) {
             );
 
             instance.execute(
-                'showAnimate',
+                'showAnimation',
                 {
                     placeholderElement: placeholderElement
                 }
@@ -263,7 +263,7 @@ define(function (require, exports, module) {
         hide: function (instance) {
 
             instance.execute(
-                'hideAnimate',
+                'hideAnimation',
                 {
                     placeholderElement: instance.inner('placeholder')
                 }
