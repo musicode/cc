@@ -89,6 +89,11 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        // 确保有值，避免写一堆 if
+        if (!me.option('triggerElement')) {
+            me.option('triggerElement', $({}));
+        }
+
         var execute = function (proxy, name) {
             if ($.isFunction(proxy[ name ])) {
                 return proxy[ name ](me);
@@ -96,7 +101,7 @@ define(function (require, exports, module) {
         };
 
         me.inner({
-            showConfigs: triggerUtil.parse(
+            showTriggers: triggerUtil.parse(
                 me.option('showLayerTrigger'),
                 function (trigger) {
 
@@ -111,7 +116,7 @@ define(function (require, exports, module) {
 
                 }
             ),
-            hideConfigs: triggerUtil.parse(
+            hideTriggers: triggerUtil.parse(
                 me.option('hideLayerTrigger'),
                 function (trigger) {
 
@@ -224,9 +229,7 @@ define(function (require, exports, module) {
         // 确保解绑了事件
         me.close();
 
-        if (me.inner('hasShowEvent')) {
-            showEvent(me, 'off');
-        }
+        showEvent(me, 'off');
 
         lifeCycle.dispose(me);
 
@@ -265,7 +268,7 @@ define(function (require, exports, module) {
      */
     function showEvent(instance, action) {
         $.each(
-            instance.inner('showConfigs'),
+            instance.inner('showTriggers'),
             function (trigger, config) {
                 triggers.show[ trigger ][ action ](instance, config);
             }
@@ -281,7 +284,7 @@ define(function (require, exports, module) {
      */
     function hideEvent(instance, action) {
         $.each(
-            instance.inner('hideConfigs'),
+            instance.inner('hideTriggers'),
             function (trigger, config) {
                 triggers.hide[ trigger ][ action ](instance, config);
             }
@@ -395,7 +398,15 @@ define(function (require, exports, module) {
         );
     }
 
+    var enterType = triggerUtil.enter.type;
+    var leaveType = triggerUtil.leave.type;
 
+    /**
+     * show/hide 配置
+     *
+     * @inner
+     * @type {Object}
+     */
     var triggers = {
 
         show: {
@@ -416,7 +427,7 @@ define(function (require, exports, module) {
                 startDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').on(
-                            triggerUtil.leave.type,
+                            leaveType,
                             instance.option('triggerSelector'),
                             fn
                         );
@@ -425,7 +436,7 @@ define(function (require, exports, module) {
                 endDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').off(
-                            triggerUtil.leave.type,
+                            leaveType,
                             fn
                         );
                     };
@@ -475,12 +486,12 @@ define(function (require, exports, module) {
                 startDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').on(
-                            triggerUtil.enter.type,
+                            enterType,
                             instance.option('triggerSelector'),
                             fn
                         );
                         instance.option('layerElement').on(
-                            triggerUtil.enter.type,
+                            enterType,
                             fn
                         );
                     };
@@ -488,11 +499,11 @@ define(function (require, exports, module) {
                 endDelay: function (instance) {
                     return function (fn) {
                         instance.option('triggerElement').off(
-                            triggerUtil.enter.type,
+                            enterType,
                             fn
                         );
                         instance.option('layerElement').off(
-                            triggerUtil.enter.type,
+                            enterType,
                             fn
                         );
                     };
