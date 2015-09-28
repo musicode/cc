@@ -167,7 +167,7 @@ define(function (require, exports, module) {
     var nativeProxy = {
         init: function (instance) {
 
-            instance.initStructure();
+            instance.initStruct();
 
             var mainElement = instance.option('mainElement');
             instance.inner({
@@ -194,7 +194,7 @@ define(function (require, exports, module) {
     var fakeProxy = {
         init: function (instance) {
 
-            instance.initStructure();
+            instance.initStruct();
 
             var mainElement = instance.option('mainElement');
             var inputElement = mainElement.find(

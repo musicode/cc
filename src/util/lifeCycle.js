@@ -18,99 +18,7 @@ define(function (require, exports, module) {
 
     var instances = { };
 
-    /**
-     * 为了更好的性能，以及彻底解决初始化触发 change 事件带来的同步问题
-     * 新版把 change 事件做成了单独时间片触发
-     *
-     */
-    var hasUpdateTimer;
-
-    /**
-     * 批量更新的 timer
-     *
-     * 只要是一次新的时间片就行，不要间隔过长，否则页面看起来是一卡一卡的
-     *
-     * @inner
-     */
-    function updateAsync() {
-        $.each(instances, function (id, instance) {
-
-            hasUpdateTimer = false;
-
-            if (!instance.$) {
-                return;
-            }
-
-            var createUpdater = function (updater, changes) {
-                return function (name, change) {
-                    var fn = updater[ name ];
-                    if ($.isFunction(fn)) {
-                        return fn.call(
-                            instance,
-                            change.newValue,
-                            change.oldValue,
-                            changes
-                        );
-                    }
-                };
-            };
-
-            var staticUpdater;
-            var instanceUpdater;
-
-            var propertyChanges = instance.inner('propertyChanges');
-            if (propertyChanges) {
-
-                staticUpdater = instance.constructor.propertyUpdater;
-                if (staticUpdater) {
-                    $.each(
-                        propertyChanges,
-                        createUpdater(staticUpdater, propertyChanges)
-                    );
-                }
-
-                instanceUpdater = instance.option('propertyChange');
-                if (instanceUpdater) {
-                    $.each(
-                        propertyChanges,
-                        createUpdater(instanceUpdater, propertyChanges)
-                    );
-                }
-
-            }
-
-            var stateChanges = instance.inner('stateChanges');
-            if (stateChanges) {
-
-                staticUpdater = instance.constructor.stateUpdater;
-                if (staticUpdater) {
-                    $.each(
-                        stateChanges,
-                        createUpdater(staticUpdater, stateChanges)
-                    );
-                }
-
-                instanceUpdater = instance.option('stateChange');
-                if (instanceUpdater) {
-                    $.each(
-                        stateChanges,
-                        createUpdater(instanceUpdater, stateChanges)
-                    );
-                }
-
-            }
-
-            // 最后对外广播
-            if (propertyChanges) {
-                instance.inner('propertyChanges', null);
-                instance.emit('propertychange', propertyChanges);
-            }
-            if (stateChanges) {
-                instance.inner('stateChanges', null);
-                instance.emit('statechange', stateChanges);
-            }
-        });
-    }
+    var UPDATE_ASYNC = 'updateAsync';
 
     /**
      * 创建 jQuery Event 对象
@@ -208,9 +116,11 @@ define(function (require, exports, module) {
 
             changes[ name ] = record;
 
-            if (!hasUpdateTimer) {
-                hasUpdateTimer = true;
-                nextTick(updateAsync);
+            if (!me.inner(UPDATE_ASYNC)) {
+                me.inner(UPDATE_ASYNC, true);
+                nextTick(
+                    $.proxy(me.sync, me)
+                );
             }
 
         };
@@ -234,7 +144,7 @@ define(function (require, exports, module) {
         /**
          * 处理模板替换
          */
-        initStructure: function () {
+        initStruct: function () {
 
             var me = this;
 
@@ -282,10 +192,30 @@ define(function (require, exports, module) {
             }
 
             // 只能执行一次
-            me.initStructure = function () {
-                throw new Error('[CC Error] initStructure() can just call one time.');
+            me.initStruct = function () {
+                me.error('component.initStruct() can just call one time.');
             };
 
+        },
+
+        /**
+         * 打印警告信息
+         *
+         * @param {string} msg
+         */
+        warn: function (msg) {
+            if (typeof console !== 'undefined') {
+                console.warn('[CC warn] ' + msg);
+            }
+        },
+
+        /**
+         * 打印错误信息
+         *
+         * @param {string} msg
+         */
+        error: function (msg) {
+            throw new Error('[CC error] ' + msg);
         },
 
         /**
@@ -336,18 +266,28 @@ define(function (require, exports, module) {
 
             event.type = event.type.toLowerCase();
 
+
+            /**
+             * event handler 执行顺序如下：
+             * 1. 通过 instance.on 注册的优先使用
+             * 2. 执行 options.ontype
+             * 3. 执行 options.ontype_ 内部使用，确保有机会在最后执行一些逻辑
+             */
+
             context.$.trigger.apply(context.$, args);
+
+            var ontype = 'on' + event.type;
 
 context.execute('ondebug', args);
 
-            if (event.isPropagationStopped()) {
-                return event;
-            }
-
-            if (context.execute('on' + event.type, args) === false) {
+            if (!event.isPropagationStopped()
+                && context.execute(ontype, args) === false
+            ) {
                 event.preventDefault();
                 event.stopPropagation();
             }
+
+            context.execute(ontype + '_', args);
 
             return event;
 
@@ -497,8 +437,11 @@ context.execute('ondebug', args);
 
             var me = this;
 
+            // 做一个容错，避免销毁后再次调用
+            var inners = me.inners || { };
+
             if (arguments.length === 1 && $.type(name) === 'string') {
-                return me.inners[ name ];
+                return inners[ name ];
             }
             else {
 
@@ -509,7 +452,7 @@ context.execute('ondebug', args);
                     return;
                 }
 
-                me.inners[ name ] = value;
+                inners[ name ] = value;
 
             }
 
@@ -547,7 +490,68 @@ context.execute('ondebug', args);
         /**
          * property setter
          */
-        set: createSettter('property', 'properties', 'set', 'get')
+        set: createSettter('property', 'properties', 'set', 'get'),
+
+        /**
+         * 为了更好的性能，以及彻底解决初始化触发 change 事件带来的同步问题
+         * 新版把 change 事件做成了单独时间片触发
+         *
+         * 每个组件都有一个异步更新定时器，在 dispose 时，会把异步的更新立即执行掉
+         */
+        sync: function () {
+
+            var me = this;
+
+            if (!me.inner(UPDATE_ASYNC)) {
+                return;
+            }
+
+            var createUpdater = function (updater, changes) {
+                return function (name, change) {
+                    var fn = updater[ name ];
+                    if ($.isFunction(fn)) {
+                        return fn.call(
+                            me,
+                            change.newValue,
+                            change.oldValue,
+                            changes
+                        );
+                    }
+                };
+            };
+
+            $.each(
+                [ 'property', 'state' ],
+                function (index, key) {
+                    var changes = me.inner(key + 'Changes');
+                    if (changes) {
+
+                        var staticUpdater = me.constructor[ key + 'Updater' ];
+                        if (staticUpdater) {
+                            $.each(
+                                changes,
+                                createUpdater(staticUpdater, changes)
+                            );
+                        }
+
+                        var instanceUpdater = me.option(key + 'Change');
+                        if (instanceUpdater) {
+                            $.each(
+                                changes,
+                                createUpdater(instanceUpdater, changes)
+                            );
+                        }
+
+                        me.inner(key + 'Changes', null);
+                        me.emit(key + 'change', changes);
+
+                    }
+                }
+            );
+
+            me.inner(UPDATE_ASYNC, false);
+
+        }
 
     };
 
@@ -678,6 +682,25 @@ context.execute('ondebug', args);
 
         extend(options, instance.constructor.defaultOptions);
 
+        options.onafterinit_ = function () {
+            instance.state('inited', true);
+        };
+        options.onafterdispose_ = function () {
+
+            instance.state('disposed', true);
+
+            delete instances[ instance.guid ];
+
+            instance.properties =
+            instance.options =
+            instance.changes =
+            instance.states =
+            instance.inners =
+            instance.guid =
+            instance.$ = null;
+
+        };
+
         instances[ instance.guid = guid() ] = instance;
 
         // 用 properties 属性管理属性
@@ -697,24 +720,6 @@ context.execute('ondebug', args);
 
         instance.init();
 
-        instance.after('dispose', function () {
-
-            // 因为调用 dispose 需要发事件
-            // 用延时确保在最后执行才不会报错
-            nextTick(function () {
-
-                instance.properties =
-                instance.options =
-                instance.changes =
-                instance.states =
-                instance.inners =
-                instance.guid =
-                instance.$ = null;
-
-            });
-
-        });
-
         return instance;
 
     };
@@ -726,8 +731,7 @@ context.execute('ondebug', args);
      */
     exports.dispose = function (instance) {
 
-        delete instances[ instance.guid ];
-
+        instance.sync();
         instance.$.off();
 
     };

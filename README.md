@@ -51,7 +51,7 @@
 
 看一个下拉菜单的例子：
 
-```
+``` 
 <div class="dropdown">
     <div class="btn btn-default dropdown-toggle">
         <span></span>
@@ -61,6 +61,34 @@
     <input type="hidden" name="fieldName" v-model="fieldName" value="{{fieldName}}" />
 </div>
 ```
+
+
+
+## 异步更新
+
+抄袭自 Vue，修改组件的 property 和 state 不会立即更新视图，而是等下一个时间片，批量更新。
+
+``` javascript
+component.set({
+    value: '1'
+});
+component.set({
+    value: '2'
+});
+// 只会更新一次视图，value 是 2
+```
+
+### 立即更新
+
+某些特殊场景，可能不希望异步更新。另一个场景是组件销毁时，如果有异步更新未执行，会立即更新，保证视图的正确。
+
+``` javascript
+component.sync();
+```
+
+
+
+
 
 ## 通用 options 配置
 

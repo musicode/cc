@@ -87,7 +87,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.initStructure();
+        me.initStruct();
 
         var mainElement = me.option('mainElement');
         var thumbElement = mainElement.find(

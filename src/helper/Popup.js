@@ -47,7 +47,6 @@ define(function (require, exports, module) {
 
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
-    var nextTick = require('../function/nextTick');
 
     var lifeCycle = require('../util/lifeCycle');
     var triggerUtil = require('../util/trigger');
@@ -66,7 +65,7 @@ define(function (require, exports, module) {
      *                                             即触发了 triggerElement 中的 triggerSelector，会弹出 layerElement
      *
      * @property {jQuery} options.layerElement 弹出的元素
-     * @property {boolean} options.hidden 弹出的元素是否默认隐藏，如果不传，会自动根据 DOM 判断
+     * @property {boolean} options.opened 弹出的元素是否默认展开，如果不传，会自动根据 DOM 判断
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
      * @property {number=} options.showLayerDelay 显示延时
@@ -94,49 +93,115 @@ define(function (require, exports, module) {
             me.option('triggerElement', $({}));
         }
 
-        var execute = function (proxy, name) {
+
+
+
+        var curry = function (proxy, name) {
             if ($.isFunction(proxy[ name ])) {
                 return proxy[ name ](me);
             }
         };
 
-        me.inner({
-            showTriggers: triggerUtil.parse(
-                me.option('showLayerTrigger'),
-                function (trigger) {
+        var showTriggers = triggerUtil.parse(
+            me.option('showLayerTrigger'),
+            function (trigger) {
 
-                    var showLayerTrigger = triggers.show[ trigger ];
+                var showLayerTrigger = triggers.show[ trigger ];
 
-                    return {
-                        delay: me.option('showLayerDelay'),
-                        startDelay: execute(showLayerTrigger, 'startDelay'),
-                        endDelay: execute(showLayerTrigger, 'endDelay'),
-                        handler: execute(showLayerTrigger, 'handler')
-                    };
+                return {
+                    delay: me.option('showLayerDelay'),
+                    startDelay: curry(showLayerTrigger, 'startDelay'),
+                    endDelay: curry(showLayerTrigger, 'endDelay'),
+                    handler: curry(showLayerTrigger, 'handler')
+                };
 
+            }
+        );
+
+        var hideTriggers = triggerUtil.parse(
+            me.option('hideLayerTrigger'),
+            function (trigger) {
+
+                var hideLayerTrigger = triggers.hide[ trigger ];
+
+                return {
+                    delay: me.option('hideLayerDelay'),
+                    startDelay: curry(hideLayerTrigger, 'startDelay'),
+                    endDelay: curry(hideLayerTrigger, 'endDelay'),
+                    handler: curry(hideLayerTrigger, 'handler')
+                };
+
+            }
+        );
+
+        var showEvent = function (action) {
+            $.each(
+                showTriggers,
+                function (trigger, config) {
+                    triggers.show[ trigger ][ action ](me, config);
                 }
-            ),
-            hideTriggers: triggerUtil.parse(
-                me.option('hideLayerTrigger'),
-                function (trigger) {
+            );
+        };
 
-                    var hideLayerTrigger = triggers.hide[ trigger ];
-
-                    return {
-                        delay: me.option('hideLayerDelay'),
-                        startDelay: execute(hideLayerTrigger, 'startDelay'),
-                        endDelay: execute(hideLayerTrigger, 'endDelay'),
-                        handler: execute(hideLayerTrigger, 'handler')
-                    };
-
+        var hideEvent = function (action) {
+            $.each(
+                hideTriggers,
+                function (trigger, config) {
+                    triggers.hide[ trigger ][ action ](me, config);
                 }
-            )
-        });
+            );
+        };
+
+
+
+
 
 
 
         var hasShowEvent = false;
         var hasHideEvent = false;
+
+        var bindShowEvent = function () {
+            if (!hasShowEvent) {
+                showEvent('on');
+                hasShowEvent = true;
+            }
+        };
+        var unbindShowEvent = function () {
+            if (hasShowEvent) {
+                showEvent('off');
+                hasShowEvent = false;
+            }
+        };
+        var bindHideEvent = function () {
+            if (!hasHideEvent) {
+                hideEvent('on');
+                hasHideEvent = true;
+            }
+        };
+        var unbindHideEvent = function () {
+            if (hasHideEvent) {
+                hideEvent('off');
+                hasHideEvent = false;
+            }
+        };
+        var stateChangeHandler = function (e, data) {
+            var opened = data.opened;
+            if (opened) {
+                if (opened.newValue) {
+                    if (!me.option('triggerSelector')) {
+                        unbindShowEvent();
+                    }
+                    setTimeout(
+                        bindHideEvent
+                    );
+                }
+                else {
+                    unbindHideEvent();
+                    bindShowEvent();
+                }
+            }
+        };
 
         var context = me.option('context') || me;
 
@@ -150,97 +215,60 @@ define(function (require, exports, module) {
             if (!hasHideEvent && hasShowEvent) {
                 return false;
             }
-        });
+        })
+        .before('dispose', function () {
 
-        me.on('statechange', function (e, data) {
-            var hidden = data.hidden;
-            if (hidden) {
-                if (hidden.newValue) {
+            context.off('statechange', stateChangeHandler);
 
-                    if (hasHideEvent) {
-                        hideEvent(me, 'off');
-                        hasHideEvent = false;
-                    }
+            unbindShowEvent();
+            unbindHideEvent();
 
-                    if (!hasShowEvent) {
-                        showEvent(me, 'on');
-                        hasShowEvent = true;
-                    }
+            me.close();
 
-                }
-                else {
+        })
+        .on('statechange', stateChangeHandler);
 
-                    if (hasShowEvent
-                        && !me.option('triggerSelector')
-                    ) {
-                        showEvent(me, 'off');
-                        hasShowEvent = false;
-                    }
 
-                    if (!hasHideEvent) {
-                        // 不论是否交互产生，都异步一下
-                        // 避免有事件冒泡
-                        setTimeout(
-                            function () {
-                                hideEvent(me, 'on');
-                                hasHideEvent = true;
-                            }
-                        );
-                    }
-
-                }
-            }
-        });
 
         me.state({
-            hidden: me.option('hidden')
+            opened: me.option('opened')
         });
 
     };
 
 
     proto.open = function () {
-        this.state('hidden', false);
+        this.state('opened', true);
     };
 
     proto._open = function () {
-        if (!this.is('hidden')) {
+        if (this.is('opened')) {
             return false;
         }
     };
 
 
     proto.close = function () {
-        this.state('hidden', true);
+        this.state('opened', false);
     };
 
     proto._close = function () {
-        if (this.is('hidden')) {
+        if (!this.is('opened')) {
             return false;
         }
     };
 
 
     proto.dispose = function () {
-
-        var me = this;
-
-        // 在 lifeCycle.dispose 前执行
-        // 确保解绑了事件
-        me.close();
-
-        showEvent(me, 'off');
-
-        lifeCycle.dispose(me);
-
+        lifeCycle.dispose(this);
     };
 
     lifeCycle.extend(proto);
 
     Popup.stateUpdater = {
-        hidden: function (hidden) {
+        opened: function (opened) {
             this.execute(
-                hidden ? 'hideLayerAnimation' : 'showLayerAnimation',
+                opened ? 'showLayerAnimation' : 'hideLayerAnimation',
                 {
                     layerElement: this.option('layerElement')
                 }
@@ -249,76 +277,15 @@ define(function (require, exports, module) {
     };
 
     Popup.stateValidator = {
-        hidden: function (hidden) {
-            if ($.type(hidden) !== 'boolean') {
-                hidden = isHidden(
+        opened: function (opened) {
+            if ($.type(opened) !== 'boolean') {
+                opened = !isHidden(
                     this.option('layerElement')
                 );
             }
-            return hidden;
+            return opened;
         }
     };
-
-    /**
-     * 处理 显示事件
-     *
-     * @inner
-     * @param {Popup} instance
-     * @param {string} action 可选值有 on off
-     */
-    function showEvent(instance, action) {
-        $.each(
-            instance.inner('showTriggers'),
-            function (trigger, config) {
-                triggers.show[ trigger ][ action ](instance, config);
-            }
-        );
-    }
-
-    /**
-     * 处理 隐藏事件
-     *
-     * @inner
-     * @param {Popup} instance
-     * @param {string} action 可选值有 on off
-     */
-    function hideEvent(instance, action) {
-        $.each(
-            instance.inner('hideTriggers'),
-            function (trigger, config) {
-                triggers.hide[ trigger ][ action ](instance, config);
-            }
-        );
-    }
-
-    /**
-     * 通用的绑定事件
-     *
-     * @inner
-     * @param {Object} instance
-     * @param {Object} config
-     */
-    function on(instance, config) {
-        instance.option('triggerElement').on(
-            config.type,
-            instance.option('triggerSelector'),
-            config.handler
-        );
-    }
-
-    /**
-     * 通用的解绑事件
-     *
-     * @inner
-     * @param {Object} instance
-     * @param {Object} config
-     */
-    function off(instance, config) {
-        instance.option('triggerElement').off(
-            config.type,
-            config.handler
-        );
-    }
 
     /**
      * 创建响应 show 事件的事件处理函数
@@ -364,6 +331,42 @@ define(function (require, exports, module) {
         };
     }
 
+    /**
+     * 通用的绑定事件
+     *
+     * @inner
+     * @param {Object} instance
+     * @param {Object} config
+     */
+    function on(instance, config) {
+        instance.option('triggerElement').on(
+            config.type,
+            instance.option('triggerSelector'),
+            config.handler
+        );
+    }
+
+    /**
+     * 通用的解绑事件
+     *
+     * @inner
+     * @param {Object} instance
+     * @param {Object} config
+     */
+    function off(instance, config) {
+        instance.option('triggerElement').off(
+            config.type,
+            config.handler
+        );
+    }
+
+    /**
+     * 在 document 绑定全局事件
+     *
+     * @inner
+     * @param {Popup} instance
+     * @param {Object} config
+     */
     function onDocument(instance, config) {
         instanceUtil.document.on(
             config.type,
@@ -371,6 +374,13 @@ define(function (require, exports, module) {
         );
     }
 
+    /**
+     * 取消全局绑定
+     *
+     * @inner
+     * @param {Popup} instance
+     * @param {Object} config
+     */
     function offDocument(instance, config) {
         instanceUtil.document.off(
             config.type,
@@ -383,7 +393,6 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Popup} instance
-     * @param {Function=} before 需要满足什么前置条件才可往下执行
      * @return {Function}
      */
     function createDocumentHideHandler(instance) {
