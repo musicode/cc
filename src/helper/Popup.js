@@ -48,7 +48,7 @@ define(function (require, exports, module) {
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var triggerUtil = require('../util/trigger');
     var instanceUtil = require('../util/instance');
 
@@ -69,15 +69,15 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
      * @property {number=} options.showLayerDelay 显示延时
-     * @property {Function=} options.showLayerAnimation 显示动画，如果未设置，默认是 layerElement.show()
+     * @property {Function=} options.showLayerAnimation 显示动画
      *
-     * @property {string=} options.hideLayerTrigger 隐藏的触发方式，可选值有 click leave blur context，可组合使用，以逗号分隔
-     * @property {number=} options.hideLayerDelay 隐藏延时
-     * @property {Function=} options.hideLayerAnimation 隐藏动画，如果未设置，默认是 layerElement.hide()
+     * @property {string} options.hideLayerTrigger 隐藏的触发方式，可选值有 click leave blur context，可组合使用，以逗号分隔
+     * @property {number} options.hideLayerDelay 隐藏延时
+     * @property {Function} options.hideLayerAnimation 隐藏动画
      *
      */
     function Popup(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Popup.prototype;
@@ -250,10 +250,10 @@ define(function (require, exports, module) {
 
 
     proto.dispose = function () {
-        lifeCycle.dispose(this);
+        lifeUtil.dispose(this);
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Popup.stateUpdater = {
         opened: function (opened) {

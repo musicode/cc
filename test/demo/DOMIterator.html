@@ -32,11 +32,11 @@
 
         require(
 
-            [ 'custom/helper/ElementIterator' ],
+            [ 'custom/helper/DOMIterator' ],
 
-            function (ElementIterator) {
+            function (DOMIterator) {
 
-                window.iterator = new ElementIterator({
+                window.iterator = new DOMIterator({
                     watchElement: $(document),
                     defaultIndex: -1,
                     index: 3,

@@ -103,7 +103,7 @@ define(function (require, exports, module) {
     require('./util/localStorage');
     require('./util/Message');
     require('./util/mimeType');
-    require('./util/mouse');
+    require('./util/touch');
     require('./util/orientation');
     require('./util/position');
     require('./util/Queue');

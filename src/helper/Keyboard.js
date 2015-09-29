@@ -24,8 +24,8 @@ define(function (require, exports, module) {
 
     var split = require('../function/split');
 
-    var lifeCycle = require('../util/lifeCycle');
-    var keyboard = require('../util/keyboard');
+    var lifeUtil = require('../util/life');
+    var keyboardUtil = require('../util/keyboard');
 
     /**
      * 处理键盘事件，提供快捷键支持
@@ -36,10 +36,10 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.watchElement 需要监听键盘事件的元素
      *
-     * @property {Object} options.shortcut 配置快捷键
-     *                                     组合键使用 + 连接，如 'ctrl+c',
-     *                                     支持键可看 util/keyboard exports
-     *                                     小键盘键统一加 $ 前缀，如 '$+' 表示加号键
+     * @property {Object=} options.shortcut 配置快捷键
+     *                                      组合键使用 + 连接，如 'ctrl+c',
+     *                                      支持键可看 util/keyboard exports
+     *                                      小键盘键统一加 $ 前缀，如 '$+' 表示加号键
      *
      * @property {Function=} options.onkeydown
      * @property {Function=} options.onkeyup
@@ -67,7 +67,7 @@ define(function (require, exports, module) {
      * });
      */
     function Keyboard(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Keyboard.prototype;
@@ -166,7 +166,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.option('watchElement').off(
             me.namespace()
@@ -174,7 +174,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
 
     /**
@@ -210,7 +210,7 @@ define(function (require, exports, module) {
                             );
 
                 $.each(
-                    keyboard.combinationKey,
+                    keyboardUtil.combinationKey,
                     function (name) {
                         if ($.inArray(name, keys) < 0) {
                             keys.push('!' + name);
@@ -231,15 +231,15 @@ define(function (require, exports, module) {
                             name = '$+';
                         }
 
-                        if (keyboard.combinationKey[name]) {
+                        if (keyboardUtil.combinationKey[ name ]) {
                             expressions.push(
                                (negative ? '!' : '')
                              + 'e.' + name + 'Key'
                             );
                         }
-                        else if (keyboard[name]) {
+                        else if (keyboardUtil[ name ]) {
                             expressions.push(
-                                'e.keyCode===' + keyboard[name]
+                                'e.keyCode===' + keyboardUtil[ name ]
                             );
                         }
                         else {

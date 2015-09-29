@@ -9,7 +9,7 @@ define(function (require, exports, module) {
     var Keyboard = require('./Keyboard');
     var Iterator = require('./Iterator');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var keyboardUtil = require('../util/keyboard');
 
     /**
@@ -20,19 +20,19 @@ define(function (require, exports, module) {
      * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
-     * @property {number=} options.defaultIndex 默认索引，默认是 -1
-     * @property {number=} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
-     * @property {number=} options.step prev 和 next 的步进值，默认是 1
-     * @property {boolean=} options.loop 是否可循环遍历，默认循环
-     * @property {string=} options.prevKey prev 操作对应的键名，默认是方向键上（up）
-     * @property {string=} options.nextKey next 操作对应的键名，默认是方向键下（down）
+     * @property {number} options.defaultIndex 默认索引
+     * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
+     * @property {number} options.step prev 和 next 的步进值
+     * @property {boolean=} options.loop 是否可循环遍历
+     * @property {string} options.prevKey prev 操作对应的键名，键名参考 util/keyboard
+     * @property {string} options.nextKey next 操作对应的键名，键名参考 util/keyboard
      *
      */
-    function ElementIterator(options) {
-        lifeCycle.init(this, options);
+    function DOMIterator(options) {
+        lifeUtil.init(this, options);
     }
 
-    var proto = ElementIterator.prototype;
+    var proto = DOMIterator.prototype;
 
     proto.init = function () {
 
@@ -44,8 +44,8 @@ define(function (require, exports, module) {
             maxIndex: me.option('maxIndex'),
             defaultIndex: me.option('defaultIndex'),
             interval: me.option('interval'),
-            loop: me.option('loop'),
             step: me.option('step'),
+            loop: me.option('loop'),
             propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
                     me.set('index', newIndex, changes.index);
@@ -148,9 +148,9 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
-    ElementIterator.propertyUpdater = {
+    DOMIterator.propertyUpdater = {
 
         index: function (index) {
             this.inner('iterator').set('index', index);
@@ -165,6 +165,6 @@ define(function (require, exports, module) {
     };
 
 
-    return ElementIterator;
+    return DOMIterator;
 
 });

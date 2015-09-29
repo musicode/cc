@@ -2,9 +2,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var ElementIterator = require('cc/helper/ElementIterator');
+    var DOMIterator = require('cc/helper/DOMIterator');
 
-    ElementIterator.defaultOptions = {
+    DOMIterator.defaultOptions = {
         loop: true,
         interval: 100,
         step: 1,
@@ -15,6 +15,6 @@ define(function (require, exports, module) {
         nextKey: 'down'
     };
 
-    return ElementIterator;
+    return DOMIterator;
 
 });

@@ -26,9 +26,9 @@ define(function (require, exports, module) {
     var isHidden = require('../function/isHidden');
     var toString = require('../function/toString');
 
+    var lifeUtil = require('../util/life');
     var inputUtil = require('../util/input');
     var detectionUtil = require('../util/detection');
-    var lifeCycle = require('../util/lifeCycle');
 
     /**
      * 使输入框元素具有 placeholder 功能
@@ -43,10 +43,10 @@ define(function (require, exports, module) {
      *
      * @property {boolean=} options.nativeFirst 是否原生优先。支持 placeholder 的浏览器，不管其表现如何，优先使用原生
      *
-     * @property {string=} options.labelSelector 模拟实现时，查找显示占位文本元素的选择器
-     * @property {string=} options.inputSelector 模拟实现时，查找输入框元素的选择器
-     * @property {Function=} options.showAnimation 模拟实现时，使用的显示动画
-     * @property {Function=} options.hideAnimation 模拟实现时，使用的隐藏动画
+     * @property {string} options.labelSelector 模拟实现时，查找显示占位文本元素的选择器
+     * @property {string} options.inputSelector 模拟实现时，查找输入框元素的选择器
+     * @property {Function} options.showAnimation 模拟实现时，使用的显示动画
+     * @property {Function} options.hideAnimation 模拟实现时，使用的隐藏动画
      *
      * @property {Function=} options.onbeforeshow
      * @property {Function=} options.onaftershow
@@ -56,7 +56,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onafterrender
      */
     function Placeholder(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Placeholder.prototype;
@@ -66,6 +66,8 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
+
+        me.initStruct();
 
         me.inner({
             proxy: me.option('nativeFirst') && detectionUtil.supportPlaceholder()
@@ -111,10 +113,10 @@ define(function (require, exports, module) {
 
     proto.dispose = function () {
         executeProxyMethod(this, 'dispose');
-        lifeCycle.dispose(this);
+        lifeUtil.dispose(this);
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Placeholder.propertyUpdater = {
         value: function () {
@@ -167,9 +169,8 @@ define(function (require, exports, module) {
     var nativeProxy = {
         init: function (instance) {
 
-            instance.initStruct();
-
             var mainElement = instance.option('mainElement');
+
             instance.inner({
                 main: mainElement,
                 input: mainElement
@@ -193,8 +194,6 @@ define(function (require, exports, module) {
 
     var fakeProxy = {
         init: function (instance) {
-
-            instance.initStruct();
 
             var mainElement = instance.option('mainElement');
             var inputElement = mainElement.find(

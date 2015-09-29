@@ -28,8 +28,7 @@ define(function (require, exports, module) {
 
     var toString = require('../function/toString');
 
-    var lifeCycle = require('../util/lifeCycle');
-
+    var lifeUtil = require('../util/life');
     var inputUtil = require('../util/input');
     var browserUtil = require('../util/browser');
     var keyboardUtil = require('../util/keyboard');
@@ -71,7 +70,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onafterlongpress
      */
     function Input(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Input.prototype;
@@ -110,7 +109,9 @@ define(function (require, exports, module) {
         keyboard
         .on('keydown', function (e, data) {
             // chrome 按方向键上会导致光标跑到最左侧
-            if (browserUtil.chrome && e.keyCode === keyboardUtil.up) {
+            if (browserUtil.chrome
+                && e.keyCode === keyboardUtil.up
+            ) {
                 e.preventDefault();
             }
             dispatchEvent(e, data);
@@ -158,7 +159,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         var mainElement = me.inner('main');
         mainElement.off(
@@ -171,7 +172,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Input.propertyUpdater = {
         value: function (value) {

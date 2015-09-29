@@ -6,10 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var toNumber = require('../function/toNumber');
     var createTimer = require('../util/timer');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
+     * 没有主元素，辅助类
      *
      * @constrctor
      * @param {Object} options
@@ -22,7 +24,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.loop 是否循环遍历
      */
     function Iterator(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Iterator.prototype;
@@ -40,33 +42,27 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 开启自动遍历
      *
      * @param {boolean} reverse 是否反向
      */
     proto.start = function (reverse) {
 
         var me = this;
-        var interval = me.option('interval');
 
         var timer = me.inner('timer');
         if (timer) {
             timer.stop();
         }
 
-        if (reverse) {
-            timer = createTimer(
-                $.proxy(me.prev, me),
-                interval,
-                interval
-            );
-        }
-        else {
-            timer = createTimer(
-                $.proxy(me.next, me),
-                interval,
-                interval
-            );
-        }
+        var fn = reverse ? me.prev : me.next;
+        var interval = me.option('interval');
+
+        timer = createTimer(
+            $.proxy(fn, me),
+            interval,
+            interval
+        );
 
         timer.start();
 
@@ -74,6 +70,9 @@ define(function (require, exports, module) {
 
     };
 
+    /**
+     * 停止自动遍历
+     */
     proto.pause = function () {
 
         var me = this;
@@ -89,6 +88,9 @@ define(function (require, exports, module) {
         }
     };
 
+    /**
+     * 停止自动遍历 + 重置索引
+     */
     proto.stop = function () {
 
         var me = this;
@@ -101,6 +103,9 @@ define(function (require, exports, module) {
 
     };
 
+    /**
+     * 前一个
+     */
     proto.prev = function () {
 
         var me = this;
@@ -114,6 +119,9 @@ define(function (require, exports, module) {
         ) {
             index = maxIndex;
         }
+
+        // 再加一层保护
+        index = toNumber(index, 0);
 
         me.set('index', index, { action: 'prev' });
 
@@ -131,6 +139,9 @@ define(function (require, exports, module) {
 
     };
 
+    /**
+     * 后一个
+     */
     proto.next = function () {
 
         var me = this;
@@ -144,6 +155,9 @@ define(function (require, exports, module) {
         ) {
             index = minIndex;
         }
+
+        // 再加一层保护
+        index = toNumber(index, 0);
 
         me.set('index', index, { action: 'next' });
 
@@ -167,17 +181,16 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Iterator.propertyValidator = {
 
         index: function (index) {
 
-            if ($.type(index) !== 'number') {
-                var me = this;
-                index = me.option('defaultIndex');
-                if ($.type(index) !== 'number') {
-                    me.error('Iterator index is not a number.');
+            if (!$.isNumeric(index)) {
+                index = this.option('defaultIndex');
+                if (!$.isNumeric(index)) {
+                    this.error('Iterator index is not a number.');
                 }
             }
 

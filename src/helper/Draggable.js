@@ -36,9 +36,9 @@ define(function (require, exports, module) {
     var enableSelection = require('../function/enableSelection');
     var disableSelection = require('../function/disableSelection');
 
-    var instance = require('../util/instance');
-    var lifeCycle = require('../util/lifeCycle');
-    var supportEvents = require('../util/mouse');
+    var lifeUtil = require('../util/life');
+    var touchUtil = require('../util/touch');
+    var instanceUtil = require('../util/instance');
 
     /**
      * 拖拽
@@ -64,7 +64,7 @@ define(function (require, exports, module) {
      *
      */
     function Draggable(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Draggable.prototype;
@@ -92,7 +92,7 @@ define(function (require, exports, module) {
 
         var namespace = me.namespace();
 
-        $.each(supportEvents, function (key, event) {
+        $.each(touchUtil, function (key, event) {
 
             if (!event.support) {
                 return;
@@ -185,12 +185,8 @@ define(function (require, exports, module) {
                     width = Math.max(0, width - mainElement.outerWidth(true));
                     height = Math.max(0, height - mainElement.outerHeight(true));
 
-                    var rect = {
-                        x: rectContainsElement ? 0 : rectInnerOffset.x,
-                        y: rectContainsElement ? 0 : rectInnerOffset.y,
-                        width: width,
-                        height: height
-                    };
+                    var x = rectContainsElement ? 0 : rectInnerOffset.x;
+                    var y = rectContainsElement ? 0 : rectInnerOffset.y;
 
                     var axis = me.option('axis');
 
@@ -202,8 +198,8 @@ define(function (require, exports, module) {
                                     // 偏移坐标
                                     offsetX,
                                     // 约束坐标范围
-                                    rect.x,
-                                    rect.x + rect.width
+                                    x,
+                                    x + width
                                 );
 
                     yCalculator = axis === 'x'
@@ -211,8 +207,8 @@ define(function (require, exports, module) {
                                 : calculator.variable(
                                     coord[ isFixed ? 'fixedY' : 'absoluteY' ],
                                     offsetY,
-                                    rect.y,
-                                    rect.y + rect.height
+                                    y,
+                                    y + height
                                 );
 
 
@@ -222,7 +218,7 @@ define(function (require, exports, module) {
                     counter = 0;
 
 
-                    instance.document
+                    instanceUtil.document
                         .off(namespace)
                         .on(event.move + namespace, dragHandler)
                         .on(event.up + namespace, afterDragHandler);
@@ -263,7 +259,7 @@ define(function (require, exports, module) {
                 }
 
                 if (bodyDraggingClass) {
-                    instance.body.addClass(bodyDraggingClass);
+                    instanceUtil.body.addClass(bodyDraggingClass);
                 }
 
                 me.emit('beforedrag', point);
@@ -284,7 +280,7 @@ define(function (require, exports, module) {
 
         var afterDragHandler = function (e) {
 
-            instance.document.off(namespace);
+            instanceUtil.document.off(namespace);
 
             enableSelection();
 
@@ -297,7 +293,7 @@ define(function (require, exports, module) {
             }
 
             if (bodyDraggingClass) {
-                instance.body.removeClass(bodyDraggingClass);
+                instanceUtil.body.removeClass(bodyDraggingClass);
             }
 
             if (counter > 0) {
@@ -316,7 +312,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -324,7 +320,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     //
     // =================================================
@@ -412,7 +408,7 @@ define(function (require, exports, module) {
      */
     var globalCoord = { };
 
-    $.each(supportEvents, function (key, event) {
+    $.each(touchUtil, function (key, event) {
 
         if (!event.support) {
             return;
