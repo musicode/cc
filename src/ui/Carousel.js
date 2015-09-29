@@ -6,11 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var toNumber = require('../function/toNumber');
+
     var Switchable = require('../helper/Switchable');
     var Iterator = require('../helper/Iterator');
 
-    var toNumber = require('../function/toNumber');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      * 轮播
@@ -26,28 +27,28 @@ define(function (require, exports, module) {
      * @property {number} options.step 每次滚动几项（item）
      *
      * @property {number} options.interval 自动播放时，切换的时间间隔，单位毫秒
-     * @property {boolean} options.loop 是否循环播放
-     * @property {boolean} options.reverse 是否反向，正向是从左到右，反向是从右到左
-     * @property {boolean} options.autoplay 是否自动播放
-     * @property {boolean} options.pauseOnHover 鼠标 hover item 时是否暂停播放，从用户体验来看，为 true 比较好
+     * @property {boolean=} options.loop 是否循环播放
+     * @property {boolean=} options.reverse 是否反向，正向是从左到右，反向是从右到左
+     * @property {boolean=} options.autoplay 是否自动播放
+     * @property {boolean=} options.pauseOnHover 鼠标 hover item 时是否暂停播放，从用户体验来看，为 true 比较好
      *
-     * @property {string} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click
-     * @property {string} options.navDelay 当 navTrigger 是 enter 时，可以设置延时
-     * @property {Function} options.navAnimation
+     * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click
+     * @property {string=} options.navDelay 当 navTrigger 是 enter 时，可以设置延时
+     * @property {Function=} options.navAnimation 切换动画
      *
-     * @property {string} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
-     * @property {string} options.navActiveClass
+     * @property {string=} options.navSelector 图标按钮选择器（一般会写序号的小按钮）
+     * @property {string=} options.navActiveClass
      *
      * @property {string} options.itemSelector 幻灯片选择器
      * @property {string=} options.itemActiveClass
-     * @property {Function} options.itemAnimation 切换动画，必传，否则不会动
+     * @property {Function} options.itemAnimation 切换动画
      *
      * @property {string=} options.prevSelector 上一步按钮的选择器
      * @property {string=} options.nextSelector 下一步按钮的选择器
      *
      */
     function Carousel(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Carousel.prototype;
@@ -104,24 +105,45 @@ define(function (require, exports, module) {
         var navSelector = me.option('navSelector');
         var navActiveClass = me.option('navActiveClass');
 
-        var switcher = new Switchable({
-            mainElement: mainElement,
-            switchTrigger: navTrigger,
-            switchDelay: me.option('navDelay'),
-            itemSelector: navSelector,
-            itemActiveClass: navActiveClass,
+        var switcher;
+        if (navTrigger && navSelector) {
+            switcher = new Switchable({
+                mainElement: mainElement,
+                switchTrigger: navTrigger,
+                switchDelay: me.option('navDelay'),
+                itemSelector: navSelector,
+                itemActiveClass: navActiveClass,
+                propertyChange: {
+                    index: function (toIndex, fromIndex) {
+
+                        me.set('index', toIndex, { action: navTrigger });
+
+                    }
+                }
+            });
+        }
+
+        var iterator = new Iterator({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex'),
+            interval: me.option('interval'),
+            step: me.option('step'),
+            loop: me.option('loop'),
             propertyChange: {
-                index: function (toIndex, fromIndex) {
+                index: function (toIndex, fromIndex, changes) {
 
-                    me.set('index', toIndex, { action: navTrigger });
+                    me.set('index', toIndex, changes.index);
 
-                    me.execute('navAnimation', {
-                        mainElement: mainElement,
-                        navSelector: navSelector,
-                        navActiveClass: navActiveClass,
-                        fromIndex: fromIndex,
-                        toIndex: toIndex
-                    });
+                    if (switcher) {
+                        me.execute('navAnimation', {
+                            mainElement: mainElement,
+                            navSelector: navSelector,
+                            navActiveClass: navActiveClass,
+                            fromIndex: fromIndex,
+                            toIndex: toIndex
+                        });
+                    }
 
                     me.execute('itemAnimation', {
                         mainElement: mainElement,
@@ -131,17 +153,6 @@ define(function (require, exports, module) {
                         toIndex: toIndex
                     });
 
-                }
-            }
-        });
-
-        var iterator = new Iterator({
-            interval: me.option('interval'),
-            loop: me.option('loop'),
-            step: me.option('step'),
-            propertyChange: {
-                index: function (newIndex, oldIndex, changes) {
-                    me.set('index', newIndex, changes.index);
                 },
                 minIndex: function (minIndex) {
                     me.set('minIndex', minIndex);
@@ -156,12 +167,6 @@ define(function (require, exports, module) {
             main: mainElement,
             switcher: switcher,
             iterator: iterator
-        });
-
-        me.set({
-            index: me.option('index'),
-            minIndex: me.option('minIndex'),
-            maxIndex: me.option('maxIndex')
         });
 
     };
@@ -188,10 +193,14 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('iterator').dispose();
-        me.inner('switcher').dispose();
+
+        var switcher = me.inner('switcher');
+        if (switcher) {
+            switcher.dispose();
+        }
 
         me.inner('main').off(
             me.namespace()
@@ -199,7 +208,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Carousel.propertyUpdater = {
 
@@ -207,8 +216,12 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            me.inner('switcher').set('index', index);
             me.inner('iterator').set('index', index);
+
+            var switcher = me.inner('switcher');
+            if (switcher) {
+                switcher.set('index', index);
+            }
 
             if (me.option('autoplay')) {
                 me.play();
@@ -230,14 +243,19 @@ define(function (require, exports, module) {
             return toNumber(minIndex, 0);
         },
         maxIndex: function (maxIndex) {
-            if ($.type(maxIndex) !== 'number') {
+
+            maxIndex = toNumber(maxIndex, null);
+
+            if (maxIndex == null) {
                 var me = this;
                 var items = me.inner('main').find(
                     me.option('itemSelector')
                 );
                 maxIndex = items.length - 1;
             }
+
             return maxIndex;
+
         }
 
     };

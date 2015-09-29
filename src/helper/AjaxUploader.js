@@ -21,8 +21,8 @@ define(function (require, exports, module) {
 
     var getRatio = require('../function/ratio');
 
-    var lifeCycle = require('../util/lifeCycle');
-    var ext2MimeType = require('../util/mimeType');
+    var lifeUtil = require('../util/life');
+    var mimeTypeUtil = require('../util/mimeType');
 
     /**
      * 使用 HTML5 ajax 上传
@@ -33,16 +33,16 @@ define(function (require, exports, module) {
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
-     * @property {string=} options.fileName 上传文件的 name 值，默认是 Filedata
-     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
+     * @property {string=} options.fileName 上传文件的 name 值
+     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                            [ 'jpg', 'png' ]
-     * @property {boolean=} options.useChunk 是否使用分片上传，默认为 false
+     * @property {boolean=} options.useChunk 是否使用分片上传
      * @property {number=} options.chunkSize 分片大小
      *
      */
     function AjaxUploader(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = AjaxUploader.prototype;
@@ -248,7 +248,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.stop();
 
@@ -258,14 +258,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
-
-    AjaxUploader.defaultOptions = {
-        data: { },
-        multiple: false,
-        fileName: 'Filedata',
-        ignoreError: false
-    };
+    lifeUtil.extend(proto);
 
     /**
      * 是否支持分块上传
@@ -612,9 +605,9 @@ define(function (require, exports, module) {
         $.each(
             accept,
             function (index, name) {
-                if (ext2MimeType[name]) {
+                if (mimeTypeUtil[ name ]) {
                     result.push(
-                        ext2MimeType[name]
+                        mimeTypeUtil[ name ]
                     );
                 }
             }

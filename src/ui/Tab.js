@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var Switchable = require('../helper/Switchable');
 
     /**
@@ -17,20 +17,20 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement 主元素
      * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 navActiveClass 算出索引
      *
-     * @property {string=} options.navTrigger 触发方式，可选值包括 over click
-     * @property {number=} options.navDelay 触发延时
-     * @property {Function=} options.navAnimation 切换动画
+     * @property {string} options.navTrigger 触发方式，可选值包括 enter click
+     * @property {number=} options.navDelay 触发延时，当 navTrigger 是 enter 时可用
+     * @property {Function} options.navAnimation 切换动画
      *
      * @property {string} options.navSelector 导航项的选择器，如 .nav-item
      * @property {string} options.navActiveClass 导航项选中状态的 className
      *
-     * @property {string=} options.contentSelector 内容项的选择器，如 .tab-panel
+     * @property {string} options.contentSelector 内容项的选择器，如 .tab-panel
      * @property {string=} options.contentActiveClass 内容项选中状态的 className
      * @property {Function=} options.contentAnimation 切换动画
      *
      */
     function Tab(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Tab.prototype;
@@ -90,13 +90,13 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('switcher').dispose();
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Tab.propertyUpdater = {
         index: function (toIndex) {

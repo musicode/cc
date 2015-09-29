@@ -15,9 +15,9 @@ define(function (require, exports, module) {
      */
 
     var ucFirst = require('../function/ucFirst');
-    var ratio = require('../function/ratio');
+    var getRatio = require('../function/ratio');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     require('../util/supload/supload');
 
     var Supload = window.Supload;
@@ -39,7 +39,7 @@ define(function (require, exports, module) {
      *                                            [ 'jpg', 'png' ]
      */
     function FlashUploader(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = FlashUploader.prototype;
@@ -148,26 +148,13 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('supload').dispose();
 
     };
 
-    lifeCycle.extend(proto);
-
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
-    FlashUploader.defaultOptions = {
-        multiple: false,
-        fileName: 'Filedata',
-        ignoreError: false,
-        flashUrl: require.toUrl('../util/supload/supload.swf')
-    };
+    lifeUtil.extend(proto);
 
     /**
      * 等待上传状态
@@ -268,7 +255,7 @@ define(function (require, exports, module) {
 
             var uploader = this.customSettings.uploader;
 
-            data.percent = 100  * ratio(data.uploaded, data.total) + '%';
+            data.percent = 100  * getRatio(data.uploaded, data.total) + '%';
 
             uploader.emit('uploadprogress', data);
 

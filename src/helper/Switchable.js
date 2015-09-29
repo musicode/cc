@@ -8,7 +8,7 @@ define(function (require, exports, module) {
 
     var toNumber = require('../function/toNumber');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var triggerUtil = require('../util/trigger');
 
     /**
@@ -17,14 +17,14 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement
-     * @property {number=} options.index 当前选中索引
-     * @property {string=} options.switchTrigger 触发切换方式，可选值有 enter click
-     * @property {number=} options.switchDelay 触发延时时间
+     * @property {number=} options.index 当前选中索引，如果没传，会根据 itemActiveClass 去 DOM 查找
+     * @property {string} options.switchTrigger 触发切换方式，可选值有 enter click
+     * @property {number=} options.switchDelay 触发延时，当 switchTrigger 是 enter 时可用
      * @property {string} options.itemSelector 触发元素的选择器
-     * @property {string=} options.itemActiveClass 触发元素被激活时的 className
+     * @property {string=} options.itemActiveClass 触发元素选中时添加的 className
      */
     function Switchable(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Switchable.prototype;
@@ -87,7 +87,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -95,17 +95,17 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Switchable.propertyValidator = {
 
         index: function (index) {
 
-            index = toNumber(index, null);
+            var me = this;
 
+            index = toNumber(index, null);
             if (index == null) {
 
-                var me = this;
                 var itemSelector = me.option('itemSelector');
                 var itemActiveClass = me.option('itemActiveClass');
 
@@ -117,9 +117,14 @@ define(function (require, exports, module) {
                 }
             }
 
+            if (!$.isNumeric(index)) {
+                me.error('Switchable index is not a number');
+            }
+
             return index;
 
         }
+
     };
 
     var triggers = {

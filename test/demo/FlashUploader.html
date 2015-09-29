@@ -44,7 +44,7 @@
 
         require(
 
-            [ 'cobble/helper/FlashUploader' ],
+            [ 'custom/helper/FlashUploader' ],
 
             function (FlashUploader) {
 
@@ -56,12 +56,7 @@
                     data: {
                         company: 'baidu'
                     },
-                    onready: function () {
-                        console.log('ready');
-                        //uploader.disable();
-                    },
                     onfilechange: function () {
-                        uploader.disable();
                         this.setData({
                             name: 'zhujl',
                             age: 25,
@@ -69,41 +64,14 @@
                         });
                         this.upload();
                     },
-                    onuploadstart: function (data) {
-                        console.log('upload start:');
-                        console.log(data.fileItem);
-                    },
-                    onuploadprogress: function (data) {
-                        console.log('upload progress:');
-                        console.log((100 * data.uploaded / data.total) + '%');
-                    },
-                    onuploadsuccess: function (data) {
-                        console.log('upload success');
-                        console.log(data.responseText);
-                    },
-                    onuploaderror: function (data) {
-                        console.log('upload error');
-                        console.log(data);
-                    },
-                    onuploadcomplete: function (data) {
-                        console.log('upload complete');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
-                });
-
-                var handler = function (e, data) {
-                    console.log('===============');
-                    console.log(e.cobble, e.type, data);
-                };
-
-                uploader
-                .on({
-                    ready: handler,
-                    fileChange: handler,
-                    uploadStart: handler,
-                    uploadProgress: handler,
-                    uploadSuccess: handler,
-                    uploadError: handler,
-                    uploadComplete: handler
                 });
 
             }

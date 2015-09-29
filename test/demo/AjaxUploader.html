@@ -20,13 +20,12 @@
 
         require(
 
-            [ 'cobble/helper/AjaxUploader' ],
+            [ 'custom/helper/AjaxUploader' ],
 
             function (AjaxUploader) {
 
-                var element = $('#file');
                 var uploader = new AjaxUploader({
-                    mainElement: element,
+                    mainElement: $('#file'),
                     action: 'http://localhost:8808/upload',
                     multiple: true,
                     accept: ['jpg', 'png', 'gif', 'bmp'],
@@ -37,42 +36,15 @@
                         });
                         this.upload();
                     },
-                    onuploadstart: function (event, data) {
-                        console.log('upload start:');
-                        console.log(data.fileItem);
-                    },
-                    onuploadprogress: function (event, data) {
-                        console.log('upload progress:');
-                        console.log(data.percent);
-                    },
-                    onuploadsuccess: function (event, data) {
-                        console.log('upload success');
-                        console.log(data.responseText);
-                    },
-                    onuploaderror: function (event, data) {
-                        console.log('upload error');
-                        console.log(data);
-                    },
-                    onuploadcomplete: function (event, data) {
-                        console.log('upload complete');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
-
-                var handler = function (e, data) {
-                    console.log('===============');
-                    console.log(e.cobble, e.type, data);
-                };
-
-                uploader
-                .on({
-                    fileChange: handler,
-                    uploadStart: handler,
-                    uploadProgress: handler,
-                    uploadSuccess: handler,
-                    uploadError: handler,
-                    uploadComplete: handler
-                });
-
 
             }
         );

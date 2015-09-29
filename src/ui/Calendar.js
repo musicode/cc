@@ -6,12 +6,6 @@ define(function (require) {
 
     'use strict';
 
-    /**
-     * 只有具有 data-value 属性的元素才支持点击选中
-     *
-     */
-
-    var lpad = require('../function/lpad');
     var split = require('../function/split');
     var createValues = require('../function/values');
     var weekOffset = require('../function/weekOffset');
@@ -23,7 +17,7 @@ define(function (require) {
     var parseDate = require('../function/parseDate');
     var simplifyDate = require('../function/simplifyDate');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      *
@@ -34,26 +28,31 @@ define(function (require) {
      *
      * @property {string=} options.value 选中的值，多选时以 , 分隔
      *
-     * @property {Date=} options.today 今天的日期，主要是为了服务器时间校正，默认是浏览器的当天
-     * @property {Date=} options.date 初始化时视图所在的日期，默认取 today
-     * @property {number=} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
+     * @property {Date=} options.today 今天的日期，可传入服务器时间用于校正，默认是浏览器的今天
+     * @property {Date=} options.date 视图所在的日期，默认取 today
+     * @property {number} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
+     * @property {string} options.mode 视图类型，可选值包括 month, week
      *
      * @property {boolean=} options.multiple 是否可多选
-     * @property {boolean=} options.toggle 是否 toggle 选中
-     * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
+     * @property {boolean=} options.toggle 是否 toggle 反选
+     * @property {boolean=} options.stable 是否稳定，当 mode 是 month 时可用
+     *                                     月份的日期分布不同，有些 4 行，有些 5 行
+     *                                     当 stable 为 true，所有月份都以 5 行显示
      *
-     * @property {string=} options.mode 视图类型，可选值包括 month, week
-     * @property {string} options.itemActiveClass 日期被选中的 className
+     * @property {string} options.itemSelector 日期选择器
+     * @property {string=} options.itemActiveClass 日期被选中时添加的 className
      *
-     * @property {string} options.prevSelector 上月/上周 选择器
-     * @property {string} options.nextSelector 下月/下周 选择器
+     * @property {string} options.valueAttribute
      *
-     * @property {Function} options.render
+     * @property {string=} options.prevSelector 上月/上周 选择器
+     * @property {string=} options.nextSelector 下月/下周 选择器
+     *
+     * @property {Function} options.render 渲染模板
      * @property {Function=} options.parse 把字符串类型的 value 解析成 Date 类型
      *
      */
     function Calendar(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Calendar.prototype;
@@ -68,29 +67,40 @@ define(function (require) {
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
 
-        mainElement.on(
-            clickType,
-            '[' + ATTR_VALUE + ']',
-            function (e) {
+        var itemSelector = me.option('itemSelector');
+        if (itemSelector) {
+            mainElement.on(
+                clickType,
+                itemSelector,
+                function (e) {
 
-                var itemValue = $(this).attr(ATTR_VALUE);
+                    var valueAttribute = me.option('valueAttribute');
+                    if (!valueAttribute) {
+                        me.error('ui/Calendar valueAttribute is missing.');
+                    }
 
-                var oldValue = me.get('value');
-                var newValue = me.inner('processValue')(itemValue, true);
+                    var itemValue = $(this).attr(valueAttribute);
+                    if (!itemValue) {
+                        me.error('ui/Calendar value is not found by valueAttribute.');
+                    }
 
-                var oldCount = split(oldValue, ',').length;
-                var newCount = split(newValue, ',').length;
+                    var oldValue = me.get('value');
+                    var newValue = me.inner('values')(itemValue, true);
 
-                e.type = newCount < oldCount
-                       ? 'unselect'
-                       : 'select';
+                    var oldCount = split(oldValue, ',').length;
+                    var newCount = split(newValue, ',').length;
 
-                me.emit(e, { value: itemValue });
+                    e.type = newCount < oldCount
+                           ? 'unselect'
+                           : 'select';
 
-                me.set('value', newValue, { action: 'click' });
+                    me.emit(e, { value: itemValue });
 
-            }
-        );
+                    me.set('value', newValue, { action: 'click' });
+
+                }
+            );
+        }
 
         var prevSelector = me.option('prevSelector');
         if (prevSelector) {
@@ -278,7 +288,7 @@ define(function (require) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -286,98 +296,73 @@ define(function (require) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
 
     var MODE_MONTH = 'month';
     var MODE_WEEK = 'week';
 
-    var ATTR_VALUE = 'data-value';
+    Calendar.propertyUpdater = {
 
-    Calendar.defaultOptions = {
-        firstDay: 1,
-        mode: MODE_MONTH,
-        toggle: false,
-        multiple: false,
-        stable: true,
-        itemActiveClass: 'active',
-        parse: parseDate
-    };
+        date: function (date) {
 
+            var me = this;
 
-    Calendar.propertyUpdater = { };
-
-    Calendar.propertyUpdater.date =
-    Calendar.propertyUpdater.data =
-    Calendar.propertyUpdater.value = function (newValue, oldValue, changes) {
-
-        var me = this;
-
-        var silentOptions = {
-            silent: true
-        };
-
-        // 如果是  render 就一次成型，不需要一个个去选中
-        var needRender = false;
-
-        if (changes.date) {
-
-            var date = changes.date.newValue;
-
-            if (!me.inRange(date)) {
-                needRender = true;
-                me.set('data', me.createRenderData(date), silentOptions);
+            if (me.inRange(date)) {
+                return;
             }
 
-        }
+            me.set('data', me.createRenderData(date));
+            me.sync();
 
-        if (!needRender && changes.data) {
-            needRender = true;
-        }
+        },
 
-        if (needRender) {
-            me.render();
-        }
-        else if (changes.value) {
+        data: function () {
+            this.render();
+        },
 
-            var itemActiveClass = me.option('itemActiveClass');
-            if (itemActiveClass) {
-
-                var mainElement = me.inner('main');
-
-                mainElement
-                .find('.' + itemActiveClass + '[' + ATTR_VALUE + ']')
-                .removeClass(itemActiveClass);
-
-                $.each(
-                    split(changes.value.newValue, ','),
-                    function (index, value) {
-
-                        if (!value) {
-                            return;
-                        }
-
-                        mainElement
-                        .find('[' + ATTR_VALUE + '="' + value + '"]')
-                        .addClass(itemActiveClass);
-
-                    }
-                );
-
-            }
-
-        }
-
-        return false;
-
-    };
-
-    Calendar.propertyValidator = {
         value: function (value) {
 
             var me = this;
 
-            var processValue = createValues(
+            var valueAttribute = me.option('valueAttribute');
+            var itemActiveClass = me.option('itemActiveClass');
+            if (!valueAttribute || !itemActiveClass) {
+                return;
+            }
+
+            var mainElement = me.inner('main');
+
+            mainElement
+            .find('.' + itemActiveClass)
+            .removeClass(itemActiveClass);
+
+            $.each(
+                split(value, ','),
+                function (index, value) {
+
+                    if (!value) {
+                        return;
+                    }
+
+                    mainElement
+                    .find('[' + valueAttribute + '="' + value + '"]')
+                    .addClass(itemActiveClass);
+
+                }
+            );
+
+        }
+
+    };
+
+    Calendar.propertyValidator = {
+
+        value: function (value) {
+
+            var me = this;
+
+            var values = createValues(
                 value,
                 me.option('multiple'),
                 me.option('toggle'),
@@ -394,11 +379,12 @@ define(function (require) {
                 }
             );
 
-            this.inner('processValue', processValue);
+            this.inner('values', values);
 
-            return processValue();
+            return values();
 
         }
+
     };
 
     var DAY = 24 * 60 * 60 * 1000;
@@ -427,9 +413,6 @@ define(function (require) {
         for (var time = start, date, item; time <= end; time += DAY) {
 
             item = simplifyDate(time);
-
-            item.month = lpad(item.month);
-            item.date = lpad(item.date);
 
             // 过去 or 现在 or 将来
             if (time > today) {
