@@ -230,7 +230,7 @@ define(function (require, exports, module) {
 
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
-        var bodyDraggingClass = me.option('bodyDraggingClass');
+        var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
 
         var dragHandler = function (e) {
 

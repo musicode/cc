@@ -24,8 +24,8 @@ define(function (require, exports, module) {
 
     var getRaito = require('../function/ratio');
 
-    var lifeCycle = require('../util/lifeCycle');
-    var orientationMap = require('../util/orientation');
+    var lifeUtil = require('../util/life');
+    var orientationUtil = require('../util/orientation');
 
     var Slider = require('./Slider');
 
@@ -34,28 +34,25 @@ define(function (require, exports, module) {
      *
      * @property {Object} options
      *
-     * @property {jQuery} options.mainElement 滚动条元素
-     * @property {string=} options.mainTemplate 滚动条的模板，如果 mainElement 结构完整，可不传模板
+     * @property {jQuery} options.mainElement 滚动条主元素
+     * @property {jQuery} options.panelElement 滚动面板元素
      *
-     * @property {jQuery} options.panelElement 滚动面板
+     * @property {number=} options.value 面板当前滚动的位置，不传则自动计算元素当前位置
      *
-     * @property {number=} options.value 面板当前滚动的位置，不传则计算元素当前位置
-     *
-     * @property {string=} options.orientation 滚动方向，可选值有 horizontal 和 vertical，默认是 vertical
-     * @property {number=} options.scrollStep 滚动的单位像素，默认是 20
+     * @property {string=} options.orientation 滚动方向，可选值有 horizontal vertical
+     * @property {(number|Function)=} options.scrollStep 滚动的单位像素
      * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation  为 horizontal 时生效
      * @property {number=} options.minHeight 滚动条的最小高度，当 orientation  为 vertical 时生效
      *
-     * @property {string=} options.thumbSelector 从 mainTemplate 选中滑块的选择器
-     *
-     * @property {string=} options.draggingClass 拖拽滑块时的 class
+     * @property {string=} options.thumbSelector 滑块选择器
+     * @property {string=} options.draggingClass 拖拽滑块时给 mainElement 添加的 className
      *
      * @property {Function=} options.showAnimation
      * @property {Function=} options.hideAnimation
      * @property {Function=} options.scrollAnimation
      */
     function ScrollBar(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = ScrollBar.prototype;
@@ -67,7 +64,7 @@ define(function (require, exports, module) {
         var me = this;
 
         var orientation = me.option('orientation');
-        var props = orientationMap[ orientation ];
+        var props = orientationUtil[ orientation ];
 
         var mainElement = me.option('mainElement');
         var panelElement = me.option('panelElement');
@@ -136,7 +133,7 @@ define(function (require, exports, module) {
         var slider = me.inner('slider');
 
         var orientation = me.option('orientation');
-        var props = orientationMap[ orientation ];
+        var props = orientationUtil[ orientation ];
 
         var mainElement = me.inner('main');
         var panelElement = me.option('panelElement');
@@ -144,7 +141,6 @@ define(function (require, exports, module) {
         var contentSize = panelElement.prop(props.scrollSize);
 
         var ratio = getRaito(viewportSize, contentSize);
-
         if (ratio > 0 && ratio < 1) {
 
             me.execute(
@@ -165,14 +161,13 @@ define(function (require, exports, module) {
                 thumbSize = minThumbSize;
             }
 
-            // 转成整数，为了避免结果是 0，这里使用向上取整
             thumbElement[ props.outerSize ](
-                Math.ceil(thumbSize)
+                Math.round(thumbSize)
             );
 
             me.inner(
                 'ratio',
-                getRaito(viewportSize, trackSize)
+                getRaito(contentSize, trackSize)
             );
 
         }
@@ -193,34 +188,13 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('slider').dispose();
 
     };
 
-    lifeCycle.extend(proto);
-
-    ScrollBar.defaultOptions = {
-        scrollStep: 5,
-        scrollStepType: 'pixel',
-        orientation: 'vertical',
-        minWidth: 10,
-        minHeight: 10,
-        mainTemplate: '<i class="scroll-thumb"></i>',
-        thumbSelector: '.scroll-thumb',
-        showAnimation: function (options) {
-            options.mainElement.show();
-        },
-        hideAnimation: function (options) {
-            options.mainElement.hide();
-        },
-        scrollAnimation: function (options) {
-            options.thumbElement.css(
-                options.thumbStyle
-            );
-        }
-    };
+    lifeUtil.extend(proto);
 
     ScrollBar.propertyUpdater = {
 
