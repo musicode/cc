@@ -71,18 +71,19 @@ define(function (require, exports, module) {
 
             options = options || { };
 
+            var oldValue = me[ getter ](name);
+
             var validator = me.constructor[ singular + 'Validator' ];
             if (validator) {
                 if ($.isFunction(validator[ name ])) {
-                    value = validator[ name ].call(me, value);
+                    value = validator[ name ].call(me, value, options);
                 }
             }
 
-            if (validate) {
-                value = validate(me, name, value);
+            if ($.isFunction(validate)) {
+                value = validate(me, value, options);
             }
 
-            var oldValue = me[ getter ](name);
             if (oldValue === value && !options.force) {
                 return;
             }
@@ -472,7 +473,7 @@ context.execute('ondebug', args);
          * state setter
          */
         state: createSettter('state', 'states', 'state', 'is',
-            function (instance, name, value) {
+            function (instance, value) {
                 if ($.type(value) !== 'boolean') {
                     value = false;
                 }

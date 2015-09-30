@@ -38,11 +38,11 @@
 
             require(
 
-                [ 'cobble/ui/SpinBox' ],
+                [ 'custom/ui/SpinBox' ],
 
                 function (SpinBox) {
 
-                    var number = new SpinBox({
+                    window.spinBox = new SpinBox({
 
                         mainElement: $('.input-number'),
 
@@ -51,8 +51,11 @@
                                     + '<i class="btn-down"></i>',
 
                         defaultValue: '',
+                        value: 0,
                         maxValue: 10,
                         minValue: 0,
+
+                        interval: 1000,
 
                         upSelector: '.btn-up',
                         downSelector: '.btn-down'

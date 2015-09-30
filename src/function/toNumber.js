@@ -22,8 +22,18 @@ define(function (require, exports, module) {
     return function (value, defaultValue, parseType) {
 
         if ($.type(value) !== 'number') {
+
             var parse = parser[ parseType ];
-            value = parse ? parse(value, 10) : (+ value);
+
+            if (parse) {
+                value = parse(value, 10);
+            }
+            else if ($.isNumeric(value)) {
+                value = + value;
+            }
+            else {
+                value = NaN;
+            }
         }
 
         return isNaN(value) ? defaultValue : value;

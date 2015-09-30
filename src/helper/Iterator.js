@@ -187,11 +187,11 @@ define(function (require, exports, module) {
 
         index: function (index) {
 
-            if (!$.isNumeric(index)) {
+            index = toNumber(index, null);
+
+            // 这里不做强校验，避免组合到其他组件中无法使用
+            if (index == null) {
                 index = this.option('defaultIndex');
-                if (!$.isNumeric(index)) {
-                    this.error('Iterator index is not a number.');
-                }
             }
 
             return index;
