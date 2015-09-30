@@ -11,7 +11,7 @@ define(function (require, exports, module) {
     var toNumber = require('../function/toNumber');
     var eventOffset = require('../function/eventOffset');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      * 星级评分
@@ -19,37 +19,35 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
+     * @property {jQuery} options.mainTemplate 主元素模板，render 时会用到
+     *
+     *
      * @property {number} options.value 当前星级
-     * @property {number=} options.count 星星总数
-     * @property {number=} options.minValue 可选最小值，默认为 1
+     * @property {number} options.count 星星总数
+     * @property {number} options.minValue 可选最小值，默认是 0
      * @property {number=} options.maxValue 可选最大值，默认和 count 相同
      * @property {boolean=} options.half 是否允许半选中
      * @property {boolean=} options.readOnly 是否只读，不可改变星星的选中状态
+     * @property {Object=} options.hint value 对应的提示信息，如
+     *                                  {
+     *                                      '1': '很差',
+     *                                      '2': '较差',
+     *                                      '3': '一般',
+     *                                      '4': '较好',
+     *                                      '5': '很好'
+     *                                  }
      *
-     * @property {string=} options.onClass 星星选中状态的图标 class
-     * @property {string=} options.offClass 星星未选中状态的图标 class
-     * @property {string=} options.halfClass 星星半选中状态的图标 class
-     *
-     * @property {Object=} options.hint key 是星星对应的值，value 是提示文本，如下：
-     *                                   {
-     *                                       '1': '非常差',
-     *                                       '2': '差',
-     *                                       '3': '一般',
-     *                                       '4': '好',
-     *                                       '5': '非常好'
-     *                                   }
-     *                                   如果允许半选中，不可用此配置
+     * @property {string} options.itemActiveClass 星星选中状态的图标 className
+     * @property {string} options.itemHalfClass 星星半选中状态的图标 className
      *
      * @property {string} options.itemSelector
-     * @property {string} options.itemTemplate
      *
      * @example
      * var rater = new Rater({
      *     mainElement: $('.rater'),
      *     value: 2,                        // 当前选中 2 颗星
      *     count: 5,                        // 总共有 5 颗星
-     *     onClass: 'icon on',
-     *     offClass: 'icon off',
+     *     itemActiveClass: 'icon on',
      *     propertyChange: {
      *         value: function (value) {
      *             console.log('value change');
@@ -58,99 +56,18 @@ define(function (require, exports, module) {
      * });
      */
     function Rater(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Rater.prototype;
 
     proto.type = 'Rater';
 
-    /**
-     * 初始化
-     */
     proto.init = function () {
 
         var me = this;
 
         var mainElement = me.option('mainElement');
-
-        if (!me.option('readOnly')) {
-
-            var supportHalf = me.option('half');
-            var itemSelector = me.option('itemSelector');
-            var itemElement;
-
-            var namespace = me.namespace();
-
-            var pickValue = function (e, target) {
-
-                var value = target.data('value');
-
-                if (supportHalf) {
-                    if (eventOffset(e).x / target.width() < 0.5) {
-                        value -= 0.5;
-                    }
-                }
-
-                return restrain(
-                    value,
-                    me.option('minValue'),
-                    me.option('maxValue')
-                );
-
-            };
-
-            var moveHandler = function (e) {
-
-                // 防止 debounce 在 mouseleave 之后执行最后一次
-                if (!itemElement) {
-                    return;
-                }
-
-                me.preview(
-                    pickValue(e, itemElement)
-                );
-
-            };
-
-            mainElement
-            .on('mouseenter' + namespace, itemSelector, function (e) {
-
-                itemElement = $(this);
-
-                if (supportHalf) {
-                    itemElement.on(
-                        'mousemove' + namespace,
-                        debounce(moveHandler, 50)
-                    );
-                }
-
-                me.preview(
-                    pickValue(e, itemElement)
-                );
-
-            })
-            .on('mouseleave' + namespace, itemSelector, function (e) {
-
-                if (supportHalf) {
-                    itemElement.off(namespace);
-                }
-
-                itemElement = null;
-
-                me.preview();
-
-            })
-            .on('click' + namespace, itemSelector, function (e) {
-
-                me.set(
-                    'value',
-                    pickValue(e, itemElement || $(this))
-                );
-
-            });
-
-        }
 
         me.inner({
             main: mainElement
@@ -163,51 +80,141 @@ define(function (require, exports, module) {
             maxValue: me.option('maxValue')
         });
 
+        if (me.option('readOnly')) {
+            return;
+        }
+
+        var itemSelector = me.option('itemSelector');
+        if (!itemSelector) {
+            me.error('itemSelector is missing.');
+        }
+
+        var activeItemElement;
+
+        var supportHalf = me.option('half');
+        var namespace = me.namespace();
+
+        var getValueByItem = function (e, target) {
+
+            var value = target.data('value');
+
+            if (supportHalf) {
+                if (eventOffset(e).x / target.width() < 0.5) {
+                    value -= 0.5;
+                }
+            }
+
+            return restrain(
+                value,
+                me.option('minValue'),
+                me.option('maxValue')
+            );
+
+        };
+
+        var moveHandler = function (e) {
+
+            // 防止 debounce 在 mouseleave 之后执行最后一次
+            if (!activeItemElement) {
+                return;
+            }
+
+            me.preview(
+                getValueByItem(e, activeItemElement)
+            );
+
+        };
+
+        mainElement
+        .on('mouseenter' + namespace, itemSelector, function (e) {
+
+            activeItemElement = $(this);
+
+            if (supportHalf) {
+                activeItemElement.on(
+                    'mousemove' + namespace,
+                    debounce(moveHandler, 50)
+                );
+            }
+
+            me.preview(
+                getValueByItem(e, activeItemElement)
+            );
+
+        })
+        .on('mouseleave' + namespace, itemSelector, function (e) {
+
+            if (supportHalf) {
+                activeItemElement.off(namespace);
+            }
+
+            activeItemElement = null;
+
+            me.preview();
+
+        })
+        .on('click' + namespace, itemSelector, function (e) {
+
+            me.set(
+                'value',
+                getValueByItem(e, activeItemElement || $(this))
+            );
+
+        });
+
     };
 
     proto.render = function () {
 
         var me = this;
 
-        var html = '';
+        var data = [ ];
         var hint = me.option('hint') || { };
 
         traverse(
             me.get('value'),
             me.get('count'),
-            function (index, className) {
+            function (index, value) {
 
-                index++;
+                index += 1;
 
-                html += me.execute(
-                            'render',
-                            [
-                                {
-                                    'class': me.option(className),
-                                    'value': index,
-                                    'hint': hint[ index ]
-                                },
-                                me.option('itemTemplate')
-                            ]
-                        );
+                var className;
+
+                switch (value) {
+                    case 1:
+                        className = me.option('itemActiveClass');
+                        break;
+                    case 0.5:
+                        className = me.option('itemHalfClass');
+                        break;
+                }
+
+                data.push({
+                    'value': index,
+                    'class': className || '',
+                    'hint': hint[ index ] || ''
+                });
 
             }
         );
 
-        me.inner('main').html(html);
+        me.inner('main').html(
+            me.execute(
+                'render',
+                [
+                    data,
+                    me.option('mainTemplate')
+                ]
+            )
+        );
 
     };
 
-    /**
-     * 预览值
-     *
-     * @param {number} value
-     */
     proto.preview = function (value) {
 
         var me = this;
 
-        me.inner('previewValue', value);
+        me.inner('value', value);
 
         if ($.type(value) !== 'number') {
             value = me.get('value');
@@ -218,7 +225,7 @@ define(function (require, exports, module) {
     };
 
     proto._preview = function (value) {
-        if (value === this.inner('previewValue')) {
+        if (value === this.inner('value')) {
             return false;
         }
         return {
@@ -230,7 +237,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -238,20 +245,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
-
-    Rater.defaultOptions = {
-        minValue: 1,
-        half: false,
-        readOnly: false,
-        itemSelector: 'i',
-        itemTemplate: '<i class="${class}" data-value="${value}" title="${hint}"></i>',
-        render: function (data, tpl) {
-            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
-                return data[$1] != null ? data[$1] : '';
-            });
-        }
-    };
+    lifeUtil.extend(proto);
 
     Rater.propertyUpdater = { };
 
@@ -260,14 +254,14 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var countChange = changes.count;
-        var valueChange = changes.value;
-
-        if (countChange) {
+        if (changes.count) {
             me.render();
         }
-        else if (valueChange) {
-            refresh(me, valueChange.newValue);
+        else {
+            var valueChange = changes.value;
+            if (valueChange) {
+                refresh(me, valueChange.newValue);
+            }
         }
 
         return false;
@@ -275,6 +269,21 @@ define(function (require, exports, module) {
     };
 
     Rater.propertyValidator = {
+
+        count: function (count) {
+            count = toNumber(count, -1);
+            if (count < 0) {
+                this.error('count must be a number.');
+            }
+            return count;
+        },
+
+        minValue: function (minValue) {
+            return toNumber(
+                minValue,
+                0
+            );
+        },
 
         maxValue: function (maxValue) {
             return toNumber(
@@ -289,20 +298,36 @@ define(function (require, exports, module) {
      * 刷新星星的状态
      *
      * @inner
-     * @param {Rater} rater
+     * @param {Rater} instance
      * @param {value} value
      */
-    function refresh(rater, value) {
+    function refresh(instance, value) {
 
-        var items = rater.inner('main').find(
-            rater.option('itemSelector')
+        var items = instance.inner('main').find(
+            instance.option('itemSelector')
         );
+
+        var itemActiveClass = instance.option('itemActiveClass');
+        var itemHalfClass = instance.option('itemHalfClass');
 
         traverse(
             value,
-            rater.get('count'),
-            function (index, className) {
-                items[ index ].className = rater.option(className);
+            instance.get('count'),
+            function (index, value) {
+
+                var element = items.eq(index);
+
+                if (itemActiveClass) {
+                    element[ value === 1 ? 'addClass' : 'removeClass' ](
+                        itemActiveClass
+                    );
+                }
+                if (itemHalfClass) {
+                    element[ value === 0.5 ? 'addClass' : 'removeClass' ](
+                        itemHalfClass
+                    );
+                }
+
             }
         );
 
@@ -318,21 +343,21 @@ define(function (require, exports, module) {
      */
     function traverse(value, count, callback) {
 
-        for (var i = 0, result, className; i < count; i++) {
+        for (var i = 0, result, item; i < count; i++) {
 
             result = value - (i + 1);
 
             if (result >= 0) {
-                className = 'onClass';
+                item = 1;
             }
             else if (result <= -1) {
-                className = 'offClass';
+                item = 0;
             }
             else {
-                className = 'halfClass';
+                item = 0.5;
             }
 
-            callback(i, className);
+            callback(i, item);
 
         }
 

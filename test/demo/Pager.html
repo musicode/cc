@@ -34,8 +34,8 @@
         require(
 
             [
-                'cobble/ui/Pager',
-                'cobble/util/etpl'
+                'custom/ui/Pager',
+                'cc/util/etpl'
             ],
 
             function (Pager, etpl) {
@@ -45,10 +45,6 @@
                     mainElement: $('#pager'),
                     page: 20,
                     count: 20,
-
-                    showCount: 4,
-                    startCount: 2,
-                    endCount: 1,
 
                     hideOnSingle: true,
 
@@ -72,11 +68,13 @@
                         return etpl.compile(tpl)(data);
                     },
 
-                    onpropertychange: function (event, data) {
-                        console.log('property', data);
-                    },
-                    onstatechange: function (event, data) {
-                        console.log('state', data);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 

@@ -82,7 +82,7 @@
 
         require(
 
-            [ 'cobble/ui/Slider' ],
+            [ 'custom/ui/Slider' ],
 
             function (Slider) {
 
@@ -112,10 +112,13 @@
                             }
                         }
                     },
-                    change: {
-                        value: function (value) {
-                            console.log(value)
-                        }
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 
@@ -127,10 +130,13 @@
                     slideAnimation: function (options) {
                         options.thumbElement.animate(options.thumbStyle, 10);
                     },
-                    change: {
-                        value: function (value) {
-                            console.log(value)
-                        }
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 
@@ -144,6 +150,7 @@
                     maxValue: 10,
                     step: 1,
 
+                    scrollStepType: 'value',
                     scrollStep: function (delta) {
                         if (delta > 0) {
                             return 1;
@@ -153,10 +160,13 @@
                         }
                     },
 
-                    change: {
-                        value: function (value) {
-                            console.log(value)
-                        }
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
             }

@@ -6,31 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * slider 有两种常见用法：
-     *
-     * 1. 进度条、音量条为代表的以 1px 为最小变化量
-     * 2. 单位步进，比如每滑动一次移动 10px
-     *
-     * 鼠标滚轮通常来说，可以理解为滚一下移动多少像素，比如 10px。
-     * 但是当可滚动距离非常大时，10px 的偏移甚至感觉不到有滚动
-     * 因此更好的方式不是基于像素，而是基于 value
-     * 以垂直滚动条为例，假设顶部值为 0，底部值为 100，于是整个可滚动距离被平分为 100 份
-     * 我们把滚动一次的偏移值设为 1，就表示每滚动一次，移动 1%，滚动 100 次就到头了
-     *
-     *
-     * 综上，组件需求如下：
-     *
-     * 1. 配置 minValue 和 maxValue，表示 value 的计算基于百分比（如音量条可配置为 0 100）
-     *
-     * 2. 配置 minValue maxValue step，表示按 step 步进，即下一个值是 value + step
-     *
-     * 3. 配置 scrollStep，表示支持鼠标滚轮，值取决与 minValue 和 maxValue
-     *
-     * 4. 配置 orientation 支持水平和垂直两个方向的滑动，默认方向是从左到右，从上到下，
-     *    但有小部分需求是反向的，因此支持反向配置
-     */
-
     var plus = require('../function/plus');
     var minus = require('../function/minus');
     var divide = require('../function/divide');
@@ -41,42 +16,38 @@ define(function (require, exports, module) {
     var contains = require('../function/contains');
     var eventOffset = require('../function/eventOffset');
 
-    var Draggable = require('../helper/Draggable');
     var Wheel = require('../helper/Wheel');
+    var Draggable = require('../helper/Draggable');
 
-    var lifeCycle = require('../util/lifeCycle');
-    var orientationMap = require('../util/orientation');
+    var lifeUtil = require('../util/life');
+    var orientationUtil = require('../util/orientation');
 
     /**
-     * 可滑动组件，类似 html5 的 <input type="range" />
-     *
      * @param {Object} options
      *
      * @property {jQuery} options.mainElement
-     * @property {string=} options.mainTemplate 模板，如果 mainElement 结构已完整，可不传模板
      *
      * @property {number=} options.value
-     *
-     * @property {number=} options.minValue 允许的最小值，默认是 0
-     * @property {number=} options.maxValue 允许的最大值，默认是 100
-     * @property {number=} options.step 步进值，默认是 1
+     * @property {number=} options.minValue 开始位置对应的 value
+     * @property {number=} options.maxValue 结束位置对应的 value
+     * @property {number=} options.step 步进值
      * @property {Function=} options.slideAnimation 滑动动画
      *
-     * @property {boolean=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数，表示单位步进值
-     * @property {boolean=} options.scrollStepType 滚动步进类型，可选值是 value 或 pixel，默认是 value
-     * @property {boolean=} options.reverse 是否反向，默认是从左到右，或从上到下，如果反向，则是从右到左，从下到上
+     * @property {(number|Function)=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数
+     * @property {boolean=} options.scrollStepType 滚动步进类型，可选值是 value pixel
      *
-     * @property {string=} options.orientation 方向，可选值有 horizontal 和 vertical，默认是 horizontal
+     * @property {string=} options.orientation 方向，可选值有 horizontal vertical
+     * @property {boolean=} options.reverse 是否反向，默认是从左到右、从上到下，如果反向，则是从右到左、从下到上
      *
      * @property {string=} options.thumbSelector 滑块选择器
      * @property {string=} options.trackSelector 滑道选择器，不传表示 mainElement 是滑道
      * @property {string=} options.barSelector 高亮条选择器
      *
-     * @property {string=} options.draggingClass 滑块正在拖拽时的 className
+     * @property {string=} options.draggingClass 滑块正在拖拽时给 mainElement 添加的 className
      *
      */
     function Slider(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Slider.prototype;
@@ -106,7 +77,7 @@ define(function (require, exports, module) {
         }
 
 
-        var props = orientationMap[
+        var props = orientationUtil[
             me.option('orientation')
         ];
 
@@ -131,13 +102,11 @@ define(function (require, exports, module) {
 
         var setValue = function (value, action) {
 
-            me.set(
-                'value',
-                value,
-                {
-                    action: action
-                }
-            );
+            var options = {
+                action: action
+            };
+
+            me.set('value', value, options);
 
         };
 
@@ -145,7 +114,7 @@ define(function (require, exports, module) {
             mainElement: thumbElement,
             containerElement: trackElement,
             containerDraggingClass: me.option('draggingClass'),
-            axis: me.option('axis'),
+            axis: props.axis,
             context: me,
             dragAnimation: function (options) {
                 setPixel(
@@ -172,6 +141,7 @@ define(function (require, exports, module) {
         );
 
         var scrollStep = me.option('scrollStep');
+        var scrollStepType = me.option('scrollStepType');
         var scrollStepIsFunction = $.isFunction(scrollStep);
 
         var wheels;
@@ -199,7 +169,7 @@ define(function (require, exports, module) {
                 var action = 'scroll';
                 var value = me.get('value');
 
-                if (me.option('scrollStepType') === 'value') {
+                if (scrollStepType === 'value') {
                     setValue(
                         value + offset,
                         action
@@ -286,7 +256,7 @@ define(function (require, exports, module) {
          *
          */
 
-        var props = orientationMap[
+        var props = orientationUtil[
             me.option('orientation')
         ];
 
@@ -316,7 +286,7 @@ define(function (require, exports, module) {
             pixelToValue = function (pixel) {
                 return plus(
                     minValue,
-                    Math.floor(
+                    Math.round(
                         divide(
                             pixel,
                             stepPixel
@@ -364,7 +334,6 @@ define(function (require, exports, module) {
         me.valueToPixel = valueToPixel;
 
         var value = me.get('value');
-
         if ($.type(value) === 'number') {
             me.set('value', value, {
                 force: true
@@ -377,7 +346,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('track').off(
             me.namespace()
@@ -393,21 +362,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
-
-    Slider.defaultOptions = {
-        minValue: 0,
-        maxValue: 100,
-        scrollStepType: 'value',
-        orientation: 'horizontal',
-        mainTemplate: '<div class="slider-thumb"></div>',
-        slideAnimation: function (options) {
-            options.thumbElement.css(options.thumbStyle);
-            if (options.barStyle) {
-                options.barElement.css(options.barStyle);
-            }
-        }
-    };
+    lifeUtil.extend(proto);
 
     Slider.propertyUpdater = {
 
@@ -415,7 +370,7 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var props = orientationMap[
+            var props = orientationUtil[
                 me.option('orientation')
             ];
 
@@ -470,14 +425,29 @@ define(function (require, exports, module) {
 
         value: function (value) {
 
-            var me = this;
-            var minValue = me.option('minValue');
-            var maxValue = me.option('maxValue');
+            var minValue = this.option('minValue');
+            var maxValue = this.option('maxValue');
 
             value = toNumber(value, minValue);
 
             return restrain(value, minValue, maxValue);
 
+        },
+
+        minValue: function (minValue) {
+            minValue = toNumber(minValue, null);
+            if (minValue == null) {
+                this.error('minValue must be a number.');
+            }
+            return minValue;
+        },
+
+        maxValue: function (maxValue) {
+            maxValue = toNumber(maxValue, null);
+            if (maxValue == null) {
+                this.error('maxValue must be a number.');
+            }
+            return maxValue;
         }
 
     };

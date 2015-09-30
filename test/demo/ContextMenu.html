@@ -82,36 +82,20 @@
 
         require(
 
-            [ 'cobble/ui/ContextMenu' ],
+            [ 'custom/ui/ContextMenu' ],
 
             function (ContextMenu) {
 
                 window.contextMenu = new ContextMenu({
                     mainElement: $('#song-list-menu'),
                     watchElement: $('#song-list'),
-                    onbeforeopen: function () {
-                        console.log('before open');
-                    },
-                    onafteropen: function () {
-                        console.log('after open');
-                    },
-                    onbeforeclose: function () {
-                        console.log('before close');
-                    },
-                    onafterclose: function () {
-                        console.log('after close');
-                    },
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
                     action: {
                         '[data-action="play"]': function (e) {

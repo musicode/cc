@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var toNumber = require('../function/toNumber');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      * 约定翻页开始页码为 1，好处如下：
@@ -35,6 +35,9 @@ define(function (require, exports, module) {
      *
      * @property {boolean=} options.hideOnSingle 是否在只有一页时自动隐藏
      *
+     * @property {string=} options.pageSelector 如果是静态链接（a）可不传
+     * @property {string=} options.pageAttribute 如果是静态链接（a）可不传
+     *
      * @property {string=} options.pageTemplate 页码模板
      * @property {string=} options.prevTemplate 上一页模板
      * @property {string=} options.nextTemplate 下一页模板
@@ -45,7 +48,7 @@ define(function (require, exports, module) {
      *
      */
     function Pager(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Pager.prototype;
@@ -58,19 +61,27 @@ define(function (require, exports, module) {
 
         var mainElement = me.option('mainElement');
 
-        mainElement
-        .on(
-            'click' + me.namespace(),
-            '[' + ATTR_PAGE + ']',
-            function () {
+        var pageSelector = me.option('pageSelector');
+        var pageAttribute = me.option('pageAttribute');
+        if (pageSelector && pageAttribute) {
+            mainElement
+            .on(
+                'click' + me.namespace(),
+                pageSelector,
+                function () {
+                    var page = $(this).attr(pageAttribute);
+                    if (page >= FIRST_PAGE) {
 
-                var page = $(this).attr(ATTR_PAGE);
-                if (page > 0) {
-                    me.set('page', page, { action: 'click' });
+                        // 转成 number
+                        page = + page;
+
+                        me.set('page', page);
+                        me.emit('select', { page: page });
+
+                    }
                 }
-
-            }
-        );
+            );
+        }
 
         me.inner({
             main: mainElement
@@ -330,7 +341,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -338,12 +349,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
-
-    Pager.defaultOptions = {
-
-    };
-
+    lifeUtil.extend(proto);
 
     Pager.propertyUpdater = { };
 
@@ -377,8 +383,6 @@ define(function (require, exports, module) {
         }
 
     };
-
-    var ATTR_PAGE = 'data-page';
 
     var FIRST_PAGE = 1;
 

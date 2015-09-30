@@ -14,9 +14,9 @@ define(function (require, exports, module) {
      *
      */
 
-    var lifeCycle = require('../util/lifeCycle');
-
     var Popup = require('../helper/Popup');
+
+    var lifeUtil = require('../util/life');
 
     /**
      * 下拉菜单
@@ -29,12 +29,15 @@ define(function (require, exports, module) {
      * @property {jQuery} options.buttonElement 点击触发下拉菜单显示的元素
      * @property {jQuery} options.menuElement 下拉菜单元素
      *
-     * @property {Array=} options.data 下拉菜单的数据
+     * @property {Array} options.data 下拉菜单的数据
      * @property {string=} options.menuTemplate 菜单模板
-     * @property {Function=} options.render 渲染模板的函数
+     * @property {Function} options.render 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
      * @property {string=} options.defaultText 未选中值时默认显示的文本，如 请选择
+     *
+     * @property {string=} options.itemSelector
+     * @property {string=} options.valueAttribute
      *
      * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.menuActiveClass 菜单展开状态的 class
@@ -50,7 +53,7 @@ define(function (require, exports, module) {
      * @property {Function} options.setText 设置选中菜单项文本
      */
     function ComboBox(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = ComboBox.prototype;
@@ -67,6 +70,7 @@ define(function (require, exports, module) {
         var menuElement = me.option('menuElement');
 
         var popup = new Popup({
+            opened: me.option('opened'),
             triggerElement: buttonElement,
             layerElement: menuElement,
             showLayerTrigger: me.option('showMenuTrigger'),
@@ -88,52 +92,67 @@ define(function (require, exports, module) {
                         menuElement: menuElement
                     }
                 );
+            },
+            stateChange: {
+                opened: function (opened) {
+                    me.state('opened', opened);
+                }
             }
         });
 
         var menuActiveClass = me.option('menuActiveClass');
         var element = mainElement || buttonElement;
 
-        var dispatchEvent = function (e) {
+        var dispatchEvent = function (e, data) {
             if (e.target.tagName) {
-                me.emit(e);
+                me.emit(e, data);
             }
         };
 
         popup
         .before('open', dispatchEvent)
-        .after('open', function (e) {
+        .after('open', function (e, data) {
             if (menuActiveClass) {
                 element.addClass(menuActiveClass);
             }
-            dispatchEvent(e);
+            dispatchEvent(e, data);
         })
         .before('close', dispatchEvent)
-        .after('close', function (e) {
+        .after('close', function (e, data) {
             if (menuActiveClass) {
                 element.removeClass(menuActiveClass);
             }
-            dispatchEvent(e);
+            dispatchEvent(e, data);
         });
 
+        var itemSelector = me.option('itemSelector');
+        if (!itemSelector) {
+            me.error('itemSelector is missing.');
+        }
+
+        var valueAttribute = me.option('valueAttribute');
+        if (!valueAttribute) {
+            me.error('valueAttribute is missing.');
+        }
 
         menuElement.on(
             'click' + me.namespace(),
-            '[' + ATTR_VALUE + ']',
+            itemSelector,
             function (e) {
 
-                var value = $(this).attr(ATTR_VALUE);
+                var value = $(this).attr(valueAttribute);
+                if (!value) {
+                    me.error('value is not found by valueAttribute.');
+                }
 
-                me.set('value', value, { action: 'click' });
+                me.set('value', value);
                 me.close();
 
                 e.type = 'select';
-
                 me.emit(e);
 
             }
         );
-
 
 
         me.inner({
@@ -172,22 +191,22 @@ define(function (require, exports, module) {
 
 
     proto.open = function () {
-        this.inner('popup').open();
+        this.state('opened', true);
     };
 
     proto._open = function () {
-        if (!this.inner('popup').is('hidden')) {
+        if (this.is('opened')) {
             return false;
         }
     };
 
 
     proto.close = function () {
-        this.inner('popup').close();
+        this.state('opened', false);
     };
 
     proto._close = function () {
-        if (this.inner('popup').is('hidden')) {
+        if (!this.is('opened')) {
             return false;
         }
     };
@@ -197,7 +216,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.option('menuElement').off(
             me.namespace()
@@ -207,11 +226,20 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
-    ComboBox.defaultOptions = { };
+    ComboBox.propertyUpdater = {
 
-    ComboBox.propertyUpdater = { };
+        data: function (data) {
+            this.render();
+        },
+
+        value: function (value) {
+
+        }
+
+    };
+
     ComboBox.propertyUpdater.data =
     ComboBox.propertyUpdater.value = function (newValue, oldValue, changes) {
 
@@ -253,12 +281,10 @@ define(function (require, exports, module) {
 
         value: function (value) {
 
-            var me = this;
-            var menuElement = me.option('menuElement');
-            var itemSelector;
-
             if (value == null) {
-                itemSelector = '.' + me.option('itemActiveClass');
+                var me = this;
+                var menuElement = me.option('menuElement');
+                var itemSelector = '.' + me.option('itemActiveClass');
                 var itemData = findItem(menuElement, itemSelector);
                 if (itemData) {
                     value = itemData.value;
@@ -269,8 +295,6 @@ define(function (require, exports, module) {
 
         }
     };
-
-    var ATTR_VALUE = 'data-value';
 
     function findItem(menuElement, itemSelector) {
 

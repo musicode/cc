@@ -205,7 +205,7 @@ define(function (require, exports, module) {
          */
         warn: function (msg) {
             if (typeof console !== 'undefined') {
-                console.warn('[CC warn] ' + msg);
+                console.warn([ '[CC warn]', this.type, msg ].join(' '));
             }
         },
 
@@ -215,7 +215,7 @@ define(function (require, exports, module) {
          * @param {string} msg
          */
         error: function (msg) {
-            throw new Error('[CC error] ' + msg);
+            throw new Error([ '[CC error]', this.type, msg ].join(' '));
         },
 
         /**
@@ -688,6 +688,11 @@ context.execute('ondebug', args);
         options.onafterdispose_ = function () {
 
             instance.state('disposed', true);
+
+            var mainElement = instance.inner('main');
+            if (instance.option('removeOnDispose') && mainElement) {
+                mainElement.remove();
+            }
 
             delete instances[ instance.guid ];
 

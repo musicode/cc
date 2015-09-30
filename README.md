@@ -51,7 +51,7 @@
 
 看一个下拉菜单的例子：
 
-``` 
+```
 <div class="dropdown">
     <div class="btn btn-default dropdown-toggle">
         <span></span>
@@ -117,6 +117,8 @@ component.sync();
             options.triggerElement.attr('data-title')
         );
     },
+    // 销毁时是否移除主元素
+    removeOnDispose: {boolean},
     // 配置模板引擎
     render: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl

@@ -26,6 +26,13 @@ define(function (require) {
      * @property {jQuery} options.mainElement 主元素
      * @property {string} options.mainTemplate
      *
+     * @property {string} options.calendarSelector 切换视图时刷新的区域
+     * @property {string} options.calendarTemplate 日历视图使用的模板
+     *
+     *                                             calendarSelector 和 calendarTemplate
+     *                                             是为了刷新子元素而设计的，如果要整体刷新，
+     *                                             使用 mainTemplate 就够了
+     *
      * @property {string=} options.value 选中的值，多选时以 , 分隔
      *
      * @property {Date=} options.today 今天的日期，可传入服务器时间用于校正，默认是浏览器的今天
@@ -57,49 +64,46 @@ define(function (require) {
 
     var proto = Calendar.prototype;
 
-
     proto.type = 'Calendar';
 
     proto.init = function () {
 
         var me = this;
 
+        me.initStruct();
+
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
 
         var itemSelector = me.option('itemSelector');
         if (itemSelector) {
-            mainElement.on(
-                clickType,
-                itemSelector,
-                function (e) {
+            mainElement.on(clickType, itemSelector, function (e) {
 
-                    var valueAttribute = me.option('valueAttribute');
-                    if (!valueAttribute) {
-                        me.error('ui/Calendar valueAttribute is missing.');
-                    }
-
-                    var itemValue = $(this).attr(valueAttribute);
-                    if (!itemValue) {
-                        me.error('ui/Calendar value is not found by valueAttribute.');
-                    }
-
-                    var oldValue = me.get('value');
-                    var newValue = me.inner('values')(itemValue, true);
-
-                    var oldCount = split(oldValue, ',').length;
-                    var newCount = split(newValue, ',').length;
-
-                    e.type = newCount < oldCount
-                           ? 'unselect'
-                           : 'select';
-
-                    me.emit(e, { value: itemValue });
-
-                    me.set('value', newValue, { action: 'click' });
-
+                var valueAttribute = me.option('valueAttribute');
+                if (!valueAttribute) {
+                    me.error('valueAttribute is missing.');
                 }
-            );
+
+                var itemValue = $(this).attr(valueAttribute);
+                if (!itemValue) {
+                    me.error('value is not found by valueAttribute.');
+                }
+
+                var oldValue = me.get('value');
+                var newValue = me.inner('values')(itemValue, true);
+
+                var oldCount = split(oldValue, ',').length;
+                var newCount = split(newValue, ',').length;
+
+                e.type = newCount < oldCount
+                       ? 'unselect'
+                       : 'select';
+
+                me.emit(e, { value: itemValue });
+
+                me.set('value', newValue);
+
+            });
         }
 
         var prevSelector = me.option('prevSelector');
@@ -234,7 +238,7 @@ define(function (require) {
 
         }
 
-        var list = getDatasource(
+        var list = createDatasource(
             weekFirstDay,
             weekLastDay,
             normalizeDate(me.get('today')),
@@ -266,12 +270,32 @@ define(function (require) {
 
         var me = this;
 
-        me.inner('main').html(
+        var mainElement = me.inner('main');
+
+        var calendarSelector = me.option('calendarSelector');
+        var calendarTemplate = me.option('calendarTemplate');
+
+        var calendarElement;
+
+        // 更新子元素
+        if (calendarSelector && calendarTemplate) {
+            calendarElement = mainElement.find(calendarSelector);
+        }
+        // 更新主元素
+        else {
+            calendarTemplate = me.option('mainTemplate');
+            calendarElement = mainElement;
+            if (me.option('replace')) {
+                me.error('replace must be false when render mainElement.');
+            }
+        }
+
+        calendarElement.html(
             me.execute(
                 'render',
                 [
                     me.get('data'),
-                    me.option('mainTemplate')
+                    calendarTemplate
                 ]
             )
         );
@@ -365,18 +389,7 @@ define(function (require) {
             var values = createValues(
                 value,
                 me.option('multiple'),
-                me.option('toggle'),
-                function (a, b) {
-                    if (a > b) {
-                        return 1;
-                    }
-                    else if (a < b) {
-                        return -1;
-                    }
-                    else {
-                        return 0;
-                    }
-                }
+                me.option('toggle')
             );
 
             this.inner('values', values);
@@ -406,7 +419,7 @@ define(function (require) {
      * @param {number} today 今天的时间戳
      * @return {Array.<Object>}
      */
-    function getDatasource(start, end, today, selected) {
+    function createDatasource(start, end, today, selected) {
 
         var data = [ ];
 

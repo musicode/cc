@@ -214,11 +214,10 @@
         window.calendar = new Calendar({
 
             mainElement: $('#month-calendar'),
-
             multiple: true,
 
             firstDay: 1,
-            value: '2015-09-27,2015-09-28,2015-09-29',
+            value: '2015-9-27,2015-9-28,2015-9-29',
 
             itemActiveClass: 'active',
             prevSelector: '.icon-prev',
@@ -227,9 +226,14 @@
             render: function (data) {
                 return monthRender(data);
             },
-            onpropertychange: function (e) {
-                console.log(this.get('value'));
-            }
+            ondebug: function (event, data) {
+                console.log(
+                    event.type,
+                    event.target.tagName ? true : false, // 是否原生
+                    data,
+                    this
+                );
+            },
         });
 
         var weekTemplate =
@@ -306,9 +310,14 @@
             render: function (data) {
                 return weekRender(data);
             },
-            onpropertychange: function () {
-                console.log(this.get('value'));
-            }
+            ondebug: function (event, data) {
+                console.log(
+                    event.type,
+                    event.target.tagName ? true : false, // 是否原生
+                    data,
+                    this
+                );
+            },
         });
     }
     );

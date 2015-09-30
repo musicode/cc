@@ -144,18 +144,7 @@ define(function (require, exports, module) {
             var values = createValues(
                 common.validateValue(me, value),
                 me.option('multiple'),
-                me.option('toggle'),
-                function (a, b) {
-                    if (a > b) {
-                        return 1;
-                    }
-                    else if (a < b) {
-                        return -1;
-                    }
-                    else {
-                        return 0;
-                    }
-                }
+                me.option('toggle')
             );
 
             me.inner('values', values);

@@ -14,6 +14,20 @@ define(function (require, exports, module) {
 
         var list = split(base, VALUE_SEPARATE);
 
+        if (!$.isFunction(sort)) {
+            sort = function (a, b) {
+                if (a > b) {
+                    return 1;
+                }
+                else if (a < b) {
+                    return -1;
+                }
+                else {
+                    return 0;
+                }
+            };
+        }
+
         return function (item, add) {
 
             if (item != null) {

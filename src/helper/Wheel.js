@@ -18,7 +18,7 @@ define(function (require, exports, module) {
      *      统一为向上为负值，向下为正值，值为 1 的倍数
      */
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      * 处理鼠标滚轮事件
@@ -29,7 +29,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.onwheel
      */
     function Wheel(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Wheel.prototype;
@@ -75,7 +75,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.option('watchElement').off(
             me.namespace()
@@ -83,7 +83,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     var support = 'onmousewheel' in document.body
                 ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
