@@ -99,9 +99,11 @@ define(function (require, exports, module) {
     lifeUtil.extend(proto);
 
     Tab.propertyUpdater = {
+
         index: function (toIndex) {
             this.inner('switcher').set('index', toIndex);
         }
+
     };
 
 

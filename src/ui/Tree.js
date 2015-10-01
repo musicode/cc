@@ -6,7 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var lifeCycle = require('../util/lifeCycle');
+    var toString = require('../function/toString');
+    var lifeUtil = require('../util/life');
 
     /**
      * 树形组件的特点如下：
@@ -82,7 +83,7 @@ define(function (require, exports, module) {
      * @property {Function} options.load 加载子节点数据
      */
     function Tree(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Tree.prototype;
@@ -93,6 +94,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStruct();
 
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
@@ -459,7 +461,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -467,12 +469,12 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
 
     Tree.propertyUpdater = {
 
-        data: function (data) {
+        data: function () {
             this.render();
         },
 
@@ -517,14 +519,7 @@ define(function (require, exports, module) {
             return $.isArray(data) ? data : [ ];
         },
 
-        value: function (value) {
-            switch ($.type(value)) {
-                case 'string':
-                case 'number':
-                    return value;
-            }
-            return '';
-        }
+        value: toString
 
     };
 

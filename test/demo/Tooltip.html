@@ -39,11 +39,11 @@
 </head>
 <body>
 
-    <span class="wrapper" title="123123123">
-        <i id="icon1" class="icon" data-dir="bottom">?</i>
+    <span class="wrapper" title="123123123"  data-placement="bottom">
+        <i id="icon1" class="icon">?</i>
     </span>
 
-    <i id="icon2" class="icon" title="提示内容111111111111" data-dir="right">?</i>
+    <i id="icon2" class="icon" title="提示内容111111111111" data-placement="right">?</i>
 
     <div class="tooltip fade left in">
         <div class="tooltip-inner">
@@ -59,7 +59,7 @@
 
         require(
 
-            [ 'cobble/ui/Tooltip' ],
+            [ 'custom/ui/Tooltip' ],
 
             function (Tooltip) {
 
@@ -75,7 +75,7 @@
 
                 config.hideDelay = 500;
 
-                config.updateContent = function (options) {
+                config.update = function (options) {
 
                     options.mainElement.find('.tooltip-inner').html(
                         options.triggerElement.attr('title')
@@ -84,23 +84,17 @@
                 };
 
 
-                config.onbeforeopen = function (e) {
-                    console.log('before open');
-                };
-                config.onafteropen = function (e) {
-                    console.log('after open');
-                };
-                config.onbeforeclose = function (e) {
-                    console.log('before close');
-                };
-                config.onafterclose = function (e) {
-                    console.log('after close');
-                };
-
-
                 new Tooltip({
                     triggerElement: $(document.body),
-                    triggerSelector: '[title]'
+                    triggerSelector: '[title]',
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
+                    }
                 });
 
             }

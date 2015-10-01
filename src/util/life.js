@@ -186,7 +186,7 @@ define(function (require, exports, module) {
 
             }
 
-            if (me.inner('underBody')
+            if (me.option('underBody')
                 && !offsetParent(mainElement).is('body')
             ) {
                 body.append(mainElement);

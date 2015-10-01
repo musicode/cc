@@ -62,6 +62,7 @@ define(function (require, exports, module) {
 
     var split = require('../function/split');
     var position = require('../util/position');
+    var toNumber = require('../function/toNumber');
     var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
@@ -70,8 +71,8 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
 
-    var instance = require('../util/instance');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
+    var window = require('../util/instance').window;
 
     /**
      * 工具提示
@@ -90,7 +91,11 @@ define(function (require, exports, module) {
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      *
      * @property {string=} options.maxWidth 提示元素的最大宽度
-     * @property {boolean=} options.share 是否共享一个元素，默认是 true
+     * @property {boolean=} options.share 是否共享一个元素
+     *
+     * @property {string=} options.skinAttribute
+     * @property {string=} options.placementAttribute
+     * @property {string=} options.maxWidthAttribute
      *
      * @property {Function} options.update 更新提示浮层的内容
      *
@@ -133,13 +138,12 @@ define(function (require, exports, module) {
      *
      */
     function Tooltip(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Tooltip.prototype;
 
     proto.type = 'Tooltip';
-
 
     proto.init = function () {
 
@@ -151,7 +155,6 @@ define(function (require, exports, module) {
         var mainElement = me.option('mainElement');
 
         var popup = new Popup({
-            hidden: true,
             layerElement: mainElement,
             triggerElement: triggerElement,
             triggerSelector: me.option('triggerSelector'),
@@ -181,52 +184,70 @@ define(function (require, exports, module) {
             }
         });
 
-        var dispatchEvent = function (e) {
+        var namespace = me.namespace();
+
+        var dispatchEvent = function (e, type, data) {
             if (e.target.tagName) {
-                me.emit(e);
+                e.type = type;
+                me.emit(e, data);
             }
         };
 
-        var resizeHandler;
-
         popup
-        .before('open', function (e) {
+        .before('open', function (e, data) {
 
             var originElement = e.originElement;
             if (!originElement || !originElement.tagName) {
                 return;
             }
 
-            var skinClass;
-            var sourceElement = mainElement.source;
+            var triggerElement;
 
-            if (sourceElement) {
-                skinClass = sourceElement.attr('data-skin');
-                if (skinClass) {
-                    mainElement.removeClass(skinClass);
+
+
+
+            var skinAttribute = me.option('skinAttribute');
+            if (skinAttribute) {
+
+                var skinClass;
+
+                triggerElement = mainElement[ triggerElementKey ];
+                if (triggerElement) {
+                    skinClass = triggerElement.attr(skinAttribute);
+                    if (skinClass) {
+                        mainElement.removeClass(skinClass);
+                    }
                 }
+
+                triggerElement =
+                mainElement[ triggerElementKey ] = $(originElement);
+
+                skinClass = triggerElement.attr(skinAttribute);
+                if (skinClass) {
+                    mainElement.addClass(skinClass);
+                }
+
             }
 
-            sourceElement =
-            mainElement.source = $(originElement);
-
-            skinClass = sourceElement.attr('data-skin');
-            if (skinClass) {
-                mainElement.addClass(skinClass);
-            }
 
 
 
 
 
-
-
-            var placementList = getPlacementList(
-                sourceElement.attr('data-placement')
-                || me.option('placement')
-            );
 
             var placement;
+
+            var placementAttribute = me.option('placementAttribute');
+            if (placementAttribute) {
+                placement = triggerElement.attr(placementAttribute)
+            }
+            if (!placement) {
+                placement = me.option('placement');
+            }
+
+            var placementList = getPlacementList(placement);
+
+            placement = null;
 
             if (placementList.length > 0) {
 
@@ -261,16 +282,22 @@ define(function (require, exports, module) {
 
 
 
-            var updateLayer = function () {
+            var updateTooltip = function () {
 
-                dispatchEvent(e);
+                dispatchEvent(e, 'beforeshow', data);
 
                 if (e.isDefaultPrevented()) {
                     return;
                 }
 
-                var maxWidth = sourceElement.attr('data-width')
-                            || me.option('maxWidth');
+                var maxWidth;
+                var maxWidthAttribute = me.option('maxWidthAttribute');
+                if (maxWidthAttribute) {
+                    maxWidth = triggerElement.attr(maxWidthAttribute);
+                }
+                if (!maxWidth) {
+                    maxWidth = me.option('maxWidth');
+                }
 
                 if (maxWidth) {
                     mainElement.css('max-width', maxWidth);
@@ -278,11 +305,11 @@ define(function (require, exports, module) {
 
                 me.pin(placement);
 
-                instance.window.resize(
-                    resizeHandler =
+                window.on(
+                    'resize' + namespace,
                     debounce(
                         function () {
-                            if (me.popup) {
+                            if (me.$) {
                                 me.pin(placement);
                             }
                         },
@@ -296,29 +323,30 @@ define(function (require, exports, module) {
                 'update',
                 {
                     mainElement: mainElement,
-                    triggerElement: sourceElement
+                    triggerElement: triggerElement
                 }
             );
 
             if (promise && $.isFunction(promise.then)) {
-                promise.then(updateLayer);
+                promise.then(updateTooltip);
             }
             else {
-                updateLayer();
+                updateTooltip();
             }
 
 
         })
-        .after('open', dispatchEvent)
-        .before('close', dispatchEvent)
-        .after('close', function (e) {
+        .after('open', function (e, data) {
+            dispatchEvent(e, 'aftershow', data);
+        })
+        .before('hide', function (e, data) {
+            dispatchEvent(e, 'beforehide', data);
+        })
+        .after('close', function (e, data) {
 
-            if (resizeHandler) {
-                instance.window.off('resize', resizeHandler);
-                resizeHandler = null;
-            }
+            window.off(namespace);
 
-            dispatchEvent(e);
+            dispatchEvent(e, 'afterhide', data);
 
         });
 
@@ -328,26 +356,26 @@ define(function (require, exports, module) {
         me.inner({
             main: mainElement,
             popup: popup
-        })
+        });
 
     };
 
-    proto.open = function () {
-        this.inner('popup').open();
+    proto.show = function () {
+        this.state('hidden', false);
     };
 
-    proto._open = function () {
-        if (!this.inner('popup').is('hidden')) {
+    proto._show = function () {
+        if (!this.is('hidden')) {
             return false;
         }
     };
 
-    proto.close = function () {
-        this.inner('popup').close();
+    proto.hide = function () {
+        this.state('hidden', true);
     };
 
-    proto._close = function () {
-        if (this.inner('popup').is('hidden')) {
+    proto._hide = function () {
+        if (this.is('hidden')) {
             return false;
         }
     };
@@ -371,15 +399,15 @@ define(function (require, exports, module) {
         var placementClass = mainElement.data(placementClassKey);
         if (placementClass) {
             mainElement
-            .removeClass(placementClass)
-            .removeData(placementClassKey);
+                .removeClass(placementClass)
+                .removeData(placementClassKey);
         }
 
         placementClass = me.option(placement + 'Class');
         if (placementClass) {
             mainElement
-            .addClass(placementClass)
-            .data(placementClassKey, placementClass);
+                .addClass(placementClass)
+                .data(placementClassKey, placementClass);
         }
 
 
@@ -388,39 +416,21 @@ define(function (require, exports, module) {
 
         var options = {
             element: mainElement,
-            attachment: mainElement.source,
-            offsetX: 0,
-            offsetY: 0
+            attachment: mainElement[ triggerElementKey ],
+            offsetX: toNumber(me.option('gapX'), 0),
+            offsetY: toNumber(me.option('gapY'), 0)
         };
-
-        var gapX = me.option('gapX');
-        if ($.type(gapX) === 'number') {
-            options.offsetX = gapX;
-        }
-
-        var gapY = me.option('gapY');
-        if ($.type(gapY) === 'number') {
-            options.offsetY = gapY;
-        }
 
         var target = placementMap[ placement ];
         if ($.isFunction(target.gap)) {
             target.gap(options);
         }
 
-        var offsetX = me.option(placement + 'OffsetX');
-        if ($.type(offsetX) === 'number') {
-            options.offsetX += offsetX;
-        }
-
-        var offsetY = me.option(placement + 'OffsetY');
-        if ($.type(offsetY) === 'number') {
-            options.offsetY += offsetY;
-        }
-
+        var offset = placement + 'Offset';
+        options.offsetX += toNumber(me.option(offset + 'X'), 0);
+        options.offsetY += toNumber(me.option(offset + 'Y'), 0);
 
         position[ target.name ](options);
-
 
     };
 
@@ -428,52 +438,26 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('popup').dispose();
 
+        window.off(me.namespace());
+
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
-    Tooltip.defaultOptions = {
+    Tooltip.stateUpdater = {
 
-        showTrigger: 'enter',
-        showDelay: 100,
-        showAnimation: function (options) {
-            options.mainElement.show();
-        },
-
-        hideTrigger: 'leave,click',
-        hideDelay: 100,
-        hideAnimation: function (options) {
-            options.mainElement.hide();
-        },
-
-        mainTemplate: '<div class="tooltip tooltip-inverted"></div>',
-
-        share: true,
-        underBody: true,
-        placement: 'auto',
-
-        topClass: 'tooltip-top',
-        rightClass: 'tooltip-right',
-        bottomClass: 'tooltip-bottom',
-        leftClass: 'tooltip-left',
-        topLeftClass: 'tooltip-top-left',
-        topRightClass: 'tooltip-top-right',
-        bottomLeftClass: 'tooltip-bottom-left',
-        bottomRightClass: 'tooltip-bottom-right',
-
-        gapX: 10,
-        gapY: 10,
-
-        update: function (options) {
-
-            options.mainElement.html(
-                options.triggerElement.attr('data-title')
-            );
-
+        hidden: function (hidden) {
+            var popup = this.inner('popup');
+            if (hidden) {
+                popup.close();
+            }
+            else {
+                popup.open();
+            }
         }
 
     };
@@ -485,8 +469,9 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testLeft() {
-        var main = this.inner('main');
-        return main.source.offset().left > main.outerWidth();
+        var mainElement = this.inner('main');
+        var triggerElement = mainElement[ triggerElementKey ];
+        return triggerElement.offset().left > mainElement.outerWidth();
     }
 
     /**
@@ -496,12 +481,12 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testRight() {
-        var main = this.inner('main');
-        var source = main.source;
+        var mainElement = this.inner('main');
+        var triggerElement = mainElement[ triggerElementKey ];
         return pageWidth() >
-               (source.offset().left
-               + source.outerWidth()
-               + main.outerWidth());
+               (triggerElement.offset().left
+               + triggerElement.outerWidth()
+               + mainElement.outerWidth());
     }
 
     /**
@@ -511,8 +496,9 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testTop() {
-        var main = this.inner('main');
-        return main.source.offset().top > main.outerHeight();
+        var mainElement = this.inner('main');
+        var triggerElement = mainElement[ triggerElementKey ];
+        return triggerElement.offset().top > mainElement.outerHeight();
     }
 
     /**
@@ -522,12 +508,12 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     function testBottom() {
-        var main = this.inner('main');
-        var source = main.source;
+        var mainElement = this.inner('main');
+        var triggerElement = mainElement[ triggerElementKey ];
         return pageHeight() >
-               (source.offset().top
-                + source.outerHeight()
-                + main.outerHeight());
+               (triggerElement.offset().top
+                + triggerElement.outerHeight()
+                + mainElement.outerHeight());
     }
 
     /**
@@ -604,20 +590,20 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 每个模板对应一个元素，这样可以少创建很多元素
-     *
-     * @inner
-     * @type {Object}
-     */
-    var templateElementMap = { };
-
-    /**
      * 存储当前方位 className 的 key
      *
      * @inner
      * @type {string}
      */
     var placementClassKey = '__placement__';
+
+    /**
+     * 存储触发元素的 key
+     *
+     * @inner
+     * @type {string}
+     */
+    var triggerElementKey = '__trigger__';
 
     /**
      * 获取方位的遍历列表
@@ -655,6 +641,7 @@ define(function (require, exports, module) {
         );
 
         return result;
+
     }
 
 
