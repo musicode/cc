@@ -47,6 +47,7 @@ define(function (require, exports, module) {
 
     var isHidden = require('../function/isHidden');
     var contains = require('../function/contains');
+    var nextTick = require('../function/nextTick');
 
     var lifeUtil = require('../util/life');
     var triggerUtil = require('../util/trigger');
@@ -231,10 +232,45 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')) {
+    proto._open = function (e) {
+
+        var me = this;
+
+        if (me.is('opened')) {
+
+            var layerElement = me.option('layerElement');
+
+            // 多个 triggerElement 触发同一个 layerElement 时
+            // 不同的 triggerElement 触发 open，需要先 close 之前的
+            var triggerElement = getTriggerElement(e);
+            var prevTriggerElement = layerElement.data(TRIGGER_ELEMENT_KEY);
+
+            if (triggerElement
+                && prevTriggerElement
+                && triggerElement !== prevTriggerElement
+            ) {
+                layerElement.data(POPUP_KEY).close();
+                nextTick(function () {
+                    me.open(e);
+                });
+            }
+
             return false;
         }
+
+    };
+
+    proto.open_ = function (e) {
+
+        var me = this;
+        var layerElement = me.option('layerElement');
+
+        var data = { };
+        data[ TRIGGER_ELEMENT_KEY ] = getTriggerElement(e);
+        data[ POPUP_KEY ] = me;
+
+        layerElement.data(data);
+
     };
 
 
@@ -247,7 +283,12 @@ define(function (require, exports, module) {
             return false;
         }
     };
-
+    proto.close_ = function () {
+        console.log('close', this.option('triggerElement'));
+        var layerElement = this.option('layerElement');
+        layerElement.removeData(POPUP_KEY);
+        layerElement.removeData(TRIGGER_ELEMENT_KEY);
+    };
 
     proto.dispose = function () {
         lifeUtil.dispose(this);
@@ -396,6 +437,23 @@ define(function (require, exports, module) {
             }
         );
     }
+
+    function getTriggerElement(event) {
+
+        var triggerElement;
+        if (event) {
+            triggerElement = event.originElement || event.currentTarget;
+        }
+
+        if (triggerElement && !triggerElement.tagName) {
+            triggerElement = null;
+        }
+
+        return triggerElement;
+    }
+
+    var POPUP_KEY = '__prev_popup__';
+    var TRIGGER_ELEMENT_KEY = '__trigger_element__';
 
     var enterType = triggerUtil.enter.type;
     var leaveType = triggerUtil.leave.type;
