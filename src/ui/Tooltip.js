@@ -40,24 +40,9 @@ define(function (require, exports, module) {
      *
      * {
      *     placement: 'bottom,auto',
-     *     bottomOffset: {
-     *         x: 20,   // 向右偏移 20px
-     *         y: 0
-     *     }
+     *     bottomOffsetX: 20,  // 向右偏移 20px
      * }
      *
-     * 如果实例化的 template 参数和 defaultOptions.mainTemplate 不同，会在实例上新建一个 main 属性
-     *
-     * 如果想控制提示浮层的最大宽度，可以在触发元素上加 data-width="100px"
-     *
-     */
-
-    /**
-     * @update
-     *
-     * 1. 鉴于全局元素比较多，而且通常有动态创建的元素的场景，因此改成事件代理
-     *
-     * 2. 为了减少元素数量，同一个模板改为元素共享
      */
 
     var split = require('../function/split');
@@ -90,7 +75,7 @@ define(function (require, exports, module) {
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      *
-     * @property {string=} options.maxWidth 提示元素的最大宽度
+     * @property {string=} options.maxWidth 提示元素的最大宽度，优先从元素读取 maxWidthAttribute
      * @property {boolean=} options.share 是否共享一个元素
      *
      * @property {string=} options.skinAttribute
@@ -298,7 +283,6 @@ define(function (require, exports, module) {
                 if (!maxWidth) {
                     maxWidth = me.option('maxWidth');
                 }
-
                 if (maxWidth) {
                     mainElement.css('max-width', maxWidth);
                 }
@@ -343,11 +327,8 @@ define(function (require, exports, module) {
             dispatchEvent(e, 'beforehide', data);
         })
         .after('close', function (e, data) {
-
             window.off(namespace);
-
             dispatchEvent(e, 'afterhide', data);
-
         });
 
 

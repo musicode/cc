@@ -284,10 +284,9 @@ define(function (require, exports, module) {
         }
     };
     proto.close_ = function () {
-        console.log('close', this.option('triggerElement'));
-        var layerElement = this.option('layerElement');
-        layerElement.removeData(POPUP_KEY);
-        layerElement.removeData(TRIGGER_ELEMENT_KEY);
+        this.option('layerElement')
+            .removeData(POPUP_KEY)
+            .removeData(TRIGGER_ELEMENT_KEY);
     };
 
     proto.dispose = function () {

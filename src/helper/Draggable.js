@@ -87,150 +87,137 @@ define(function (require, exports, module) {
 
         var containerElement = me.option('containerElement');
         var pageElement = page();
-
         var rectElement = containerElement || pageElement;
-
-        var namespace = me.namespace();
-
-        $.each(touchUtil, function (key, event) {
-
-            if (!event.support) {
-                return;
-            }
-
-            mainElement.on(
-                event.down + namespace,
-                function (e) {
-
-                    // 这里本想使用 not 选择器来实现 cancal
-                    // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
-                    // 因为有这个问题，索性整个判断都放在这里
-
-                    var handleSelector = me.option('handleSelector');
-                    var cancelSelector = me.option('cancelSelector');
-
-                    var target = e.target;
-
-                    if (handleSelector && !hitTarget(mainElement, handleSelector, target)
-                        || cancelSelector && hitTarget(mainElement, cancelSelector, target)
-                    ) {
-                        return;
-                    }
-
-
-
-
-                    // 重新取值比较靠谱
-                    var style = position(mainElement);
-
-
-
-
-                    // =====================================================================
-                    // 计算偏移量
-                    // 这样方便 onDrag 时作为当前全局坐标的减数，减少计算量
-                    // =====================================================================
-
-                    var coord = globalCoord[ key ];
-
-                    var mainOuterOffset = outerOffset(mainElement);
-                    var rectInnerOffset = innerOffset(rectElement);
-
-                    // offset() 包含 margin
-                    // 减去 margin 才是真正的坐标值
-                    var offsetX = coord.absoluteX(e) - mainOuterOffset.x;
-                    var offsetY = coord.absoluteY(e) - mainOuterOffset.y;
-
-                    // 因为 onDrag 是用`全局坐标`减去`偏移量`
-                    // 所以偏移量应该是全局坐标的偏移量
-                    var rectContainsElement = contains(rectElement, mainElement);
-                    if (rectContainsElement) {
-                        offsetX += rectInnerOffset.x;
-                        offsetY += rectInnerOffset.y;
-                    }
-
-
-
-
-
-
-                    // ====================================================
-                    // 全局坐标计算函数
-                    // ====================================================
-
-                    point.left = style.left;
-                    point.top = style.top;
-
-                    // 计算拖拽范围
-                    var width;
-                    var height;
-
-                    var isFixed = style.position === 'fixed';
-                    if (isFixed) {
-
-                        width = containerElement
-                            ? containerElement.innerWidth()
-                            : viewportWidth();
-
-                        height = containerElement
-                            ? containerElement.innerHeight()
-                            : viewportHeight();
-
-                    }
-                    else {
-                        width = rectElement.innerWidth();
-                        height = rectElement.innerHeight();
-                    }
-
-                    width = Math.max(0, width - mainElement.outerWidth(true));
-                    height = Math.max(0, height - mainElement.outerHeight(true));
-
-                    var x = rectContainsElement ? 0 : rectInnerOffset.x;
-                    var y = rectContainsElement ? 0 : rectInnerOffset.y;
-
-                    var axis = me.option('axis');
-
-                    xCalculator = axis === 'y'
-                                ? calculator.constant(style.left)
-                                : calculator.variable(
-                                    // 全局坐标
-                                    coord[ isFixed ? 'fixedX' : 'absoluteX' ],
-                                    // 偏移坐标
-                                    offsetX,
-                                    // 约束坐标范围
-                                    x,
-                                    x + width
-                                );
-
-                    yCalculator = axis === 'x'
-                                ? calculator.constant(style.top)
-                                : calculator.variable(
-                                    coord[ isFixed ? 'fixedY' : 'absoluteY' ],
-                                    offsetY,
-                                    y,
-                                    y + height
-                                );
-
-
-
-
-
-                    counter = 0;
-
-
-                    instanceUtil.document
-                        .off(namespace)
-                        .on(event.move + namespace, dragHandler)
-                        .on(event.up + namespace, afterDragHandler);
-
-                }
-            );
-
-        });
 
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
         var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
+
+        var beforeDragHandler = function (e) {
+
+            // 这里本想使用 not 选择器来实现 cancal
+            // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
+            // 因为有这个问题，索性整个判断都放在这里
+
+            var handleSelector = me.option('handleSelector');
+            var cancelSelector = me.option('cancelSelector');
+
+            var target = e.target;
+
+            if (handleSelector && !hitTarget(mainElement, handleSelector, target)
+                || cancelSelector && hitTarget(mainElement, cancelSelector, target)
+            ) {
+                return;
+            }
+
+
+
+
+            // 重新取值比较靠谱
+            var style = position(mainElement);
+
+
+
+
+            // =====================================================================
+            // 计算偏移量
+            // 这样方便 onDrag 时作为当前全局坐标的减数，减少计算量
+            // =====================================================================
+
+            var coord;
+
+            $.each(globalCoord, function (key, value) {
+                if (e.type.indexOf(key) === 0) {
+                    coord = value;
+                    return false;
+                }
+            });
+
+            if (!coord) {
+                me.error('event[' + type + '] is not supported.');
+            }
+
+            var mainOuterOffset = outerOffset(mainElement);
+            var rectInnerOffset = innerOffset(rectElement);
+
+            // offset() 包含 margin
+            // 减去 margin 才是真正的坐标值
+            var offsetX = coord.absoluteX(e) - mainOuterOffset.x;
+            var offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+
+            // 因为 onDrag 是用`全局坐标`减去`偏移量`
+            // 所以偏移量应该是全局坐标的偏移量
+            var rectContainsElement = contains(rectElement, mainElement);
+            if (rectContainsElement) {
+                offsetX += rectInnerOffset.x;
+                offsetY += rectInnerOffset.y;
+            }
+
+
+
+
+
+
+            // ====================================================
+            // 全局坐标计算函数
+            // ====================================================
+
+            point.left = style.left;
+            point.top = style.top;
+
+            // 计算拖拽范围
+            var width;
+            var height;
+
+            var isFixed = style.position === 'fixed';
+            if (isFixed) {
+
+                width = containerElement
+                    ? containerElement.innerWidth()
+                    : viewportWidth();
+
+                height = containerElement
+                    ? containerElement.innerHeight()
+                    : viewportHeight();
+
+            }
+            else {
+                width = rectElement.innerWidth();
+                height = rectElement.innerHeight();
+            }
+
+            width = Math.max(0, width - mainElement.outerWidth(true));
+            height = Math.max(0, height - mainElement.outerHeight(true));
+
+            var x = rectContainsElement ? 0 : rectInnerOffset.x;
+            var y = rectContainsElement ? 0 : rectInnerOffset.y;
+
+            var axis = me.option('axis');
+
+            xCalculator = axis === 'y'
+                        ? calculator.constant(style.left)
+                        : calculator.variable(
+                            // 全局坐标
+                            coord[ isFixed ? 'fixedX' : 'absoluteX' ],
+                            // 偏移坐标
+                            offsetX,
+                            // 约束坐标范围
+                            x,
+                            x + width
+                        );
+
+            yCalculator = axis === 'x'
+                        ? calculator.constant(style.top)
+                        : calculator.variable(
+                            coord[ isFixed ? 'fixedY' : 'absoluteY' ],
+                            offsetY,
+                            y,
+                            y + height
+                        );
+
+            counter = 0;
+
+        };
 
         var dragHandler = function (e) {
 
@@ -280,8 +267,6 @@ define(function (require, exports, module) {
 
         var afterDragHandler = function (e) {
 
-            instanceUtil.document.off(namespace);
-
             enableSelection();
 
             if (draggingClass) {
@@ -305,6 +290,15 @@ define(function (require, exports, module) {
             yCalculator = null;
 
         };
+
+        me.execute('bind', {
+            mainElement: mainElement,
+            containerElement: containerElement,
+            namespace: me.namespace(),
+            downHandler: beforeDragHandler,
+            moveHandler: dragHandler,
+            upHandler: afterDragHandler
+        });
 
     };
 
