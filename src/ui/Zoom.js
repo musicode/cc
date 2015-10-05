@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
+    var innerOffset = require('../function/innerOffset');
     var imageDimension = require('../function/imageDimension');
 
     var Draggable = require('../helper/Draggable');
@@ -62,13 +63,12 @@ define(function (require, exports, module) {
         var finderWidth;
         var finderHeight;
 
-        // 视口尺寸（根据比例自动计算）
-        var viewportWidth;
-        var viewportHeight;
-
         // 缩放比例
         var scaleX;
         var scaleY;
+
+        // thumbnail 偏移坐标
+        var thumbnailOffset;
 
         var scaledImageReady = function () {
 
@@ -82,19 +82,16 @@ define(function (require, exports, module) {
 
         var rawImageReady = function () {
 
-            if (!finderWidth || !finderHeight) {
+            if (!scaledWidth || !rawWidth) {
                 return;
             }
 
             scaleX = scaledWidth / rawWidth;
             scaleY = scaledHeight / rawHeight;
-
-            viewportWidth = finderWidth / scaleX;
-            viewportHeight = finderHeight / scaleY;
-
+console.log(scaleX, scaleY)
             viewportElement.css({
-                width: viewportWidth,
-                height: viewportHeight,
+                width: finderWidth / scaleX,
+                height: finderHeight / scaleY,
                 background: 'url(' + imageUrl + ') no-repeat'
             });
 
@@ -130,30 +127,57 @@ define(function (require, exports, module) {
             bind: function (options) {
 
                 var namespace = options.namespace;
+                var enterType = 'mouseenter' + namespace;
+                var leaveType = 'mouseleave' + namespace;
+
+                var delayTimer;
+
+                var clearTimer = function (e) {
+                    if (delayTimer) {
+                        clearTimeout(delayTimer);
+                        delayTimer = null;
+                    }
+                };
+
+                var leaveHandler = function (e) {
+                    delayTimer = setTimeout(
+                        function () {
+                            delayTimer = null;
+                            options.upHandler(e);
+                            document.off(namespace);
+                        },
+                        50
+                    );
+                };
 
                 thumbnailElement
                     .on(
-                        'mouseenter' + namespace,
+                        enterType,
                         function (e) {
 
-                            var offset = finderElement.offset();
+                            if (delayTimer) {
+                                clearTimer();
+                                return;
+                            }
 
-                            e.clientX = offset.left + finderWidth / 2;
-                            e.clientY = offset.top + finderHeight / 2;
+                            thumbnailOffset = innerOffset(thumbnailElement);
 
-                            options.downHandler(e);
+                            options.downHandler(e, {
+                                x: finderWidth / 2,
+                                y: finderHeight / 2
+                            });
+
                             document
                                 .off(namespace)
                                 .on('mousemove' + namespace, options.moveHandler);
                         }
                     )
-                    .on(
-                        'mouseleave' + namespace,
-                        function (e) {
-                            options.upHandler(e);
-                            document.off(namespace);
-                        }
-                    );
+                    .on(leaveType, leaveHandler);
+
+                finderElement
+                    .on(enterType, clearTimer)
+                    .on(leaveType, leaveHandler);
+
 
             },
             onbeforedrag: function () {
@@ -185,8 +209,9 @@ define(function (require, exports, module) {
                 );
             },
             ondrag: function (e, data) {
-                var left = data.left / scaleX;
-                var top = data.top / scaleY;
+                var left = (data.left - thumbnailOffset.x) / scaleX;
+                var top = (data.top - thumbnailOffset.y) / scaleY;
+                console.log(data, left + ',' + top)
                 viewportElement.css({
                     'background-position': '-' + left + 'px -' + top + 'px'
                 });

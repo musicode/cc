@@ -93,7 +93,7 @@ define(function (require, exports, module) {
         var containerDraggingClass = me.option('containerDraggingClass');
         var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
 
-        var beforeDragHandler = function (e) {
+        var beforeDragHandler = function (e, offset) {
 
             // 这里本想使用 not 选择器来实现 cancal
             // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
@@ -140,10 +140,17 @@ define(function (require, exports, module) {
             var mainOuterOffset = outerOffset(mainElement);
             var rectInnerOffset = innerOffset(rectElement);
 
-            // offset() 包含 margin
-            // 减去 margin 才是真正的坐标值
-            var offsetX = coord.absoluteX(e) - mainOuterOffset.x;
-            var offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+            var offsetX;
+            var offsetY;
+
+            if (offset) {
+                offsetX = offset.x;
+                offsetY = offset.y;
+            }
+            else {
+                offsetX = coord.absoluteX(e) - mainOuterOffset.x;
+                offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+            }
 
             // 因为 onDrag 是用`全局坐标`减去`偏移量`
             // 所以偏移量应该是全局坐标的偏移量
