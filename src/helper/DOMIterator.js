@@ -111,6 +111,16 @@ define(function (require, exports, module) {
 
         });
 
+        if (watchElement.is(':text')) {
+            keyboard
+                .on('keydown', function (e) {
+                    // 处理某些浏览器按方向键上会导致光标跑到最左侧
+                    if (e.keyCode === keyboardUtil.up) {
+                        e.preventDefault();
+                    }
+                });
+        }
+
 
         me.inner({
             iterator: iterator,
@@ -140,18 +150,13 @@ define(function (require, exports, module) {
     };
 
     proto.dispose = function () {
-
-        var me = this;
-
-        me.inner('iterator').dispose();
-        me.inner('keyboard').dispose();
-
+        this.inner('iterator').dispose();
+        this.inner('keyboard').dispose();
     };
 
     lifeUtil.extend(proto);
 
     DOMIterator.propertyUpdater = {
-
         index: function (index) {
             this.inner('iterator').set('index', index);
         },
@@ -161,9 +166,7 @@ define(function (require, exports, module) {
         maxIndex: function (maxIndex) {
             this.inner('iterator').set('maxIndex', maxIndex);
         }
-
     };
-
 
     return DOMIterator;
 

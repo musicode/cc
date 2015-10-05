@@ -189,7 +189,7 @@ define(function (require, exports, module) {
                             html += nodeCache.view;
                         }
                     }
-                    else if (id === node.id) {
+                    else if (id == node.id) {
                         html += nodeCache.view;
                         return false;
                     }
@@ -227,7 +227,7 @@ define(function (require, exports, module) {
 
         me.walk({
             enter: function (node, cache) {
-                if (node.id === id) {
+                if (node.id == id) {
                     target = node;
                     return false;
                 }
@@ -253,7 +253,7 @@ define(function (require, exports, module) {
             );
         }
         else {
-            deferred.reject('node[' + id + '] not found.');
+            deferred.reject('node[' + id + '] is not found.');
         }
 
         return deferred;
@@ -330,7 +330,8 @@ define(function (require, exports, module) {
 
         this.walk({
             enter: function (node) {
-                if (node.id === id) {
+                // 避免字符串和数字不全等
+                if (node.id == id) {
                     result = node;
                     return false;
                 }

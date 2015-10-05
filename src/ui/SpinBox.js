@@ -20,9 +20,11 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
      * @property {number=} options.value
-     * @property {number=} options.minValue
-     * @property {number=} options.maxVlue
+     * @property {number} options.minValue
+     * @property {number} options.maxValue
      * @property {number=} options.defaultValue 默认值，当输入的值非法时，可用默认值替换错误值，如果不想替换，则不传
+     * @property {number} options.step
+     * @property {number} options.interval
      * @property {string=} options.inputSelector 输入框选择器
      * @property {string=} options.upSelector 向上按钮选择器
      * @property {string=} options.downSelector 向下按钮选择器
@@ -41,8 +43,8 @@ define(function (require, exports, module) {
 
         me.initStruct();
 
-        var step = me.option('step');
-        if (!$.isNumeric(step)) {
+        var step = toNumber(me.option('step'), null);
+        if (step == null) {
             me.error('step must be a number.');
         }
 
@@ -80,6 +82,7 @@ define(function (require, exports, module) {
         var downSelector = me.option('downSelector');
         var mousedownType = 'mousedown' + namespace;
         var mouseupType = 'mouseup' + namespace;
+        var blueType = 'focusout' + namespace;
 
         var mouseupHandler = function () {
             iterator.pause();
@@ -97,11 +100,9 @@ define(function (require, exports, module) {
                 iterator.start(true);
                 document.on(mouseupType, mouseupHandler);
             })
-            .on('focusout' + namespace, function () {
-                me.set(
-                    'value',
-                    $.trim(inputElement.val())
-                );
+            .on(blueType, function () {
+                var value = $.trim(inputElement.val());
+                me.set('value', value);
             });
 
         me.inner({
@@ -118,11 +119,12 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
+        me.inner('iterator').dispose();
+
         var namespace = me.namespace();
         document.off(namespace);
 
         me.inner('main').off(namespace);
-        me.inner('iterator').dispose();
 
     };
 

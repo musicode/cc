@@ -18,7 +18,7 @@ define(function (require, exports, module) {
      * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
-     * @property {number} options.defaultIndex 默认索引
+     * @property {number} options.defaultIndex 默认索引，调用 stop() 会重置为该索引
      * @property {number} options.step prev 和 next 的步进值
      * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
      * @property {boolean=} options.loop 是否循环遍历
@@ -120,10 +120,11 @@ define(function (require, exports, module) {
             index = maxIndex;
         }
 
-        // 再加一层保护
-        index = toNumber(index, 0);
-
-        me.set('index', index, { action: 'prev' });
+        me.set(
+            'index',
+            toNumber(index, 0),
+            { action: 'prev' }
+        );
 
     };
 
@@ -156,10 +157,11 @@ define(function (require, exports, module) {
             index = minIndex;
         }
 
-        // 再加一层保护
-        index = toNumber(index, 0);
-
-        me.set('index', index, { action: 'next' });
+        me.set(
+            'index',
+            toNumber(index, 0),
+            { action: 'next' }
+        );
 
     };
 
@@ -175,11 +177,7 @@ define(function (require, exports, module) {
 
     };
 
-    proto.dispose = function () {
-
-        this.stop();
-
-    };
+    proto.dispose = proto.stop;
 
     lifeUtil.extend(proto);
 

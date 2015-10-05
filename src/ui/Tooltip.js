@@ -9,32 +9,31 @@ define(function (require, exports, module) {
     /**
      * 鼠标悬浮元素，弹出提示浮层
      *
-     * 鉴于需求较多，可通过 Tooltip.defaultOptions 进行配置
-     *
      * 提示出现的位置可通过 defaultOptions.placement 统一配置
-     * 如个别元素需特殊处理，可为元素加上 data-placement 属性改写全局配置
+     * 如个别元素需特殊处理，可为元素加上 placementAttribute 配置的属性改写全局配置
      *
      * 如全局希望浮层显示在触发元素下方，可配置 Tooltip.defaultOptions.placement = 'bottom';
      *
-     * 但是有个别元素，显示在下方体验不好，可在模板里写 <span data-placement="top">xx</span>
+     * 但是有个别元素，显示在下方体验不好，假设 placementAttribute 配置为 `data-placement`，
+     * 可在模板里写 <span data-placement="top">xx</span>
      *
      * 如果要实现箭头效果，有两种方式：
      *
-     * 1. border 实现: 配置方位 class，如
+     * 1. border 实现: 配置方位 className，如
      *
      *    {
      *        topClass: 'tooltip-up',
      *        bottomClass: 'tooltip-down'
      *    }
      *
-     *    当显示在上方时，会给浮层元素加上 `tooltip-up` class;
-     *    当显示在下方时，会给浮层元素加上 `tooltip-down` class;
+     *    当显示在上方时，会给浮层元素加上 `tooltip-up`;
+     *    当显示在下方时，会给浮层元素加上 `tooltip-down`;
      *
      *    接下来可用 border 实现三角形，但需注意的是，
      *    当箭头向上时，需要把 border-top-width 设置为 0，
      *    这样才可避免透明的上边框影响触发逻辑，其他方向同理
      *
-     *
+     * 2. 通过 mainTemplate 和 update(options) 几乎可实现任何效果
      *
      * 如需要微调位置，比如不是上下左右，而是下方偏右，可参考如下配置：
      *
@@ -67,9 +66,8 @@ define(function (require, exports, module) {
      * @property {jQuery} options.triggerElement 需要工具提示的元素
      * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
      *
-     * @property {jQuery=} options.mainElement 提示浮层元素，这个配置用于应付比较复杂的场景，如浮层视图里有交互
-     *                                         简单场景可用 mainTemplate 配置搞定
-     * @property {string=} options.mainTemplate 提示元素的模版，可配合使用 placementClass, onBeforeShow 实现特殊需求
+     * @property {jQuery=} options.mainElement 提示浮层元素
+     *                                         对于 Tooltip 来说，通常会配置 mainTemplate，而无需指定元素
      *
      * @property {string=} options.placement 提示元素出现的位置
      *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
@@ -78,11 +76,11 @@ define(function (require, exports, module) {
      * @property {string=} options.maxWidth 提示元素的最大宽度，优先从元素读取 maxWidthAttribute
      * @property {boolean=} options.share 是否共享一个元素
      *
-     * @property {string=} options.skinAttribute
-     * @property {string=} options.placementAttribute
-     * @property {string=} options.maxWidthAttribute
+     * @property {string=} options.skinAttribute 配置皮肤属性，显示 tooltip 之前，会从触发元素上读取该属性，并添加该 className
+     * @property {string=} options.placementAttribute 配置方位属性，显示 tooltip 之前，会从触发元素上读取该属性，并添加该 className
+     * @property {string=} options.maxWidthAttribute 配置最大宽度属性，显示 tooltip 之前，会从触发元素上读取该属性，并设置 max-width
      *
-     * @property {Function} options.update 更新提示浮层的内容
+     * @property {Function=} options.update 更新提示浮层的内容
      *
      * @property {string=} options.showTrigger 显示的触发方式
      * @property {number=} options.showDelay 显示延时
@@ -196,7 +194,7 @@ define(function (require, exports, module) {
 
                 var skinClass;
 
-                triggerElement = mainElement[ triggerElementKey ];
+                triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
                 if (triggerElement) {
                     skinClass = triggerElement.attr(skinAttribute);
                     if (skinClass) {
@@ -205,7 +203,7 @@ define(function (require, exports, module) {
                 }
 
                 triggerElement =
-                mainElement[ triggerElementKey ] = $(originElement);
+                mainElement[ TRIGGER_ELEMENT_KEY ] = $(originElement);
 
                 skinClass = triggerElement.attr(skinAttribute);
                 if (skinClass) {
@@ -377,18 +375,18 @@ define(function (require, exports, module) {
         // 先设置好样式，再定位
         // 这样才能保证定位计算不会出问题
 
-        var placementClass = mainElement.data(placementClassKey);
+        var placementClass = mainElement.data(PLACEMENT_CLASS_KEY);
         if (placementClass) {
             mainElement
                 .removeClass(placementClass)
-                .removeData(placementClassKey);
+                .removeData(PLACEMENT_CLASS_KEY);
         }
 
         placementClass = me.option(placement + 'Class');
         if (placementClass) {
             mainElement
                 .addClass(placementClass)
-                .data(placementClassKey, placementClass);
+                .data(PLACEMENT_CLASS_KEY, placementClass);
         }
 
 
@@ -397,7 +395,7 @@ define(function (require, exports, module) {
 
         var options = {
             element: mainElement,
-            attachment: mainElement[ triggerElementKey ],
+            attachment: mainElement[ TRIGGER_ELEMENT_KEY ],
             offsetX: toNumber(me.option('gapX'), 0),
             offsetY: toNumber(me.option('gapY'), 0)
         };
@@ -451,7 +449,7 @@ define(function (require, exports, module) {
      */
     function testLeft() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ triggerElementKey ];
+        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
         return triggerElement.offset().left > mainElement.outerWidth();
     }
 
@@ -463,7 +461,7 @@ define(function (require, exports, module) {
      */
     function testRight() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ triggerElementKey ];
+        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
         return pageWidth() >
                (triggerElement.offset().left
                + triggerElement.outerWidth()
@@ -478,7 +476,7 @@ define(function (require, exports, module) {
      */
     function testTop() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ triggerElementKey ];
+        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
         return triggerElement.offset().top > mainElement.outerHeight();
     }
 
@@ -490,7 +488,7 @@ define(function (require, exports, module) {
      */
     function testBottom() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ triggerElementKey ];
+        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
         return pageHeight() >
                (triggerElement.offset().top
                 + triggerElement.outerHeight()
@@ -576,7 +574,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var placementClassKey = '__placement__';
+    var PLACEMENT_CLASS_KEY = '__placement_class__';
 
     /**
      * 存储触发元素的 key
@@ -584,7 +582,7 @@ define(function (require, exports, module) {
      * @inner
      * @type {string}
      */
-    var triggerElementKey = '__trigger__';
+    var TRIGGER_ELEMENT_KEY = '__trigger_element__';
 
     /**
      * 获取方位的遍历列表

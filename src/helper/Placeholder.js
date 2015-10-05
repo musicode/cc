@@ -47,13 +47,6 @@ define(function (require, exports, module) {
      * @property {string} options.inputSelector 模拟实现时，查找输入框元素的选择器
      * @property {Function} options.showAnimation 模拟实现时，使用的显示动画
      * @property {Function} options.hideAnimation 模拟实现时，使用的隐藏动画
-     *
-     * @property {Function=} options.onbeforeshow
-     * @property {Function=} options.onaftershow
-     * @property {Function=} options.onbeforehide
-     * @property {Function=} options.onafterhide
-     * @property {Function=} options.onbeforerender
-     * @property {Function=} options.onafterrender
      */
     function Placeholder(options) {
         lifeUtil.init(this, options);

@@ -20,7 +20,10 @@ define(function (require, exports, module) {
     var Draggable = require('../helper/Draggable');
 
     var lifeUtil = require('../util/life');
+    var touchUtil = require('../util/touch');
     var orientationUtil = require('../util/orientation');
+
+    var document = require('../util/instance').document;
 
     /**
      * @param {Object} options
@@ -28,18 +31,18 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement
      *
      * @property {number=} options.value
-     * @property {number=} options.minValue 开始位置对应的 value
-     * @property {number=} options.maxValue 结束位置对应的 value
+     * @property {number} options.minValue 开始位置对应的 value
+     * @property {number} options.maxValue 结束位置对应的 value
      * @property {number=} options.step 步进值
-     * @property {Function=} options.slideAnimation 滑动动画
+     * @property {Function} options.slideAnimation 滑动动画
      *
      * @property {(number|Function)=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数
-     * @property {boolean=} options.scrollStepType 滚动步进类型，可选值是 value pixel
+     * @property {boolean} options.scrollStepType 滚动步进类型，可选值是 value pixel
      *
-     * @property {string=} options.orientation 方向，可选值有 horizontal vertical
+     * @property {string} options.orientation 方向，可选值有 horizontal vertical
      * @property {boolean=} options.reverse 是否反向，默认是从左到右、从上到下，如果反向，则是从右到左、从下到上
      *
-     * @property {string=} options.thumbSelector 滑块选择器
+     * @property {string} options.thumbSelector 滑块选择器
      * @property {string=} options.trackSelector 滑道选择器，不传表示 mainElement 是滑道
      * @property {string=} options.barSelector 高亮条选择器
      *
@@ -110,12 +113,33 @@ define(function (require, exports, module) {
 
         };
 
+        var namespace = me.namespace();
+
         var drager = new Draggable({
             mainElement: thumbElement,
             containerElement: trackElement,
             containerDraggingClass: me.option('draggingClass'),
             axis: props.axis,
             context: me,
+            bind: function (options) {
+                $.each(touchUtil, function (type, item) {
+                    if (!item.support) {
+                        return;
+                    }
+                    thumbElement
+                        .on(item.down + namespace, function (e) {
+                            options.downHandler(e);
+                            document
+                                .off(namespace)
+                                .on(item.move + namespace, options.moveHandler)
+                                .on(item.up + namespace, function (e) {
+                                    options.upHandler(e);
+                                    document.off(namespace);
+                                });
+                        });
+
+                });
+            },
             dragAnimation: function (options) {
                 setPixel(
                     options.mainStyle[ props.position ],
@@ -125,7 +149,7 @@ define(function (require, exports, module) {
         });
 
         trackElement.on(
-            'click' + me.namespace(),
+            'click' + namespace,
             function (e) {
 
                 if (contains(thumbElement, e.target)) {
@@ -346,9 +370,11 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
-        me.inner('track').off(
-            me.namespace()
-        );
+        var namespace = me.namespace();
+        document.off(namespace);
+
+        me.inner('thumb').off(namespace);
+        me.inner('track').off(namespace);
         me.inner('drager').dispose();
 
         var wheels = me.inner('wheels');

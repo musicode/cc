@@ -24,6 +24,7 @@ define(function (require, exports, module) {
      *       但在个别浏览器下，它也可能是 0 或 229
      *
      * 我曾以为我能控制这个复杂度，但我错了，用一个词概括就是防不胜防。。。
+     *
      */
 
     var around = require('../function/around');

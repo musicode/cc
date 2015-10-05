@@ -23,6 +23,7 @@ define(function (require, exports, module) {
      */
 
     var getRaito = require('../function/ratio');
+    var isHidden = require('../function/isHidden');
 
     var lifeUtil = require('../util/life');
     var orientationUtil = require('../util/orientation');
@@ -110,6 +111,10 @@ define(function (require, exports, module) {
             slider: slider
         });
 
+        me.state({
+            hidden: me.option('hidden')
+        });
+
         me.refresh();
 
     };
@@ -143,12 +148,7 @@ define(function (require, exports, module) {
         var ratio = getRaito(viewportSize, contentSize);
         if (ratio > 0 && ratio < 1) {
 
-            me.execute(
-                'showAnimation',
-                {
-                    mainElement: mainElement
-                }
-            );
+            me.state('hidden', false);
 
             var trackElement = slider.inner('track');
             var thumbElement = slider.inner('thumb');
@@ -172,12 +172,7 @@ define(function (require, exports, module) {
 
         }
         else {
-            me.execute(
-                'hideAnimation',
-                {
-                    mainElement: mainElement
-                }
-            );
+            me.state('hidden', true);
         }
 
         slider.refresh();
@@ -186,11 +181,9 @@ define(function (require, exports, module) {
 
     proto.dispose = function () {
 
-        var me = this;
+        lifeUtil.dispose(this);
 
-        lifeUtil.dispose(me);
-
-        me.inner('slider').dispose();
+        this.inner('slider').dispose();
 
     };
 
@@ -203,6 +196,31 @@ define(function (require, exports, module) {
         }
 
     };
+
+    ScrollBar.stateUpdater = {
+
+        hidden: function (hidden) {
+            this.execute(
+                hidden ? 'hideAnimation' : 'showAnimation',
+                {
+                    mainElement: this.inner('main')
+                }
+            );
+        }
+
+    };
+
+    ScrollBar.stateValidator = {
+
+        hidden: function (hidden) {
+            if ($.type(hidden) !== 'boolean') {
+                hidden = isHidden(this.inner('main'));
+            }
+            return hidden;
+        }
+
+    };
+
 
     return ScrollBar;
 

@@ -38,7 +38,7 @@ define(function (require, exports, module) {
 
     var lifeUtil = require('../util/life');
     var touchUtil = require('../util/touch');
-    var instanceUtil = require('../util/instance');
+    var bodyElement = require('../util/instance').body;
 
     /**
      * 拖拽
@@ -255,7 +255,7 @@ define(function (require, exports, module) {
                 }
 
                 if (bodyDraggingClass) {
-                    instanceUtil.body.addClass(bodyDraggingClass);
+                    bodyElement.addClass(bodyDraggingClass);
                 }
 
                 me.emit('beforedrag', point);
@@ -287,7 +287,7 @@ define(function (require, exports, module) {
             }
 
             if (bodyDraggingClass) {
-                instanceUtil.body.removeClass(bodyDraggingClass);
+                bodyElement.removeClass(bodyDraggingClass);
             }
 
             if (counter > 0) {

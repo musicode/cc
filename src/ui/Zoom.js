@@ -6,7 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var isHidden = require('../function/isHidden');
     var imageDimension = require('../function/imageDimension');
 
     var Draggable = require('../helper/Draggable');
@@ -38,9 +37,6 @@ define(function (require, exports, module) {
         var me = this;
 
         var thumbnailElement = me.option('thumbnailElement');
-        if (isHidden(thumbnailElement)) {
-            me.error('thumbnailElement must be visible.');
-        }
         if (!thumbnailElement.is('img')) {
             me.error('thumbnailElement must be a <img />.');
         }
