@@ -7,7 +7,6 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
-    var innerOffset = require('../function/innerOffset');
     var imageDimension = require('../function/imageDimension');
 
     var Draggable = require('../helper/Draggable');
@@ -43,25 +42,19 @@ define(function (require, exports, module) {
             me.error('thumbnailElement must be visible.');
         }
         if (!thumbnailElement.is('img')) {
-            me.error('thumbnailElement muse be a <img />.');
+            me.error('thumbnailElement must be a <img />.');
         }
 
         var viewportElement = me.option('viewportElement');
         var finderElement = me.option('finderElement');
-        var imageUrl = me.option('imageUrl');
-        var namespace = me.namespace();
 
         // 缩放尺寸
-        var scaledWidth = thumbnailElement.prop('width');
-        var scaledHeight = thumbnailElement.prop('height');
-
-        // 原始尺寸
-        var rawWidth;
-        var rawHeight;
+        var thumbnailWidth = thumbnailElement.prop('width');
+        var thumbnailHeight = thumbnailElement.prop('height');
 
         // 取景器尺寸
-        var finderWidth;
-        var finderHeight;
+        var finderWidth = finderElement.outerWidth();;
+        var finderHeight = finderElement.outerHeight();
 
         // 缩放比例
         var scaleX;
@@ -72,36 +65,33 @@ define(function (require, exports, module) {
 
         var scaledImageReady = function () {
 
-            // 取景器尺寸
-            finderWidth = finderElement.innerWidth();
-            finderHeight = finderElement.innerHeight();
+            var imageUrl = me.option('imageUrl');
 
-            rawImageReady();
+            imageDimension(
+                imageUrl,
+                function (rawWidth, rawHeight) {
 
-        };
+                    scaleX = thumbnailWidth / rawWidth;
+                    scaleY = thumbnailHeight / rawHeight;
 
-        var rawImageReady = function () {
+                    viewportElement.css({
+                        width: finderWidth / scaleX,
+                        height: finderHeight / scaleY,
+                        background: 'url(' + imageUrl + ') no-repeat'
+                    });
 
-            if (!scaledWidth || !rawWidth) {
-                return;
-            }
-
-            scaleX = scaledWidth / rawWidth;
-            scaleY = scaledHeight / rawHeight;
-console.log(scaleX, scaleY)
-            viewportElement.css({
-                width: finderWidth / scaleX,
-                height: finderHeight / scaleY,
-                background: 'url(' + imageUrl + ') no-repeat'
-            });
+                }
+            );
 
         };
 
-        if (!scaledWidth && !scaledHeight) {
+        var namespace = me.namespace();
+
+        if (!thumbnailWidth && !thumbnailHeight) {
             thumbnailElement
                 .one('load' + namespace, function () {
-                    scaledWidth = this.width;
-                    scaledHeight = this.height;
+                    thumbnailWidth = this.width;
+                    thumbnailHeight = this.height;
                     scaledImageReady();
                 });
         }
@@ -109,14 +99,7 @@ console.log(scaleX, scaleY)
             scaledImageReady();
         }
 
-        imageDimension(
-            imageUrl,
-            function (width, height) {
-                rawWidth = width;
-                rawHeight = height;
-                rawImageReady();
-            }
-        );
+
 
         var dragger = new Draggable({
             mainElement: finderElement,
@@ -126,7 +109,6 @@ console.log(scaleX, scaleY)
             },
             bind: function (options) {
 
-                var namespace = options.namespace;
                 var enterType = 'mouseenter' + namespace;
                 var leaveType = 'mouseleave' + namespace;
 
@@ -151,33 +133,30 @@ console.log(scaleX, scaleY)
                 };
 
                 thumbnailElement
-                    .on(
-                        enterType,
-                        function (e) {
+                    .on(enterType, function (e) {
 
-                            if (delayTimer) {
-                                clearTimer();
-                                return;
-                            }
-
-                            thumbnailOffset = innerOffset(thumbnailElement);
-
-                            options.downHandler(e, {
-                                x: finderWidth / 2,
-                                y: finderHeight / 2
-                            });
-
-                            document
-                                .off(namespace)
-                                .on('mousemove' + namespace, options.moveHandler);
+                        if (delayTimer) {
+                            clearTimer();
+                            return;
                         }
-                    )
+
+                        thumbnailOffset = thumbnailElement.position();;
+
+                        options.downHandler(e, {
+                            x: finderWidth / 2,
+                            y: finderHeight / 2
+                        });
+
+                        document
+                            .off(namespace)
+                            .on('mousemove' + namespace, options.moveHandler);
+
+                    })
                     .on(leaveType, leaveHandler);
 
                 finderElement
                     .on(enterType, clearTimer)
                     .on(leaveType, leaveHandler);
-
 
             },
             onbeforedrag: function () {
@@ -209,9 +188,8 @@ console.log(scaleX, scaleY)
                 );
             },
             ondrag: function (e, data) {
-                var left = (data.left - thumbnailOffset.x) / scaleX;
-                var top = (data.top - thumbnailOffset.y) / scaleY;
-                console.log(data, left + ',' + top)
+                var left = (data.left - thumbnailOffset.left) / scaleX;
+                var top = (data.top - thumbnailOffset.top) / scaleY;
                 viewportElement.css({
                     'background-position': '-' + left + 'px -' + top + 'px'
                 });
@@ -230,15 +208,17 @@ console.log(scaleX, scaleY)
 
         lifeUtil.dispose(me);
 
-        var namespace = me.namespace();
+        me.inner('dragger').dispose();
 
+        var namespace = me.namespace();
         document.off(namespace);
 
         me.option('thumbnailElement').off(
             namespace
         );
-
-        me.inner('dragger').dispose();
+        me.option('finderElement').off(
+            namespace
+        );
 
     };
 
