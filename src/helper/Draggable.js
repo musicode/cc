@@ -173,11 +173,16 @@ define(function (require, exports, module) {
             point.top = style.top;
 
             // 计算拖拽范围
+            var x = rectContainsElement ? 0 : rectInnerOffset.x;
+            var y = rectContainsElement ? 0 : rectInnerOffset.y;
             var width;
             var height;
 
             var isFixed = style.position === 'fixed';
             if (isFixed) {
+
+                x -= pageScrollLeft();
+                y -= pageScrollTop();
 
                 width = containerElement
                     ? containerElement.innerWidth()
@@ -195,9 +200,6 @@ define(function (require, exports, module) {
 
             width = Math.max(0, width - mainElement.outerWidth(true));
             height = Math.max(0, height - mainElement.outerHeight(true));
-
-            var x = rectContainsElement ? 0 : rectInnerOffset.x;
-            var y = rectContainsElement ? 0 : rectInnerOffset.y;
 
             var axis = me.option('axis');
 
