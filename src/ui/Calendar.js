@@ -26,13 +26,6 @@ define(function (require) {
      * @property {jQuery} options.mainElement 主元素
      * @property {string} options.mainTemplate
      *
-     * @property {string} options.calendarSelector 切换视图时刷新的区域
-     * @property {string} options.calendarTemplate 日历视图使用的模板
-     *
-     *                                             calendarSelector 和 calendarTemplate
-     *                                             是为了刷新子元素而设计的，如果要整体刷新，
-     *                                             使用 mainTemplate 就够了
-     *
      * @property {string=} options.value 选中的值，多选时以 , 分隔
      *
      * @property {Date=} options.today 今天的日期，可传入服务器时间用于校正，默认是浏览器的今天
@@ -371,7 +364,7 @@ define(function (require) {
      * @param {number} start 开始日期时间戳
      * @param {number} end 结束日期时间戳
      * @param {number} today 今天的时间戳
-     * @param {Array.<string>} values
+     * @param {Array.<number>} values
      * @return {Array.<Object>}
      */
     function createDatasource(start, end, today, values) {
