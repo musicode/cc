@@ -66,7 +66,7 @@ define(function (require, exports, module) {
             name = exports.prop(instance, 'name');
 
             if (!name || $.type(name) !== 'string') {
-                instance.error('form/' + instance.type + ' must have the name attribute.')
+                instance.error('name attribute is missing.')
             }
 
         }

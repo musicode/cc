@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var createValues = require('../function/values');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var common = require('./common');
     var Box = require('./Box');
 
@@ -27,7 +27,7 @@ define(function (require, exports, module) {
      * @property {string=} options.boxDisabledClass
      */
     function BoxGroup(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = BoxGroup.prototype;
@@ -106,7 +106,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         $.each(
             me.inner('boxes'),
@@ -117,14 +117,13 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     BoxGroup.propertyUpdater = {
 
         name: function (name) {
             common.prop(this, 'name', name);
         },
-
         value: function (value) {
             common.prop(this, 'value', value);
         }
@@ -136,7 +135,6 @@ define(function (require, exports, module) {
         name: function (name) {
             return common.validateName(this, name);
         },
-
         value: function (value) {
 
             var me = this;

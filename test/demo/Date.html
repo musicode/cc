@@ -15,7 +15,10 @@
     </head>
     <body>
 
-        <div class="form-date"></div>
+        <div class="form-date">
+            <input type="text" name="date" />
+            <div class="calendar"></div>
+        </div>
 
         <script src="./js/jquery.js"></script>
         <script src="./js/esl.js"></script>
@@ -25,7 +28,7 @@
             require(
 
                 [
-                    'cobble/form/Date'
+                    'custom/form/Date'
                 ],
 
                 function (FormDate) {
@@ -34,22 +37,13 @@
                     new FormDate({
                         mainElement: $('.form-date'),
                         value: '2015-09-26',
-                        propertyChange: {
-                            value: function (value) {
-                                console.log(value);
-                            }
-                        },
-                        onbeforeopen: function () {
-                            console.log('before open');
-                        },
-                        onafteropen: function () {
-                            console.log('after open');
-                        },
-                        onbeforeclose: function () {
-                            console.log('before close');
-                        },
-                        onafterclose: function () {
-                            console.log('after close');
+                        ondebug: function (event, data) {
+                            console.log(
+                                event.type,
+                                event.target.tagName ? true : false, // 是否原生
+                                data,
+                                this
+                            );
                         },
                         render: function (data, tpl) {
 

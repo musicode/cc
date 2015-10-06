@@ -382,6 +382,7 @@ define(function (require, exports, module) {
 
             processIndex(index, function () {
                 iterator.set('index', index);
+                iterator.sync();
             });
 
         })
@@ -398,6 +399,7 @@ define(function (require, exports, module) {
                         'index',
                         iterator.option('defaultIndex')
                     );
+                    iterator.sync();
                 }
 
                 mouseEnterElement = null;

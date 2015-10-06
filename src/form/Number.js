@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var SpinBox = require('../ui/SpinBox');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var common = require('./common');
 
     /**
@@ -26,7 +26,7 @@ define(function (require, exports, module) {
      * @property {string=} options.downSelector 向下按钮选择器
      */
     function Number(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Number.prototype;
@@ -79,21 +79,13 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('spinbox').dispose();
 
     };
 
-    lifeCycle.extend(proto);
-
-    Number.defaultOptions = {
-        step: 1,
-        interval: 100,
-        inputSelector: ':text',
-        upSelector: '.icon-caret-up',
-        downSelector: '.icon-caret-down'
-    };
+    lifeUtil.extend(proto);
 
     Number.propertyUpdater = {
 

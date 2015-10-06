@@ -16,7 +16,7 @@ define(function (require, exports, module) {
      */
 
     var debounce = require('../function/debounce');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var common = require('./common');
 
     /**
@@ -33,7 +33,7 @@ define(function (require, exports, module) {
      * @property {string=} options.disabledClass 禁用的 className
      */
     function Box(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Box.prototype;
@@ -99,7 +99,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -107,7 +107,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
 
     Box.propertyUpdater = {

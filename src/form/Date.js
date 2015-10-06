@@ -13,7 +13,7 @@ define(function (require, exports, module) {
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     var common = require('./common');
 
@@ -52,7 +52,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.parse 把 value 解析成 Date
      */
     function Date(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Date.prototype;
@@ -77,17 +77,22 @@ define(function (require, exports, module) {
             date: me.option('date'),
             today: me.option('today'),
             stable: me.option('stable'),
+            toggle: me.option('toggle'),
             multiple: me.option('multiple'),
+            firstDay: me.option('firstDay'),
+            parse: me.option('parse'),
+            renderSelector: me.option('renderSelector'),
+            renderTemplate: me.option('renderTemplate'),
             prevSelector: me.option('prevSelector'),
             nextSelector: me.option('nextSelector'),
+            itemSelector: me.option('itemSelector'),
             itemActiveClass: me.option('itemActiveClass'),
+            valueAttribute: me.option('valueAttribute'),
             onselect: function () {
                 popup.close();
             },
             render: function (data, tpl) {
-                calendarElement.html(
-                    me.execute('render', [ data, tpl ])
-                );
+                return me.execute('render', [ data, tpl ]);
             },
             propertyChange: {
                 value: function (value) {
@@ -120,12 +125,17 @@ define(function (require, exports, module) {
                         calendarElement: calendarElement
                     }
                 );
+            },
+            stateChange: {
+                opened: function (opened) {
+                    me.state('opened', opened);
+                }
             }
         });
 
-        var dispatchEvent = function (e) {
+        var dispatchEvent = function (e, data) {
             if (e.target.tagName) {
-                me.emit(e);
+                me.emit(e, data);
             }
         };
 
@@ -136,7 +146,7 @@ define(function (require, exports, module) {
         popup
         .before('open', dispatchEvent)
         .after('open', dispatchEvent)
-        .before('close', function (e) {
+        .before('close', function (e, data) {
 
             var target = e.target;
 
@@ -151,7 +161,7 @@ define(function (require, exports, module) {
 
             }
 
-            dispatchEvent(e);
+            dispatchEvent(e, data);
 
         })
         .after('close', dispatchEvent);
@@ -178,22 +188,22 @@ define(function (require, exports, module) {
 
 
     proto.open = function () {
-        this.inner('popup').open();
+        this.state('opened', true);
     };
 
     proto._open = function () {
-        if (!this.inner('popup').is('hidden')) {
+        if (this.is('opened')) {
             return false;
         }
     };
 
 
     proto.close = function () {
-        this.inner('popup').close();
+        this.state('opened', false);
     };
 
     proto._close = function () {
-        if (this.inner('popup').is('hidden')) {
+        if (!this.is('opened')) {
             return false;
         }
     };
@@ -208,23 +218,20 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
-        me.inner('calendar').dispose();
         me.inner('popup').dispose();
+        me.inner('calendar').dispose();
 
     };
 
-    lifeCycle.extend(proto);
-
-    Date.defaultOptions = { };
+    lifeUtil.extend(proto);
 
     Date.propertyUpdater = {
 
         name: function (name) {
             common.prop(this, 'name', name);
         },
-
         value: function (value) {
             common.prop(this, 'value', value);
             this.inner('calendar').set('value', value);
@@ -237,7 +244,6 @@ define(function (require, exports, module) {
         name: function (name) {
             return common.validateName(this, name);
         },
-
         value: function (value) {
 
             var me = this;
@@ -266,6 +272,11 @@ define(function (require, exports, module) {
         }
     };
 
+    Date.stateUpdater = {
+        opened: function (opened) {
+            this.inner('popup').state('opened', opened);
+        }
+    };
 
 
     return Date;

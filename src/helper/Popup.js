@@ -508,7 +508,7 @@ define(function (require, exports, module) {
             blur: {
                 on: on,
                 off: off,
-                hanlder: createHideHandler
+                handler: createHideHandler
             },
             click: {
                 on: onDocument,
