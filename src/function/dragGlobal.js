@@ -25,7 +25,32 @@ define(function (require, exports, module) {
             containerElement: instance.body,
             mainDraggingClass: options.draggingClass,
             handleSelector: options.handleSelector,
-            cancelSelector: options.cancelSelector
+            cancelSelector: options.cancelSelector,
+            dragAnimation: options.dragAnimation,
+            bind: function (options) {
+
+                var namespace = options.namespace;
+
+                options.mainElement
+                    .on('mousedown' + namespace, function (e) {
+
+                        if (!options.downHandler(e)) {
+                            return;
+                        }
+
+                        instance.document
+                            .off(namespace)
+                            .on('mousemove' + namespace, options.moveHandler)
+                            .on('mouseup' + namespace, function (e) {
+
+                                options.upHandler(e);
+
+                                instance.document.off(namespace);
+
+                            });
+
+                    });
+            }
         });
 
     };

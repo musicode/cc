@@ -179,8 +179,8 @@ define(function (require, exports, module) {
         popup
         .before('open', function (e, data) {
 
-            var originElement = e.originElement;
-            if (!originElement || !originElement.tagName) {
+            var ccElement = e.ccElement;
+            if (!ccElement || !ccElement.tagName) {
                 return;
             }
 
@@ -203,7 +203,7 @@ define(function (require, exports, module) {
                 }
 
                 triggerElement =
-                mainElement[ TRIGGER_ELEMENT_KEY ] = $(originElement);
+                mainElement[ TRIGGER_ELEMENT_KEY ] = $(ccElement);
 
                 skinClass = triggerElement.attr(skinAttribute);
                 if (skinClass) {

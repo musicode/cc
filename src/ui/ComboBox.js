@@ -6,21 +6,13 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     *
-     * 元素自定义属性使用 data-text 和 data-value
-     * 如果需要在点击菜单项获得其他数据，可在元素任意绑定 data-xxx
-     * 当 change 事件触发时，会把所有 data 通过参数传入
-     *
-     */
+    var toString = require('../function/toString');
 
     var Popup = require('../helper/Popup');
 
     var lifeUtil = require('../util/life');
 
     /**
-     * 下拉菜单
-     *
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.mainElement 如果需要容器包着 buttonElement 和 menuElement, 可以设置主元素
@@ -37,6 +29,7 @@ define(function (require, exports, module) {
      * @property {string=} options.defaultText 未选中值时默认显示的文本，如 请选择
      *
      * @property {string=} options.itemSelector
+     * @property {string=} options.textAttribute
      * @property {string=} options.valueAttribute
      *
      * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
@@ -70,14 +63,13 @@ define(function (require, exports, module) {
         var menuElement = me.option('menuElement');
 
         var popup = new Popup({
-            opened: me.option('opened'),
             triggerElement: buttonElement,
             layerElement: menuElement,
             showLayerTrigger: me.option('showMenuTrigger'),
             showLayerDelay: me.option('showMenuDelay'),
             hideLayerTrigger: me.option('hideMenuTrigger'),
             hideLayerDelay: me.option('hideMenuDelay'),
-            showLayerAnimation: function () {
+            showLayerAnimation: function (options) {
                 me.execute(
                     'showMenuAnimation',
                     {
@@ -85,7 +77,7 @@ define(function (require, exports, module) {
                     }
                 );
             },
-            hideLayerAnimation: function () {
+            hideLayerAnimation: function (options) {
                 me.execute(
                     'hideMenuAnimation',
                     {
@@ -141,7 +133,7 @@ define(function (require, exports, module) {
             function (e) {
 
                 var value = $(this).attr(valueAttribute);
-                if (!value) {
+                if ($.type(value) !== 'string') {
                     me.error('value is not found by valueAttribute.');
                 }
 
@@ -171,14 +163,10 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.option('menuElement').html(
-            me.execute(
-                'render',
-                [
-                    me.get('data'),
-                    me.option('menuTemplate')
-                ]
-            )
+        me.renderWith(
+            me.get('data'),
+            me.option('menuTemplate'),
+            me.option('menuElement')
         );
 
     };
@@ -218,60 +206,75 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
+        me.inner('popup').dispose();
+
         me.option('menuElement').off(
             me.namespace()
         );
-
-        me.inner('popup').dispose();
 
     };
 
     lifeUtil.extend(proto);
 
-    ComboBox.propertyUpdater = {
-
-        data: function (data) {
-            this.render();
-        },
-
-        value: function (value) {
-
-        }
-
-    };
+    ComboBox.propertyUpdater = { };
 
     ComboBox.propertyUpdater.data =
     ComboBox.propertyUpdater.value = function (newValue, oldValue, changes) {
 
         var me = this;
-        var menuElement = me.option('menuElement');
-        var value = me.get('value');
 
-        var item;
+        var menuElement = me.option('menuElement');
         var itemActiveClass = me.option('itemActiveClass');
+        var textAttribute = me.option('textAttribute');
+        var valueAttribute = me.option('valueAttribute');
+
 
         if (changes.data) {
             this.render();
         }
         else if (changes.value && itemActiveClass) {
-            item = findItem(menuElement, '[' + ATTR_VALUE + '=' + changes.value.oldValue + ']');
-            if (item) {
-                item.element.removeClass(itemActiveClass);
-            }
+            menuElement
+                .find('.' + itemActiveClass)
+                .removeClass(itemActiveClass);
         }
 
-        if (value !== null) {
-            item = findItem(menuElement, '[' + ATTR_VALUE + '=' + value + ']');
-            if (item && itemActiveClass) {
-                item.element.addClass(itemActiveClass);
+
+        var text;
+        var value = toString(me.get('value'), null);
+
+        if (value != null) {
+
+            var itemElement = menuElement.find(
+                '[' + valueAttribute + '=' + value + ']'
+            );
+
+            switch (itemElement.length) {
+                case 1:
+                    if (itemActiveClass) {
+                        itemElement.addClass(itemActiveClass);
+                    }
+
+                    text = itemElement.attr(textAttribute);
+                    if (text == null) {
+                        text = itemElement.html();
+                    }
+
+                    break;
+                case 0:
+                    me.error('value is not found by valueAttribute.');
+                    break;
+                default:
+                    me.error('value repeated.');
+                    break;
             }
+
         }
 
         me.execute(
             'setText',
             {
                 buttonElement: me.option('buttonElement'),
-                text: (item && item.text) || me.option('defaultText')
+                text: text || me.option('defaultText')
             }
         );
 
@@ -281,13 +284,15 @@ define(function (require, exports, module) {
 
         value: function (value) {
 
-            if (value == null) {
-                var me = this;
-                var menuElement = me.option('menuElement');
-                var itemSelector = '.' + me.option('itemActiveClass');
-                var itemData = findItem(menuElement, itemSelector);
-                if (itemData) {
-                    value = itemData.value;
+            var me = this;
+
+            var itemActiveClass = me.option('itemActiveClass');
+            if (value == null && itemActiveClass) {
+                var itemElement = me.option('menuElement').find('.' + itemActiveClass);
+                if (itemElement.length === 1) {
+                    value = itemElement.attr(
+                        me.option('valueAttribute')
+                    );
                 }
             }
 
@@ -296,29 +301,13 @@ define(function (require, exports, module) {
         }
     };
 
-    function findItem(menuElement, itemSelector) {
+    ComboBox.stateUpdater = {
 
-        var target;
-
-        try {
-            target = menuElement.find(itemSelector);
-        }
-        catch (e) { }
-
-        if (target && target.length === 1) {
-
-            var data = target.data();
-
-            data.element = target;
-
-            if (data.text == null) {
-                data.text = target.html();
-            }
-
-            return data;
+        opened: function (opened) {
+            this.inner('popup').state('opened', opened);
         }
 
-    }
+    };
 
 
     return ComboBox;

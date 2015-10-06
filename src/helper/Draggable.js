@@ -179,6 +179,8 @@ define(function (require, exports, module) {
             var height;
 
             var isFixed = style.position === 'fixed';
+            var vHeight = viewportHeight();
+
             if (isFixed) {
 
                 x -= pageScrollLeft();
@@ -190,7 +192,7 @@ define(function (require, exports, module) {
 
                 height = containerElement
                     ? containerElement.innerHeight()
-                    : viewportHeight();
+                    : vHeight;
 
             }
             else {
@@ -198,8 +200,16 @@ define(function (require, exports, module) {
                 height = rectElement.innerHeight();
             }
 
+            if (rectElement.is('body') || rectElement.is('html')) {
+                if (height < vHeight) {
+                    height = vHeight;
+                }
+            }
+
             width = Math.max(0, width - mainElement.outerWidth(true));
             height = Math.max(0, height - mainElement.outerHeight(true));
+
+console.log(x,y,width,height)
 
             var axis = me.option('axis');
 
@@ -225,6 +235,8 @@ define(function (require, exports, module) {
                         );
 
             counter = 0;
+
+            return true;
 
         };
 

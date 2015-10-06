@@ -136,12 +136,16 @@ define(function (require, exports, module) {
                             return;
                         }
 
-                        thumbnailOffset = thumbnailElement.position();;
-
-                        options.downHandler(e, {
+                        var offset = {
                             x: finderWidth / 2,
                             y: finderHeight / 2
-                        });
+                        };
+
+                        if (!options.downHandler(e, offset)) {
+                            return;
+                        }
+
+                        thumbnailOffset = thumbnailElement.position();;
 
                         document
                             .off(namespace)

@@ -440,7 +440,7 @@ define(function (require, exports, module) {
 
         var triggerElement;
         if (event) {
-            triggerElement = event.originElement || event.currentTarget;
+            triggerElement = event.ccElement || event.currentTarget;
         }
 
         if (triggerElement && !triggerElement.tagName) {

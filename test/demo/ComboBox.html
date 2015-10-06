@@ -29,7 +29,7 @@
 
         require(
 
-            [ 'cobble/ui/ComboBox' ],
+            [ 'custom/ui/ComboBox' ],
 
             function (ComboBox) {
 
@@ -43,28 +43,19 @@
 
                     defaultText: 'hahah',
 
-                    onbeforeopen: function () {
-                        console.log('before open');
-                    },
-                    onafteropen: function () {
-                        console.log('after open');
-                    },
-                    onbeforeclose: function () {
-                        console.log('before close');
-                        return true;
-                    },
-                    onafterclose: function () {
-                        console.log('after close');
-                        return true;
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
 
                     setText: function (options) {
                         options.buttonElement.find('span').html(options.text);
-                    },
-
-                    onpropertychange: function (event, data) {
-                        console.log(data);
                     }
+
                 });
 
             }

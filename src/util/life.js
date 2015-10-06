@@ -249,14 +249,14 @@ define(function (require, exports, module) {
 
             event = createEvent(event);
 
-            event.origin = context;
+            event.cc = context;
 
             // 经由 apply(me) 之后，currentTarget 会变成 me.$
             // 因此需要新增一个属性来存储最初的元素
 
             var currentTarget = event.currentTarget;
             if (currentTarget && currentTarget.tagName) {
-                event.originElement = currentTarget;
+                event.ccElement = currentTarget;
             }
 
 
@@ -389,11 +389,17 @@ context.execute('ondebug', args);
 
         },
 
-        renderWith: function (data) {
+        renderWith: function (data, template, element) {
 
             var me = this;
 
-            var mainElement = me.option('mainElement');
+            if (!template) {
+                template = me.option('mainTemplate');
+            }
+            if (!element) {
+                element = me.option('mainElement');
+            }
+
             var renderSelector = me.option('renderSelector');
             var renderTemplate = me.option('renderTemplate');
 
@@ -403,16 +409,23 @@ context.execute('ondebug', args);
                 if (me.option('replace')) {
                     me.error('replace must be false if not configure renderSelector and renderTemplate.');
                 }
-                renderElement = mainElement;
-                renderTemplate = me.option('mainTemplate');
+                renderElement = element;
+                renderTemplate = template;
             }
             else {
-                renderElement = mainElement.find(renderSelector);
+                renderElement = element.find(renderSelector);
             }
 
-            renderElement.html(
-                me.execute('render', [ data, renderTemplate ])
-            );
+            var html;
+
+            if ($.isPlainObject(data)) {
+                html = me.execute('render', [ data, renderTemplate ]);
+            }
+            else if ($.type(data) === 'string') {
+                html = data;
+            }
+
+            renderElement.html(html);
 
         },
 

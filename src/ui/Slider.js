@@ -128,7 +128,9 @@ define(function (require, exports, module) {
                     }
                     thumbElement
                         .on(item.down + namespace, function (e) {
-                            options.downHandler(e);
+                            if (!options.downHandler(e)) {
+                                return;
+                            }
                             document
                                 .off(namespace)
                                 .on(item.move + namespace, options.moveHandler)

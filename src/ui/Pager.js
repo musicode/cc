@@ -264,7 +264,7 @@ define(function (require, exports, module) {
             }
         ).join('');
 
-        mainElement.html(html);
+        me.renderWith(html);
 
         me.state('hidden', false);
 

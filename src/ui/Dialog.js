@@ -6,15 +6,15 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var instance = require('../util/instance');
-    var lifeCycle = require('../util/lifeCycle');
-
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
 
     var pinGlobal = require('../function/pinGlobal');
     var dragGlobal = require('../function/dragGlobal');
+
+    var lifeUtil = require('../util/life');
+    var window = require('../util/instance').window;
 
     /**
      * 对话框
@@ -45,15 +45,14 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框，默认为 false
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
-     * @property {Function=} options.showAnimation 显示对话框动画
-     * @property {Function=} options.hideAnimation 隐藏对话框动画
-     * @property {Function=} options.resizeAnimation 窗口 resize 时调整窗口位置的动画
-     * @property {Function=} options.resizeMaskAnimation 调整遮罩大小的动画
+     * @property {Function=} options.showAnimation 显示对话框和遮罩动画
+     * @property {Function=} options.hideAnimation 隐藏对话框和遮罩动画
+     * @property {Function=} options.dragAnimation 拖拽对话框的动画
+     * @property {Function=} options.refreshAnimation 调用 refresh() 的动画
+     * @property {Function=} options.resizeWindowAnimation 窗口 resize 时调整对话框和遮罩的动画
      *
      * @property {jQuery=} options.maskElement 遮罩元素
      * @property {string=} options.maskTemplate 如果没传遮罩，可传模板动态创建
-     * @property {Function=} options.showMaskAnimation 显示遮罩动画
-     * @property {Function=} options.hideMaskAnimation 隐藏遮罩动画
      *
      * @property {string=} options.skinClass 皮肤
      * @property {string=} options.draggableClass 可拖拽时给 mainElement 添加的 class
@@ -69,7 +68,7 @@ define(function (require, exports, module) {
      *
      */
     function Dialog(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Dialog.prototype;
@@ -207,12 +206,19 @@ define(function (require, exports, module) {
             mainElement.on(clickType, closeSelector, hideHandler);
         }
 
-        if (maskElement && me.option('hideOnBlur')) {
-            maskElement.on(clickType, hideHandler);
-        }
-
         if (me.option('disposeOnHide')) {
             me.after('hide', $.proxy(me.dispose, me));
+        }
+
+        if (maskElement) {
+            if (me.option('hideOnBlur')) {
+                maskElement.on(clickType, hideHandler);
+            }
+            if (me.option('removeOnDispose')) {
+                me.after('dispose', function () {
+                    maskElement.remove();
+                });
+            }
         }
 
 
@@ -255,38 +261,35 @@ define(function (require, exports, module) {
         var me = this;
 
         var isResize = arguments[0];
+        var options = { };
 
         if (!isResize || me.option('positionOnResize')) {
 
             var mainElement = me.inner('main');
 
-            me.execute(
-                isResize ? 'resizeAnimation' : 'refreshAnimation',
-                {
-                    mainElement: mainElement,
-                    mainStyle: pinGlobal({
-                        element: mainElement,
-                        x: me.option('x'),
-                        y: me.option('y'),
-                        fixed: me.option('fixed')
-                    })
-                }
-            );
+            options.mainElement = mainElement;
+            options.mainStyle = pinGlobal({
+                element: mainElement,
+                x: me.option('x'),
+                y: me.option('y'),
+                fixed: me.option('fixed')
+            });
+
         }
 
         var maskElement = me.inner('mask');
         if (maskElement) {
-            me.execute(
-                'resizeMaskAnimation',
-                {
-                    maskElement: maskElement,
-                    maskStyle: {
-                        width: pageWidth(),
-                        height: pageHeight()
-                    }
-                }
-            );
+            options.maskElement = maskElement;
+            options.maskStyle = {
+                width: pageWidth(),
+                height: pageHeight()
+            };
         }
+
+        me.execute(
+            isResize ? 'resizeWindowAnimation' : 'refreshAnimation',
+            options
+        );
 
     };
 
@@ -294,7 +297,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         if (!me.is('hidden')) {
             me.hide();
@@ -309,126 +312,45 @@ define(function (require, exports, module) {
             maskElement.off(namespace);
         }
 
-        if (me.option('removeOnDispose')) {
-            mainElement.remove();
-            if (maskElement) {
-                maskElement.remove();
-            }
-        }
-
     };
 
-    lifeCycle.extend(proto);
-
-
-    /**
-     * 默认配置
-     *
-     * @static
-     * @type {Object}
-     */
-    Dialog.defaultOptions = {
-
-        x: '50%',
-        y: '50%',
-
-        modal: true,
-        fixed: true,
-        hidden: false,
-        draggable: true,
-        underBody: true,
-        hideOnBlur: false,
-        removeOnEmpty: true,
-        disposeOnHide: true,
-        removeOnDispose: true,
-        positionOnResize: true,
-
-        draggableClass: 'draggable',
-
-        draggableHandleSelector: '.dialog-header',
-        draggableCancelSelector: [ '.dialog-header h1', '.dialog-close' ],
-
-        headerSelector: '.dialog-header',
-        titleSelector: '.dialog-header h1',
-        closeSelector: '.dialog-close',
-        contentSelector: '.dialog-body',
-
-        mainTemplate: '<div class="dialog">'
-                    +     '<i class="dialog-close">&times;</i>'
-                    +     '<div class="dialog-header"><h1></h1></div>'
-                    +     '<div class="dialog-body"></div>'
-                    + '</div>',
-
-        maskTemplate: '<div class="dialog-mask"></div>',
-
-        showAnimation: function (options) {
-            options.mainElement.show();
-        },
-        hideAnimation: function (options) {
-            options.mainElement.hide();
-        },
-        showMaskAnimation: function (options) {
-            options.maskElement.show();
-        },
-        hideMaskAnimation: function (options) {
-            options.maskElement.hide();
-        },
-        resizeMaskAnimation: function (options) {
-            options.maskElement.css(options.maskStyle);
-        },
-        resizeAnimation: function (options) {
-            options.mainElement.css(options.mainStyle);
-        },
-        refreshAnimation: function (options) {
-            options.mainElement.css(options.mainStyle);
-        }
-
-    };
+    lifeUtil.extend(proto);
 
     Dialog.stateUpdater = {
 
         hidden: function (hidden) {
 
             var me = this;
+            var namespace = me.namespace();
 
-            var resizer = me.inner('resizer');
-            if (resizer) {
-                instance.window.off('resize', resizer);
-                resizer = null;
-            }
+            window.off(namespace);
 
-            var drager = me.inner('drager');
-            if (drager) {
-                drager.dispose();
-                drager = null;
+            var dragger = me.inner('dragger');
+            if (dragger) {
+                dragger.dispose();
+                dragger = null;
             }
 
             var mainElement = me.inner('main');
             var maskElement = me.inner('mask');
 
-            if (hidden) {
+            var options = {
+                mainElement: mainElement
+            };
+            if (maskElement) {
+                options.maskElement = maskElement;
+            }
 
+            if (hidden) {
                 me.execute(
                     'hideAnimation',
-                    {
-                        mainElement: mainElement
-                    }
+                    options
                 );
-
-                if (maskElement) {
-                    me.execute(
-                        'hideMaskAnimation',
-                        {
-                            maskElement: maskElement
-                        }
-                    );
-                }
-
             }
             else {
 
-                instance.window.resize(
-                    resizer =
+                window.on(
+                    'resize' + namespace,
                     debounce(
                         function () {
                             me.refresh(true);
@@ -438,56 +360,30 @@ define(function (require, exports, module) {
                 );
 
                 if (me.option('draggable')) {
-                    drager = dragGlobal({
+                    dragger = dragGlobal({
                         element: mainElement,
                         handleSelector: me.option('draggableHandleSelector'),
                         cancelSelector: me.option('draggableCancelSelector'),
-                        draggingClass: me.option('draggingClass')
+                        draggingClass: me.option('draggingClass'),
+                        dragAnimation: me.option('dragAnimation')
                     });
                 }
 
-                // 因为 refresh 会设置 left top
-                // 但是某些浏览器无法及时刷新 DOM，导致 Draggable 读出来的依然是 0 0
-                // 所以这里换到 Draggable 后面调用
-                me.refresh();
-
                 me.execute(
                     'showAnimation',
-                    {
-                        mainElement: mainElement
-                    }
+                    options
                 );
 
-                if (maskElement) {
-                    me.execute(
-                        'showMaskAnimation',
-                        {
-                            maskElement: maskElement
-                        }
-                    );
-                }
+                me.refresh();
 
             }
 
             me.inner({
-                resizer: resizer,
-                drager: drager
+                dragger: dragger
             });
 
         }
     };
-
-    Dialog.stateValidator = {
-
-        hidden: function (hidden) {
-            if ($.type(hidden) !== 'boolean') {
-                hidden = !!hidden;
-            }
-            return hidden;
-        }
-
-    };
-
 
     return Dialog;
 

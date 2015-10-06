@@ -26,12 +26,12 @@
 
         require(
 
-            [ 'cobble/ui/Dialog' ],
+            [ 'custom/ui/Dialog' ],
 
             function (Dialog) {
 
                 $('button').click(function () {
-                    if (dialog.get('hidden')) {
+                    if (dialog.is('hidden')) {
                         dialog.show();
                     }
                     else {
@@ -60,13 +60,6 @@
 
                     maskTemplate: '<div class="modal"></div>',
 
-                    showMaskAnimation: function (options) {
-                        options.maskElement.slideDown(1000);
-                    },
-                    hideMaskAnimation: function (options) {
-                        options.maskElement.slideUp(1000);
-                    },
-
                     mainTemplate: '<div class="modal-dialog">'
                             +     '<div class="modal-content">'
                             +         '<div class="modal-header">'
@@ -85,38 +78,24 @@
 
                     showAnimation: function (options) {
                         options.mainElement.fadeIn(400);
+                        options.maskElement.slideDown(1000);
                     },
                     hideAnimation: function (options) {
                         options.mainElement.fadeOut(400);
+                        options.maskElement.slideUp(1000);
                     },
-                    resizeAnimation: function (options) {
+                    resizeWindowAnimation: function (options) {
                         options.mainElement.animate(options.mainStyle, 100);
                     },
 
 
-                    onbeforeshow: function () {
-                        console.log('before show');
-                    },
-                    onaftershow: function () {
-                        console.log('after show');
-                    },
-                    onbeforehide: function () {
-                        console.log('before hide');
-                    },
-                    onafterhide: function () {
-                        console.log('after hide');
-                    },
-                    onbeforeinit: function () {
-                        console.log('before init');
-                    },
-                    onafterinit: function () {
-                        console.log('after init');
-                    },
-                    onbeforedispose: function () {
-                        console.log('before dispose');
-                    },
-                    onafterdispose: function () {
-                        console.log('after dispose');
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
 
                 });
