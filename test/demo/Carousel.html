@@ -58,7 +58,7 @@
 
         require(
 
-            [ 'cobble/ui/Carousel' ],
+            [ 'custom/ui/Carousel' ],
 
             function (Carousel) {
 
@@ -80,12 +80,13 @@
                         var to = options.toIndex;
                     },
 
-                    onpropertychange: function (event, data) {
-                        var indexChange = data.index;
-                        if (indexChange) {
-                            console.log(indexChange.action);
-                        }
-
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     }
                 });
 

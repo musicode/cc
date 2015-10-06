@@ -77,12 +77,13 @@ define(function (require) {
 
         var itemSelector = me.option('itemSelector');
         if (itemSelector) {
-            mainElement.on(clickType, itemSelector, function (e) {
 
-                var valueAttribute = me.option('valueAttribute');
-                if (!valueAttribute) {
-                    me.error('valueAttribute is missing.');
-                }
+            var valueAttribute = me.option('valueAttribute');
+            if (!valueAttribute) {
+                me.error('valueAttribute is missing.');
+            }
+
+            mainElement.on(clickType, itemSelector, function (e) {
 
                 var itemValue = $(this).attr(valueAttribute);
                 if (!itemValue) {
@@ -141,35 +142,11 @@ define(function (require) {
     };
 
     proto.prev = function () {
-
-        var me = this;
-        var date = me.get('date');
-
-        date = me.option('mode') === MODE_WEEK
-             ? weekOffset(date, -1)
-             : monthOffset(date, -1);
-
-        me.set({
-            date: date,
-            data: me.createRenderData(date)
-        });
-
+        offsetCalendar(this, -1);
     };
 
     proto.next = function () {
-
-        var me = this;
-        var date = me.get('date');
-
-        date = me.option('mode') === MODE_WEEK
-             ? weekOffset(date, 1)
-             : monthOffset(date, 1);
-
-        me.set({
-            date: date,
-            data: me.createRenderData(date)
-        });
-
+        offsetCalendar(this, 1);
     };
 
     /**
@@ -182,11 +159,8 @@ define(function (require) {
 
         var data = this.get('data');
 
-        if (!data) {
-            return false;
-        }
-
-        return date >= parseDate(data.start)
+        return data
+            && date >= parseDate(data.start)
             && date < (parseDate(data.end).getTime() + DAY);
 
     };
@@ -207,21 +181,13 @@ define(function (require) {
         var weekLastDay;
 
         var isMonthMode = me.option('mode') === MODE_MONTH;
-
         if (isMonthMode) {
-
-            var monthFirstDay = monthFirst(date);
-            var monthLastDay = monthLast(date);
-
-            weekFirstDay = weekFirst(monthFirstDay, firstDay);
-            weekLastDay = weekLast(monthLastDay, firstDay);
-
+            weekFirstDay = weekFirst(monthFirst(date), firstDay);
+            weekLastDay = weekLast(monthLast(date), firstDay);
         }
         else {
-
             weekFirstDay = weekFirst(date, firstDay);
             weekLastDay = weekLast(date, firstDay);
-
         }
 
         weekFirstDay = normalizeDate(weekFirstDay);
@@ -238,21 +204,27 @@ define(function (require) {
 
         }
 
+        var values = [ ];
+
+        $.each(
+            split(me.get('value'), ','),
+            function (index, literal) {
+                if (literal) {
+                    var date = me.execute('parse', literal);
+                    if (date) {
+                        values.push(
+                            normalizeDate(date)
+                        );
+                    }
+                }
+            }
+        );
+
         var list = createDatasource(
             weekFirstDay,
             weekLastDay,
             normalizeDate(me.get('today')),
-            $.map(
-                split(me.get('value'), ','),
-                function (literal) {
-                    if (literal) {
-                        var date = me.execute('parse', literal);
-                        if (date) {
-                            return normalizeDate(date);
-                        }
-                    }
-                }
-            )
+            values
         );
 
         return $.extend(
@@ -267,39 +239,9 @@ define(function (require) {
     };
 
     proto.render = function () {
-
-        var me = this;
-
-        var mainElement = me.inner('main');
-
-        var calendarSelector = me.option('calendarSelector');
-        var calendarTemplate = me.option('calendarTemplate');
-
-        var calendarElement;
-
-        // 更新子元素
-        if (calendarSelector && calendarTemplate) {
-            calendarElement = mainElement.find(calendarSelector);
-        }
-        // 更新主元素
-        else {
-            calendarTemplate = me.option('mainTemplate');
-            calendarElement = mainElement;
-            if (me.option('replace')) {
-                me.error('replace must be false when render mainElement.');
-            }
-        }
-
-        calendarElement.html(
-            me.execute(
-                'render',
-                [
-                    me.get('data'),
-                    calendarTemplate
-                ]
-            )
+        this.renderWith(
+            this.get('data')
         );
-
     };
 
     proto._render = function () {
@@ -322,61 +264,70 @@ define(function (require) {
 
     lifeUtil.extend(proto);
 
+    Calendar.propertyUpdater = { };
 
-    var MODE_MONTH = 'month';
-    var MODE_WEEK = 'week';
+    Calendar.propertyUpdater.data =
+    Calendar.propertyUpdater.date =
+    Calendar.propertyUpdater.value = function (newValue, oldValue, change) {
 
-    Calendar.propertyUpdater = {
+        var me = this;
 
-        date: function (date) {
+        var needRender;
 
-            var me = this;
-
-            if (me.inRange(date)) {
-                return;
+        if (change.date) {
+            var date = change.date.newValue;
+            if (!me.inRange(date)) {
+                needRender = true;
+                me.set(
+                    'data',
+                    me.createRenderData(date),
+                    {
+                        silent: true
+                    }
+                );
             }
+        }
 
-            me.set('data', me.createRenderData(date));
-            me.sync();
+        if (!needRender && change.data) {
+            needRender = true;
+        }
 
-        },
+        if (needRender) {
+            me.render();
+        }
 
-        data: function () {
-            this.render();
-        },
+        if (!needRender && !change.value) {
+            return;
+        }
 
-        value: function (value) {
 
-            var me = this;
 
-            var valueAttribute = me.option('valueAttribute');
-            var itemActiveClass = me.option('itemActiveClass');
-            if (!valueAttribute || !itemActiveClass) {
-                return;
-            }
 
-            var mainElement = me.inner('main');
+        var valueAttribute = me.option('valueAttribute');
+        var itemActiveClass = me.option('itemActiveClass');
+        if (!valueAttribute || !itemActiveClass) {
+            return;
+        }
 
-            mainElement
+        var mainElement = me.inner('main');
+        mainElement
             .find('.' + itemActiveClass)
             .removeClass(itemActiveClass);
 
-            $.each(
-                split(value, ','),
-                function (index, value) {
+        $.each(
+            split(me.get('value'), ','),
+            function (index, value) {
 
-                    if (!value) {
-                        return;
-                    }
+                if (!value) {
+                    return;
+                }
 
-                    mainElement
+                mainElement
                     .find('[' + valueAttribute + '="' + value + '"]')
                     .addClass(itemActiveClass);
 
-                }
-            );
-
-        }
+            }
+        );
 
     };
 
@@ -400,6 +351,9 @@ define(function (require) {
 
     };
 
+    var MODE_MONTH = 'month';
+    var MODE_WEEK = 'week';
+
     var DAY = 24 * 60 * 60 * 1000;
 
     /**
@@ -417,9 +371,10 @@ define(function (require) {
      * @param {number} start 开始日期时间戳
      * @param {number} end 结束日期时间戳
      * @param {number} today 今天的时间戳
+     * @param {Array.<string>} values
      * @return {Array.<Object>}
      */
-    function createDatasource(start, end, today, selected) {
+    function createDatasource(start, end, today, values) {
 
         var data = [ ];
 
@@ -438,7 +393,7 @@ define(function (require) {
                 item.phase = 'today';
             }
 
-            if ($.inArray(time, selected) >= 0) {
+            if ($.inArray(time, values) >= 0) {
                 item.active = true;
             }
 
@@ -447,6 +402,28 @@ define(function (require) {
         }
 
         return data;
+
+    }
+
+    /**
+     * 日期偏移
+     *
+     * @inner
+     * @param {Calendar} instance
+     * @param {number} offset
+     */
+    function offsetCalendar(instance, offset) {
+
+        var date = instance.get('date');
+
+        date = instance.option('mode') === MODE_WEEK
+             ? weekOffset(date, offset)
+             : monthOffset(date, offset);
+
+        instance.set({
+            date: date,
+            data: instance.createRenderData(date)
+        });
 
     }
 
