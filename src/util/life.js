@@ -418,7 +418,7 @@ context.execute('ondebug', args);
 
             var html;
 
-            if ($.isPlainObject(data)) {
+            if ($.isPlainObject(data) || $.isArray(data)) {
                 html = me.execute('render', [ data, renderTemplate ]);
             }
             else if ($.type(data) === 'string') {

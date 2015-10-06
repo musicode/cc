@@ -65,7 +65,7 @@
         require(
 
             [
-                'cobble/ui/Autocomplete'
+                'custom/ui/Autocomplete'
             ],
 
             function (AutoComplete, etpl) {
@@ -97,19 +97,13 @@
 
                     itemActiveClass: 'item-active',
 
-                    onenter: function (event, data) {
-                        console.log('enter', data);
-                    },
-                    onselect: function (event, data) {
-                        console.log('select', data);
-                    },
-
-                    onbeforeopen: function () {
-                        console.log('onBeforeOpen', this)
-                    },
-
-                    onafteropen: function () {
-                        console.log('onAfterOpen', this)
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
 
                     load: function (value, callback) {

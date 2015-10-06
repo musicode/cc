@@ -12,9 +12,9 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
-    var Iterator = require('../helper/ElementIterator');
+    var Iterator = require('../helper/DOMIterator');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
 
     /**
      * 自动补全
@@ -23,15 +23,15 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.inputElement 输入框元素
      *
-     * @property {jQuery} options.menuElement 菜单元素，菜单最好用样式设置好位置，这样直接 show 出来，无需涉及定位逻辑
+     * @property {jQuery} options.menuElement 菜单元素
      * @property {string=} options.menuTemplate 菜单模板
      *
      * @property {string=} options.itemSelector 菜单项选择器，默认是 li
      * @property {string=} options.itemActiveClass 菜单项 active 时的 className
      *
-     * @property {number=} options.interval 长按上下键遍历的等待间隔时间，默认 60ms
-     * @property {boolean=} options.includeInput 上下遍历是否包含输入框，默认包含
-     * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启，默认不开启
+     * @property {number=} options.interval 长按上下键遍历的等待间隔时间
+     * @property {boolean=} options.includeInput 上下遍历是否包含输入框
+     * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启
      *
      * @property {string=} options.showMenuTrigger 显示的触发方式
      * @property {number=} options.showMenuDelay 显示延时
@@ -41,13 +41,13 @@ define(function (require, exports, module) {
      * @property {number=} options.hideMenuDelay 隐藏延时
      * @property {Function=} options.hideMenuAnimation 隐藏动画
      *
-     * @property {Function=} options.render 配置模板引擎的 render 方法，方法签名是 (data, tpl): string
+     * @property {Function=} options.render 配置模板引擎
      *
      * @property {Function} options.load 加载数据，可以是远程或本地数据，方法签名是 (query, callback)
      *
      */
     function AutoComplete(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = AutoComplete.prototype;
@@ -87,8 +87,12 @@ define(function (require, exports, module) {
 
         var iterator = new Iterator({
             watchElement: inputElement,
-            defaultIndex: 0,
             minIndex: me.option('includeInput') ? 0 : 1,
+            defaultIndex: 0,
+            step: 1,
+            loop: true,
+            prevKey: 'up',
+            nextKey: 'down',
             interval: me.option('interval'),
             propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
@@ -141,7 +145,7 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                if (!popup.is('hidden')) {
+                if (me.is('opened')) {
                     me.close();
                 }
 
@@ -172,7 +176,7 @@ define(function (require, exports, module) {
 
         var input = new Input({
             mainElement: inputElement,
-            smart: true,
+            silentOnLongPress: true,
             shortcut: keyboardAction,
             propertyChange: {
                 value: function (value) {
@@ -207,6 +211,11 @@ define(function (require, exports, module) {
                         menuElement: menuElement
                     }
                 );
+            },
+            stateChange: {
+                opened: function (opened) {
+                    me.state('opened', opened);
+                }
             }
         });
 
@@ -405,21 +414,15 @@ define(function (require, exports, module) {
 
     };
 
-    /**
-     * 渲染数据
-     */
+
     proto.render = function () {
 
         var me = this;
 
-        me.option('menuElement').html(
-            me.execute(
-                'render',
-                [
-                    me.get('data'),
-                    me.option('menuTemplate')
-                ]
-            )
+        me.renderWith(
+            me.get('data'),
+            me.option('menuTemplate'),
+            me.option('menuElement')
         );
 
     };
@@ -430,63 +433,56 @@ define(function (require, exports, module) {
         }
     };
 
+
     proto.open = function () {
-        this.inner('popup').open();
+        this.state('opened', true);
     };
 
     proto._open = function () {
-        if (!this.inner('popup').is('hidden')
-            || !this.get('data')
-        ) {
+        if (this.is('opened')) {
             return false;
         }
     };
 
+
     proto.close = function () {
-        this.inner('popup').close();
+        this.state('opened', false);
     };
 
     proto._close = function () {
-        if (this.inner('popup').is('hidden')) {
+        if (!this.is('opened')) {
             return false;
         }
     };
+
 
     proto.dispose = function () {
 
         var me = this;
 
-        lifeCycle.dispose(me);
-
-        me.option('menuElement').off(
-            me.namespace()
-        );
+        lifeUtil.dispose(me);
 
         me.inner('iterator').dispose();
         me.inner('input').dispose();
         me.inner('popup').dispose();
 
+        me.option('menuElement').off(
+            me.namespace()
+        );
+
     };
 
-    lifeCycle.extend(proto);
-
-    AutoComplete.defaultOptions = {
-        interval: 60,
-        includeInput: true,
-        itemSelector: 'li',
-        showMenuTrigger: 'focus',
-        hideMenuTrigger: 'click',
-        showMenuAnimation: function (options) {
-            options.menuElement.show();
-        },
-        hideMenuAnimation: function (options) {
-            options.menuElement.hide();
-        }
-    };
+    lifeUtil.extend(proto);
 
     AutoComplete.propertyUpdater = {
         data: function () {
             this.render();
+        }
+    };
+
+    AutoComplete.stateUpdater = {
+        opened: function (opened) {
+            this.inner('popup').state('opened', opened);
         }
     };
 
