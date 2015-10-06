@@ -44,14 +44,14 @@
 
 比如 **Vue** 在 <input> 元素上使用 `v-model` 指令可以创建双向绑定，因此在 `cc/form/*` ，所有表单组件必须包含如下元素中的一种：
 
-- <input type="*" />
-- <textrea></textarea>
+- `<input type="*" />`
+- `<textrea></textarea>`
 
 在用户交互中产生的 value 变化，组件会自动同步到表单元素的 value 属性，从而支持 mvvm 框架的指令。
 
 看一个下拉菜单的例子：
 
-```
+``` 
 <div class="dropdown">
     <div class="btn btn-default dropdown-toggle">
         <span></span>
@@ -102,8 +102,20 @@ component.sync();
     // true 表示 mainTemplate 创建的元素替换 mainElement
     // false 表示 mainTemplate 赋值给 mainElement.innerHTML
     replace: {boolean},
+    
+    // 对于有局部刷新功能的组件，需要提供刷新区域
+    // 比如 Calendar，可以刷新主元素(mainElement.innerHTML = '')
+    // 也可以刷新某个子元素，保持其他元素不变(比如左右切换按钮)
+    // cc 提供 renderSelector renderTemplate 选项，如果未传入，取 mainElement 和 mainTemplate
+    // 但要注意的是，如果刷新主元素，replace 必须设置为 false，否则组件无法处理
+    renderSelector: {string},
+    renderTemplate: {string},
+        
     // 主元素是否是 body 的第一级子元素，比如 Dialog 应该设为 true，定位才不会错
     underBody: {boolean},
+    // 销毁时是否移除主元素
+    removeOnDispose: {boolean},
+      
     // 是否共享主元素
     // 共享主元素是为了减少 DOM 数量，提升性能
     // 比如 Tooltip 应该设为 true，这样可以节省很多 DOM
@@ -117,8 +129,7 @@ component.sync();
             options.triggerElement.attr('data-title')
         );
     },
-    // 销毁时是否移除主元素
-    removeOnDispose: {boolean},
+    
     // 配置模板引擎
     render: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl

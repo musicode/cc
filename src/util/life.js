@@ -389,6 +389,33 @@ context.execute('ondebug', args);
 
         },
 
+        renderWith: function (data) {
+
+            var me = this;
+
+            var mainElement = me.option('mainElement');
+            var renderSelector = me.option('renderSelector');
+            var renderTemplate = me.option('renderTemplate');
+
+            var renderElement;
+
+            if (!renderTemplate || !renderTemplate) {
+                if (me.option('replace')) {
+                    me.error('replace must be false if not configure renderSelector and renderTemplate.');
+                }
+                renderElement = mainElement;
+                renderTemplate = me.option('mainTemplate');
+            }
+            else {
+                renderElement = mainElement.find(renderSelector);
+            }
+
+            renderElement.html(
+                me.execute('render', [ data, renderTemplate ])
+            );
+
+        },
+
         /**
          * jquery 事件的命名空间
          *

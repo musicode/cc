@@ -26,8 +26,8 @@ define(function (require, exports, module) {
      * @property {number} options.count 星星总数
      * @property {number} options.minValue 可选最小值，默认是 0
      * @property {number=} options.maxValue 可选最大值，默认和 count 相同
-     * @property {boolean=} options.half 是否允许半选中
      * @property {boolean=} options.readOnly 是否只读，不可改变星星的选中状态
+     * @property {boolean=} options.half 是否允许半选中
      * @property {Object=} options.hint value 对应的提示信息，如
      *                                  {
      *                                      '1': '很差',
@@ -47,7 +47,7 @@ define(function (require, exports, module) {
      *     mainElement: $('.rater'),
      *     value: 2,                        // 当前选中 2 颗星
      *     count: 5,                        // 总共有 5 颗星
-     *     itemActiveClass: 'icon on',
+     *     itemActiveClass: 'on',
      *     propertyChange: {
      *         value: function (value) {
      *             console.log('value change');
@@ -106,8 +106,8 @@ define(function (require, exports, module) {
 
             return restrain(
                 value,
-                me.option('minValue'),
-                me.option('maxValue')
+                me.get('minValue'),
+                me.get('maxValue')
             );
 
         };
@@ -168,47 +168,38 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var data = [ ];
-        var hint = me.option('hint') || { };
+        var list = [ ];
+
+        var hintMap = me.option('hint') || { };
+        var classMap = {
+            '1': me.option('itemActiveClass'),
+            '0.5': me.option('itemHalfClass')
+        };
 
         traverse(
             me.get('value'),
             me.get('count'),
             function (index, value) {
 
-                index += 1;
+                var className = classMap[ value ];
 
-                var className;
+                value = index + 1;
 
-                switch (value) {
-                    case 1:
-                        className = me.option('itemActiveClass');
-                        break;
-                    case 0.5:
-                        className = me.option('itemHalfClass');
-                        break;
-                }
-
-                data.push({
-                    'value': index,
+                list.push({
+                    'value': value,
                     'class': className || '',
-                    'hint': hint[ index ] || ''
+                    'hint': hintMap[ value ] || ''
                 });
 
             }
         );
 
-        me.inner('main').html(
-            me.execute(
-                'render',
-                [
-                    data,
-                    me.option('mainTemplate')
-                ]
-            )
-        );
+        me.renderWith({
+            list: list
+        });
 
     };
+
 
     proto.preview = function (value) {
 
@@ -216,7 +207,8 @@ define(function (require, exports, module) {
 
         me.inner('value', value);
 
-        if ($.type(value) !== 'number') {
+        value = toNumber(value, null);
+        if (value == null) {
             value = me.get('value');
         }
 
@@ -224,14 +216,6 @@ define(function (require, exports, module) {
 
     };
 
-    proto._preview = function (value) {
-        if (value === this.inner('value')) {
-            return false;
-        }
-        return {
-            value: value
-        };
-    };
 
     proto.dispose = function () {
 
@@ -279,10 +263,7 @@ define(function (require, exports, module) {
         },
 
         minValue: function (minValue) {
-            return toNumber(
-                minValue,
-                0
-            );
+            return toNumber(minValue, 0);
         },
 
         maxValue: function (maxValue) {
@@ -334,7 +315,7 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 遍历的策略提个方法出来
+     * 遍历
      *
      * @inner
      * @param {number} value

@@ -4,14 +4,15 @@
     <meta charset="UTF-8">
     <title>Rater</title>
     <style>
-        .on {
-            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -50px;
+
+        .icon-star {
+            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -62px;
             display: inline-block;
             width: 12px;
             height: 12px;
         }
-        .off {
-            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -62px;
+        .on {
+            background: url(http://vs-static.baidu.com/edu/newjuhe/asset/img/icon.png) no-repeat 0 -50px;
             display: inline-block;
             width: 12px;
             height: 12px;
@@ -35,7 +36,7 @@
 
         require(
 
-            [ 'cobble/ui/Rater' ],
+            [ 'custom/ui/Rater' ],
 
             function (Rater) {
 
@@ -46,17 +47,18 @@
                     minValue: 2,
                     //maxValue: 4,
 
-                    onClass: 'on',
-                    offClass: 'off',
-                    halfClass: 'half',
+                    itemActiveClass: 'on',
+                    itemHalfClass: 'half',
 
                     half: true,
 
-                    onbeforepreview: function (e, data) {
-                        console.log('before preview', data);
-                    },
-                    onafterpreview: function (e, data) {
-                        console.log('after preview', data);
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
                     },
 
                     onpropertychange: function () {
