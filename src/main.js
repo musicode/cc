@@ -15,8 +15,8 @@ define(function (require, exports, module) {
     require('./form/Validator');
 
     require('./helper/AjaxUploader');
+    require('./helper/DOMIterator');
     require('./helper/Draggable');
-    require('./helper/ElementIterator');
     require('./helper/FlashUploader');
     require('./helper/Input');
     require('./helper/Iterator');
@@ -54,11 +54,10 @@ define(function (require, exports, module) {
     require('./util/instance');
     require('./util/json');
     require('./util/keyboard');
-    require('./util/lifeCycle');
+    require('./util/life');
     require('./util/localStorage');
     require('./util/Message');
     require('./util/mimeType');
-    require('./util/touch');
     require('./util/orientation');
     require('./util/position');
     require('./util/Queue');
@@ -68,6 +67,7 @@ define(function (require, exports, module) {
     require('./util/swipe');
     require('./util/time');
     require('./util/timer');
+    require('./util/touch');
     require('./util/trigger');
     require('./util/url');
     require('./util/visibility');
