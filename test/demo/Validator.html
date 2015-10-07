@@ -49,7 +49,7 @@
 
     require(
 
-        [ 'cobble/Form/Validator' ],
+        [ 'custom/Form/Validator' ],
 
         function (Validator) {
 
@@ -95,7 +95,10 @@
                     }
                 },
                 errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${error}',
-                errorPlacement: function (fieldElement, errorElement) {
+                errorPlacement: function (options) {
+
+                    var fieldElement = options.fieldElement;
+                    var errorElement = options.errorElement;
 
                     if (fieldElement.prop('type') === 'hidden') {
                         fieldElement = fieldElement.parent();

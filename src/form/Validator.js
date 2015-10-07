@@ -467,11 +467,14 @@ define(function (require, exports, module) {
 
                     var deferred = $.Deferred();
 
-                    var customResult = fieldConfig.custom(
-                        fieldElement,
-                        function (error) {
-                            deferred.resolve(error);
-                        }
+                    var customResult = me.execute(
+                        fieldConfig.custom,
+                        [
+                            fieldElement,
+                            function (error) {
+                                deferred.resolve(error);
+                            }
+                        ]
                     );
 
                     failError = (customResult == null || customResult.then)
@@ -543,21 +546,6 @@ define(function (require, exports, module) {
     };
 
     lifeUtil.extend(proto);
-
-    Validator.defaultOptions = {
-        validateOnBlur: false,
-        scrollOffset: -100,
-        groupSelector: '.form-group',
-        fieldSelector: '[name]',
-        successClass: 'has-success',
-        errorClass: 'has-error',
-        errorSelector: '.error',
-        render: function (data, tpl) {
-            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
-                return data[$1] || '';
-            });
-        }
-    };
 
     /**
      * 配置验证类型
@@ -789,19 +777,19 @@ define(function (require, exports, module) {
      * 刷新分组的验证状态
      *
      * @inner
-     * @param {Validator} validator
+     * @param {Validator} instance
      * @param {jQuery} groupElement
      * @param {Array} validateResult
      */
-    function refreshGroup(validator, groupElement, validateResult) {
+    function refreshGroup(instance, groupElement, validateResult) {
 
-        var successClass = validator.option('successClass');
-        var errorClass = validator.option('errorClass');
+        var successClass = instance.option('successClass');
+        var errorClass = instance.option('errorClass');
 
-        var errorTemplate = validator.option('errorTemplate');
-        var errorPlacement = validator.option('errorPlacement');
+        var errorTemplate = instance.option('errorTemplate');
+        var errorPlacement = instance.option('errorPlacement');
 
-        var errorSelector = validator.option('errorSelector');
+        var errorSelector = instance.option('errorSelector');
         var errorElement;
 
         if (errorSelector) {
@@ -833,7 +821,7 @@ define(function (require, exports, module) {
                         && errorElement.length > index
                     ) {
 
-                        var html = validator.execute(
+                        var html = instance.execute(
                             'render',
                             [
                                 {
@@ -846,9 +834,12 @@ define(function (require, exports, module) {
                         errorElement.eq(index).html(html);
 
                         if ($.isFunction(errorPlacement)) {
-                            errorPlacement(
-                                item.element,
-                                errorElement.eq(index)
+                            instance.execute(
+                                errorPlacement,
+                                {
+                                    fieldElement: item.element,
+                                    errorElement: errorElement.eq(index)
+                                }
                             );
                         }
 
