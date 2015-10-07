@@ -3,6 +3,9 @@ define(function (require, exports, module) {
     'use strict';
 
     var Validator = require('cc/form/Validator');
+    var etpl = require('cc/util/etpl');
+
+    var render;
 
     Validator.defaultOptions = {
         validateOnBlur: false,
@@ -13,9 +16,10 @@ define(function (require, exports, module) {
         errorClass: 'has-error',
         errorSelector: '.error',
         render: function (data, tpl) {
-            return tpl.replace(/\${(\w+)}/g, function ($0, $1) {
-                return data[$1] || '';
-            });
+            if (!render) {
+                render = etpl.compile(tpl);
+            }
+            return render(data);
         }
     };
 

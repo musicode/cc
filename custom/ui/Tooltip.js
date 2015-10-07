@@ -21,7 +21,7 @@ define(function (require, exports, module) {
 
         share: true,
         underBody: true,
-        placement: 'auto',
+        placement: 'bottom,auto',
 
         skinAttribute: 'data-skin',
         placementAttribute: 'data-placement',
