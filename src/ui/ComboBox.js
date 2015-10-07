@@ -20,9 +20,9 @@ define(function (require, exports, module) {
      *
      * @property {jQuery} options.buttonElement 点击触发下拉菜单显示的元素
      * @property {jQuery} options.menuElement 下拉菜单元素
+     * @property {string=} options.menuTemplate 菜单模板
      *
      * @property {Array} options.data 下拉菜单的数据
-     * @property {string=} options.menuTemplate 菜单模板
      * @property {Function} options.render 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
@@ -56,6 +56,8 @@ define(function (require, exports, module) {
     proto.init = function () {
 
         var me = this;
+
+        me.initStruct();
 
         var mainElement = me.option('mainElement');
 

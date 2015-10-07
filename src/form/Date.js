@@ -270,12 +270,15 @@ define(function (require, exports, module) {
             return value;
 
         }
+
     };
 
     Date.stateUpdater = {
+
         opened: function (opened) {
             this.inner('popup').state('opened', opened);
         }
+
     };
 
 

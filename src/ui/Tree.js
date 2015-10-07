@@ -520,7 +520,9 @@ define(function (require, exports, module) {
             return $.isArray(data) ? data : [ ];
         },
 
-        value: toString
+        value: function (value) {
+            return toString(value);
+        }
 
     };
 

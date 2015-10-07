@@ -59,6 +59,8 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStruct();
+
         var mainElement = me.option('mainElement');
 
         var namespace = me.namespace();

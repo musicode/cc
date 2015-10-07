@@ -172,7 +172,9 @@ define(function (require, exports, module) {
     };
 
     Input.propertyValidator = {
-        value: toString
+        value: function (value) {
+            return toString(value);
+        }
     };
 
 

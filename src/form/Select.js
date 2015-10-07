@@ -19,7 +19,7 @@ define(function (require, exports, module) {
      */
 
     var ComboBox = require('../ui/ComboBox');
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var common = require('./common');
 
     /**
@@ -50,7 +50,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.hideMenuAnimation 隐藏动画
      */
     function Select(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Select.prototype;
@@ -67,16 +67,23 @@ define(function (require, exports, module) {
 
         var combobox = new ComboBox({
             mainElement: mainElement,
+            data: me.option('data'),
+            value: me.option('value'),
+            defaultText: me.option('defaultText'),
             buttonElement: mainElement.find(me.option('buttonSelector')),
             menuElement: mainElement.find(me.option('menuSelector')),
+            menuTemplate: me.option('menuTemplate'),
+            renderSelector: me.option('renderSelector'),
+            renderTemplate: me.option('renderTemplate'),
             showMenuTrigger: me.option('showMenuTrigger'),
             showMenuDelay: me.option('showMenuDelay'),
             hideMenuTrigger: me.option('hideMenuTrigger'),
             hideMenuDelay: me.option('hideMenuDelay'),
-            defaultText: me.option('defaultText'),
-            menuTemplate: me.option('menuTemplate'),
+            itemSelector: me.option('itemSelector'),
             itemActiveClass: me.option('itemActiveClass'),
             menuActiveClass: me.option('menuActiveClass'),
+            textAttribute: me.option('textAttribute'),
+            valueAttribute: me.option('valueAttribute'),
             showMenuAnimation: function (options) {
                 me.execute('showMenuAnimation', options);
             },
@@ -94,16 +101,33 @@ define(function (require, exports, module) {
                 value: function (value) {
                     me.set('value', value);
                 }
+            },
+            stateChange: {
+                opened: function (opened) {
+                    me.state('opened', opened);
+                }
             }
         });
 
+        var nativeElement = common.findNative(me, 'input:hidden');
+
+        var dispatchEvent = function (e, data) {
+            if (e.target.tagName) {
+                me.emit(e, data);
+            }
+        };
+
         // 模拟 focus/blur，便于表单验证
         combobox
-        .after('open', function () {
-            mainElement.trigger('focusin');
+        .before('open', dispatchEvent)
+        .after('open', function (e, data) {
+            nativeElement.trigger('focusin');
+            dispatchEvent(e, data);
         })
-        .after('close', function () {
-            mainElement.trigger('focusout');
+        .before('close', dispatchEvent)
+        .after('close', function (e, data) {
+            nativeElement.trigger('focusout');
+            dispatchEvent(e, data);
         });
 
 
@@ -111,7 +135,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
-            native: common.findNative(me, 'input:hidden'),
+            native: nativeElement,
             combobox: combobox
         });
 
@@ -123,21 +147,40 @@ define(function (require, exports, module) {
 
     };
 
+
+    proto.open = function () {
+        this.state('opened', true);
+    };
+
+    proto._open = function () {
+        if (this.is('opened')) {
+            return false;
+        }
+    };
+
+
+    proto.close = function () {
+        this.state('opened', false);
+    };
+
+    proto._close = function () {
+        if (!this.is('opened')) {
+            return false;
+        }
+    };
+
+
     proto.dispose = function () {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('combobox').dispose();
 
     };
 
-    lifeCycle.extend(proto);
-
-    Select.defaultOptions = {
-
-    };
+    lifeUtil.extend(proto);
 
     Select.propertyUpdater = {
 
@@ -182,6 +225,12 @@ define(function (require, exports, module) {
             return common.validateValue(this, value);
         }
 
+    };
+
+    Select.stateUpdater = {
+        opened: function (opened) {
+            this.inner('combobox').state('opened', opened);
+        }
     };
 
 

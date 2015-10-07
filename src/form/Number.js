@@ -37,11 +37,12 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        me.initStruct();
+
         var mainElement = me.option('mainElement');
 
         var spinbox = new SpinBox({
             mainElement: mainElement,
-            mainTemplate: me.option('mainTemplate'),
             value: me.option('value'),
             minValue: me.option('minValue'),
             maxValue: me.option('maxValue'),
@@ -64,7 +65,7 @@ define(function (require, exports, module) {
         });
 
         me.inner({
-            main: spinbox.inner('main'),
+            main: mainElement,
             native: spinbox.inner('input'),
             spinbox: spinbox
         });

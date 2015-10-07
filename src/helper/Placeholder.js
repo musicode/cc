@@ -21,6 +21,8 @@ define(function (require, exports, module) {
      * 2. 为了保证浏览器之间有相同的体验，最好使用模拟实现
      * 3. 如果希望修改 placeholder 颜色，必须使用模拟实现
      *
+     * 如果需要支持低端浏览器，需要在模板或 mainTemplate 保证 DOM 结构
+     * 并指定 labelSelector 和 inputSelector
      */
 
     var isHidden = require('../function/isHidden');
@@ -41,7 +43,8 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.value 如果文字没写在元素属性（placeholder attribute）上，也可以传值
      *
-     * @property {boolean=} options.nativeFirst 是否原生优先。支持 placeholder 的浏览器，不管其表现如何，优先使用原生
+     * @property {boolean=} options.nativeFirst 是否原生优先
+     *                                          支持 placeholder 的浏览器，不管其表现如何，优先使用原生
      *
      * @property {string} options.labelSelector 模拟实现时，查找显示占位文本元素的选择器
      * @property {string} options.inputSelector 模拟实现时，查找输入框元素的选择器

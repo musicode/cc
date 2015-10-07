@@ -9,7 +9,7 @@ define(function (require, exports) {
     var Input = require('../helper/Input');
     var Placeholder = require('../helper/Placeholder');
 
-    var lifeCycle = require('../util/lifeCycle');
+    var lifeUtil = require('../util/life');
     var common = require('./common');
 
     /**
@@ -18,15 +18,16 @@ define(function (require, exports) {
      * @property {jQuery} options.mainElement
      * @property {string=} options.name
      * @property {string=} options.value
+     * @property {string=} options.placeholder
      *
-     * @property {string} options.placeholderTemplate
-     * @property {string} options.placeholderLabelSelector
-     * @property {boolean=} options.placeholderNativeFirst
+     * @property {string} options.inputSelector
+     * @property {string} options.labelSelector
+     * @property {boolean=} options.nativeFirst
      *
      * @property {Object=} options.shortcut 配置快捷键
      */
     function Text(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Text.prototype;
@@ -37,11 +38,16 @@ define(function (require, exports) {
 
         var me = this;
 
+        me.initStruct();
+
         var placeholder = new Placeholder({
             mainElement: me.option('mainElement'),
-            nativeFirst: me.option('placeholderNativeFirst'),
-            labelSelector: me.option('placeholderLabelSelector'),
-            mainTemplate: me.option('placeholderTemplate'),
+            value: me.option('placeholder'),
+            nativeFirst: me.option('nativeFirst'),
+            inputSelector: me.option('inputSelector'),
+            labelSelector: me.option('labelSelector'),
+            showAnimation: me.option('showAnimation'),
+            hideAnimation: me.option('hideAnimation'),
             propertyChange: {
                 value: function (value) {
                     me.set('placeholder', value);
@@ -54,7 +60,6 @@ define(function (require, exports) {
         var input = new Input({
             mainElement: inputElement,
             shortcut: me.option('shortcut'),
-            context: me,
             propertyChange: {
                 value: function (value) {
                     me.set('value', value);
@@ -63,7 +68,6 @@ define(function (require, exports) {
         });
 
         me.inner({
-            // mainElement 可能被 Placeholder 改写过
             main: placeholder.inner('main'),
             native: inputElement,
             input: input,
@@ -76,19 +80,14 @@ define(function (require, exports) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('input').dispose();
         me.inner('placeholder').dispose();
 
     };
 
-
-    lifeCycle.extend(proto);
-
-
-    Text.defaultOptions = { };
-
+    lifeUtil.extend(proto);
 
     Text.propertyUpdater = {
 

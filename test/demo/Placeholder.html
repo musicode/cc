@@ -38,19 +38,19 @@
 
             function (Placeholder) {
 
-                // window.nativePlaceholder = new Placeholder({
-                //     mainElement: $(':text').eq(0),
-                //     nativeFirst: true,
+                window.nativePlaceholder = new Placeholder({
+                    mainElement: $(':text').eq(0),
+                    nativeFirst: true,
 
-                //     ondebug: function (event, data) {
-                //         console.log(
-                //             event.type,
-                //             event.target.tagName ? true : false, // 是否原生
-                //             data,
-                //             this
-                //         );
-                //     }
-                // });
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                        );
+                    }
+                });
 
                 window.fakePlaceholder = new Placeholder({
                     mainElement: $('.placeholder-wrapper'),

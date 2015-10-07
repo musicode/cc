@@ -22,6 +22,7 @@ define(function (require, exports, module) {
      * @property {string=} options.value
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否可反选
+     * @property {string} options.boxTemplate
      * @property {string} options.boxSelector
      * @property {string=} options.boxCheckedClass
      * @property {string=} options.boxDisabledClass
@@ -53,9 +54,10 @@ define(function (require, exports, module) {
 
                 var instance = new Box({
                     mainElement: boxElement.eq(index),
-                    toggle: me.option('toggle'),
+                    mainTemplate: me.option('boxTemplate'),
                     checkedClass: me.option('boxCheckedClass'),
                     disabledClass: me.option('boxDisabledClass'),
+                    toggle: me.option('toggle'),
                     stateChange: {
                         checked: function (checked) {
 

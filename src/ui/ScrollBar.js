@@ -67,14 +67,13 @@ define(function (require, exports, module) {
         var orientation = me.option('orientation');
         var props = orientationUtil[ orientation ];
 
-        var mainElement = me.option('mainElement');
         var panelElement = me.option('panelElement');
 
         var slider = new Slider({
             minValue: 0,
             maxValue: 100,
             value: me.option('value'),
-            mainElement: mainElement,
+            mainElement: me.option('mainElement'),
             mainTemplate: me.option('mainTemplate'),
             orientation: orientation,
             scrollElement: panelElement,

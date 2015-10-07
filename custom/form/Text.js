@@ -2,9 +2,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Placeholder = require('cc/helper/Placeholder');
+    var Text = require('cc/form/Text');
 
-    Placeholder.defaultOptions = {
+    Text.defaultOptions = {
         nativeFirst: true,
         inputSelector: ':text',
         labelSelector: '.placeholder',
@@ -16,6 +16,6 @@ define(function (require, exports, module) {
         }
     };
 
-    return Placeholder;
+    return Text;
 
 });

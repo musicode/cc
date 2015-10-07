@@ -7,7 +7,8 @@ define(function (require, exports, module) {
     'use strict';
 
     var isHidden = require('../function/isHidden');
-    var lifeCycle = require('../util/lifeCycle');
+    var nextTick = require('../function/nextTick');
+    var lifeUtil = require('../util/life');
 
     /**
      * 表单验证通常包括 required, min, max 等
@@ -105,7 +106,7 @@ define(function (require, exports, module) {
      *
      */
     function Validator(options) {
-        lifeCycle.init(this, options);
+        lifeUtil.init(this, options);
     }
 
     var proto = Validator.prototype;
@@ -292,7 +293,7 @@ define(function (require, exports, module) {
                 );
             }
 
-            setTimeout(
+            nextTick(
                 function () {
                     me.emit(
                         'validatecomplete',
@@ -533,7 +534,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        lifeCycle.dispose(me);
+        lifeUtil.dispose(me);
 
         me.inner('main').off(
             me.namespace()
@@ -541,7 +542,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeCycle.extend(proto);
+    lifeUtil.extend(proto);
 
     Validator.defaultOptions = {
         validateOnBlur: false,

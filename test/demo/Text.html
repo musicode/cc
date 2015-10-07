@@ -18,9 +18,15 @@
     </head>
     <body>
 
-        <input type="text" class="form-text" placeholder="请输入文本" />
+        <div class="placeholder-wrapper placeholder-input">
+            <input type="text" class="form-text" placeholder="请输入用户名" value="" />
+            <div class="placeholder"></div>
+        </div>
 
-        <textarea class="form-text" placeholder="请输入文本"></textarea>
+        <div class="placeholder-wrapper placeholder-textarea">
+            <textarea class="form-text" placeholder="请输入文本"></textarea>
+            <div class="placeholder"></div>
+        </div>
 
         <script src="./js/jquery.js"></script>
         <script src="./js/esl.js"></script>
@@ -29,23 +35,34 @@
 
             require(
 
-                [ 'cobble/Form/Text' ],
+                [ 'custom/Form/Text' ],
 
                 function (Text) {
 
                     window.inputText = new Text({
-                        mainElement: $(':text'),
-                        placeholderNativeFirst: true
-                        onpropertychange: function () {
-                            console.log(this.get('value'));
+                        mainElement: $('.placeholder-input'),
+                        inputSelector: 'input',
+                        ondebug: function (event, data) {
+                            console.log(
+                                event.type,
+                                event.target.tagName ? true : false, // 是否原生
+                                data,
+                                this
+                            );
                         }
                     });
 
                     window.textareaText = new Text({
-                        mainElement: $('textarea'),
-                        placeholderNativeFirst: false,
-                        onpropertychange: function () {
-                            console.log(this.get('value'));
+                        mainElement: $('.placeholder-textarea'),
+                        nativeFirst: false,
+                        inputSelector: 'textarea',
+                        ondebug: function (event, data) {
+                            console.log(
+                                event.type,
+                                event.target.tagName ? true : false, // 是否原生
+                                data,
+                                this
+                            );
                         }
                     });
 
