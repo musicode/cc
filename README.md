@@ -8,7 +8,7 @@
 
 ## 为什么基于 jQuery
 
-基于 jQuery 可以节省很多代码，比如 **Event**、**Deferred**，jQuery 的事件模块做的很好用，比如模拟事件冒泡、自定义事件、命名空间等，如果自己实现一套，代码量会增加很多。
+基于 jQuery 可以节省很多代码，**Event**、**Deferred** 直接拿来用就行，事件模块做的尤其好用，比如模拟事件冒泡、自定义事件、命名空间等，如果自己实现一套，代码量会增加很多。
 
 如果你非常介意 jQuery 的体积也没关系，可以了解一下我的思路。
 
@@ -104,24 +104,24 @@ component.sync();
     replace: {boolean},
     
     // 对于有局部刷新功能的组件，需要提供刷新区域
-    // 比如 Calendar，可以刷新主元素(mainElement.innerHTML = '')
+    // 比如 Calendar，可以刷新主元素(类似 mainElement.innerHTML = '')
     // 也可以刷新某个子元素，保持其他元素不变(比如左右切换按钮)
-    // cc 提供 renderSelector renderTemplate 选项，如果未传入，取 mainElement 和 mainTemplate
+    // cc 提供 renderSelector、renderTemplate 选项，如果未传入，取 mainElement 和 mainTemplate
     // 但要注意的是，如果刷新主元素，replace 必须设置为 false，否则组件无法处理
     renderSelector: {string},
     renderTemplate: {string},
         
-    // 主元素是否是 body 的第一级子元素，比如 Dialog 应该设为 true，定位才不会错
+    // 主元素是否是 document.body 的直接子元素，比如 Dialog 通常是 true，定位才不会错
     underBody: {boolean},
-    // 销毁时是否移除主元素
+    // 销毁时是否移除主元素，比如 Dialog 通常是 true
     removeOnDispose: {boolean},
       
     // 是否共享主元素
     // 共享主元素是为了减少 DOM 数量，提升性能
-    // 比如 Tooltip 应该设为 true，这样可以节省很多 DOM
-    // 因为多个实例共享一个主元素，那么就必须提供根据不同的组件实例动态更新主元素的方法
+    // 比如 Tooltip 通常是 true，可以节省很多 DOM
     share: {boolean},
     // 更新主元素
+    // 如果多个实例共享一个主元素（即 share 为 true），必须提供根据不同的实例动态更新主元素的方法
     update: function (options) {
         // options.mainElement 必定存在
         // 其他数据项则取决于组件的特点，比如 Tooltip 会传入 triggerElement
@@ -148,12 +148,12 @@ component.sync();
     },
 
     // 交互方式配置通常由三项组成
-    // 比如点击一个按钮弹出一个浮层，对应配置如下：
+    // 比如 hover 一个按钮弹出一个浮层，对应配置如下：
     // {
-    //     showTrigger: 'click',
+    //     showTrigger: 'enter',
     //     showDelay: 100,  // delay 只有当 trigger 为 enter、leave 时可用
     //     showAnimation: function (options) {
-    //
+    //         options.xxElement.show();
     //     }
     // }
     xxTrigger: 'click,enter,leave,focus,blur,context',
