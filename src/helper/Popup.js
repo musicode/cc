@@ -437,17 +437,9 @@ define(function (require, exports, module) {
     }
 
     function getTriggerElement(event) {
-
-        var triggerElement;
         if (event) {
-            triggerElement = event.ccElement || event.currentTarget;
+            return event.currentTarget;
         }
-
-        if (triggerElement && !triggerElement.tagName) {
-            triggerElement = null;
-        }
-
-        return triggerElement;
     }
 
     var POPUP_KEY = '__prev_popup__';

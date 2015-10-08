@@ -134,7 +134,8 @@ define(function (require, exports, module) {
         });
 
         var dispatchEvent = function (e, data) {
-            if (e.target.tagName) {
+            var event = data.event;
+            if (event) {
                 me.emit(e, data);
             }
         };
@@ -148,17 +149,17 @@ define(function (require, exports, module) {
         .after('open', dispatchEvent)
         .before('close', function (e, data) {
 
-            var target = e.target;
-
-            if (target.tagName) {
-
-                if (!contains(document, target) // 日历刷新后触发，所以元素没了
-                    || contains(inputElement, target)
-                    || contains(calendarElement, target)
-                ) {
-                    return false;
+            var event = data.event;
+            if (event) {
+                var target = event.target;
+                if (event.type === 'click') {
+                    if (!contains(document, target) // 日历刷新后触发，所以元素没了
+                        || contains(inputElement, target)
+                        || contains(calendarElement, target)
+                    ) {
+                        return false;
+                    }
                 }
-
             }
 
             dispatchEvent(e, data);

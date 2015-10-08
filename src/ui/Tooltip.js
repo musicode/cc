@@ -170,7 +170,7 @@ define(function (require, exports, module) {
         var namespace = me.namespace();
 
         var dispatchEvent = function (e, type, data) {
-            if (e.target.tagName) {
+            if (data && data.event) {
                 e.type = type;
                 me.emit(e, data);
             }
@@ -179,15 +179,17 @@ define(function (require, exports, module) {
         popup
         .before('open', function (e, data) {
 
-            var ccElement = e.ccElement;
-            if (!ccElement || !ccElement.tagName) {
+            var event = data.event;
+            if (!event) {
                 return;
             }
 
+            var currentTarget = event.currentTarget;
+
+
+
+
             var triggerElement;
-
-
-
 
             var skinAttribute = me.option('skinAttribute');
             if (skinAttribute) {
@@ -203,7 +205,7 @@ define(function (require, exports, module) {
                 }
 
                 triggerElement =
-                mainElement[ TRIGGER_ELEMENT_KEY ] = $(ccElement);
+                mainElement[ TRIGGER_ELEMENT_KEY ] = $(currentTarget);
 
                 skinClass = triggerElement.attr(skinAttribute);
                 if (skinClass) {

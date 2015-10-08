@@ -67,6 +67,12 @@ define(function (require, exports, module) {
             var me = this;
 
             me
+            .before('open', function (e, data) {
+                var event = data.event;
+                if (event) {
+                    event.preventDefault();
+                }
+            })
             .on('select', function (e) {
                 e.preventDefault();
             });

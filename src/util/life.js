@@ -248,17 +248,7 @@ define(function (require, exports, module) {
             var context = me.option('context') || me;
 
             event = createEvent(event);
-
             event.cc = context;
-
-            // 经由 apply(me) 之后，currentTarget 会变成 me.$
-            // 因此需要新增一个属性来存储最初的元素
-
-            var currentTarget = event.currentTarget;
-            if (currentTarget && currentTarget.tagName) {
-                event.ccElement = currentTarget;
-            }
-
 
             var args = [ event ];
             if ($.isPlainObject(data)) {
@@ -607,17 +597,42 @@ context.execute('ondebug', args);
      * @param {Object} args 拦截方法参数
      * @return {Object|boolean}
      */
-    function executeAspect(instance, aspect, args) {
+    function executeAspect(instance, name, args, type, e) {
+
+        var result;
+
+        var aspect = type === 'before'
+                   ? ('_' + name)
+                   : (name + '_');
+
         var method = instance[ aspect ];
         if ($.isFunction(method)) {
-            var result = method.apply(instance, args);
-            if (result === false) {
-                return false;
-            }
-            if ($.isPlainObject(result)) {
-                return result;
+            result = method.apply(instance, args);
+            if (result !== false && !$.isPlainObject(result)) {
+                result = null;
             }
         }
+
+        if (result === false) {
+            return false;
+        }
+
+        if (e && e[ $.expando ]) {
+            if (!result) {
+                result = { };
+            }
+            result.event = e;
+        }
+
+        var event = instance.emit(
+            createEvent(type + name),
+            result
+        );
+
+        if (event.isDefaultPrevented()) {
+            return false;
+        }
+
     }
 
     /**
@@ -649,56 +664,30 @@ context.execute('ondebug', args);
 
 
 
-            var beforeHandler = function (event) {
-
-                var me = this;
-
-                var aspectResult = executeAspect(me, '_' + name, arguments);
-                if (aspectResult === false) {
-                    return false;
-                }
-
-                event = createEvent(event);
-                event.type = 'before' + name;
-
-                event = this.emit(event, aspectResult);
-
-                // 如果阻止默认行为
-                // 方法执行流程到此结束
-                if (event.isDefaultPrevented()) {
-                    return false;
-                }
-
+            var beforeHandler = function (e) {
+                return executeAspect(this, name, arguments, 'before', e);
             };
 
-            var afterHandler = function (event) {
+            var afterHandler = function (e) {
 
                 var me = this;
                 var args = arguments;
 
                 var emitAfterEvent = function () {
-
-                    var aspectResult = executeAspect(me, name + '_', args);
-                    if (aspectResult === false) {
-                        return;
-                    }
-
-                    event = createEvent(event);
-                    event.type = 'after' + name;
-
-                    me.emit(event, aspectResult);
-
+                    return executeAspect(me, name, args, 'after', e);
                 };
 
-                // 最后一个参数是方法执行结果
-                // 如果返回了 promise，等待它完成
-                var executeResult = args[ args.length - 1 ];
-                if (executeResult && $.isFunction(executeResult.then)) {
-                    executeResult.then(emitAfterEvent);
+                if (method.length + 1 === args.length) {
+                    // 最后一个参数是方法执行结果
+                    // 如果返回了 promise，等待它完成
+                    var executeResult = args[ args.length - 1 ];
+                    if (executeResult && $.isFunction(executeResult.then)) {
+                        executeResult.then(emitAfterEvent);
+                        return;
+                    }
                 }
-                else {
-                    emitAfterEvent();
-                }
+
+                emitAfterEvent();
 
             };
 

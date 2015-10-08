@@ -112,7 +112,7 @@ define(function (require, exports, module) {
         var nativeElement = common.findNative(me, 'input:hidden');
 
         var dispatchEvent = function (e, data) {
-            if (e.target.tagName) {
+            if (data && data.event) {
                 me.emit(e, data);
             }
         };

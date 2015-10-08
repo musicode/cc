@@ -220,46 +220,52 @@ define(function (require, exports, module) {
         });
 
 
-        var dispatchEvent = function (e) {
-            if (e.target.tagName) {
-                me.emit(e);
+        var dispatchEvent = function (e, data) {
+            if (data && data.event) {
+                me.emit(e, data);
             }
         };
 
         popup
-        .before('open', function (e) {
+        .before('open', function (e, data) {
 
-            // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
-            if (contains(inputElement, e.target)) {
-                suggest();
-                return false;
+            var event = data.event;
+            if (event) {
+                var target = event.target;
+                // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
+                if (contains(inputElement, target)) {
+                    suggest();
+                    return false;
+                }
             }
 
-            dispatchEvent(e);
+            dispatchEvent(e, data);
 
         })
-        .after('open', function (e) {
+        .after('open', function (e, data) {
 
             iterator.set('maxIndex', iteratorData.length - 1);
 
-            dispatchEvent(e);
+            dispatchEvent(e, data);
 
         })
-        .before('close', function (e) {
+        .before('close', function (e, data) {
 
-            var target = e.target;
-
-            // 点击输入框或 layer 不需要隐藏
-            if (contains(inputElement, target)
-                || contains(menuElement, target)
-            ) {
-                return false;
+            var event = data.event;
+            if (event) {
+                var target = event.target;
+                // 点击输入框或 layer 不需要隐藏
+                if (contains(inputElement, target)
+                    || contains(menuElement, target)
+                ) {
+                    return false;
+                }
             }
 
-            dispatchEvent(e);
+            dispatchEvent(e, data);
 
         })
-        .after('close', function (e) {
+        .after('close', function (e, data) {
 
             iterator.stop();
             iterator.set('maxIndex', 0);
@@ -268,7 +274,7 @@ define(function (require, exports, module) {
 
             mouseEnterElement = null;
 
-            dispatchEvent(e);
+            dispatchEvent(e, data);
 
         });
 

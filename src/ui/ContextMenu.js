@@ -100,7 +100,7 @@ define(function (require, exports, module) {
 
 
         var dispatchEvent = function (e, type, data) {
-            if (e.target.tagName) {
+            if (data && data.event) {
                 e.type = type;
                 me.emit(e, data);
             }
