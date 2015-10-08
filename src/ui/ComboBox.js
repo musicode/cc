@@ -244,7 +244,7 @@ define(function (require, exports, module) {
         var text;
         var value = toString(me.get('value'), null);
 
-        if (value != null) {
+        if (value != null && value !== '') {
 
             var itemElement = menuElement.find(
                 '[' + valueAttribute + '=' + value + ']'
