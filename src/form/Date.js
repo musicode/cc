@@ -31,19 +31,18 @@ define(function (require, exports, module) {
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      * @property {boolean=} options.multiple 是否可多选
      *
-     * @property {string=} options.showCalendarTrigger 显示的触发方式
-     * @property {number=} options.showCalendarDelay 显示延时
-     * @property {Function=} options.showCalendarAnimation 显示动画
+     * @property {string=} options.showLayerTrigger 显示的触发方式
+     * @property {number=} options.showLayerDelay 显示延时
+     * @property {Function=} options.showLayerAnimation 显示动画
      *
-     * @property {string=} options.hideCalendarTrigger 隐藏的触发方式
-     * @property {number=} options.hideCalendarDelay 隐藏延时
-     * @property {Function=} options.hideCalendarAnimation 隐藏动画
-     *
-     * @property {string=} options.mainTemplate 组件模板
-     * @property {string=} options.calendarTemplate 日历模板
+     * @property {string=} options.hideLayerTrigger 隐藏的触发方式
+     * @property {number=} options.hideLayerDelay 隐藏延时
+     * @property {Function=} options.hideLayerAnimation 隐藏动画
      *
      * @property {string=} options.inputSelector 输入框选择器
-     * @property {string=} options.calendarSelector 日历选择器
+     * @property {string=} options.layerSelector 浮层选择器
+     * @property {string=} options.calendarSelector 浮层中的日历选择器，不传表示 layer 就是日历
+     * @property {string=} options.calendarTemplate 日历模板
      *
      * @property {string=} options.prevSelector 上个月的按钮选择器
      * @property {string=} options.nextSelector 下个月的按钮选择器
@@ -66,9 +65,14 @@ define(function (require, exports, module) {
         me.initStruct();
 
         var mainElement = me.option('mainElement');
-        var calendarElement = mainElement.find(
-            me.option('calendarSelector')
+        var layerElement = mainElement.find(
+            me.option('layerSelector')
         );
+
+        var calendarSelector = me.option('calendarSelector');
+        var calendarElement = calendarSelector
+                            ? layerElement.find(calendarSelector)
+                            : layerElement;
 
         var calendar = new Calendar({
             mainElement: calendarElement,
@@ -104,25 +108,24 @@ define(function (require, exports, module) {
 
         var popup = new Popup({
             triggerElement: mainElement,
-            layerElement: calendarElement,
-            triggerSelector: me.option('triggerSelector'),
-            showLayerTrigger: me.option('showCalendarTrigger'),
-            showLayerDelay: me.option('showCalendarDelay'),
-            hideLayerTrigger: me.option('hideCalendarTrigger'),
-            hideLayerDelay: me.option('hideCalendarDelay'),
+            layerElement: layerElement,
+            showLayerTrigger: me.option('showLayerTrigger'),
+            showLayerDelay: me.option('showLayerDelay'),
+            hideLayerTrigger: me.option('hideLayerTrigger'),
+            hideLayerDelay: me.option('hideLayerDelay'),
             showLayerAnimation: function () {
                 me.execute(
-                    'showCalendarAnimation',
+                    'showLayerAnimation',
                     {
-                        calendarElement: calendarElement
+                        layerElement: layerElement
                     }
                 );
             },
             hideLayerAnimation: function () {
                 me.execute(
-                    'hideCalendarAnimation',
+                    'hideLayerAnimation',
                     {
-                        calendarElement: calendarElement
+                        layerElement: layerElement
                     }
                 );
             },
@@ -153,7 +156,7 @@ define(function (require, exports, module) {
                 var target = event.target;
                 if (!contains(document, target) // 日历刷新后触发，所以元素没了
                     || contains(inputElement, target)
-                    || contains(calendarElement, target)
+                    || contains(layerElement, target)
                 ) {
                     return false;
                 }

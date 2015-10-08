@@ -16,7 +16,7 @@ define(function (require, exports, module) {
         parse: require('cc/function/parseDate'),
 
         inputSelector: ':text',
-        calendarSelector: '.calendar',
+        layerSelector: '.calendar',
 
         itemSelector: '[data-value]',
         itemActiveClass: 'active',
@@ -24,13 +24,13 @@ define(function (require, exports, module) {
         prevSelector: '.fa-chevron-left',
         nextSelector: '.fa-chevron-right',
 
-        showCalendarTrigger: 'focus',
-        hideCalendarTrigger: 'blur,click',
-        showCalendarAnimation: function (options) {
-            options.calendarElement.show();
+        showLayerTrigger: 'focus',
+        hideLayerTrigger: 'blur,click',
+        showLayerAnimation: function (options) {
+            options.layerElement.show();
         },
-        hideCalendarAnimation: function (options) {
-            options.calendarElement.hide();
+        hideLayerAnimation: function (options) {
+            options.layerElement.hide();
         },
 
         render: function (data, tpl) {
