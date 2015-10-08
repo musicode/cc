@@ -25,7 +25,7 @@ define(function (require, exports, module) {
         nextSelector: '.fa-chevron-right',
 
         showCalendarTrigger: 'focus',
-        hideCalendarTrigger: 'blur',
+        hideCalendarTrigger: 'blur,click',
         showCalendarAnimation: function (options) {
             options.calendarElement.show();
         },

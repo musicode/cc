@@ -59,27 +59,6 @@ define(function (require, exports, module) {
             return render(data);
         },
 
-        load: function (node, callback) {
-
-            setTimeout(
-                function () {
-
-                    var random = '哈哈哈哈';
-
-                    callback(
-                        null,
-                        [
-                            {
-                                id: random + Math.random(),
-                                name: random
-                            }
-                        ]
-                    );
-                },
-                1000
-            );
-        },
-
         onbeforeexpand: function (e, data) {
 
             var nodeId = data.node.id;

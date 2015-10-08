@@ -229,7 +229,7 @@ define(function (require, exports, module) {
         popup
         .before('open', function (e, data) {
 
-            var event = data.event;
+            var event = data && data.event;
             if (event) {
                 var target = event.target;
                 // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
@@ -251,7 +251,7 @@ define(function (require, exports, module) {
         })
         .before('close', function (e, data) {
 
-            var event = data.event;
+            var event = data && data.event;
             if (event) {
                 var target = event.target;
                 // 点击输入框或 layer 不需要隐藏

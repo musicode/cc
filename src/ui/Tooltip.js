@@ -179,7 +179,7 @@ define(function (require, exports, module) {
         popup
         .before('open', function (e, data) {
 
-            var event = data.event;
+            var event = data && data.event;
             if (!event) {
                 return;
             }
