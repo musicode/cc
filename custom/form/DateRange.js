@@ -2,16 +2,15 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Date = require('cc/form/Date');
+    var DateRange = require('cc/form/DateRange');
     var lpad = require('cc/function/lpad');
     var etpl = require('cc/util/etpl');
 
     var tplRender = { };
 
-    Date.defaultOptions = {
+    DateRange.defaultOptions = {
         firstDay: 1,
         mode: 'month',
-        toggle: false,
         multiple: false,
         stable: true,
 
@@ -21,13 +20,18 @@ define(function (require, exports, module) {
         },
 
         inputSelector: ':text',
-        layerSelector: '.calendar',
+        layerSelector: '.dropdown-menu',
+        startCalendarSelector: '.calendar-start',
+        endCalendarSelector: '.calendar-end',
 
         itemSelector: '[data-value]',
         itemActiveClass: 'active',
 
         prevSelector: '.fa-chevron-left',
         nextSelector: '.fa-chevron-right',
+
+        applySelector: '.footer > .btn-primary',
+        cancelSelector: '.footer > .btn-default',
 
         showLayerTrigger: 'focus',
         hideLayerTrigger: 'blur,click',
@@ -104,6 +108,6 @@ define(function (require, exports, module) {
         }
     };
 
-    return Date;
+    return DateRange;
 
 });

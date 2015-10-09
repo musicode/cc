@@ -5,7 +5,7 @@ define(function (require, exports, module) {
     var Rater = require('cc/ui/Rater');
     var etpl = require('cc/util/etpl');
 
-    var render;
+    var tplRender = { };
 
     Rater.defaultOptions = {
         minValue: 1,
@@ -24,10 +24,14 @@ define(function (require, exports, module) {
                     +     '></i>'
                     + '<!-- /for -->',
         render: function (data, tpl) {
+
+            var render = tplRender[ tpl ];
             if (!render) {
-                render = etpl.compile(tpl);
+                render = tplRender[ tpl ] = etpl.compile(tpl);
             }
+
             return render(data);
+
         }
     };
 

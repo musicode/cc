@@ -80,7 +80,7 @@ define(function (require, exports, module) {
         var type = $.type(value);
 
         if (type === 'number') {
-            type = '' + type;
+            value = '' + value;
         }
         else if (type !== 'string') {
             value = exports.prop(instance, 'value') || '';

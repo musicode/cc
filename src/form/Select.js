@@ -35,8 +35,9 @@ define(function (require, exports, module) {
      * @property {Array=} options.data 下拉菜单的数据
      *
      * @property {string=} options.buttonSelector 点击触发下拉菜单显示的元素
-     * @property {string=} options.menuSelector 下拉菜单元素
      * @property {string=} options.labelSelector 按钮上显示文本的元素
+     * @property {string=} options.menuSelector 下拉菜单元素
+     * @property {string=} options.menuTemplate 下拉菜单模板
      *
      * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
      * @property {string=} options.menuActiveClass 菜单展开状态的 class
