@@ -125,6 +125,11 @@ define(function (require, exports, module) {
         popup
         .before('open', dispatchEvent)
         .after('open', dispatchEvent)
+        .before('close', dispatchEvent)
+        .after('close', dispatchEvent);
+
+
+        me
         .before('close', function (e, data) {
 
             var event = data && data.event;
@@ -138,10 +143,7 @@ define(function (require, exports, module) {
                 }
             }
 
-            dispatchEvent(e, data);
-
-        })
-        .after('close', dispatchEvent);
+        });
 
 
         var namespace = me.namespace();
@@ -156,7 +158,7 @@ define(function (require, exports, module) {
                         startCalendar.get('value'),
                         endCalendar.get('value')
                     ];
-                    me.set('value', list.join('-'));
+                    me.set('value', list.join(SEPRATOR));
                     me.close();
                 }
             );
@@ -239,7 +241,7 @@ define(function (require, exports, module) {
 
             common.prop(me, 'value', value);
 
-            var terms = split(value, '-');
+            var terms = split(value, SEPRATOR);
             me.inner('startCalendar').set('value', terms[0]);
             me.inner('endCalendar').set('value', terms[1]);
 
@@ -258,7 +260,7 @@ define(function (require, exports, module) {
 
             value = common.validateValue(me, value);
 
-            var terms = split(value, '-');
+            var terms = split(value, SEPRATOR);
             if (terms.length === 2) {
                 $.each(
                     terms,
@@ -316,6 +318,7 @@ define(function (require, exports, module) {
         });
     }
 
+    var SEPRATOR = ' - ';
 
     return DateRange;
 

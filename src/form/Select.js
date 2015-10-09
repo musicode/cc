@@ -110,7 +110,6 @@ define(function (require, exports, module) {
             }
         });
 
-        var nativeElement = common.findNative(me, 'input:hidden');
 
         var dispatchEvent = function (e, data) {
             if (data && data.event) {
@@ -118,20 +117,23 @@ define(function (require, exports, module) {
             }
         };
 
-        // 模拟 focus/blur，便于表单验证
         combobox
         .before('open', dispatchEvent)
-        .after('open', function (e, data) {
-            nativeElement.trigger('focusin');
-            dispatchEvent(e, data);
-        })
+        .after('open', dispatchEvent)
         .before('close', dispatchEvent)
-        .after('close', function (e, data) {
+        .after('close', dispatchEvent);
+
+
+        var nativeElement = common.findNative(me, 'input:hidden');
+
+        // 模拟 focus/blur，便于表单验证
+        me
+        .after('open', function () {
+            nativeElement.trigger('focusin');
+        })
+        .after('close', function () {
             nativeElement.trigger('focusout');
-            dispatchEvent(e, data);
         });
-
-
 
 
         me.inner({

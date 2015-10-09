@@ -94,9 +94,6 @@ define(function (require, exports, module) {
             }
         });
 
-        var menuActiveClass = me.option('menuActiveClass');
-        var element = mainElement || buttonElement;
-
         var dispatchEvent = function (e, data) {
             if (data && data.event) {
                 me.emit(e, data);
@@ -105,19 +102,21 @@ define(function (require, exports, module) {
 
         popup
         .before('open', dispatchEvent)
-        .after('open', function (e, data) {
-            if (menuActiveClass) {
-                element.addClass(menuActiveClass);
-            }
-            dispatchEvent(e, data);
-        })
+        .after('open', dispatchEvent)
         .before('close', dispatchEvent)
-        .after('close', function (e, data) {
-            if (menuActiveClass) {
+        .after('close', dispatchEvent);
+
+        var menuActiveClass = me.option('menuActiveClass');
+        if (menuActiveClass) {
+            var element = mainElement || buttonElement;
+            me
+            .after('open', function () {
+                element.addClass(menuActiveClass);
+            })
+            .after('close', function () {
                 element.removeClass(menuActiveClass);
-            }
-            dispatchEvent(e, data);
-        });
+            });
+        }
 
         var itemSelector = me.option('itemSelector');
         if (!itemSelector) {

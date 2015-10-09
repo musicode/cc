@@ -227,6 +227,12 @@ define(function (require, exports, module) {
         };
 
         popup
+        .before('open', dispatchEvent)
+        .after('open', dispatchEvent)
+        .before('close', dispatchEvent)
+        .after('close', dispatchEvent);
+
+        me
         .before('open', function (e, data) {
 
             var event = data && data.event;
@@ -239,14 +245,10 @@ define(function (require, exports, module) {
                 }
             }
 
-            dispatchEvent(e, data);
-
         })
         .after('open', function (e, data) {
 
             iterator.set('maxIndex', iteratorData.length - 1);
-
-            dispatchEvent(e, data);
 
         })
         .before('close', function (e, data) {
@@ -262,8 +264,6 @@ define(function (require, exports, module) {
                 }
             }
 
-            dispatchEvent(e, data);
-
         })
         .after('close', function (e, data) {
 
@@ -274,13 +274,7 @@ define(function (require, exports, module) {
 
             mouseEnterElement = null;
 
-            dispatchEvent(e, data);
-
-        });
-
-
-
-        me
+        })
         .before('render', function () {
 
             iterator.stop();

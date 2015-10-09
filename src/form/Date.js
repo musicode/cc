@@ -142,13 +142,18 @@ define(function (require, exports, module) {
             }
         };
 
+        popup
+        .before('open', dispatchEvent)
+        .after('open', dispatchEvent)
+        .before('close', dispatchEvent)
+        .after('close', dispatchEvent);
+
+
         var inputElement = mainElement.find(
             me.option('inputSelector')
         );
 
-        popup
-        .before('open', dispatchEvent)
-        .after('open', dispatchEvent)
+        me
         .before('close', function (e, data) {
 
             var event = data && data.event;
@@ -162,12 +167,7 @@ define(function (require, exports, module) {
                 }
             }
 
-            dispatchEvent(e, data);
-
-        })
-        .after('close', dispatchEvent);
-
-
+        });
 
 
 
