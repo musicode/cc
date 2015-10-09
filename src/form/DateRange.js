@@ -169,7 +169,9 @@ define(function (require, exports, module) {
             layerElement.on(
                 'click' + namespace,
                 cancelSelector,
-                $.proxy(me.close, me)
+                function () {
+                    me.close();
+                }
             );
         }
 

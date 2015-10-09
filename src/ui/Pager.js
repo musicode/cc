@@ -365,6 +365,10 @@ define(function (require, exports, module) {
 
         page: function (page) {
             return toNumber(page, FIRST_PAGE);
+        },
+
+        count: function (count) {
+            return toNumber(count, 0);
         }
 
     };

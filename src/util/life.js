@@ -228,6 +228,14 @@ define(function (require, exports, module) {
         },
 
         /**
+         * 绑定一次事件
+         */
+        one: function (event, data, handler) {
+            this.$.one(event, data, handler);
+            return this;
+        },
+
+        /**
          * 解绑事件
          */
         off: function (event, handler) {
@@ -269,7 +277,7 @@ define(function (require, exports, module) {
 
             var ontype = 'on' + event.type;
 
-context.execute('ondebug', args);
+console.log(args);
 
             if (!event.isPropagationStopped()
                 && context.execute(ontype, args) === false
@@ -581,6 +589,8 @@ context.execute('ondebug', args);
             );
 
             me.inner(UPDATE_ASYNC, false);
+
+            me.emit('sync');
 
         }
 

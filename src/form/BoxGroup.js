@@ -52,44 +52,43 @@ define(function (require, exports, module) {
             boxElement,
             function (index) {
 
-                var instance = new Box({
-                    mainElement: boxElement.eq(index),
-                    mainTemplate: me.option('boxTemplate'),
-                    checkedClass: me.option('boxCheckedClass'),
-                    disabledClass: me.option('boxDisabledClass'),
-                    toggle: me.option('toggle'),
-                    stateChange: {
-                        checked: function (checked) {
-
-                            if (checked && !me.option('multiple')) {
-
-                                $.each(
-                                    boxes,
-                                    function (index, box) {
-                                        if (box !== instance) {
-                                            box.state('checked', false);
-                                        }
-                                    }
-                                );
-
-                            }
-
-                            me.set(
-                                'value',
-                                me.inner('values')(
-                                    instance.get('value'),
-                                    checked
-                                )
-                            );
-
-                        }
-                    }
-                });
-
-                boxes.push(instance);
+                boxes.push(
+                    new Box({
+                        mainElement: boxElement.eq(index),
+                        mainTemplate: me.option('boxTemplate'),
+                        checkedClass: me.option('boxCheckedClass'),
+                        disabledClass: me.option('boxDisabledClass'),
+                        toggle: me.option('toggle')
+                    })
+                );
 
             }
         );
+
+        me.one('sync', function () {
+
+            $.each(
+                boxes,
+                function (index, box) {
+                    box.option(
+                        'stateChange',
+                        {
+                            checked: function (checked) {
+
+                                me.set(
+                                    'value',
+                                    me.inner('values')(
+                                        box.get('value'),
+                                        checked
+                                    )
+                                );
+
+                            }
+                        }
+                    );
+                }
+            )
+        });
 
         me.inner({
             main: mainElement,
@@ -127,7 +126,29 @@ define(function (require, exports, module) {
             common.prop(this, 'name', name);
         },
         value: function (value) {
-            common.prop(this, 'value', value);
+
+            var me = this;
+
+            common.prop(me, 'value', value);
+
+            if (!value) {
+                return;
+            }
+
+            $.each(
+                me.inner('boxes'),
+                function (index, box) {
+
+                    if (box.get('value') === value) {
+                        box.state('checked', true);
+                    }
+                    else if (!me.option('multiple')) {
+                        box.state('checked', false);
+                    }
+
+                }
+            );
+
         }
 
     };
