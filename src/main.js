@@ -32,7 +32,6 @@ define(function (require, exports, module) {
     require('./ui/ComboBox');
     require('./ui/ContextMenu');
     require('./ui/Dialog');
-    require('./ui/Grid');
     require('./ui/Pager');
     require('./ui/Rater');
     require('./ui/ScrollBar');

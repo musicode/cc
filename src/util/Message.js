@@ -43,10 +43,10 @@ define(function (require, exports, module) {
      *     不用再次判断是否支持 postMessage 了
      */
 
-    var timer = require('../function/timer');
     var guid = require('../function/guid');
 
     var urlUtil = require('./url');
+    var timer = require('./timer');
 
     /**
      * Message 构造函数

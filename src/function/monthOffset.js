@@ -15,8 +15,6 @@ define(function (require, exports, module) {
      * 既然没有完美的方式，就用最简单的方式，即先转成 1 号，再进行加减
      */
 
-    var dateOffset = require('./dateOffset');
-
     return function (date, offset) {
 
         if ($.type(date) === 'date') {
