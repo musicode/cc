@@ -8,6 +8,10 @@ define(function (require, exports, module) {
 
     return function (date) {
 
+        if (!date) {
+            return;
+        }
+
         if ($.type(date) === 'number') {
             date = new Date(date);
         }

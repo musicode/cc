@@ -9,15 +9,19 @@ define(function (require, exports, module) {
     var lpad = require('./lpad');
     var simplifyDate = require('./simplifyDate');
 
-    return function (date) {
+    return function (date, sep) {
 
         var result = simplifyDate(date);
 
-        return [
-            result.year,
-            lpad(result.month),
-            lpad(result.date)
-        ].join('-');
+        if (result) {
+            return [
+                result.year,
+                lpad(result.month),
+                lpad(result.date)
+            ].join(sep || '-');
+        }
+
+        return '';
 
     };
 
