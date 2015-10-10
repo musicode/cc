@@ -230,7 +230,7 @@ define(function (require, exports, module) {
         /**
          * 绑定一次事件
          */
-        one: function (event, data, handler) {
+        once: function (event, data, handler) {
             this.$.one(event, data, handler);
             return this;
         },
@@ -277,7 +277,7 @@ define(function (require, exports, module) {
 
             var ontype = 'on' + event.type;
 
-console.log(args);
+context.execute('ondebug', args);
 
             if (!event.isPropagationStopped()
                 && context.execute(ontype, args) === false

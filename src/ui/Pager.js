@@ -364,7 +364,7 @@ define(function (require, exports, module) {
     Pager.propertyValidator = {
 
         page: function (page) {
-            return toNumber(page, FIRST_PAGE);
+            return toNumber(page, 0);
         },
 
         count: function (count) {

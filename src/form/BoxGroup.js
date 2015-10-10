@@ -65,7 +65,7 @@ define(function (require, exports, module) {
             }
         );
 
-        me.one('sync', function () {
+        me.once('sync', function () {
 
             $.each(
                 boxes,
