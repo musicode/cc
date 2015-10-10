@@ -26,7 +26,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.menuElement 菜单元素
      * @property {string=} options.menuTemplate 菜单模板
      *
-     * @property {string=} options.itemSelector 菜单项选择器，默认是 li
+     * @property {string=} options.itemSelector 菜单项选择器
      * @property {string=} options.itemActiveClass 菜单项 active 时的 className
      *
      * @property {number=} options.interval 长按上下键遍历的等待间隔时间

@@ -34,21 +34,21 @@ define(function (require, exports, module) {
      * @property {(number|string)=} options.x 窗口出现的 x 位置，可以是 数字(10) 或 百分比(50%)
      * @property {(number|string)=} options.y 窗口出现的 y 位置，可以是 数字(10) 或 百分比(50%)
      *
-     * @property {boolean=} options.hidden 初始化时是否隐藏，默认为 false
-     * @property {boolean=} options.fixed 是否 fixed 定位，默认为 false
-     * @property {boolean=} options.modal 是否是窗口模态，默认为 true
+     * @property {boolean=} options.hidden 初始化时是否隐藏
+     * @property {boolean=} options.fixed 是否 fixed 定位
+     * @property {boolean=} options.modal 是否是窗口模态
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableHandleSelector 和 draggableCancelSelector 配置
      * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 元素
-     * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件，默认为 true
-     * @property {boolean=} options.removeOnDispose 销毁时是否移除元素，默认为 true
-     * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框，默认为 false
+     * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件
+     * @property {boolean=} options.removeOnDispose 销毁时是否移除元素
+     * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
      * @property {Function=} options.showAnimation 显示对话框和遮罩动画
      * @property {Function=} options.hideAnimation 隐藏对话框和遮罩动画
-     * @property {Function=} options.dragAnimation 拖拽对话框的动画
-     * @property {Function=} options.refreshAnimation 调用 refresh() 的动画
+     * @property {Function=} options.dragAnimation 拖拽对话框移动的动画
+     * @property {Function=} options.refreshAnimation 调用 refresh() 时调整对话框和遮罩的动画
      * @property {Function=} options.resizeWindowAnimation 窗口 resize 时调整对话框和遮罩的动画
      *
      * @property {jQuery=} options.maskElement 遮罩元素
@@ -94,6 +94,9 @@ define(function (require, exports, module) {
             // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
             mainElement.before(maskElement);
 
+        }
+        else if (maskElement) {
+            maskElement = null;
         }
 
 
@@ -160,7 +163,6 @@ define(function (require, exports, module) {
         var style = { };
 
         var width = me.option('width');
-
         switch ($.type(width)) {
             case 'string':
             case 'number':
@@ -378,9 +380,7 @@ define(function (require, exports, module) {
 
             }
 
-            me.inner({
-                dragger: dragger
-            });
+            me.inner('dragger', dragger);
 
         }
     };

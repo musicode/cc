@@ -43,8 +43,8 @@ define(function (require, exports, module) {
      * @property {string=} options.itemActiveClass
      * @property {Function} options.itemAnimation 切换动画
      *
-     * @property {string=} options.prevSelector 上一步按钮的选择器
-     * @property {string=} options.nextSelector 下一步按钮的选择器
+     * @property {string=} options.prevSelector 上一个按钮的选择器
+     * @property {string=} options.nextSelector 下一个按钮的选择器
      *
      */
     function Carousel(options) {

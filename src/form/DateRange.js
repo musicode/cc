@@ -178,8 +178,8 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
+            layer: layerElement,
             native: inputElement,
-            input: inputElement,
             popup: popup,
             startCalendar: startCalendar,
             endCalendar: endCalendar
