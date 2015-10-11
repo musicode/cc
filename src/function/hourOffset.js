@@ -1,15 +1,15 @@
 /**
- * @file 天偏移
+ * @file 小时偏移
  * @author musicode
  */
 define(function (require, exports, module) {
 
     'use strict';
 
-    var hourOffset = require('./hourOffset');
+    var minuteOffset = require('./minuteOffset');
 
     return function (date, offset) {
-        return hourOffset(date, offset * 24);
+        return minuteOffset(date, offset * 60);
     };
 
 });

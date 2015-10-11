@@ -1,5 +1,5 @@
 /**
- * @file 周偏移，单位是周
+ * @file 周偏移
  * @author musicode
  */
 define(function (require, exports, module) {

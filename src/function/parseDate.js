@@ -21,7 +21,7 @@ define(function (require, exports, module) {
                 year = year.year;
             }
             else if ($.type(year) === 'string') {
-                var parts = year.split('-');
+                var parts = year.split(month || '-');
                 year = parts[0];
                 month = parts[1];
                 date = parts[2];

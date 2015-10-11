@@ -603,11 +603,13 @@ context.execute('ondebug', args);
      *
      * @inner
      * @param {Object} instance 组件实例
-     * @param {Object} aspect 拦截方法名称
+     * @param {string} name 拦截方法名称
      * @param {Object} args 拦截方法参数
-     * @return {Object|boolean}
+     * @param {Object} type before or false
+     * @param {Object} event 事件
+     * @return {boolean?}
      */
-    function executeAspect(instance, name, args, type, e) {
+    function executeAspect(instance, name, args, type, event) {
 
         var result;
 
@@ -627,14 +629,14 @@ context.execute('ondebug', args);
             return false;
         }
 
-        if (e && e[ $.expando ]) {
+        if (event && event[ $.expando ]) {
             if (!result) {
                 result = { };
             }
-            result.event = e;
+            result.event = event;
         }
 
-        var event = instance.emit(
+        event = instance.emit(
             createEvent(type + name),
             result
         );

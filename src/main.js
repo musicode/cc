@@ -64,7 +64,6 @@ define(function (require, exports, module) {
     require('./util/redirect');
     require('./util/string');
     require('./util/swipe');
-    require('./util/time');
     require('./util/timer');
     require('./util/touch');
     require('./util/trigger');

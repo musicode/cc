@@ -99,6 +99,8 @@ define(function (require, exports, module) {
      *
      * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
      *                                           传了则用 field.closest(selector) 进行向上查找
+     * @property {Function=} options.showErrorAnimation
+     * @property {Function=} options.hideErrorAnimation
      *
      * @property {Object=} options.fields 配置字段
      *
@@ -271,7 +273,7 @@ define(function (require, exports, module) {
 
         }
 
-        var fields = [ ];
+        fields = [ ];
         var errors = [ ];
 
         var validateComplete = function () {
@@ -360,7 +362,7 @@ define(function (require, exports, module) {
         // 如果真的需要多个 field，依次匹配 error 元素
         groupElement
             .find('[name]')
-            .each(function (index) {
+            .each(function () {
 
                 var target = this;
                 var fieldElement = $(target);
@@ -787,13 +789,12 @@ define(function (require, exports, module) {
         var errorClass = instance.option('errorClass');
 
         var errorTemplate = instance.option('errorTemplate');
-        var errorPlacement = instance.option('errorPlacement');
 
         var errorSelector = instance.option('errorSelector');
-        var errorElement;
+        var errorElements;
 
         if (errorSelector) {
-            errorElement = groupElement.find(errorSelector);
+            errorElements = groupElement.find(errorSelector);
         }
 
 
@@ -808,6 +809,11 @@ define(function (require, exports, module) {
                     error = item.error = '';
                 }
 
+                var errorElement;
+                if (errorElements && errorElements.length > index) {
+                    errorElement = errorElements.eq(index);
+                }
+
                 if (error) {
 
                     if (successClass) {
@@ -817,9 +823,7 @@ define(function (require, exports, module) {
                         groupElement.addClass(errorClass);
                     }
 
-                    if (errorElement
-                        && errorElement.length > index
-                    ) {
+                    if (errorElement) {
 
                         var html = instance.execute(
                             'render',
@@ -831,17 +835,15 @@ define(function (require, exports, module) {
                             ]
                         );
 
-                        errorElement.eq(index).html(html);
+                        errorElement.html(html);
 
-                        if ($.isFunction(errorPlacement)) {
-                            instance.execute(
-                                errorPlacement,
-                                {
-                                    fieldElement: item.element,
-                                    errorElement: errorElement.eq(index)
-                                }
-                            );
-                        }
+                        instance.execute(
+                            'showErrorAnimation',
+                            {
+                                errorElement: errorElement,
+                                fieldElement: item.element
+                            }
+                        )
 
                     }
                 }
@@ -851,6 +853,15 @@ define(function (require, exports, module) {
                     }
                     if (errorClass) {
                         groupElement.removeClass(errorClass);
+                    }
+                    if (errorElement) {
+                        instance.execute(
+                            'hideErrorAnimation',
+                            {
+                                errorElement: errorElement,
+                                fieldElement: item.element
+                            }
+                        )
                     }
                 }
 

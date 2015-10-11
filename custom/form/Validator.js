@@ -15,6 +15,15 @@ define(function (require, exports, module) {
         successClass: 'has-success',
         errorClass: 'has-error',
         errorSelector: '.error',
+        errorTemplate: '${error}',
+        showErrorAnimation: function (options) {
+            var errorElement = options.errorElement;
+            errorElement.show();
+        },
+        hideErrorAnimation: function (options) {
+            var errorElement = options.errorElement;
+            errorElement.hide();
+        },
         render: function (data, tpl) {
 
             var render = tplRender[ tpl ];
