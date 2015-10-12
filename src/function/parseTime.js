@@ -21,6 +21,16 @@ define(function (require, exports, module) {
         }
         else if (arguments.length === 1) {
 
+            if ($.isPlainObject(hour)) {
+                valid = true;
+                second = hour.second;
+                minute = hour.minute;
+                hour = hour.hour;
+            }
+
+        }
+        else if (arguments.length === 2) {
+
             if ($.type(hour) === 'string') {
 
                 var parts = hour.split(':');
@@ -34,15 +44,6 @@ define(function (require, exports, module) {
                     second = + $.trim(parts[2]);
 
                 }
-
-            }
-            else if ($.isPlainObject(hour)) {
-
-                valid = true;
-
-                second = hour.second;
-                minute = hour.minute;
-                hour = hour.hour;
 
             }
         }

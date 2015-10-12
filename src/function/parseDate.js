@@ -14,13 +14,16 @@ define(function (require, exports, module) {
             valid = true;
         }
         else if (arguments.length === 1) {
-            valid = true;
             if ($.isPlainObject(year)) {
+                valid = true;
                 date = year.date;
                 month = year.month;
                 year = year.year;
             }
-            else if ($.type(year) === 'string') {
+        }
+        else if (arguments.length === 2) {
+            if ($.type(year) === 'string') {
+                valid = true;
                 var parts = year.split(month || '-');
                 year = parts[0];
                 month = parts[1];
