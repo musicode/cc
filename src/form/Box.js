@@ -85,7 +85,7 @@ define(function (require, exports, module) {
 
         me.set({
             name: me.option('name'),
-            value: me.option('value'),
+            value: me.option('value')
         });
 
         me.state({
