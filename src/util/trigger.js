@@ -24,6 +24,13 @@ define(function (require, exports, module) {
                 options.handler.call(e.currentTarget, e);
             };
 
+            var beforeHandler = options.beforeHandler;
+            if ($.isFunction(beforeHandler)) {
+                if (beforeHandler.call(e.currentTarget, e) === false) {
+                    return;
+                }
+            }
+
             if (delay > 0 && startDelay && endDelay) {
 
                 var startTimer = function () {
@@ -118,7 +125,9 @@ define(function (require, exports, module) {
                     if (config) {
                         configs[ trigger ] = {
                             type: config.type,
-                            handler: config.handler(each(trigger))
+                            handler: config.handler(
+                                each(trigger)
+                            )
                         };
                     }
 

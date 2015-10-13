@@ -65,7 +65,8 @@ define(function (require, exports, module) {
      * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
      *                                             即触发了 triggerElement 中的 triggerSelector，会弹出 layerElement
      *
-     * @property {jQuery} options.layerElement 弹出的元素
+     * @property {jQuery|Function} options.layerElement 弹出的元素
+     *
      * @property {boolean=} options.opened 弹出的元素是否默认展开，如果不传，会自动根据 DOM 判断
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
@@ -88,14 +89,6 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        // 确保有值，避免写一堆 if
-        if (!me.option('triggerElement')) {
-            me.option('triggerElement', $({}));
-        }
-
-
-
-
         var curry = function (proxy, name) {
             if ($.isFunction(proxy[ name ])) {
                 return proxy[ name ](me);
@@ -112,7 +105,13 @@ define(function (require, exports, module) {
                     delay: me.option('showLayerDelay'),
                     startDelay: curry(showLayerTrigger, 'startDelay'),
                     endDelay: curry(showLayerTrigger, 'endDelay'),
-                    handler: curry(showLayerTrigger, 'handler')
+                    handler: curry(showLayerTrigger, 'handler'),
+                    beforeHandler: function (e) {
+                        me.inner({
+                            trigger: getTriggerElement(me, e),
+                            layer: getLayerElement(me, e)
+                        });
+                    }
                 };
 
             }
@@ -219,6 +218,10 @@ define(function (require, exports, module) {
         .on('statechange', stateChangeHandler);
 
 
+        me.inner({
+            trigger: getTriggerElement(me),
+            layer: getLayerElement(me)
+        });
 
         me.state({
             opened: me.option('opened')
@@ -237,16 +240,16 @@ define(function (require, exports, module) {
 
         if (me.is('opened')) {
 
-            var layerElement = me.option('layerElement');
+            var layerElement = me.inner('layer');
 
             // 多个 triggerElement 触发同一个 layerElement 时
             // 不同的 triggerElement 触发 open，需要先 close 之前的
-            var triggerElement = getTriggerElement(e);
+            var currTriggerElement = me.inner('trigger');
             var prevTriggerElement = layerElement.data(TRIGGER_ELEMENT_KEY);
 
-            if (triggerElement
+            if (currTriggerElement
                 && prevTriggerElement
-                && triggerElement !== prevTriggerElement
+                && currTriggerElement[0] !== prevTriggerElement[0]
             ) {
                 layerElement.data(POPUP_KEY).close();
                 nextTick(function () {
@@ -262,13 +265,16 @@ define(function (require, exports, module) {
     proto.open_ = function (e) {
 
         var me = this;
-        var layerElement = me.option('layerElement');
 
-        var data = { };
-        data[ TRIGGER_ELEMENT_KEY ] = getTriggerElement(e);
-        data[ POPUP_KEY ] = me;
+        var layerElement = me.inner('layer');
+        if (layerElement) {
 
-        layerElement.data(data);
+            var data = { };
+            data[ TRIGGER_ELEMENT_KEY ] = me.inner('trigger');
+            data[ POPUP_KEY ] = me;
+
+            layerElement.data(data);
+        }
 
     };
 
@@ -283,9 +289,18 @@ define(function (require, exports, module) {
         }
     };
     proto.close_ = function () {
-        this.option('layerElement')
-            .removeData(POPUP_KEY)
-            .removeData(TRIGGER_ELEMENT_KEY);
+        var me = this;
+        var layerElement = me.inner('layer');
+        if (layerElement) {
+            layerElement
+                .removeData(POPUP_KEY)
+                .removeData(TRIGGER_ELEMENT_KEY);
+
+            me.inner({
+                layer: null,
+                trigger: null
+            });
+        }
     };
 
     proto.dispose = function () {
@@ -296,21 +311,25 @@ define(function (require, exports, module) {
 
     Popup.stateUpdater = {
         opened: function (opened) {
-            this.execute(
-                opened ? 'showLayerAnimation' : 'hideLayerAnimation',
-                {
-                    layerElement: this.option('layerElement')
-                }
-            );
+            var layerElement = this.inner('layer');
+            if (layerElement) {
+                this.execute(
+                    opened ? 'showLayerAnimation' : 'hideLayerAnimation',
+                    {
+                        layerElement: layerElement
+                    }
+                );
+            }
         }
     };
 
     Popup.stateValidator = {
         opened: function (opened) {
             if ($.type(opened) !== 'boolean') {
-                opened = !isHidden(
-                    this.option('layerElement')
-                );
+                var layerElement = this.inner('layer');
+                if (layerElement) {
+                    opened = !isHidden(layerElement);
+                }
             }
             return opened;
         }
@@ -360,6 +379,18 @@ define(function (require, exports, module) {
         };
     }
 
+    function onElement(element, type, handler, selector) {
+        if (element) {
+            element.on(type, selector, handler);
+        }
+    }
+
+    function offElement(element, type, handler) {
+        if (element) {
+            element.off(type, handler);
+        }
+    }
+
     /**
      * 通用的绑定事件
      *
@@ -367,11 +398,12 @@ define(function (require, exports, module) {
      * @param {Object} instance
      * @param {Object} config
      */
-    function on(instance, config) {
-        instance.option('triggerElement').on(
+    function onTrigger(instance, config) {
+        onElement(
+            instance.option('triggerElement'),
             config.type,
-            instance.option('triggerSelector'),
-            config.handler
+            config.handler,
+            instance.option('triggerSelector')
         );
     }
 
@@ -382,8 +414,9 @@ define(function (require, exports, module) {
      * @param {Object} instance
      * @param {Object} config
      */
-    function off(instance, config) {
-        instance.option('triggerElement').off(
+    function offTrigger(instance, config) {
+        offElement(
+            instance.option('triggerElement'),
             config.type,
             config.handler
         );
@@ -429,16 +462,35 @@ define(function (require, exports, module) {
             instance,
             function (e) {
                 return !contains(
-                    instance.option('layerElement'),
+                    instance.inner('layer'),
                     e.target
                 );
             }
         );
     }
 
-    function getTriggerElement(event) {
+    function getTriggerElement(instance, event) {
+        var triggerElement = instance.option('triggerElement');
+        var triggerSelector = instance.option('triggerSelector');
+        if (triggerElement && !triggerSelector) {
+            return triggerElement;
+        }
         if (event) {
-            return event.currentTarget;
+            return $(event.currentTarget);
+        }
+    }
+
+    function getLayerElement(instance, event) {
+        var layerElement = instance.option('layerElement');
+        if (layerElement && layerElement.jquery && layerElement.length) {
+            return layerElement;
+        }
+        if ($.isFunction(layerElement)) {
+            layerElement = instance.execute(layerElement, event);
+            if (layerElement && layerElement.tagName) {
+                layerElement = $(layerElement);
+            }
+            return layerElement;
         }
     }
 
@@ -458,48 +510,49 @@ define(function (require, exports, module) {
 
         show: {
             focus: {
-                on: on,
-                off: off,
+                on: onTrigger,
+                off: offTrigger,
                 handler: createShowHandler
             },
             click: {
-                on: on,
-                off: off,
+                on: onTrigger,
+                off: offTrigger,
                 handler: createShowHandler
             },
             enter: {
-                on: on,
-                off: off,
+                on: onTrigger,
+                off: offTrigger,
                 handler: createShowHandler,
                 startDelay: function (instance) {
-                    return function (fn) {
-                        instance.option('triggerElement').on(
+                    return function (handler) {
+                        onElement(
+                            instance.inner('trigger'),
                             leaveType,
-                            instance.option('triggerSelector'),
-                            fn
+                            handler
                         );
                     };
                 },
                 endDelay: function (instance) {
-                    return function (fn) {
-                        instance.option('triggerElement').off(
+                    return function (handler) {
+                        offElement(
+                            instance.inner('trigger'),
                             leaveType,
-                            fn
+                            handler
                         );
                     };
                 }
             },
             context: {
-                on: on,
-                off: off,
+                on: onTrigger,
+                off: offTrigger,
                 handler: createShowHandler
             }
         },
 
         hide: {
             blur: {
-                on: on,
-                off: off,
+                on: onTrigger,
+                off: offTrigger,
                 handler: createHideHandler
             },
             click: {
@@ -509,50 +562,68 @@ define(function (require, exports, module) {
             },
             leave: {
                 on: function (instance, config) {
-                    instance.option('triggerElement').on(
-                        config.type,
-                        instance.option('triggerSelector'),
-                        config.handler
-                    );
-                    instance.option('layerElement').on(
+
+                    onElement(
+                        instance.inner('trigger'),
                         config.type,
                         config.handler
                     );
+
+                    onElement(
+                        instance.inner('layer'),
+                        config.type,
+                        config.handler
+                    );
+
                 },
                 off: function (instance, config) {
-                    instance.option('triggerElement').off(
+
+                    offElement(
+                        instance.inner('trigger'),
                         config.type,
                         config.handler
                     );
-                    instance.option('layerElement').off(
+
+                    offElement(
+                        instance.inner('layer'),
                         config.type,
                         config.handler
                     );
+
                 },
                 handler: createHideHandler,
                 startDelay: function (instance) {
-                    return function (fn) {
-                        instance.option('triggerElement').on(
+                    return function (handler) {
+
+                        onElement(
+                            instance.inner('trigger'),
                             enterType,
-                            instance.option('triggerSelector'),
-                            fn
+                            handler
                         );
-                        instance.option('layerElement').on(
+
+                        onElement(
+                            instance.inner('layer'),
                             enterType,
-                            fn
+                            handler
                         );
+
                     };
                 },
                 endDelay: function (instance) {
-                    return function (fn) {
-                        instance.option('triggerElement').off(
+                    return function (handler) {
+
+                        offElement(
+                            instance.inner('trigger'),
                             enterType,
-                            fn
+                            handler
                         );
-                        instance.option('layerElement').off(
+
+                        offElement(
+                            instance.inner('layer'),
                             enterType,
-                            fn
+                            handler
                         );
+
                     };
                 }
             },
