@@ -262,7 +262,7 @@ define(function (require, exports, module) {
 
     };
 
-    proto.open_ = function (e) {
+    proto.open_ = function () {
 
         var me = this;
 
@@ -295,11 +295,6 @@ define(function (require, exports, module) {
             layerElement
                 .removeData(POPUP_KEY)
                 .removeData(TRIGGER_ELEMENT_KEY);
-
-            me.inner({
-                layer: null,
-                trigger: null
-            });
         }
     };
 
@@ -311,14 +306,21 @@ define(function (require, exports, module) {
 
     Popup.stateUpdater = {
         opened: function (opened) {
-            var layerElement = this.inner('layer');
+            var me = this;
+            var layerElement = me.inner('layer');
             if (layerElement) {
-                this.execute(
+                me.execute(
                     opened ? 'showLayerAnimation' : 'hideLayerAnimation',
                     {
                         layerElement: layerElement
                     }
                 );
+                if (!opened) {
+                    me.inner({
+                        layer: null,
+                        trigger: null
+                    });
+                }
             }
         }
     };
@@ -430,7 +432,8 @@ define(function (require, exports, module) {
      * @param {Object} config
      */
     function onDocument(instance, config) {
-        instanceUtil.document.on(
+        onElement(
+            instanceUtil.document,
             config.type,
             config.handler
         );
@@ -444,7 +447,8 @@ define(function (require, exports, module) {
      * @param {Object} config
      */
     function offDocument(instance, config) {
-        instanceUtil.document.off(
+        offElement(
+            instanceUtil.document,
             config.type,
             config.handler
         );
@@ -485,7 +489,7 @@ define(function (require, exports, module) {
         if (layerElement && layerElement.jquery && layerElement.length) {
             return layerElement;
         }
-        if ($.isFunction(layerElement)) {
+        if (event && $.isFunction(layerElement)) {
             layerElement = instance.execute(layerElement, event);
             if (layerElement && layerElement.tagName) {
                 layerElement = $(layerElement);
