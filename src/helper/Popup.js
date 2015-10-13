@@ -316,9 +316,11 @@ define(function (require, exports, module) {
                     }
                 );
                 if (!opened) {
-                    me.inner({
-                        layer: null,
-                        trigger: null
+                    me.once('sync', function () {
+                        me.inner({
+                            layer: null,
+                            trigger: null
+                        });
                     });
                 }
             }
