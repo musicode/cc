@@ -65,7 +65,7 @@ define(function (require, exports, module) {
             }
         );
 
-        me.once('sync', function () {
+        me.once('aftersync', function () {
 
             $.each(
                 boxes,

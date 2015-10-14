@@ -6,12 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var weekFirst = require('./weekFirst');
-    var dateOffset = require('./dateOffset');
+    var firstDateInWeek = require('./firstDateInWeek');
+    var offsetDate = require('./offsetDate');
 
     return function (date, firstDay) {
-        return dateOffset(
-            weekFirst(date, firstDay),
+        return offsetDate(
+            firstDateInWeek(date, firstDay),
             6
         );
     };

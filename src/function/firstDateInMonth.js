@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var dateOffset = require('./dateOffset');
+    var offsetDate = require('./offsetDate');
 
     return function (date) {
 
@@ -14,7 +14,7 @@ define(function (require, exports, module) {
             date = new Date(date);
         }
 
-        return dateOffset(
+        return offsetDate(
             date,
             1 - date.getDate()
         );

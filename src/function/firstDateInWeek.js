@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var dateOffset = require('./dateOffset');
+    var offsetDate = require('./offsetDate');
 
     return function (date, firstDay) {
 
@@ -17,7 +17,7 @@ define(function (require, exports, module) {
         var day = date.getDay();
         day = day >= firstDay ? day : (day + 7);
 
-        return dateOffset(date, -1 * (day - firstDay));
+        return offsetDate(date, -1 * (day - firstDay));
 
     };
 

@@ -11,6 +11,7 @@ define(function (require, exports, module) {
     var extend = require('../function/extend');
     var ucFirst = require('../function/ucFirst');
     var nextTick = require('../function/nextTick');
+    var toBoolean = require('../function/toBoolean');
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
 
@@ -18,7 +19,7 @@ define(function (require, exports, module) {
 
     var instances = { };
 
-    var UPDATE_ASYNC = 'updateAsync';
+    var UPDATE_ASYNC = '__update_async__';
 
     /**
      * 创建 jQuery Event 对象
@@ -118,9 +119,11 @@ define(function (require, exports, module) {
             changes[ name ] = record;
 
             if (!me.inner(UPDATE_ASYNC)) {
-                me.inner(UPDATE_ASYNC, true);
-                nextTick(
-                    $.proxy(me.sync, me)
+                me.inner(
+                    UPDATE_ASYNC,
+                    nextTick(function () {
+                        me.sync(UPDATE_ASYNC);
+                    })
                 );
             }
 
@@ -512,10 +515,7 @@ context.execute('ondebug', args);
          */
         state: createSettter('state', 'states', 'state', 'is',
             function (instance, value) {
-                if ($.type(value) !== 'boolean') {
-                    value = false;
-                }
-                return value;
+                return toBoolean(value, false);
             }
         ),
 
@@ -529,7 +529,11 @@ context.execute('ondebug', args);
         /**
          * property setter
          */
-        set: createSettter('property', 'properties', 'set', 'get'),
+        set: createSettter('property', 'properties', 'set', 'get')
+
+    };
+
+    var aspectMethods = {
 
         /**
          * 为了更好的性能，以及彻底解决初始化触发 change 事件带来的同步问题
@@ -540,10 +544,6 @@ context.execute('ondebug', args);
         sync: function () {
 
             var me = this;
-
-            if (!me.inner(UPDATE_ASYNC)) {
-                return;
-            }
 
             var createUpdater = function (updater, changes) {
                 return function (name, change) {
@@ -588,10 +588,19 @@ context.execute('ondebug', args);
                 }
             );
 
+            // 手动调的
+            if (arguments[0] !== UPDATE_ASYNC) {
+                me.inner(UPDATE_ASYNC)();
+            }
+
             me.inner(UPDATE_ASYNC, false);
 
-            me.emit('sync');
+        },
 
+        _sync: function () {
+            if (!this.inner(UPDATE_ASYNC)) {
+                return false;
+            }
         }
 
     };
@@ -661,6 +670,8 @@ context.execute('ondebug', args);
         // 拦截方法的写法来自某一天的灵光咋现，因为我不喜欢私有属性和方法带上下划线前缀，但是下划线用来标识前后似乎非常优雅
         //
         // 比如 _show 表示显示之前，show_ 表示显示之后，非常直白
+
+        extend(proto, aspectMethods);
 
         $.each(proto, function (name, method) {
 

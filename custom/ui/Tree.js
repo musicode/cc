@@ -36,10 +36,14 @@ define(function (require, exports, module) {
                     + ' data-id="${node.id}" data-level="${cache.level}">'
                     +     '<div class="tree-node">'
 
+                    +         '<!-- if: !${node.children} || ${node.children.length} > 0 -->'
+
                     +         '<!-- if: ${node.expanded} -->'
-                    +             '<i class="fa fa-minus-square"></i>'
+                    +             '<i class="fa fa-minus-square${className}"></i>'
                     +         '<!-- else -->'
-                    +             '<i class="fa fa-plus-square"></i>'
+                    +             '<i class="fa fa-plus-square${className}"></i>'
+                    +         '<!-- /if -->'
+
                     +         '<!-- /if -->'
 
                     +         '<label>${node.name}</label>'

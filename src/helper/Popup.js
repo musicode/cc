@@ -191,9 +191,7 @@ define(function (require, exports, module) {
                     if (!me.option('triggerSelector')) {
                         unbindShowEvent();
                     }
-                    setTimeout(
-                        bindHideEvent
-                    );
+                    nextTick(bindHideEvent);
                 }
                 else {
                     unbindHideEvent();
@@ -315,14 +313,6 @@ define(function (require, exports, module) {
                         layerElement: layerElement
                     }
                 );
-                if (!opened) {
-                    me.once('sync', function () {
-                        me.inner({
-                            layer: null,
-                            trigger: null
-                        });
-                    });
-                }
             }
         }
     };

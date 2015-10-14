@@ -6,10 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var dateOffset = require('./dateOffset');
+    var offsetDate = require('./offsetDate');
 
     return function (date, offset) {
-        return dateOffset(date, offset * 7);
+        return offsetDate(date, offset * 7);
     };
 
 });

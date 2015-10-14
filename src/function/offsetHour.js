@@ -6,10 +6,10 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var minuteOffset = require('./minuteOffset');
+    var offsetMinute = require('./offsetMinute');
 
     return function (date, offset) {
-        return minuteOffset(date, offset * 60);
+        return offsetMinute(date, offset * 60);
     };
 
 });

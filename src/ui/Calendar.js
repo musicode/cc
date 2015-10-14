@@ -8,12 +8,12 @@ define(function (require) {
 
     var split = require('../function/split');
     var createValues = require('../function/values');
-    var weekOffset = require('../function/weekOffset');
-    var monthOffset = require('../function/monthOffset');
-    var weekFirst = require('../function/weekFirst');
-    var weekLast = require('../function/weekLast');
-    var monthFirst = require('../function/monthFirst');
-    var monthLast = require('../function/monthLast');
+    var offsetWeek = require('../function/offsetWeek');
+    var offsetMonth = require('../function/offsetMonth');
+    var firstDateInWeek = require('../function/firstDateInWeek');
+    var lastDateInWeek = require('../function/lastDateInWeek');
+    var firstDateInMonth = require('../function/firstDateInMonth');
+    var lastDateInMonth = require('../function/lastDateInMonth');
     var parseDate = require('../function/parseDate');
     var simplifyDate = require('../function/simplifyDate');
 
@@ -170,29 +170,29 @@ define(function (require) {
 
         var firstDay = me.option('firstDay');
 
-        var weekFirstDay;
-        var weekLastDay;
+        var weekFirstDate;
+        var weekLastDate;
 
         var isMonthMode = me.option('mode') === MODE_MONTH;
         if (isMonthMode) {
-            weekFirstDay = weekFirst(monthFirst(date), firstDay);
-            weekLastDay = weekLast(monthLast(date), firstDay);
+            weekFirstDate = firstDateInWeek(firstDateInMonth(date), firstDay);
+            weekLastDate = lastDateInWeek(lastDateInMonth(date), firstDay);
         }
         else {
-            weekFirstDay = weekFirst(date, firstDay);
-            weekLastDay = weekLast(date, firstDay);
+            weekFirstDate = firstDateInWeek(date, firstDay);
+            weekLastDate = lastDateInWeek(date, firstDay);
         }
 
-        weekFirstDay = normalizeDate(weekFirstDay);
-        weekLastDay = normalizeDate(weekLastDay);
+        weekFirstDate = normalizeDate(weekFirstDate);
+        weekLastDate = normalizeDate(weekLastDate);
 
         if (isMonthMode && me.option('stable')) {
 
-            var duration = weekLastDay - weekFirstDay;
+            var duration = weekLastDate - weekFirstDate;
             var offset = stableDuration - duration;
 
             if (offset > 0) {
-                weekLastDay += offset;
+                weekLastDate += offset;
             }
 
         }
@@ -214,8 +214,8 @@ define(function (require) {
         );
 
         var list = createDatasource(
-            weekFirstDay,
-            weekLastDay,
+            weekFirstDate,
+            weekLastDate,
             normalizeDate(me.get('today')),
             values
         );
@@ -410,8 +410,8 @@ define(function (require) {
         var date = instance.get('date');
 
         date = instance.option('mode') === MODE_WEEK
-             ? weekOffset(date, offset)
-             : monthOffset(date, offset);
+             ? offsetWeek(date, offset)
+             : offsetMonth(date, offset);
 
         instance.set({
             date: date,
