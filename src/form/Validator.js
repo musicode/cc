@@ -91,9 +91,6 @@ define(function (require, exports, module) {
      *
      * @property {number=} options.scrollOffset 使用 autoScroll 时，为了避免顶部贴边，最好加上一些间距
      *
-     * @property {string=} options.successClass 验证通过的 className
-     *
-     * @property {string=} options.errorClass 验证失败的 className
      * @property {string=} options.errorSelector 显示错误文本的元素选择器，如 .error
      * @property {string=} options.errorTemplate 错误模板
      *
@@ -149,14 +146,17 @@ define(function (require, exports, module) {
 
                 if (groupElement.length === 1) {
 
-                    var className = [
-                        me.option('successClass'),
-                        me.option('errorClass')
-                    ].join(' ');
+                    var index = groupElement.find('[name]').index(target);
+                    var list = groupElement.find(me.option('errorSelector'));
 
-                    className = $.trim(className);
-                    if (className) {
-                        groupElement.removeClass(className);
+                    if (list.length >= index) {
+                        me.execute(
+                            'hideErrorAnimation',
+                            {
+                                errorElement: list.eq(index),
+                                fieldElement: target
+                            }
+                        );
                     }
 
                 }
@@ -168,22 +168,10 @@ define(function (require, exports, module) {
             mainElement.on(
                 'focusout' + namespace,
                 function (e) {
-
-                    var target = $(e.target);
-
-                    var name = target.prop('name');
-                    if (!name) {
-                        // 便于封装组件
-                        target = target.find('[name]');
-                        if (target.length === 1) {
-                            name = target.prop('name');
-                        }
-                    }
-
+                    var name = e.target.name;
                     if (name) {
                         me.validate(name);
                     }
-
                 }
             );
         }
@@ -487,6 +475,7 @@ define(function (require, exports, module) {
 
                 var validateItem = {
                     name: name,
+                    value: value,
                     element: fieldElement,
                     error: failError
                 };
@@ -785,9 +774,6 @@ define(function (require, exports, module) {
      */
     function refreshGroup(instance, groupElement, validateResult) {
 
-        var successClass = instance.option('successClass');
-        var errorClass = instance.option('errorClass');
-
         var errorTemplate = instance.option('errorTemplate');
 
         var errorSelector = instance.option('errorSelector');
@@ -815,14 +801,6 @@ define(function (require, exports, module) {
                 }
 
                 if (error) {
-
-                    if (successClass) {
-                        groupElement.removeClass(successClass);
-                    }
-                    if (errorClass) {
-                        groupElement.addClass(errorClass);
-                    }
-
                     if (errorElement) {
 
                         var html = instance.execute(
@@ -843,17 +821,11 @@ define(function (require, exports, module) {
                                 errorElement: errorElement,
                                 fieldElement: item.element
                             }
-                        )
+                        );
 
                     }
                 }
                 else {
-                    if (successClass) {
-                        groupElement.addClass(successClass);
-                    }
-                    if (errorClass) {
-                        groupElement.removeClass(errorClass);
-                    }
                     if (errorElement) {
                         instance.execute(
                             'hideErrorAnimation',
