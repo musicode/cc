@@ -262,7 +262,6 @@ define(function (require, exports, module) {
 
                     break;
                 case 0:
-                    me.error('value is not found by valueAttribute.');
                     break;
                 default:
                     me.error('value repeated.');

@@ -60,6 +60,7 @@ define(function (require, exports) {
         var input = new Input({
             mainElement: inputElement,
             shortcut: me.option('shortcut'),
+            value: me.option('value'),
             propertyChange: {
                 value: function (value) {
                     me.set('value', value);
@@ -72,6 +73,10 @@ define(function (require, exports) {
             native: inputElement,
             input: input,
             placeholder: placeholder
+        });
+
+        me.set({
+            name: me.option('name')
         });
 
     };
@@ -96,8 +101,13 @@ define(function (require, exports) {
         },
 
         value: function (value) {
-            this.inner('input').set('value', value);
+
+            var input = this.inner('input');
+            input.set('value', value);
+            input.sync();
+
             this.inner('placeholder').render();
+
         },
 
         placeholder: function (placeholder) {

@@ -7,34 +7,26 @@ define(function (require, exports, module) {
     'use strict';
 
     var lpad = require('./lpad');
-    var simplifyDate = require('./simplifyDate');
+    var simplifyTime = require('./simplifyTime');
 
-    return function (date, options) {
+    return function (date, hasSecond) {
 
-        var hour = lpad(date.getHours());
-        var minute = lpad(date.getMinutes());
-        var second = lpad(date.getSeconds());
+        date = simplifyTime(date);
 
-        var list = [ ];
-
-        if (!options) {
-            options = {
-                hour: true,
-                minute: true
-            };
-        }
-
-        if (options.hour) {
-            list.push(hour);
-            if (options.minute) {
-                list.push(minute);
-                if (options.second) {
-                    list.push(second);
-                }
+        if (date) {
+            var list = [
+                lpad(date.hour),
+                lpad(date.minute)
+            ];
+            if (hasSecond) {
+                list.push(
+                    lpad(date.second)
+                );
             }
+            return list.join(':');
         }
 
-        return list.length > 1 ? list.join(':') : '';
+        return '';
 
     };
 

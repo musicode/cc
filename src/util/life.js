@@ -747,17 +747,20 @@ context.execute('ondebug', args);
                 mainElement.remove();
             }
 
-            delete instances[ instance.guid ];
+            nextTick(function () {
+                delete instances[ instance.guid ];
 
-            instance.properties =
-            instance.options =
-            instance.changes =
-            instance.states =
-            instance.inners =
-            instance.guid =
-            instance.$ = null;
+                instance.properties =
+                instance.options =
+                instance.changes =
+                instance.states =
+                instance.inners =
+                instance.guid =
+                instance.$ = null;
+            });
 
         };
+
 
         instances[ instance.guid = guid() ] = instance;
 
@@ -775,6 +778,11 @@ context.execute('ondebug', args);
 
         // 用 jQuery 实现事件系统
         instance.$ = $({ });
+
+        instance
+            .once('afterinit', function () {
+                instance.state('inited', true);
+            });
 
         instance.init();
 

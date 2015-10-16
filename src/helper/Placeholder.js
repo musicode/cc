@@ -66,7 +66,8 @@ define(function (require, exports, module) {
         me.initStruct();
 
         me.inner({
-            proxy: me.option('nativeFirst') && detectionUtil.supportPlaceholder()
+            proxy: me.option('nativeFirst')
+                && detectionUtil.supportPlaceholder()
                  ? nativeProxy
                  : fakeProxy
         });
@@ -250,6 +251,13 @@ define(function (require, exports, module) {
             instance.inner('label').html(
                 instance.get('value')
             );
+
+            if ($.trim(inputElement.val())) {
+                instance.hide();
+            }
+            else {
+                instance.show();
+            }
 
         },
         dispose: function (instance) {
