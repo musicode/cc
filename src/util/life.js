@@ -779,11 +779,6 @@ context.execute('ondebug', args);
         // 用 jQuery 实现事件系统
         instance.$ = $({ });
 
-        instance
-            .once('afterinit', function () {
-                instance.state('inited', true);
-            });
-
         instance.init();
 
         return instance;
