@@ -54,7 +54,7 @@ define(function (require, exports, module) {
     exports.findNative = function (instance, selector) {
         var nativeElement = instance.option('mainElement').find(selector);
         if (nativeElement.length !== 1) {
-            instance.error('form/' + instance.type + ' 必须包含一个 ' + selector + '.');
+            instance.error('form/' + instance.type + ' 必须包含一个 [' + selector + '].');
         }
         return nativeElement;
     };
