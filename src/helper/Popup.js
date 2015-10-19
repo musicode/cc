@@ -107,10 +107,28 @@ define(function (require, exports, module) {
                     endDelay: curry(showLayerTrigger, 'endDelay'),
                     handler: curry(showLayerTrigger, 'handler'),
                     beforeHandler: function (e) {
-                        me.inner({
-                            trigger: getTriggerElement(me, e),
-                            layer: getLayerElement(me, e)
-                        });
+
+                        var action = function () {
+                            me.inner({
+                                trigger: getTriggerElement(me, e),
+                                layer: getLayerElement(me, e)
+                            });
+                        };
+
+                        if (me.is('opened')) {
+
+                            var promise = $.Deferred();
+                            promise.then(action);
+
+                            me.inner(HIDE_PROMISE_KEY, promise);
+
+                            return promise;
+
+                        }
+                        else {
+                            action();
+                        }
+
                     }
                 };
 
@@ -340,6 +358,7 @@ define(function (require, exports, module) {
     function createShowHandler(instance, before) {
         return function (e) {
 
+
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {
                     return;
@@ -369,6 +388,12 @@ define(function (require, exports, module) {
             }
 
             instance.close(e);
+
+            var promise = instance.inner(HIDE_PROMISE_KEY);
+            if (promise) {
+                instance.sync();
+                promise.resolve();
+            }
 
         };
     }
@@ -492,6 +517,7 @@ define(function (require, exports, module) {
 
     var POPUP_KEY = '__prev_popup__';
     var TRIGGER_ELEMENT_KEY = '__trigger_element__';
+    var HIDE_PROMISE_KEY = '__hide_promise__';
 
     var enterType = triggerUtil.enter.type;
     var leaveType = triggerUtil.leave.type;

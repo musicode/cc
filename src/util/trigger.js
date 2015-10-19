@@ -24,56 +24,67 @@ define(function (require, exports, module) {
                 options.handler.call(e.currentTarget, e);
             };
 
+            var action = function () {
+
+                if (delay > 0 && startDelay && endDelay) {
+
+                    var startTimer = function () {
+
+                        options[ delayTimer ] = setTimeout(
+                            function () {
+                                fn(delayTimer);
+                            },
+                            delay
+                        );
+
+                    };
+
+                    var clearTimer = function () {
+
+                        clearTimeout(options[ delayTimer ]);
+
+                        endDelay(fn, options);
+
+                        options[ delayTimer ] = null;
+
+                    };
+
+                    var fn = function (value) {
+
+                        if (options[ delayTimer ]) {
+                            clearTimer();
+                        }
+
+                        if (delayTimer === value) {
+                            done();
+                        }
+
+                    };
+
+                    startDelay(fn, options);
+
+                    startTimer();
+
+                }
+                else {
+                    done();
+                }
+
+            };
+
             var beforeHandler = options.beforeHandler;
             if ($.isFunction(beforeHandler)) {
-                if (beforeHandler.call(e.currentTarget, e) === false) {
+                var result = beforeHandler.call(e.currentTarget, e);
+                if (result === false) {
+                    return;
+                }
+                else if (result && $.isFunction(result.then)) {
+                    result.then(action);
                     return;
                 }
             }
 
-            if (delay > 0 && startDelay && endDelay) {
-
-                var startTimer = function () {
-
-                    options[ delayTimer ] = setTimeout(
-                        function () {
-                            fn(delayTimer);
-                        },
-                        delay
-                    );
-
-                };
-
-                var clearTimer = function () {
-
-                    clearTimeout(options[ delayTimer ]);
-
-                    endDelay(fn, options);
-
-                    options[ delayTimer ] = null;
-
-                };
-
-                var fn = function (value) {
-
-                    if (options[ delayTimer ]) {
-                        clearTimer();
-                    }
-
-                    if (delayTimer === value) {
-                        done();
-                    }
-
-                };
-
-                startDelay(fn, options);
-
-                startTimer();
-
-            }
-            else {
-                done();
-            }
+            action();
 
         };
 
