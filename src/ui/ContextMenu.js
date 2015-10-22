@@ -122,7 +122,7 @@ define(function (require, exports, module) {
                 event.type = type;
             }
 
-            me.emit(event, data.data);
+            me.emit(event, data.data, true);
 
         });
 

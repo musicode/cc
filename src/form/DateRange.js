@@ -116,18 +116,10 @@ define(function (require, exports, module) {
             }
         });
 
-        var dispatchEvent = function (e, data) {
-            if (data && data.event) {
-                me.emit(e, data);
-            }
-        };
-
         popup
-        .before('open', dispatchEvent)
-        .after('open', dispatchEvent)
-        .before('close', dispatchEvent)
-        .after('close', dispatchEvent);
-
+        .on('dispatch', function (e, data) {
+            me.emit(data.event, data.data, true);
+        });
 
         me
         .before('close', function (e, data) {

@@ -157,14 +157,35 @@ define(function (require, exports, module) {
 
         var namespace = me.namespace();
 
-        var dispatchEvent = function (e, type, data) {
-            if (data && data.event) {
-                e.type = type;
-                me.emit(e, data);
-            }
-        };
-
         popup
+        .on('dispatch', function (e, data) {
+
+            var type;
+            var event = data.event;
+
+            switch (event.type) {
+                case 'beforeopen':
+                    return;
+                    break;
+                case 'afteropen':
+                    type = 'aftershow';
+                    break;
+                case 'beforeclose':
+                    type = 'beforehide';
+                    break;
+                case 'afterclose':
+                    type = 'afterhide';
+                    window.off(namespace);
+                    break;
+            }
+
+            if (type) {
+                event.type = type;
+            }
+
+            me.emit(event, data.data, true);
+
+        })
         .before('open', function (e, data) {
 
             var event = data && data.event;
@@ -257,7 +278,8 @@ define(function (require, exports, module) {
 
             var updateTooltip = function () {
 
-                dispatchEvent(e, 'beforeshow', data);
+                e.type = 'beforeshow';
+                me.emit(e, data, true);
 
                 if (e.isDefaultPrevented()) {
                     return;
@@ -307,16 +329,6 @@ define(function (require, exports, module) {
             }
 
 
-        })
-        .after('open', function (e, data) {
-            dispatchEvent(e, 'aftershow', data);
-        })
-        .before('hide', function (e, data) {
-            dispatchEvent(e, 'beforehide', data);
-        })
-        .after('close', function (e, data) {
-            window.off(namespace);
-            dispatchEvent(e, 'afterhide', data);
         });
 
 

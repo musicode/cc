@@ -126,7 +126,7 @@ define(function (require, exports, module) {
 
             }
 
-            me.emit(data.event, data.data);
+            me.emit(data.event, data.data, true);
 
         });
 

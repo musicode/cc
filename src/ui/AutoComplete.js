@@ -220,52 +220,43 @@ define(function (require, exports, module) {
         });
 
 
-        var dispatchEvent = function (e, data) {
-            if (data && data.event) {
-                me.emit(e, data);
-            }
-        };
-
         popup
-        .before('open', dispatchEvent)
-        .after('open', dispatchEvent)
-        .before('close', dispatchEvent)
-        .after('close', dispatchEvent);
+        .on('dispatch', function (e, data) {
+
+            var target = data.data.event.target;
+            var event = data.event;
+
+            switch (event.type) {
+
+                case 'beforeopen':
+                    // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
+                    if (contains(inputElement, target)) {
+                        suggest();
+                        return false;
+                    }
+                    break;
+
+                case 'beforeclose':
+                    // 点击输入框或 layer 不需要隐藏
+                    if (contains(inputElement, target)
+                        || contains(menuElement, target)
+                    ) {
+                        return false;
+                    }
+                    break;
+            }
+
+            me.emit(event, data.data, true);
+
+        });
 
         me
-        .before('open', function (e, data) {
-
-            var event = data && data.event;
-            if (event) {
-                var target = event.target;
-                // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
-                if (contains(inputElement, target)) {
-                    suggest();
-                    return false;
-                }
-            }
-
-        })
-        .after('open', function (e, data) {
+        .after('open', function () {
 
             iterator.set('maxIndex', iteratorData.length - 1);
 
         })
-        .before('close', function (e, data) {
-
-            var event = data && data.event;
-            if (event) {
-                var target = event.target;
-                // 点击输入框或 layer 不需要隐藏
-                if (contains(inputElement, target)
-                    || contains(menuElement, target)
-                ) {
-                    return false;
-                }
-            }
-
-        })
-        .after('close', function (e, data) {
+        .after('close', function () {
 
             iterator.stop();
             iterator.set('maxIndex', 0);

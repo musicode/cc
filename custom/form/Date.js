@@ -17,7 +17,7 @@ define(function (require, exports, module) {
 
         valueAttribute: 'data-value',
         parse: function (text) {
-            return new Date(text);
+            return new window.Date(text);
         },
 
         inputSelector: ':text',

@@ -6,11 +6,11 @@ define(function (require, exports, module) {
 
     Select.defaultOptions = {
 
-        buttonSelector: '> .btn',
+        buttonSelector: '> .btn-default',
         menuSelector: '> .dropdown-menu',
-        labelSelector: '> .btn span',
+        labelSelector: '> .btn-default span',
 
-        itemSelector: 'li > a',
+        itemSelector: 'li',
         itemActiveClass: 'active',
 
         textAttribute: 'data-text',

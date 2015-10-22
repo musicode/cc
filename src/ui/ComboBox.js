@@ -95,7 +95,7 @@ define(function (require, exports, module) {
         });
 
         popup.on('dispatch', function (e, data) {
-            me.emit(data.event, data.data);
+            me.emit(data.event, data.data, true);
         });
 
         var menuActiveClass = me.option('menuActiveClass');
@@ -131,7 +131,7 @@ define(function (require, exports, module) {
                 }
 
                 me.set('value', value);
-                me.close();
+                me.close(e);
 
                 e.type = 'select';
                 me.emit(e, true);
@@ -175,22 +175,28 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
+    proto._open = function (e) {
         if (this.is('opened')) {
             return false;
         }
+        return dispatchEvent(e);
     };
+
+    proto.open_ = dispatchEvent;
 
 
     proto.close = function () {
         this.state('opened', false);
     };
 
-    proto._close = function () {
+    proto._close = function (e) {
         if (!this.is('opened')) {
             return false;
         }
+        return dispatchEvent(e);
     };
+
+    proto.close_ = dispatchEvent;
 
 
     proto.dispose = function () {
@@ -300,6 +306,14 @@ define(function (require, exports, module) {
         }
 
     };
+
+    function dispatchEvent(e) {
+        if (e) {
+            return {
+                dispatch: true
+            };
+        }
+    }
 
 
     return ComboBox;

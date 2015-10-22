@@ -297,13 +297,17 @@ if (event.type !== 'dispatch') {
             context.execute(ontype + '_', args);
 
             if (dispatch && !event.isPropagationStopped()) {
-                me.emit(
+                var dispatchEvent = me.emit(
                     'dispatch',
                     {
                         event: event,
                         data: data
                     }
                 );
+                if (dispatchEvent.isPropagationStopped()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             }
 
             return event;
