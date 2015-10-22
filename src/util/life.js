@@ -251,9 +251,10 @@ define(function (require, exports, module) {
          *
          * @param {Event|string} event 事件对象或事件名称
          * @param {Object=} data 事件数据
+         * @param {boolean=} dispatch 组合使用时，是否需要被转发
          * @return {Event}
          */
-        emit: function (event, data) {
+        emit: function (event, data, dispatch) {
 
             var me = this;
             var context = me.option('context') || me;
@@ -265,9 +266,11 @@ define(function (require, exports, module) {
             if ($.isPlainObject(data)) {
                 args.push(data);
             }
+            else if (data === true && arguments.length === 2) {
+                dispatch = true;
+            }
 
             event.type = event.type.toLowerCase();
-
 
             /**
              * event handler 执行顺序如下：
@@ -280,7 +283,9 @@ define(function (require, exports, module) {
 
             var ontype = 'on' + event.type;
 
-context.execute('ondebug', args);
+if (event.type !== 'dispatch') {
+    context.execute('ondebug', args);
+}
 
             if (!event.isPropagationStopped()
                 && context.execute(ontype, args) === false
@@ -290,6 +295,16 @@ context.execute('ondebug', args);
             }
 
             context.execute(ontype + '_', args);
+
+            if (dispatch && !event.isPropagationStopped()) {
+                me.emit(
+                    'dispatch',
+                    {
+                        event: event,
+                        data: data
+                    }
+                );
+            }
 
             return event;
 
@@ -645,9 +660,11 @@ context.execute('ondebug', args);
             result.event = event;
         }
 
+
         event = instance.emit(
             createEvent(type + name),
-            result
+            result,
+            result && result.dispatch
         );
 
         if (event.isDefaultPrevented()) {

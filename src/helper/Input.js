@@ -93,42 +93,49 @@ define(function (require, exports, module) {
 
         var isLongPress;
 
-        var dispatchEvent = function (e, data) {
-            me.emit(e, data);
-        };
-
         var updateValue = function (value) {
-            if (value == null) {
+
+            var options = { };
+
+            if ($.type(value) !== 'string') {
                 value = mainElement.val();
+                options.from = 'dom';
             }
-            me.set('value', value);
+
+            me.set('value', value, options);
+
         };
 
 
-        keyboard
-        .on('keydown', dispatchEvent)
-        .on('keyup', dispatchEvent)
-        .before('longpress', function (e, data) {
-            isLongPress = true;
-            dispatchEvent(e, data);
-        })
-        .after('longpress', function (e, data) {
+        keyboard.on('dispatch', function (e, data) {
 
-            isLongPress = false;
+            switch (data.event.type) {
 
-            if (keyboardUtil.isCharKey(data.keyCode)
-                || keyboardUtil.isDeleteKey()
-            ) {
-                updateValue();
+                case 'beforelongpress':
+                    isLongPress = true;
+                    break;
+
+                case 'afterlongpress':
+                    isLongPress = false;
+                    if (keyboardUtil.isCharKey(data.keyCode)
+                        || keyboardUtil.isDeleteKey()
+                    ) {
+                        updateValue();
+                    }
+                    break;
+
             }
 
-            dispatchEvent(e, data);
+            me.emit(data.event, data.data);
 
         });
 
 
+        var namespace = me.namespace();
+
         mainElement
-        .on('input' + me.namespace(), function () {
+        .on('blur' + namespace, updateValue)
+        .on('input' + namespace, function () {
             if (!isLongPress || !me.option('silentOnLongPress')) {
                 updateValue();
             }
@@ -166,8 +173,10 @@ define(function (require, exports, module) {
     lifeUtil.extend(proto);
 
     Input.propertyUpdater = {
-        value: function (value) {
-            this.inner('main').val(value);
+        value: function (newValue, oldValue, changes) {
+            if (changes.value.from !== 'dom') {
+                this.inner('main').val(newValue);
+            }
         }
     };
 

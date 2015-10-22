@@ -276,9 +276,15 @@ define(function (require, exports, module) {
             return false;
         }
 
+        if (e) {
+            return {
+                dispatch: true
+            };
+        }
+
     };
 
-    proto.open_ = function () {
+    proto.open_ = function (e) {
 
         var me = this;
 
@@ -292,6 +298,12 @@ define(function (require, exports, module) {
             layerElement.data(data);
         }
 
+        if (e) {
+            return {
+                dispatch: true
+            };
+        }
+
     };
 
 
@@ -299,18 +311,28 @@ define(function (require, exports, module) {
         this.state('opened', false);
     };
 
-    proto._close = function () {
+    proto._close = function (e) {
         if (!this.is('opened')) {
             return false;
         }
+        if (e) {
+            return {
+                dispatch: true
+            };
+        }
     };
-    proto.close_ = function () {
+    proto.close_ = function (e) {
         var me = this;
         var layerElement = me.inner('layer');
         if (layerElement) {
             layerElement
                 .removeData(POPUP_KEY)
                 .removeData(TRIGGER_ELEMENT_KEY);
+        }
+        if (e) {
+            return {
+                dispatch: true
+            };
         }
     };
 

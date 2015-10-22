@@ -75,7 +75,7 @@ define(function (require, exports, module) {
                     if (page >= FIRST_PAGE) {
 
                         // 转成 number
-                        page = + page;
+                        page = toNumber(page);
 
                         me.set('page', page);
                         me.emit('select', { page: page });

@@ -94,17 +94,9 @@ define(function (require, exports, module) {
             }
         });
 
-        var dispatchEvent = function (e, data) {
-            if (data && data.event) {
-                me.emit(e, data);
-            }
-        };
-
-        popup
-        .before('open', dispatchEvent)
-        .after('open', dispatchEvent)
-        .before('close', dispatchEvent)
-        .after('close', dispatchEvent);
+        popup.on('dispatch', function (e, data) {
+            me.emit(data.event, data.data);
+        });
 
         var menuActiveClass = me.option('menuActiveClass');
         if (menuActiveClass) {
@@ -142,7 +134,7 @@ define(function (require, exports, module) {
                 me.close();
 
                 e.type = 'select';
-                me.emit(e);
+                me.emit(e, true);
 
             }
         );

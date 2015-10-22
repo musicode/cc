@@ -668,6 +668,7 @@ define(function (require, exports, module) {
      */
     Validator.pattern = {
         number: /^[\d.]*$/,
+        char: /^[\w\u2E80-\u9FFF]+$/,
         int: /^\d+$/,
         url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
         tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,

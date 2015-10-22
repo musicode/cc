@@ -105,7 +105,8 @@ define(function (require, exports, module) {
                         'beforelongpress',
                         {
                             keyCode: currentKeyCode
-                        }
+                        },
+                        true
                     );
                 }
                 pressCounter++;
@@ -119,7 +120,7 @@ define(function (require, exports, module) {
 
 
 
-            me.emit(e);
+            me.emit(e, true);
 
 
 
@@ -149,14 +150,15 @@ define(function (require, exports, module) {
                     'afterlongpress',
                     {
                         keyCode: e.keyCode
-                    }
+                    },
+                    true
                 );
             }
 
             pressCounter = 0;
             prevKeyCode = null;
 
-            me.emit(e);
+            me.emit(e, true);
 
         });
 

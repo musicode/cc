@@ -70,7 +70,7 @@ define(function (require, exports, module) {
      *                                         对于 Tooltip 来说，通常会配置 mainTemplate，而无需指定元素
      *
      * @property {string=} options.placement 提示元素出现的位置
-     *                                       可选值包括 left right top bottom topLeft topRight bottomLeft bottomRight auto
+     *                                       可选值包括 left right top bottom auto
      *                                       可组合使用 如 'bottom,auto'，表示先尝试 bottom，不行就 auto
      *
      * @property {string=} options.maxWidth 提示元素的最大宽度，优先从元素读取 maxWidthAttribute
@@ -97,10 +97,6 @@ define(function (require, exports, module) {
      * @property {Object=} options.rightClass 设置右侧 class
      * @property {Object=} options.bottomClass 设置下侧 class
      * @property {Object=} options.leftClass 设置左侧 class
-     * @property {Object=} options.topLeftClass 设置左上侧 class
-     * @property {Object=} options.topRightClass 设置右上侧 class
-     * @property {Object=} options.bottomLeftClass 设置左下侧 class
-     * @property {Object=} options.bottomRightClass 设置右下侧 class
      *
      * @property {Object=} options.topOffsetX 设置上侧偏移量
      * @property {Object=} options.topOffsetY 设置上侧偏移量
@@ -110,14 +106,6 @@ define(function (require, exports, module) {
      * @property {Object=} options.bottomOffsetY 设置下侧偏移量
      * @property {Object=} options.leftOffsetX 设置左侧偏移量
      * @property {Object=} options.leftOffsetY 设置左侧偏移量
-     * @property {Object=} options.topLeftOffsetX 设置左上侧偏移量
-     * @property {Object=} options.topLeftOffsetY 设置左上侧偏移量
-     * @property {Object=} options.topRightOffsetX 设置右上侧偏移量
-     * @property {Object=} options.topRightOffsetY 设置右上侧偏移量
-     * @property {Object=} options.bottomLeftOffsetX 设置左下侧偏移量
-     * @property {Object=} options.bottomLeftOffsetY 设置左下侧偏移量
-     * @property {Object=} options.bottomRightOffsetX 设置右下侧偏移量
-     * @property {Object=} options.bottomRightOffsetY 设置右下侧偏移量
      *
      */
     function Tooltip(options) {
@@ -364,9 +352,7 @@ define(function (require, exports, module) {
     /**
      * 定位
      *
-     * @param {string} placement 方位，可选值有 topLeft     top    topRight
-     *                                        left               right
-     *                                        bottomLeft bottom  bottomRight
+     * @param {string} placement 方位，可选值有 top right bottom left
      *
      */
     proto.pin = function (placement) {
@@ -537,37 +523,8 @@ define(function (require, exports, module) {
                 options.offsetX *= -1;
                 options.offsetY = 0;
             }
-        },
-
-        bottomLeft: {
-            name: 'bottomLeft',
-            test: [ testBottom, testLeft ],
-            gap: function (options) {
-                options.offsetX *= -1;
-            }
-        },
-
-        bottomRight: {
-            name: 'bottomRight',
-            test: [ testBottom, testRight ]
-        },
-
-        topLeft: {
-            name: 'topLeft',
-            test: [ testTop, testLeft ],
-            gap: function (options) {
-                options.offsetX *= -1;
-                options.offsetY *= -1;
-            }
-        },
-
-        topRight: {
-            name: 'topRight',
-            test: [ testTop, testRight ],
-            gap: function (options) {
-                options.offsetY *= -1;
-            }
         }
+
     };
 
     /**

@@ -98,26 +98,32 @@ define(function (require, exports, module) {
             }
         });
 
+        popup.on('dispatch', function (e, data) {
 
-        var dispatchEvent = function (e, type, data) {
-            if (data && data.event) {
-                e.type = type;
-                me.emit(e, data);
+            var type;
+            var event = data.event;
+
+            switch (event.type) {
+                case 'beforeopen':
+                    type = 'beforeshow';
+                    break;
+                case 'afteropen':
+                    type = 'aftershow';
+                    break;
+                case 'beforeclose':
+                    type = 'beforehide';
+                    break;
+                case 'afterclose':
+                    type = 'afterhide';
+                    break
             }
-        };
 
-        popup
-        .before('open', function (e, data) {
-            dispatchEvent(e, 'beforeshow', data);
-        })
-        .after('open', function (e, data) {
-            dispatchEvent(e, 'aftershow', data);
-        })
-        .before('close', function (e, data) {
-            dispatchEvent(e, 'beforehide', data);
-        })
-        .after('close', function (e, data) {
-            dispatchEvent(e, 'afterhide', data);
+            if (type) {
+                event.type = type;
+            }
+
+            me.emit(event, data.data);
+
         });
 
         me.inner({
@@ -129,13 +135,13 @@ define(function (require, exports, module) {
         .on('contextmenu' + namespace, function (e) {
 
             if (activeMenu) {
-                activeMenu.hide();
+                activeMenu.hide(e);
             }
 
             contextEvent = e;
 
             activeMenu = me;
-            activeMenu.show();
+            activeMenu.show(e);
 
             var pos = eventPage(e);
 
@@ -160,21 +166,25 @@ define(function (require, exports, module) {
         this.state('hidden', false);
     };
 
-    proto._show = function () {
+    proto._show = function (e) {
         if (!this.is('hidden')) {
             return false;
         }
+        return dispatchEvent(e);
     };
+    proto.show_ = dispatchEvent;
 
     proto.hide = function () {
         this.state('hidden', true);
     };
 
-    proto._hide = function () {
+    proto._hide = function (e) {
         if (this.is('hidden')) {
             return false;
         }
+        return dispatchEvent(e);
     };
+    proto.hide_ = dispatchEvent;
 
     proto.dispose = function () {
 
@@ -210,6 +220,14 @@ define(function (require, exports, module) {
     };
 
     var activeMenu;
+
+    function dispatchEvent(e) {
+        if (e) {
+            return {
+                dispatch: true
+            };
+        }
+    }
 
 
     return ContextMenu;
