@@ -182,18 +182,9 @@ define(function (require, exports, module) {
             var vHeight = viewportHeight();
 
             if (isFixed) {
-
-                x -= pageScrollLeft();
-                y -= pageScrollTop();
-
-                width = containerElement
-                    ? containerElement.innerWidth()
-                    : viewportWidth();
-
-                height = containerElement
-                    ? containerElement.innerHeight()
-                    : vHeight;
-
+                var byViewport = !containerElement || containerElement.is('body');
+                width = byViewport ? viewportWidth() : containerElement.innerWidth();
+                height = byViewport ? vHeight : containerElement.innerHeight();
             }
             else {
                 width = rectElement.innerWidth();
@@ -208,8 +199,6 @@ define(function (require, exports, module) {
 
             width = Math.max(0, width - mainElement.outerWidth(true));
             height = Math.max(0, height - mainElement.outerHeight(true));
-
-console.log(x,y,width,height)
 
             var axis = me.option('axis');
 
