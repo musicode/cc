@@ -11,10 +11,7 @@ define(function (require, exports, module) {
         validateOnBlur: false,
         scrollOffset: -100,
         groupSelector: '.form-group',
-        fieldSelector: '[name]',
-        successClass: 'has-success',
-        errorClass: 'has-error',
-        errorSelector: '.error',
+        errorAttribute: 'data-error-for',
         errorTemplate: '${error}',
         showErrorAnimation: function (options) {
             var errorElement = options.errorElement;

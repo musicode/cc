@@ -1,9 +1,10 @@
 /**
- * @file 验证器
+ * @file 验证器（DOM 无关）
  * @author musicode
  */
 define(function (require, exports, module) {
 
+    'use strict';
 
     /**
      * 内置常用规则
@@ -17,69 +18,60 @@ define(function (require, exports, module) {
             if (data.value) {
                 return true;
             }
-            else if (data.rules.required) {
+            else if (rules.required) {
                 return false;
             }
         },
 
-        pattern: function (data) {
-            var pattern = data.rules.pattern;
+        pattern: function (data, rules) {
+            var pattern = rules.pattern;
+            if ($.type(pattern) === 'string') {
+                pattern = buildInPatterns[ pattern ];
+            }
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
             }
         },
 
-        minlength: function (data) {
-            var minlength = data.rules.minlength;
-            if ($.isNumeric(minlength)) {
-                return data.value.length >= + minlength;
+        minlength: function (data, rules) {
+            if ($.isNumeric(rules.minlength)) {
+                return data.value.length >= + rules.minlength;
             }
         },
 
-        maxlength: function (data) {
-            var maxlength = data.rules.maxlength;
-            if ($.isNumeric(maxlength)) {
-                return data.value.length <= + maxlength;
+        maxlength: function (data, rules) {
+            if ($.isNumeric(rules.maxlength)) {
+                return data.value.length <= + rules.maxlength;
             }
         },
 
-        min: function (data) {
-            var min = data.rules.min;
-            if ($.isNumeric(min)) {
-                return data.value >= + min;
+        min: function (data, rules) {
+            if ($.isNumeric(rules.min)) {
+                return data.value >= + rules.min;
             }
         },
 
-        max: function (data) {
-            var max = data.rules.max;
-            if ($.isNumeric(max)) {
-                return data.value <= + max;
+        max: function (data, rules) {
+            if ($.isNumeric(rules.max)) {
+                return data.value <= + rules.max;
             }
         },
 
-        step: function (data) {
-            var min = data.rules.min;
-            var step = data.rules.step;
+        step: function (data, rules) {
+            var min = rules.min;
+            var step = rules.step;
             if ($.isNumeric(min) && $.isNumeric(step)) {
                 return (data.value - min) % step === 0;
             }
         },
 
-        /**
-         * 是否和另一个字段相同，确认密码常用，如
-         * <input type="password" name="password" required />
-         * <input type="password" name="password_confirm" equals="password" />
-         *
-         * @param {Object} data
-         * @return {?boolean}
-         */
-        equals: function (data) {
-            var equals = data.rules.equals;
+        equals: function (data, rules, all) {
+            var equals = rules.equals;
             if (equals) {
-                var target = this.inner('main').find('[name="' + equals + '"]');
-                return data.value === $.trim(target.val());
+                return data.value === all[ equals ].value;
             }
         }
+
     };
 
     /**
@@ -90,7 +82,9 @@ define(function (require, exports, module) {
      */
     var buildInPatterns = {
         int: /^\d+$/,
-        number: /^[\d.]*$/,
+        number: /^-?[\d.]*$/,
+        positive: /^[\d.]*$/,
+        negative: /^-[\d.]*$/,
         char: /^[\w\u2E80-\u9FFF]+$/,
         url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
         tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
@@ -99,13 +93,27 @@ define(function (require, exports, module) {
     };
 
 
+    function resolvePromises(promises) {
+
+        var deferred = $.Deferred();
+
+        $.when
+            .apply($, promises)
+            .done(function () {
+                deferred.resolve(arguments);
+            });
+
+        return deferred;
+
+    }
+
     /**
      *
      * @param {Object} data 待验证的数据，格式如下：
      *                      {
      *                          key1: {
-     *                              value1: '',
-     *                              extra // 扩展数据，比如 DOM 元素
+     *                              value: '', // value 需要经过 trim
+     *                              extra      // 扩展数据，比如 DOM 元素
      *                          }
      *                      }
      *
@@ -113,100 +121,159 @@ define(function (require, exports, module) {
      *                       {
      *                           key1: {
      *                               before: function () {
-     *                                   // 返回 false 可拦截验证
+     *                                  // 返回 false 可拦截 key1 的后续验证
      *                               },
      *                               after: function () {
-     *
+     *                                  // 验证完做一些处理
      *                               },
+     *                               // 如果对顺序有要求，可配置 sequence
+     *                               // 否则取决于遍历 rules 对象的顺序
+     *                               sequence: [ 'required', 'pattern', 'customRule' ],
      *                               rules: {
      *                                   required: true,
-     *                                   customRule1: function () {
+     *                                   pattern: 'buildIn' or /xx/,
+     *                                   customRule: function () {
      *                                      // 返回值：
-     *                                      // true -> 验证通过
-     *                                      // false -> 验证失败
-     *                                      // promise -> 异步校验
-     *                                      // 其他 -> 不做校验
+     *                                      // true -> 同步验证通过
+     *                                      // false -> 同步验证失败
+     *                                      // promise -> 异步校验，异步值和同步返回值作用相同
+     *                                      // 其他 -> 跳过
      *                                   }
      *                               },
-     *                               successes: {
-     *
-     *                               },
      *                               errors: {
-     *                                   required: '请输入',
-     *                                   customError1: '写错啦'
-     *                               },
+     *                                   required: 'required error',
+     *                                   pattern: 'pattern error',
+     *                                   customRule: 'customRule error'
+     *                               }
      *                           }
      *                       }
      */
     exports.validate = function (data, rules) {
 
-        var result = [ ];
-
-        var failRule;
-        var failError;
+        var list = [ ];
+        var promises = [ ];
 
         $.each(
             data,
             function (key, item) {
 
-                $.each(
-                    rules,
-                    function (index, rule) {
+                var rule = rules[ key ];
 
-                        var result = validateItem(item, rule);
+                if (!rule) {
+                    return;
+                }
 
-                        if (result === false) {
-                            failRule = rule;
-                            return false;
-                        }
-                        // 如果不是强制字段，为空时避免后续属性的检测
-                        else if (rule.name === 'required') {
-                            if (item.value == null || item.value === '') {
-                                return false;
-                            }
-                        }
+                if ($.isFunction(rule.before)
+                    && rule.before() === false
+                ) {
+                    return;
+                }
 
+
+                var failedRule;
+
+                var promiseNames = [ ];
+                var promiseValues = [ ];
+
+                var validate = function (name, value) {
+                    if (!$.isFunction(value)) {
+                        value = buildInRules[ name ];
                     }
-                );
+                    if ($.isFunction(value)) {
+                        var validateComplete = function (result) {
+                            if (result === false) {
+                                failedRule = name;
+                            }
+                            else if (result && $.isFunction(result.then)) {
+                                result.then(validateComplete);
+                                promiseNames.push(name);
+                                promiseValues.push(result);
+                            }
+                            return result;
+                        };
+                        return validateComplete(
+                            value(item, rule.rules, data)
+                        );
+                    }
+                };
+
+                if ($.isArray(rule.sequence)) {
+                    $.each(
+                        rule.sequence,
+                        function (index, name) {
+                            return validate(name, rule.rules[name]);
+                        }
+                    );
+                }
+                else {
+                    $.each(
+                        rule.rules,
+                        function (name, value) {
+                            return validate(name, value);
+                        }
+                    );
+                }
+
+                var result = $.extend({ }, item);
+
+                var extend = function () {
+
+                    if (failedRule) {
+                        result.error = rule.errors[ failedRule ];
+                    }
+
+                    if ($.isFunction(rule.after)) {
+                        rule.after(result);
+                    }
+
+                };
+
+                var index;
+
+                if (promiseValues.length) {
+
+                    var promise =
+
+                    resolvePromises(promiseValues)
+                        .then(function (values) {
+
+                            $.each(
+                                values,
+                                function (index, value) {
+                                    if (value === false) {
+                                        failedRule = promiseNames[ index ];
+                                        return false;
+                                    }
+                                }
+                            );
+
+                            extend();
+                            list[ index - 1 ] = result;
+
+                        });
+
+                    index = list.push(promise);
+
+                    promises.push(promise);
+
+                }
+                else {
+                    extend();
+                    index = list.push(result);
+                }
 
             }
         );
 
-
-        if (failRule) {
-
-            var errors = fieldConfig.errors;
-            if (errors) {
-                failError = errors[ failRule.name ];
-            }
-
-        }
-        else if ($.isFunction(fieldConfig.custom)) {
-
-            var deferred = $.Deferred();
-
-            var customResult = me.execute(
-                fieldConfig.custom,
-                [
-                    fieldElement,
-                    function (error) {
-                        deferred.resolve(error);
-                    }
-                ]
-            );
-
-            failError = (customResult == null || customResult.then)
-                ? deferred
-                : customResult;
-
+        if (promises.length) {
+            return resolvePromises(promises)
+                .then(function () {
+                    return list;
+                });
         }
 
-        var validateItem = {
-            name: name,
-            value: value,
-            element: fieldElement,
-            error: failError
-        };
+        return list;
+
 
     };
 

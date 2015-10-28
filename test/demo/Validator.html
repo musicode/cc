@@ -12,29 +12,29 @@
     <div class="form-group">
         <div class="form-label">手机号：</div>
         <div class="form-controls">
-            <input type="text" name="mobile" class="form-text" required="required" max="10" min="1" />
-            <span class="error"></span>
+            <input type="text" name="mobile" class="form-text" />
+            <span class="error" data-error-for="mobile"></span>
         </div>
     </div>
     <div class="form-group">
         <div class="form-label">邮箱：</div>
         <div class="form-controls">
-            <input type="email" class="form-text" name="email" required />
-            <span class="error"></span>
+            <input type="email" class="form-text" name="email" />
+            <span class="error" data-error-for="email"></span>
         </div>
     </div>
     <div class="form-group">
         <div class="form-label">同步自定义：</div>
         <div class="form-controls">
-            <input type="text" class="form-text" name="sync" required />
-            <span class="error"></span>
+            <input type="text" class="form-text" name="sync" />
+            <span class="error" data-error-for="sync"></span>
         </div>
     </div>
     <div class="form-group">
         <div class="form-label">异步自定义：</div>
         <div class="form-controls">
-            <input type="text" class="form-text" name="async" required />
-            <span class="error"></span>
+            <input type="text" class="form-text" name="async" />
+            <span class="error" data-error-for="async"></span>
         </div>
     </div>
     <div class="form-action">
@@ -58,44 +58,73 @@
                 validateOnBlur: true,
                 fields: {
                     mobile: {
-                        type: 'mobile',
+                        rules: {
+                            required: true,
+                            max: 10,
+                            min: 5,
+                            pattern: 'mobile'
+                        },
                         errors: {
                             required: '请输入用户名',
-                            max: '最大为10',
-                            min: '最小为 :attr',
+                            max: '最大为 ${rule}',
+                            min: '最小为 ${rule}',
                             pattern: '手机号错误'
                         }
                     },
                     email: {
+                        rules: {
+                            required: true,
+                            pattern: 'email'
+                        },
                         errors: {
                             required: '请输入邮箱',
                             pattern: '邮箱错误'
                         }
                     },
                     sync: {
-                        errors: {
-                            required: '请输入xx'
+                        rules: {
+                            required: true,
+                            custom: function (data, rules) {
+                                return false;
+                            }
                         },
-                        custom: function (value) {
-                            return '同步错误';
+                        errors: {
+                            required: '请输入xx',
+                            custom: '同步自定义错误'
                         }
                     },
                     async: {
-                        errors: {
-                            required: '请输入xx'
+                        before: function () {
+                            console.log('-- async before');
                         },
-                        custom: function (value, callback) {
-                            setTimeout(
-                                function () {
-                                    callback('异步错误');
-                                },
-                                2000
-                            );
+                        after: function () {
+                            console.log('-- async after');
+                        },
+                        rules: {
+                            required: true,
+                            custom: function (data, rules) {
+
+                                var deferred = $.Deferred();
+
+                                setTimeout(
+                                    function () {
+                                        deferred.resolve(false);
+                                    },
+                                    5000
+                                );
+
+                                return deferred;
+
+                            }
+                        },
+                        errors: {
+                            required: '请输入xx',
+                            custom: '异步自定义错误'
                         }
                     }
                 },
                 errorTemplate: '<i class="icon icon-times-circle"></i>&nbsp;${error}',
-                errorPlacement: function (options) {
+                showErrorAnimation: function (options) {
 
                     var fieldElement = options.fieldElement;
                     var errorElement = options.errorElement;
@@ -106,6 +135,7 @@
 
                     // 把 position 清空才能取到正确的宽度
                     errorElement.css({
+                        display: 'inline-block',
                         position: 'static',
                         width: 'auto'
                     });
