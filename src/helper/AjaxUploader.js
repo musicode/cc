@@ -417,10 +417,11 @@ define(function (require, exports, module) {
                     if (chunkInfo.uploaded < fileItem.file.size) {
 
                         // 分片上传成功
-                        uploader.emit('chunkuploadsuccess', data);
-
-                        chunkInfo.index++;
-                        uploader.upload();
+                        var event = uploader.emit('chunkuploadsuccess', data);
+                        if (!event.isDefaultPrevented()) {
+                            chunkInfo.index++;
+                            uploader.upload();
+                        }
 
                         return;
                     }

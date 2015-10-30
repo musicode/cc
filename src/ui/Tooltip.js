@@ -64,7 +64,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.triggerElement 需要工具提示的元素
-     * @property {string=} options.triggerSelector 如果传了选择器，表示为 triggerElement 的 triggerSelector 元素进行事件代理
+     * @property {string=} options.triggerSelector 如果传了选择器，可不传 triggerElement，转为使用事件代理
      *
      * @property {jQuery=} options.mainElement 提示浮层元素
      *                                         对于 Tooltip 来说，通常会配置 mainTemplate，而无需指定元素
@@ -122,12 +122,11 @@ define(function (require, exports, module) {
 
         me.initStruct();
 
-        var triggerElement = me.option('triggerElement');
         var mainElement = me.option('mainElement');
 
         var popup = new Popup({
             layerElement: mainElement,
-            triggerElement: triggerElement,
+            triggerElement: me.option('triggerElement'),
             triggerSelector: me.option('triggerSelector'),
             showLayerTrigger: me.option('showTrigger'),
             showLayerDelay: me.option('showDelay'),

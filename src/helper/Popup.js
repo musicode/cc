@@ -441,7 +441,7 @@ define(function (require, exports, module) {
      */
     function onTrigger(instance, config) {
         onElement(
-            instance.option('triggerElement'),
+            instance.option('triggerElement') || instanceUtil.body,
             config.type,
             config.handler,
             instance.option('triggerSelector')
@@ -457,7 +457,7 @@ define(function (require, exports, module) {
      */
     function offTrigger(instance, config) {
         offElement(
-            instance.option('triggerElement'),
+            instance.option('triggerElement') || instanceUtil.body,
             config.type,
             config.handler
         );

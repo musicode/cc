@@ -247,6 +247,18 @@ define(function (require, exports, module) {
         },
 
         /**
+         * DOM 事件代理
+         */
+        live: function (event, selector, handler) {
+            var me = this;
+            var mainElement = me.inner('main');
+            if (mainElement) {
+                mainElement.on(event + me.namespace(), selector, handler);
+            }
+            return me;
+        },
+
+        /**
          * 触发事件
          *
          * @param {Event|string} event 事件对象或事件名称
@@ -815,6 +827,11 @@ if (event.type !== 'dispatch') {
 
         instance.sync();
         instance.$.off();
+
+        var mainElement = instance.inner('main');
+        if (mainElement) {
+            mainElement.off();
+        }
 
     };
 
