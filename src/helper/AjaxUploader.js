@@ -344,6 +344,9 @@ define(function (require, exports, module) {
     function uploadChunk(uploader, fileItem) {
 
         var file = fileItem.nativeFile;
+        // 碰到过传了几个分片之后，file.size 变成 0 的情况
+        // 因此 fileSize 从最初的格式化对象中取比较保险
+        var fileSize = fileItem.file.size;
 
         var chunkInfo = fileItem.chunk;
         if (!chunkInfo) {
@@ -356,14 +359,14 @@ define(function (require, exports, module) {
         var chunkSize = uploader.option('chunkSize');
         var start = chunkSize * chunkIndex;
         var end = chunkSize * (chunkIndex + 1);
-        if (end > file.size) {
-            end = file.size;
+        if (end > fileSize) {
+            end = fileSize;
         }
 
         // 正在上传分片的大小
         chunkInfo.uploading = end - start;
 
-        var range = 'bytes ' + (start + 1) + '-' + end + '/' + file.size;
+        var range = 'bytes ' + (start + 1) + '-' + end + '/' + fileSize;
 
         var xhr = fileItem.xhr;
 
