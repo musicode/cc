@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     require('./form/Box');
     require('./form/BoxGroup');
     require('./form/Date');
+    require('./form/DateRange');
     require('./form/Number');
     require('./form/Select');
     require('./form/Text');
@@ -75,8 +76,6 @@ define(function (require, exports, module) {
     require('./function/lastDateInWeek');
     require('./function/offsetWeek');
 
-
-
     require('./helper/AjaxUploader');
     require('./helper/DOMIterator');
     require('./helper/Draggable');
@@ -131,6 +130,7 @@ define(function (require, exports, module) {
     require('./util/touch');
     require('./util/trigger');
     require('./util/url');
+    require('./util/validator');
     require('./util/visibility');
 
     require('./util/supload/supload');
