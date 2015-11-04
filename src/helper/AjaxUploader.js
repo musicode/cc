@@ -416,17 +416,16 @@ define(function (require, exports, module) {
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
 
-                    var uploaded = chunkInfo.uploaded;
-                    uploaded += chunkInfo.uploading;
-
-                    if (uploaded < fileItem.file.size) {
+                    if (chunkInfo.uploaded < fileItem.file.size) {
 
                         // 分片上传成功
                         var event = uploader.emit('chunkuploadsuccess', data);
                         if (!event.isDefaultPrevented()) {
                             chunkInfo.index++;
-                            chunkInfo.uploaded = uploaded;
-                            uploader.upload();
+                            chunkInfo.uploaded += chunkInfo.uploading;
+                            if (chunkInfo.uploaded < fileItem.file.size) {
+                                uploader.upload();
+                            }
                         }
 
                         return;
