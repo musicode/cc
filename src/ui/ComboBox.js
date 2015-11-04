@@ -71,7 +71,7 @@ define(function (require, exports, module) {
             showLayerDelay: me.option('showMenuDelay'),
             hideLayerTrigger: me.option('hideMenuTrigger'),
             hideLayerDelay: me.option('hideMenuDelay'),
-            showLayerAnimation: function (options) {
+            showLayerAnimation: function () {
                 me.execute(
                     'showMenuAnimation',
                     {
@@ -79,7 +79,7 @@ define(function (require, exports, module) {
                     }
                 );
             },
-            hideLayerAnimation: function (options) {
+            hideLayerAnimation: function () {
                 me.execute(
                     'hideMenuAnimation',
                     {
