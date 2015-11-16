@@ -310,6 +310,14 @@ define(function (require, exports, module) {
     AjaxUploader.ERROR_CANCEL = 0;
 
     /**
+     * 上传分片大小错误
+     *
+     * @const
+     * @type {number}
+     */
+    AjaxUploader.ERROR_CHUNK_SIZE = -1;
+
+    /**
      * 上传整个文件
      *
      * @inner
@@ -366,6 +374,18 @@ define(function (require, exports, module) {
 
         // 正在上传分片的大小
         chunkInfo.uploading = end - start;
+        if (chunkInfo.uploading <= 0) {
+            setTimeout(function () {
+                uploader.emit(
+                    'uploadError',
+                    {
+                        fileItem: fileItem,
+                        errorCode: AjaxUploader.ERROR_CHUNK_SIZE
+                    }
+                );
+            });
+            return;
+        }
 
         var range = 'bytes ' + (start + 1) + '-' + end + '/' + fileSize;
 
