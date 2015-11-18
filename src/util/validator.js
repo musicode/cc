@@ -163,9 +163,12 @@ define(function (require, exports, module) {
                     return;
                 }
 
+                var result = $.extend({ }, item);
+
                 if ($.isFunction(rule.before)
-                    && rule.before() === false
+                    && rule.before(data) === false
                 ) {
+                    list.push(result);
                     return;
                 }
 
@@ -214,8 +217,6 @@ define(function (require, exports, module) {
                     );
                 }
 
-                var result = $.extend({ }, item);
-
                 var extend = function () {
 
                     if (failedRule) {
@@ -259,7 +260,7 @@ define(function (require, exports, module) {
                 }
                 else {
                     extend();
-                    index = list.push(result);
+                    list.push(result);
                 }
 
             }
