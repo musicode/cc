@@ -193,22 +193,25 @@ define(function (require, exports, module) {
         init: function (instance) {
 
             var mainElement = instance.option('mainElement');
-            var inputElement = mainElement.find(
-                instance.option('inputSelector')
-            );
+            var inputSelector = instance.option('inputSelector');
+            var labelSelector = instance.option('labelSelector');
+
+            var inputElement = mainElement.find(inputSelector);
 
             instance.inner({
                 main: mainElement,
                 input: inputElement,
-                label: mainElement.find(
-                    instance.option('labelSelector')
-                )
+                label: mainElement.find(labelSelector)
             });
 
             inputUtil.init(inputElement);
 
-            inputElement
-                .on('input' + instance.namespace(), function () {
+            var namespace = instance.namespace();
+            mainElement
+                .on('click' + namespace, labelSelector, function () {
+                    inputElement.focus();
+                })
+                .on('input' + namespace, inputSelector, function () {
                     var hidden = $.trim(inputElement.val()).length > 0;
                     if (hidden !== instance.is('hidden')) {
                         // 为了触发 before 和 after 事件才调用实例方法
