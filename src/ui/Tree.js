@@ -24,7 +24,7 @@ define(function (require, exports, module) {
      * 3. 节点点击后的反应，比如展开收起
      * 4. 刷新子树
      *
-     * 需要注意的是，至少要在节点元素上加上 data-id，否则无法进行 DOM 查找
+     * 需要注意的是，至少要在节点元素上加上 data-id（可配置 idAttribute），否则无法进行 DOM 查找
      *
      * 节点元素指的是包含 文本和子树 的的元素，这点一定要注意，它对应着节点的数据结构：
      *
@@ -77,6 +77,8 @@ define(function (require, exports, module) {
      * @property {string} options.activeClass 节点选中状态时添加的 className
      * @property {string} options.expandedClass 节点展开状态时添加的 className
      * @property {string} options.collapsedClass 节点收起状态时添加的 className
+     *
+     * @property {string} options.idAttribute
      *
      * @property {string} options.nodeTemplate 节点模板
      * @property {Function} options.render 渲染模板
@@ -531,7 +533,7 @@ define(function (require, exports, module) {
      *
      * @inner
      * @param {Tree} instance
-     * @param {string} id
+     * @param {string|jQuery} id
      * @return {jQuery?}
      */
     function findNodeElement(instance, id) {
@@ -539,11 +541,32 @@ define(function (require, exports, module) {
         var mainElement = instance.inner('main');
 
         var nodeSelector = instance.option('nodeSelector');
-        var nodeElement = id.jquery
-                        ? id
-                        : mainElement.find('[data-id="' + id + '"]');
+        var nodeElement;
 
-        if (nodeElement.length === 1) {
+        if (id.jquery) {
+            nodeElement = id;
+        }
+        else {
+            var idAttribute = instance.idAttribute;
+
+            if (id) {
+                nodeElement = mainElement.find('[' + idAttribute + '="' + id + '"]');
+            }
+            else {
+                mainElement
+                    .find('[' + idAttribute + ']')
+                    .each(function () {
+                        var target = $(this);
+                        var value = target.attr(idAttribute);
+                        if (value === '') {
+                            nodeElement = target;
+                            return false;
+                        }
+                    });
+            }
+        }
+
+        if (nodeElement && nodeElement.length === 1) {
             nodeElement = nodeElement.closest(nodeSelector);
             if (nodeElement.length === 1) {
                 return nodeElement;

@@ -241,29 +241,48 @@ define(function (require, exports, module) {
         var text;
         var value = toString(me.get('value'), null);
 
-        if (value != null && value !== '') {
+        if (value != null) {
 
-            var itemElement = menuElement.find(
-                '[' + valueAttribute + '=' + value + ']'
-            );
+            var getText = function (element) {
+                text = element.attr(textAttribute);
+                if (text == null) {
+                    text = element.html();
+                }
+                return text;
+            };
 
-            switch (itemElement.length) {
-                case 1:
-                    if (itemActiveClass) {
-                        itemElement.addClass(itemActiveClass);
-                    }
+            if (value !== '') {
+                var itemElement = menuElement.find(
+                    '[' + valueAttribute + '=' + value + ']'
+                );
 
-                    text = itemElement.attr(textAttribute);
-                    if (text == null) {
-                        text = itemElement.html();
-                    }
+                switch (itemElement.length) {
+                    case 1:
+                        if (itemActiveClass) {
+                            itemElement.addClass(itemActiveClass);
+                        }
 
-                    break;
-                case 0:
-                    break;
-                default:
-                    me.error('value repeated.');
-                    break;
+                        text = getText(itemElement);
+
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        me.error('value repeated.');
+                        break;
+                }
+            }
+            else {
+                menuElement
+                    .find('[' + valueAttribute + ']')
+                    .each(function () {
+                        var target = $(this);
+                        var value = target.attr(valueAttribute);
+                        if (value === '') {
+                            text = getText(target);
+                            return false;
+                        }
+                    });
             }
 
         }
