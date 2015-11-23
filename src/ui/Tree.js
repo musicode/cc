@@ -547,9 +547,9 @@ define(function (require, exports, module) {
             nodeElement = id;
         }
         else {
-            var idAttribute = instance.idAttribute;
+            var idAttribute = instance.option('idAttribute');
 
-            if (id) {
+            if (id || id === 0) {
                 nodeElement = mainElement.find('[' + idAttribute + '="' + id + '"]');
             }
             else {
