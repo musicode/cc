@@ -437,7 +437,7 @@ if (event.type !== 'dispatch') {
 
             var renderElement;
 
-            if (!renderTemplate || !renderTemplate) {
+            if (!renderSelector || !renderTemplate) {
                 if (me.option('replace')) {
                     me.error('replace must be false if not configure renderSelector and renderTemplate.');
                 }
