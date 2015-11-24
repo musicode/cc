@@ -323,7 +323,7 @@ define(function (require, exports, module) {
                 return instance.execute('render', [data, tpl]);
             }
         });
-        me.once('aftersync', function () {
+        instance.once('aftersync', function () {
 
             calendar.option(
                 'propertyChange',
