@@ -15,32 +15,54 @@ define(function (require, exports, module) {
      * 表单验证通常包括 required, min, max 等
      * 为方便记忆，属性名称遵循 HTML5 标准，具体可参考 html5 input 元素属性
      *
-     *  required: 是否必填
-     *       max: 数字最大值
-     *       min: 数字最小值
-     *      step: 数字步进值
-     * maxlength: 字符串最大长度
-     * minlength: 字符串最小长度
-     *   pattern: 正则
+     *  required: 是否必填（boolean）
+     *       max: 数字最大值（number）
+     *       min: 数字最小值（number）
+     *      step: 数字步进值（number）
+     * maxlength: 字符串最大长度（number）
+     * minlength: 字符串最小长度（number）
+     *   pattern: 正则（string|RegExp）
+     *
+     * ## 自定义错误
+     *
+     * util/validator 模块内置了一些常用的规则，比如上面列举的 html5 属性
+     *
+     * 如果需要自定义规则，需要以下两步：
+     * 1. 为 rules 添加一个规则，value 是函数，函数细节请参考 util/validator 注释
+     * 2. 为 errors 添加一个错误话术，value 是字符串
+     *
+     * ## 失焦验证
+     *
+     * 表单验证可通过 validateOnBlur 整体控制表单字段是否开启失焦验证，本着局部覆盖全局的原则，
+     * fields 可为某个单独的字段设置 validateOnBlur
      *
      * {
      *     fields: {
      *         username: {
+     *             // 可覆盖 options 中的全局 validateOnBlur
+     *             validateOnBlur: false,
      *
+     *             // 验证规则
      *             rules: {
      *                 required: true,
      *                 min: 3,
      *                 max: 10,
      *                 minlength: 3,
      *                 maxlength: 10,
-     *                 pattern: /\d/
+     *                 pattern: 'number',
+     *                 custom: function (data) {
+      *                    var value = data.value;
+      *                    ....
+      *                    return true/false/Promise;
+      *                }
      *             },
      *
      *             // 与 rules 一一对应的错误信息
      *             errors: {
      *                 required: '请输入用户名',
      *                 min: '最小为 3'，
-     *                 ...
+     *                 ...,
+     *                 custom: '自定义错误'
      *             }
      *
      *         }
@@ -118,19 +140,22 @@ define(function (require, exports, module) {
             }
         );
 
-        if (me.option('validateOnBlur')) {
-            mainElement.on(
-                'focusout' + namespace,
-                function (e) {
-                    var name = e.target.name;
-                    if (name) {
-                        me.validate(name);
+        mainElement.on(
+            'focusout' + namespace,
+            function (e) {
+                var name = e.target.name;
+                if (name) {
+                    var config = me.option('fields')[name];
+                    if (config) {
+                        var local = config.validateOnBlur;
+                        var global = me.option('validateOnBlur');
+                        if (local === true || local == null && global) {
+                            me.validate(name);
+                        }
                     }
                 }
-            );
-        }
-
-
+            }
+        );
 
 
         me.inner({
