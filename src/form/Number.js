@@ -50,18 +50,26 @@ define(function (require, exports, module) {
             downSelector: me.option('downSelector'),
             inputSelector: me.option('inputSelector'),
             interval: me.option('interval'),
-            step: me.option('step'),
-            propertyChange: {
-                value: function (value) {
-                    me.set('value', value);
-                },
-                minValue: function (minValue) {
-                    me.set('minValue', minValue);
-                },
-                maxValue: function (maxValue) {
-                    me.set('maxValue', maxValue);
+            step: me.option('step')
+        });
+
+        me.once('aftersync', function () {
+
+            spinbox.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        me.set('value', value);
+                    },
+                    minValue: function (minValue) {
+                        me.set('minValue', minValue);
+                    },
+                    maxValue: function (maxValue) {
+                        me.set('maxValue', maxValue);
+                    }
                 }
-            }
+            );
+
         });
 
         me.inner({

@@ -47,12 +47,7 @@ define(function (require, exports) {
             inputSelector: me.option('inputSelector'),
             labelSelector: me.option('labelSelector'),
             showAnimation: me.option('showAnimation'),
-            hideAnimation: me.option('hideAnimation'),
-            propertyChange: {
-                value: function (value) {
-                    me.set('placeholder', value);
-                }
-            }
+            hideAnimation: me.option('hideAnimation')
         });
 
         var inputElement = placeholder.inner('input');
@@ -60,12 +55,29 @@ define(function (require, exports) {
         var input = new Input({
             mainElement: inputElement,
             shortcut: me.option('shortcut'),
-            value: me.option('value'),
-            propertyChange: {
-                value: function (value) {
-                    me.set('value', value);
+            value: me.option('value')
+        });
+
+        me.once('aftersync', function () {
+
+            placeholder.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        me.set('placeholder', value);
+                    }
                 }
-            }
+            );
+
+            input.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        me.set('value', value);
+                    }
+                }
+            );
+
         });
 
         me.inner({

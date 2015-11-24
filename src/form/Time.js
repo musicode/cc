@@ -14,6 +14,7 @@ define(function (require, exports, module) {
     var Calendar = require('../ui/Calendar');
 
     var lifeUtil = require('../util/life');
+    var inputUtil = require('../util/input');
 
     var common = require('./common');
 
@@ -94,12 +95,20 @@ define(function (require, exports, module) {
                         layerElement: layerElement
                     }
                 );
-            },
-            stateChange: {
-                opened: function (opened) {
-                    me.state('opened', opened);
-                }
             }
+        });
+
+        me.once('aftersync', function () {
+
+            popup.option(
+                'stateChange',
+                {
+                    opened: function (opened) {
+                        me.state('opened', opened);
+                    }
+                }
+            );
+
         });
 
         popup
@@ -110,6 +119,11 @@ define(function (require, exports, module) {
         var inputElement = mainElement.find(
             me.option('inputSelector')
         );
+
+        var input = inputUtil.init(inputElement);
+        inputElement.on('input', function () {
+            me.set('value', this.value);
+        });
 
         me
         .before('close', function (e, data) {
@@ -131,7 +145,7 @@ define(function (require, exports, module) {
         me.inner({
             main: mainElement,
             native: inputElement,
-            input: inputElement,
+            input: input,
             layer: layerElement,
             popup: popup
         });
@@ -185,6 +199,9 @@ define(function (require, exports, module) {
         lifeUtil.dispose(me);
 
         me.inner('popup').dispose();
+        me.inner('input').dispose(
+            me.inner('native')
+        );
 
     };
 

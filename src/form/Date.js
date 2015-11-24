@@ -14,6 +14,7 @@ define(function (require, exports, module) {
     var Calendar = require('../ui/Calendar');
 
     var lifeUtil = require('../util/life');
+    var inputUtil = require('../util/input');
 
     var common = require('./common');
 
@@ -97,11 +98,6 @@ define(function (require, exports, module) {
             },
             render: function (data, tpl) {
                 return me.execute('render', [ data, tpl ]);
-            },
-            propertyChange: {
-                value: function (value) {
-                    me.set('value', value);
-                }
             }
         });
 
@@ -128,11 +124,6 @@ define(function (require, exports, module) {
                         layerElement: layerElement
                     }
                 );
-            },
-            stateChange: {
-                opened: function (opened) {
-                    me.state('opened', opened);
-                }
             }
         });
 
@@ -144,6 +135,11 @@ define(function (require, exports, module) {
         var inputElement = mainElement.find(
             me.option('inputSelector')
         );
+
+        var input = inputUtil.init(inputElement);
+        inputElement.on('input', function () {
+            me.set('value', this.value);
+        });
 
         me
         .before('close', function (e, data) {
@@ -161,12 +157,34 @@ define(function (require, exports, module) {
 
         });
 
+        me.once('aftersync', function () {
+
+            calendar.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        me.set('value', value);
+                    }
+                }
+            );
+
+            popup.option(
+                'stateChange',
+                {
+                    opened: function (opened) {
+                        me.state('opened', opened);
+                    }
+                }
+            );
+
+        });
+
 
 
         me.inner({
             main: mainElement,
             native: inputElement,
-            input: inputElement,
+            input: input,
             popup: popup,
             calendar: calendar
         });
@@ -215,6 +233,9 @@ define(function (require, exports, module) {
 
         me.inner('popup').dispose();
         me.inner('calendar').dispose();
+        me.inner('input').dispose(
+            me.inner('native')
+        );
 
     };
 

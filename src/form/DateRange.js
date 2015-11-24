@@ -22,6 +22,7 @@ define(function (require, exports, module) {
     var Calendar = require('../ui/Calendar');
 
     var lifeUtil = require('../util/life');
+    var inputUtil = require('../util/input');
 
     var common = require('./common');
 
@@ -108,12 +109,25 @@ define(function (require, exports, module) {
                         layerElement: layerElement
                     }
                 );
-            },
-            stateChange: {
-                opened: function (opened) {
-                    me.state('opened', opened);
-                }
             }
+        });
+
+        var input = inputUtil.init(inputElement);
+        inputElement.on('input', function () {
+            me.set('value', this.value);
+        });
+
+        me.once('aftersync', function () {
+
+            popup.option(
+                'stateChange',
+                {
+                    opened: function (opened) {
+                        me.state('opened', opened);
+                    }
+                }
+            );
+
         });
 
         popup
@@ -172,6 +186,7 @@ define(function (require, exports, module) {
             main: mainElement,
             layer: layerElement,
             native: inputElement,
+            input: input,
             popup: popup,
             startCalendar: startCalendar,
             endCalendar: endCalendar
@@ -216,6 +231,9 @@ define(function (require, exports, module) {
         me.inner('startCalendar').dispose();
         me.inner('endCalendar').dispose();
 
+        me.inner('input').dispose(
+            me.inner('native')
+        );
         me.inner('layer').off(
             me.namespace()
         );
@@ -285,7 +303,7 @@ define(function (require, exports, module) {
     };
 
     function createCalendar(instance, mainElement, propName) {
-        return new Calendar({
+        var calendar = new Calendar({
             mainElement: mainElement,
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
@@ -302,14 +320,22 @@ define(function (require, exports, module) {
             itemActiveClass: instance.option('itemActiveClass'),
             valueAttribute: instance.option('valueAttribute'),
             render: function (data, tpl) {
-                return instance.execute('render', [ data, tpl ]);
-            },
-            propertyChange: {
-                value: function (value) {
-                    instance.set(propName, value);
-                }
+                return instance.execute('render', [data, tpl]);
             }
         });
+        me.once('aftersync', function () {
+
+            calendar.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        instance.set(propName, value);
+                    }
+                }
+            );
+
+        });
+        return calendar;
     }
 
     var SEPRATOR = ' - ';

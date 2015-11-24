@@ -87,7 +87,9 @@ define(function (require, exports, module) {
                         }
                     );
                 }
-            )
+            );
+
+
         });
 
         me.inner({

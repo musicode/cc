@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var isHidden = require('../function/isHidden');
     var nextTick = require('../function/nextTick');
+    var debounce = require('../function/debounce');
     var lifeUtil = require('../util/life');
     var validator = require('../util/validator');
 
@@ -142,19 +143,26 @@ define(function (require, exports, module) {
 
         mainElement.on(
             'focusout' + namespace,
-            function (e) {
-                var name = e.target.name;
-                if (name) {
-                    var config = me.option('fields')[name];
-                    if (config) {
-                        var local = config.validateOnBlur;
-                        var global = me.option('validateOnBlur');
-                        if (local === true || local == null && global) {
-                            me.validate(name);
+            // 大多数场景下，不需要延迟执行
+            // 对于输入框后面跟选择层的场景，点击选择层会导致输入框 blur，因此设置一个延时
+            // 经测试，180ms 是一个最小可用延迟
+            // 本着没必要配置就不配置的原则，这里直接写死
+            debounce(
+                function (e) {
+                    var name = e.target.name;
+                    if (name) {
+                        var config = me.option('fields')[name];
+                        if (config) {
+                            var local = config.validateOnBlur;
+                            var global = me.option('validateOnBlur');
+                            if (local === true || local == null && global) {
+                                me.validate(name);
+                            }
                         }
                     }
-                }
-            }
+                },
+                180
+            )
         );
 
 

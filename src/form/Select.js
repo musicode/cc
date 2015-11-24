@@ -97,17 +97,29 @@ define(function (require, exports, module) {
             setText: function (options) {
                 var labelSelector = me.option('labelSelector');
                 mainElement.find(labelSelector).html(options.text);
-            },
-            propertyChange: {
-                value: function (value) {
-                    me.set('value', value);
-                }
-            },
-            stateChange: {
-                opened: function (opened) {
-                    me.state('opened', opened);
-                }
             }
+        });
+
+        me.once('aftersync', function () {
+
+            combobox.option(
+                'propertyChange',
+                {
+                    value: function (value) {
+                        me.set('value', value);
+                    }
+                }
+            );
+
+            combobox.option(
+                'stateChange',
+                {
+                    opened: function (opened) {
+                        me.state('opened', opened);
+                    }
+                }
+            );
+
         });
 
 
