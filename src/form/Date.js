@@ -136,7 +136,7 @@ define(function (require, exports, module) {
             me.option('inputSelector')
         );
 
-        var input = inputUtil.init(inputElement);
+        inputUtil.init(inputElement);
         inputElement.on('input', function () {
             me.set('value', this.value);
         });
@@ -184,7 +184,6 @@ define(function (require, exports, module) {
         me.inner({
             main: mainElement,
             native: inputElement,
-            input: input,
             popup: popup,
             calendar: calendar
         });
@@ -230,12 +229,12 @@ define(function (require, exports, module) {
         var me = this;
 
         lifeUtil.dispose(me);
+        inputUtil.dispose(
+            me.inner('native')
+        );
 
         me.inner('popup').dispose();
         me.inner('calendar').dispose();
-        me.inner('input').dispose(
-            me.inner('native')
-        );
 
     };
 

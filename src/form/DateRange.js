@@ -112,7 +112,7 @@ define(function (require, exports, module) {
             }
         });
 
-        var input = inputUtil.init(inputElement);
+        inputUtil.init(inputElement);
         inputElement.on('input', function () {
             me.set('value', this.value);
         });
@@ -186,7 +186,6 @@ define(function (require, exports, module) {
             main: mainElement,
             layer: layerElement,
             native: inputElement,
-            input: input,
             popup: popup,
             startCalendar: startCalendar,
             endCalendar: endCalendar
@@ -226,14 +225,14 @@ define(function (require, exports, module) {
         var me = this;
 
         lifeUtil.dispose(me);
+        inputUtil.dispose(
+            me.inner('native')
+        );
 
         me.inner('popup').dispose();
         me.inner('startCalendar').dispose();
         me.inner('endCalendar').dispose();
 
-        me.inner('input').dispose(
-            me.inner('native')
-        );
         me.inner('layer').off(
             me.namespace()
         );

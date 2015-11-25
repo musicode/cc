@@ -51,7 +51,7 @@
 
 看一个下拉菜单的例子：
 
-``` 
+```
 <div class="dropdown">
     <div class="btn btn-default dropdown-toggle">
         <span></span>
@@ -96,26 +96,26 @@ component.sync();
 {
     // 主元素，即组件最外层容器元素，或者说根元素
     mainElement: {jQuery},
-    // 主元素模板，如果是后端渲染出来的模板，即组件结构已完整，则不用这个选项
+    // 主元素模板，如果组件 DOM 结构已完整，则不用这个选项
     mainTemplate: {string},
-    // 当传入 mainTemplate 选项时，可以配置 replace，默认是 false
+    // 当传入 mainTemplate 选项时，可以配置 replace
     // true 表示 mainTemplate 创建的元素替换 mainElement
-    // false 表示 mainTemplate 赋值给 mainElement.innerHTML
+    // false 表示 mainTemplate 赋值给 mainElement 元素的 innerHTML
     replace: {boolean},
-    
+
     // 对于有局部刷新功能的组件，需要提供刷新区域
-    // 比如 Calendar，可以刷新主元素(类似 mainElement.innerHTML = '')
+    // 比如 Calendar，可以刷新主元素(类似改写 mainElement 的 innerHTML)
     // 也可以刷新某个子元素，保持其他元素不变(比如左右切换按钮)
-    // cc 提供 renderSelector、renderTemplate 选项，如果未传入，取 mainElement 和 mainTemplate
+    // CC 提供 renderSelector、renderTemplate 选项，如果未传入，取 mainElement 和 mainTemplate
     // 但要注意的是，如果刷新主元素，replace 必须设置为 false，否则组件无法处理
     renderSelector: {string},
     renderTemplate: {string},
-        
+
     // 主元素是否是 document.body 的直接子元素，比如 Dialog 通常是 true，定位才不会错
     underBody: {boolean},
     // 销毁时是否移除主元素，比如 Dialog 通常是 true
     removeOnDispose: {boolean},
-      
+
     // 是否共享主元素
     // 共享主元素是为了减少 DOM 数量，提升性能
     // 比如 Tooltip 通常是 true，可以节省很多 DOM
@@ -129,7 +129,7 @@ component.sync();
             options.triggerElement.attr('data-title')
         );
     },
-    
+
     // 配置模板引擎
     render: function (data, tpl) {
         // 参数顺序 [ data, tpl ] 是考虑到拼接字符串不需要 tpl
@@ -140,7 +140,7 @@ component.sync();
     // 组件内部不做数据缓存，需要数据的时候都会调用 load
     // 如果对性能要求比较高，可以自行在 load 中实现缓存
     load: function (value, callback) {
-        // callback 使用 node 风格
+        // node 风格的 callback
         // 第一个参数是 error
         post(function (data) {
             callback(null, data);
@@ -156,10 +156,11 @@ component.sync();
     //         options.xxElement.show();
     //     }
     // }
+    // 与 show 对应的还有 hideTrigger/hideDelay/hideAnimation，表示如何隐藏
     xxTrigger: 'click,enter,leave,focus,blur,context',
     xxDelay: {number},
     xxAnimation: function (options) {
-
+        // 自定义动画
     }
 }
 ```

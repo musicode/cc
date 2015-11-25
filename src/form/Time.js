@@ -120,7 +120,7 @@ define(function (require, exports, module) {
             me.option('inputSelector')
         );
 
-        var input = inputUtil.init(inputElement);
+        inputUtil.init(inputElement);
         inputElement.on('input', function () {
             me.set('value', this.value);
         });
@@ -145,7 +145,6 @@ define(function (require, exports, module) {
         me.inner({
             main: mainElement,
             native: inputElement,
-            input: input,
             layer: layerElement,
             popup: popup
         });
@@ -197,11 +196,11 @@ define(function (require, exports, module) {
         var me = this;
 
         lifeUtil.dispose(me);
-
-        me.inner('popup').dispose();
-        me.inner('input').dispose(
+        inputUtil.dispose(
             me.inner('native')
         );
+
+        me.inner('popup').dispose();
 
     };
 
