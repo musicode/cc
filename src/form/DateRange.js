@@ -119,6 +119,7 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
+            popup.state('opened', me.is('opened'));
             popup.option(
                 'stateChange',
                 {
@@ -324,6 +325,7 @@ define(function (require, exports, module) {
         });
         instance.once('aftersync', function () {
 
+            calendar.set('value', instance.get(propName));
             calendar.option(
                 'propertyChange',
                 {

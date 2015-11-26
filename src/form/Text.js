@@ -60,6 +60,7 @@ define(function (require, exports) {
 
         me.once('aftersync', function () {
 
+            placeholder.set('placeholder', me.get('placeholder'));
             placeholder.option(
                 'propertyChange',
                 {
@@ -69,6 +70,7 @@ define(function (require, exports) {
                 }
             );
 
+            input.set('value', me.get('value'));
             input.option(
                 'propertyChange',
                 {
@@ -88,7 +90,8 @@ define(function (require, exports) {
         });
 
         me.set({
-            name: me.option('name')
+            name: me.option('name'),
+            value: me.option('value')
         });
 
     };

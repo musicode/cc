@@ -118,7 +118,8 @@ define(function (require, exports, module) {
         return {
             origin: origin,
             pathname: pathname,
-            search: link.search
+            search: link.search,
+            hash: link.hash
         };
     };
 

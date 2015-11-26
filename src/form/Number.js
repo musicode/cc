@@ -55,6 +55,12 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
+            spinbox.set({
+                value: me.get('value'),
+                minValue: me.get('minValue'),
+                maxValue: me.get('maxValue')
+            });
+
             spinbox.option(
                 'propertyChange',
                 {

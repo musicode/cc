@@ -159,6 +159,7 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
+            calendar.set('value', me.get('value'));
             calendar.option(
                 'propertyChange',
                 {
@@ -168,6 +169,7 @@ define(function (require, exports, module) {
                 }
             );
 
+            popup.state('opened', me.is('opened'));
             popup.option(
                 'stateChange',
                 {

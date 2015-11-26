@@ -102,6 +102,7 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
+            combobox.set('value', me.get('value'));
             combobox.option(
                 'propertyChange',
                 {
@@ -111,6 +112,7 @@ define(function (require, exports, module) {
                 }
             );
 
+            combobox.state('opened', combobox.is('opened'));
             combobox.option(
                 'stateChange',
                 {
