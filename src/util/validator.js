@@ -192,6 +192,9 @@ define(function (require, exports, module) {
                                 promiseNames.push(name);
                                 promiseValues.push(result);
                             }
+                            else if ($.type(result) !== 'boolean') {
+                                result = false;
+                            }
                             return result;
                         };
                         return validateComplete(
