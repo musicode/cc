@@ -123,11 +123,17 @@ define(function (require, exports, module) {
         me.initStruct();
 
         var mainElement = me.option('mainElement');
+        var triggerElement = me.option('triggerElement');
+        var triggerSelector = me.option('triggerSelector');
+
+        if (!triggerElement && !triggerSelector) {
+            me.error('triggerElement、triggerSelector 至少传一个吧！');
+        }
 
         var popup = new Popup({
             layerElement: mainElement,
-            triggerElement: me.option('triggerElement'),
-            triggerSelector: me.option('triggerSelector'),
+            triggerElement: triggerElement,
+            triggerSelector: triggerSelector,
             showLayerTrigger: me.option('showTrigger'),
             showLayerDelay: me.option('showDelay'),
             hideLayerTrigger: me.option('hideTrigger'),
@@ -195,42 +201,46 @@ define(function (require, exports, module) {
             var currentTarget = event.currentTarget;
 
 
-
-
-            var triggerElement;
+            var skinClass;
+            var placement;
+            var maxWidth;
+            var placementClass;
 
             var skinAttribute = me.option('skinAttribute');
-            if (skinAttribute) {
+            var placementAttribute = me.option('placementAttribute');
+            var maxWidthAttribute = me.option('maxWidthAttribute');
 
-                var skinClass;
-
-                triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
-                if (triggerElement) {
+            var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
+            if (triggerElement) {
+                if (skinAttribute) {
                     skinClass = triggerElement.attr(skinAttribute);
                     if (skinClass) {
                         mainElement.removeClass(skinClass);
                     }
                 }
-
-                triggerElement =
-                mainElement[ TRIGGER_ELEMENT_KEY ] = $(currentTarget);
-
-                skinClass = triggerElement.attr(skinAttribute);
-                if (skinClass) {
-                    mainElement.addClass(skinClass);
+                if (placementAttribute) {
+                    placement = triggerElement.attr(placementAttribute);
+                    if (placement) {
+                        placementClass = me.option(placement + 'Class');
+                        if (placementClass) {
+                            mainElement.removeClass(placementClass);
+                        }
+                    }
                 }
-
+                if (maxWidthAttribute) {
+                    maxWidth = triggerElement.attr(maxWidthAttribute);
+                    if (maxWidth) {
+                        mainElement.css('max-width', '');
+                    }
+                }
             }
 
 
 
+            triggerElement =
+            mainElement[ TRIGGER_ELEMENT_KEY ] = $(currentTarget);
 
 
-
-
-            var placement;
-
-            var placementAttribute = me.option('placementAttribute');
             if (placementAttribute) {
                 placement = triggerElement.attr(placementAttribute)
             }
@@ -278,14 +288,25 @@ define(function (require, exports, module) {
             var updateTooltip = function () {
 
                 e.type = 'beforeshow';
+
                 me.emit(e, data, true);
 
                 if (e.isDefaultPrevented()) {
                     return;
                 }
 
-                var maxWidth;
-                var maxWidthAttribute = me.option('maxWidthAttribute');
+                placementClass = me.option(placement + 'Class');
+                if (placementClass) {
+                    mainElement.addClass(placementClass);
+                }
+
+                if (skinAttribute) {
+                    skinClass = triggerElement.attr(skinAttribute);
+                    if (skinClass) {
+                        mainElement.addClass(skinClass);
+                    }
+                }
+
                 if (maxWidthAttribute) {
                     maxWidth = triggerElement.attr(maxWidthAttribute);
                 }
@@ -364,33 +385,11 @@ define(function (require, exports, module) {
      * 定位
      *
      * @param {string} placement 方位，可选值有 top right bottom left
-     *
      */
     proto.pin = function (placement) {
 
         var me = this;
         var mainElement = me.inner('main');
-
-        // 先设置好样式，再定位
-        // 这样才能保证定位计算不会出问题
-
-        var placementClass = mainElement.data(PLACEMENT_CLASS_KEY);
-        if (placementClass) {
-            mainElement
-                .removeClass(placementClass)
-                .removeData(PLACEMENT_CLASS_KEY);
-        }
-
-        placementClass = me.option(placement + 'Class');
-        if (placementClass) {
-            mainElement
-                .addClass(placementClass)
-                .data(PLACEMENT_CLASS_KEY, placementClass);
-        }
-
-
-
-        // 定位条件
 
         var options = {
             element: mainElement,
@@ -429,13 +428,7 @@ define(function (require, exports, module) {
     Tooltip.stateUpdater = {
 
         hidden: function (hidden) {
-            var popup = this.inner('popup');
-            if (hidden) {
-                popup.close();
-            }
-            else {
-                popup.open();
-            }
+            this.inner('popup')[ hidden ? 'close' : 'open' ]();
         }
 
     };
@@ -539,14 +532,6 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 存储当前方位 className 的 key
-     *
-     * @inner
-     * @type {string}
-     */
-    var PLACEMENT_CLASS_KEY = '__placement_class__';
-
-    /**
      * 存储触发元素的 key
      *
      * @inner
@@ -574,11 +559,10 @@ define(function (require, exports, module) {
                 if (placementMap[name]) {
                     result.push(name);
                 }
-                else {
-                    // 没匹配到的唯一情况是 auto
+                else if (name === 'auto') {
                     $.each(
                         placementMap,
-                        function (name, value) {
+                        function (name) {
                             if ($.inArray(name, result) < 0) {
                                 result.push(name);
                             }

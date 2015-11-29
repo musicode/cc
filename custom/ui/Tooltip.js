@@ -17,7 +17,8 @@ define(function (require, exports, module) {
             options.mainElement.hide();
         },
 
-        mainTemplate: '<div class="tooltip tooltip-inverted"></div>',
+        mainTemplate: '<div class="tooltip secondary"></div>',
+        triggerSelector: '[data-title]',
 
         share: true,
         underBody: true,
@@ -27,14 +28,10 @@ define(function (require, exports, module) {
         placementAttribute: 'data-placement',
         maxWidthAttribute: 'data-width',
 
-        topClass: 'tooltip-top',
-        rightClass: 'tooltip-right',
-        bottomClass: 'tooltip-bottom',
-        leftClass: 'tooltip-left',
-        topLeftClass: 'tooltip-top-left',
-        topRightClass: 'tooltip-top-right',
-        bottomLeftClass: 'tooltip-bottom-left',
-        bottomRightClass: 'tooltip-bottom-right',
+        topClass: 'top',
+        rightClass: 'right',
+        bottomClass: 'bottom',
+        leftClass: 'left',
 
         gapX: 10,
         gapY: 10,

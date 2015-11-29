@@ -130,8 +130,13 @@ define(function (require, exports, module) {
                     me.error('value is not found by valueAttribute.');
                 }
 
-                me.set('value', value);
                 me.close(e);
+
+                if (e.isDefaultPrevented()) {
+                    return;
+                }
+
+                me.set('value', value);
 
                 e.type = 'select';
                 me.emit(e, true);

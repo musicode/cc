@@ -3,54 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Tooltip</title>
-    <link rel="stylesheet" href="http://cdn.bootcss.com/twitter-bootstrap/3.0.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/cs.css">
+    <link rel="stylesheet" href="./css/font-awesome.css">
     <style>
-        html,
         body {
-            height: 100%;
+            padding: 100px;
         }
-
-        .icon {
-            background-color: #DD5ACD;
-            color: #FFF;
-            font-size: 1.5em;
-            font-style: normal;
-            width: 24px;
-            height: 24px;
-            line-height: 24px;
-            text-align: center;
-
-
+        .fa + .fa {
+            margin-left: 50px;
         }
-
-        #icon2 {
-            position: absolute;
-            top: 40%;
-            left: 40%;
-        }
-
-        .wrapper {
-            position: absolute;
-            left: 20%;
-            top: 20%;
-        }
-
     </style>
 </head>
 <body>
 
-    <span class="wrapper" title="123123123"  data-placement="bottom">
-        <i id="icon1" class="icon">?</i>
-    </span>
-
-    <i id="icon2" class="icon" title="提示内容111111111111" data-placement="right">?</i>
-
-    <div class="tooltip fade left in">
-        <div class="tooltip-inner">
-            Tooltip!
-        </div>
-        <div class="tooltip-arrow"></div>
-    </div>
+    <i class="fa fa-info" data-title="11111111111111111111" data-skin="warning" data-placement="top"></i>
+    <i class="fa fa-info" data-title="2222222222222222222222222222222222222" data-width="100px" data-placement="right"></i>
+    <i class="fa fa-info" data-title="3333333333333333333333333" data-skin="success" data-placement="bottom"></i>
+    <i class="fa fa-info" data-title="4444444444444444444444" data-skin="error" data-placement="left"></i>
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -63,30 +32,7 @@
 
             function (Tooltip) {
 
-                var config = Tooltip.defaultOptions;
-
-                config.mainTemplate = '<div class="tooltip fade in">'
-                                    +    '<div class="tooltip-inner"></div>'
-                                    +    '<div class="tooltip-arrow"></div>'
-                                    + '</div>';
-
-                config.gapX = 8;
-                config.gapY = 0;
-
-                config.hideDelay = 500;
-
-                config.update = function (options) {
-
-                    options.mainElement.find('.tooltip-inner').html(
-                        options.triggerElement.attr('title')
-                    );
-
-                };
-
-
                 new Tooltip({
-                    triggerElement: $(document.body),
-                    triggerSelector: '[title]',
                     ondebug: function (event, data) {
                         console.log(
                             event.type,
