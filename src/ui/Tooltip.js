@@ -47,7 +47,6 @@ define(function (require, exports, module) {
     var split = require('../function/split');
     var position = require('../util/position');
     var toNumber = require('../function/toNumber');
-    var isHidden = require('../function/isHidden');
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
@@ -157,6 +156,11 @@ define(function (require, exports, module) {
                     }
                 );
 
+            },
+            stateChange: {
+                opened: function (opened) {
+                    me.state('hidden', !opened);
+                }
             }
         });
 
@@ -198,48 +202,29 @@ define(function (require, exports, module) {
                 return;
             }
 
-            var currentTarget = event.currentTarget;
+            var skinClass = me.inner('skinClass');
+            if (skinClass) {
+                mainElement.removeClass(skinClass);
+            }
+
+            var placement = me.inner('placement');
+            if (placement) {
+                mainElement.removeClass(
+                    me.option(placement + 'Class')
+                );
+            }
+
+            var maxWidth = me.inner('maxWidth');
+            if (maxWidth) {
+                mainElement.css('max-width', '');
+            }
 
 
-            var skinClass;
-            var placement;
-            var maxWidth;
-            var placementClass;
+            triggerElement = $(event.currentTarget);
 
             var skinAttribute = me.option('skinAttribute');
             var placementAttribute = me.option('placementAttribute');
             var maxWidthAttribute = me.option('maxWidthAttribute');
-
-            var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
-            if (triggerElement) {
-                if (skinAttribute) {
-                    skinClass = triggerElement.attr(skinAttribute);
-                    if (skinClass) {
-                        mainElement.removeClass(skinClass);
-                    }
-                }
-                if (placementAttribute) {
-                    placement = triggerElement.attr(placementAttribute);
-                    if (placement) {
-                        placementClass = me.option(placement + 'Class');
-                        if (placementClass) {
-                            mainElement.removeClass(placementClass);
-                        }
-                    }
-                }
-                if (maxWidthAttribute) {
-                    maxWidth = triggerElement.attr(maxWidthAttribute);
-                    if (maxWidth) {
-                        mainElement.css('max-width', '');
-                    }
-                }
-            }
-
-
-
-            triggerElement =
-            mainElement[ TRIGGER_ELEMENT_KEY ] = $(currentTarget);
-
 
             if (placementAttribute) {
                 placement = triggerElement.attr(placementAttribute)
@@ -275,7 +260,17 @@ define(function (require, exports, module) {
 
             }
 
+            var clean = function () {
+                me.inner({
+                    trigger: null,
+                    skinClass: null,
+                    placement: null,
+                    maxWidth: null
+                });
+            };
+
             if (!placement) {
+                clean();
                 return false;
             }
 
@@ -285,20 +280,23 @@ define(function (require, exports, module) {
 
 
 
-            var updateTooltip = function () {
+            var update = function () {
 
                 e.type = 'beforeshow';
 
                 me.emit(e, data, true);
 
                 if (e.isDefaultPrevented()) {
+                    clean();
                     return;
                 }
 
-                placementClass = me.option(placement + 'Class');
-                if (placementClass) {
-                    mainElement.addClass(placementClass);
-                }
+
+                mainElement.addClass(
+                    me.option(placement + 'Class')
+                );
+
+                skinClass = '';
 
                 if (skinAttribute) {
                     skinClass = triggerElement.attr(skinAttribute);
@@ -306,6 +304,8 @@ define(function (require, exports, module) {
                         mainElement.addClass(skinClass);
                     }
                 }
+
+                maxWidth = '';
 
                 if (maxWidthAttribute) {
                     maxWidth = triggerElement.attr(maxWidthAttribute);
@@ -317,14 +317,21 @@ define(function (require, exports, module) {
                     mainElement.css('max-width', maxWidth);
                 }
 
-                me.pin(placement);
+                me.inner({
+                    trigger: triggerElement,
+                    skinClass: skinClass,
+                    placement: placement,
+                    maxWidth: maxWidth
+                });
+
+                me.pin();
 
                 window.on(
                     'resize' + namespace,
                     debounce(
                         function () {
                             if (me.$) {
-                                me.pin(placement);
+                                me.pin();
                             }
                         },
                         50
@@ -342,10 +349,10 @@ define(function (require, exports, module) {
             );
 
             if (promise && $.isFunction(promise.then)) {
-                promise.then(updateTooltip);
+                promise.then(update);
             }
             else {
-                updateTooltip();
+                update();
             }
 
 
@@ -383,21 +390,20 @@ define(function (require, exports, module) {
 
     /**
      * 定位
-     *
-     * @param {string} placement 方位，可选值有 top right bottom left
      */
-    proto.pin = function (placement) {
+    proto.pin = function () {
 
         var me = this;
         var mainElement = me.inner('main');
 
         var options = {
             element: mainElement,
-            attachment: mainElement[ TRIGGER_ELEMENT_KEY ],
+            attachment: me.inner('trigger'),
             offsetX: toNumber(me.option('gapX'), 0),
             offsetY: toNumber(me.option('gapY'), 0)
         };
 
+        var placement = me.inner('placement');
         var target = placementMap[ placement ];
         if ($.isFunction(target.gap)) {
             target.gap(options);
@@ -441,7 +447,7 @@ define(function (require, exports, module) {
      */
     function testLeft() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
+        var triggerElement = this.inner('trigger');
         return triggerElement.offset().left > mainElement.outerWidth();
     }
 
@@ -453,7 +459,7 @@ define(function (require, exports, module) {
      */
     function testRight() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
+        var triggerElement = this.inner('trigger');
         return pageWidth() >
                (triggerElement.offset().left
                + triggerElement.outerWidth()
@@ -468,7 +474,7 @@ define(function (require, exports, module) {
      */
     function testTop() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
+        var triggerElement = this.inner('trigger');
         return triggerElement.offset().top > mainElement.outerHeight();
     }
 
@@ -480,7 +486,7 @@ define(function (require, exports, module) {
      */
     function testBottom() {
         var mainElement = this.inner('main');
-        var triggerElement = mainElement[ TRIGGER_ELEMENT_KEY ];
+        var triggerElement = this.inner('trigger');
         return pageHeight() >
                (triggerElement.offset().top
                 + triggerElement.outerHeight()
@@ -530,14 +536,6 @@ define(function (require, exports, module) {
         }
 
     };
-
-    /**
-     * 存储触发元素的 key
-     *
-     * @inner
-     * @type {string}
-     */
-    var TRIGGER_ELEMENT_KEY = '__trigger_element__';
 
     /**
      * 获取方位的遍历列表

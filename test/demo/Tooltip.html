@@ -33,13 +33,25 @@
             function (Tooltip) {
 
                 new Tooltip({
-                    ondebug: function (event, data) {
-                        console.log(
-                            event.type,
-                            event.target.tagName ? true : false, // 是否原生
-                            data,
-                            this
-                        );
+//                    ondebug: function (event, data) {
+//                        console.log(
+//                            event.type,
+//                            event.target.tagName ? true : false, // 是否原生
+//                            data,
+//                            this
+//                        );
+//                    },
+                    onbeforeshow: function () {
+                        console.log('beforeshow', this.is('hidden'));
+                    },
+                    onaftershow: function () {
+                        console.log('aftershow', this.is('hidden'));
+                    },
+                    onbeforehide: function () {
+                        console.log('beforehide', this.is('hidden'));
+                    },
+                    onafterhide: function () {
+                        console.log('afterhide', this.is('hidden'));
                     }
                 });
 
