@@ -177,14 +177,14 @@ define(function (require, exports, module) {
 
         },
         minValue: function (minValue) {
-            var minValue = toNumber(minValue, null);
+            minValue = toNumber(minValue, null);
             if (minValue == null) {
                 this.error('minValue must be a number.');
             }
             return minValue;
         },
         maxValue: function (maxValue) {
-            var maxValue = toNumber(maxValue, null);
+            maxValue = toNumber(maxValue, null);
             if (maxValue == null) {
                 this.error('maxValue must be a number.');
             }
