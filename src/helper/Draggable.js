@@ -46,7 +46,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 需要拖拽的元素
-     * @property {jQuery=} options.containerElement 限制拖拽范围的容器
+     * @property {jQuery=} options.containerElement 限制拖拽范围的容器元素
      * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 className
      * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 添加的 className
      * @property {string=} options.bodyDraggingClass 拖拽时给 bodyElement 添加的 className，用样式避免出现选区
@@ -56,11 +56,8 @@ define(function (require, exports, module) {
      * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
      * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
      *
+     * @property {Function} options.init
      * @property {Function} options.dragAnimation
-     *
-     * @property {Function=} options.onbeforedrag
-     * @property {Function=} options.ondrag
-     * @property {Function=} options.onafterdrag
      *
      */
     function Draggable(options) {
@@ -91,7 +88,7 @@ define(function (require, exports, module) {
 
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
-        var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
+        var bodyDraggingClass = me.option('bodyDraggingClass');
 
         var beforeDragHandler = function (e, offset) {
 
@@ -301,7 +298,7 @@ define(function (require, exports, module) {
 
         };
 
-        me.execute('bind', {
+        me.execute('init', {
             mainElement: mainElement,
             containerElement: containerElement,
             namespace: me.namespace(),

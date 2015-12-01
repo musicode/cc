@@ -113,11 +113,15 @@ define(function (require, exports, module) {
 
                 case 'afterlongpress':
                     isLongPress = false;
-                    if (keyboardUtil.isCharKey(data.keyCode)
+
+                    var keyCode = data.keyCode;
+                    if (keyboardUtil.isCharKey(keyCode)
                         || keyboardUtil.isDeleteKey()
+                        || (mainElement.is('textarea') && keyCode === keyboardUtil.enter)
                     ) {
                         updateValue();
                     }
+
                     break;
 
             }
@@ -171,10 +175,13 @@ define(function (require, exports, module) {
     lifeUtil.extend(proto);
 
     Input.propertyUpdater = {
-        value: function (value) {
+        value: function (newValue, oldValue, changes) {
             var inputElement = this.inner('main');
-            if (inputElement.val() !== value) {
-                inputElement.val(value);
+            // 写值会导致光标发生变化，因此如果不是强制改值，不应该去改
+            if (inputElement.val() !== newValue
+                || changes.value.force
+            ) {
+                inputElement.val(newValue);
             }
         }
     };

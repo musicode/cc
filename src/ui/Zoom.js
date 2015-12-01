@@ -103,7 +103,7 @@ define(function (require, exports, module) {
             dragAnimation: function (options) {
                 finderElement.css(options.mainStyle);
             },
-            bind: function (options) {
+            init: function (options) {
 
                 var enterType = 'mouseenter' + namespace;
                 var leaveType = 'mouseleave' + namespace;

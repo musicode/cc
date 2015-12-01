@@ -6,10 +6,11 @@ define(function (require, exports, module) {
     var document = require('cc/util/instance').document;
 
     Draggable.defaultOptions = {
+        bodyDraggingClass: 'dragging',
         dragAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
         },
-        bind: function (options) {
+        init: function (options) {
 
             var namespace = options.namespace;
 

@@ -27,7 +27,7 @@ define(function (require, exports, module) {
             handleSelector: options.handleSelector,
             cancelSelector: options.cancelSelector,
             dragAnimation: options.dragAnimation,
-            bind: function (options) {
+            init: function (options) {
 
                 var namespace = options.namespace;
 

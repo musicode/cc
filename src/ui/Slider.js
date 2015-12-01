@@ -121,7 +121,7 @@ define(function (require, exports, module) {
             containerDraggingClass: me.option('draggingClass'),
             axis: props.axis,
             context: me,
-            bind: function (options) {
+            init: function (options) {
                 $.each(touchUtil, function (type, item) {
                     if (!item.support) {
                         return;
