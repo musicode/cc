@@ -54,7 +54,7 @@ define(function (require, exports, module) {
         );
 
         var iterator = new Iterator({
-            watchElement: inputElement,
+            mainElement: inputElement,
             index: me.option('value'),
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),

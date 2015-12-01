@@ -212,7 +212,7 @@ define(function (require, exports, module) {
 
             wheels.push(
                 new Wheel({
-                    watchElement: trackElement,
+                    mainElement: trackElement,
                     onwheel: wheelHandler
                 })
             );
@@ -221,7 +221,7 @@ define(function (require, exports, module) {
             if (scrollElement) {
                 wheels.push(
                     new Wheel({
-                        watchElement: scrollElement,
+                        mainElement: scrollElement,
                         onwheel: wheelHandler
                     })
                 );

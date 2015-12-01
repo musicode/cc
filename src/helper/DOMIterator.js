@@ -16,7 +16,7 @@ define(function (require, exports, module) {
      *
      * @constrctor
      * @param {Object} options
-     * @property {jQuery} options.watchElement 监听键盘事件的元素
+     * @property {jQuery} options.mainElement 监听键盘事件的元素
      * @property {number} options.index 当前索引
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
@@ -75,9 +75,9 @@ define(function (require, exports, module) {
             }
         };
 
-        var watchElement = me.option('watchElement');
+        var mainElement = me.option('mainElement');
         var keyboard = new Keyboard({
-            watchElement: watchElement,
+            mainElement: mainElement,
             shortcut: shortcut
         });
 
@@ -111,7 +111,7 @@ define(function (require, exports, module) {
 
         });
 
-        if (watchElement.is(':text')) {
+        if (mainElement.is(':text')) {
             keyboard
                 .on('keydown', function (e) {
                     // 处理某些浏览器按方向键上会导致光标跑到最左侧

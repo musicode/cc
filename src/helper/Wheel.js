@@ -25,8 +25,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.watchElement 需要监听鼠标滚轮事件的元素
-     * @property {Function=} options.onwheel
+     * @property {jQuery=} options.mainElement 需要监听鼠标滚轮事件的元素
      */
     function Wheel(options) {
         lifeUtil.init(this, options);
@@ -40,7 +39,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.option('watchElement').on(
+        me.option('mainElement').on(
             support + me.namespace(),
             function (e) {
 
@@ -77,7 +76,7 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
-        me.option('watchElement').off(
+        me.option('mainElement').off(
             me.namespace()
         );
 

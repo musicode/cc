@@ -29,7 +29,7 @@
         var element = $(document.body);
 
         var wheel = new Wheel({
-            watchElement: element,
+            mainElement: element,
             ondebug: function (event, data) {
                 console.log(
                     event.type,
@@ -37,6 +37,9 @@
                     data,
                     this
                 );
+            },
+            onwheel: function () {
+                //return false;
             }
         });
     }

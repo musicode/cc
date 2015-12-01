@@ -3,76 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <title>Popup</title>
+
+    <link rel="stylesheet" href="./css/cs.css">
+    <link rel="stylesheet" href="./css/font-awesome.css">
+
     <style>
-        #ui-select {
-            display: inline-block;
-            *display: inline;
-            *zoom: 1;
+        .dropdown {
+            width: 200px;
         }
-        #select-trigger {
-            border: 1px solid #DDD;
-            background-color: #F3F3F3;
-            cursor: pointer;
-            display: inline-block;
-            padding: 5px 10px;
-            width: 100px;
-            border-radius: 2px;
-            position: relative;
-        }
-        #select-trigger i {
-            display: inline-block;
-
-            position: absolute;
-            right: 10px;
-        }
-        .icon-arrow-down {
-            border: 5px solid #666;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-bottom-color: transparent;
-            top: 10px;
-        }
-        .icon-arrow-up {
-            border: 5px solid #666;
-            border-left-color: transparent;
-            border-right-color: transparent;
-            border-top-color: transparent;
-            top: 5px;
-        }
-        #select-layer {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            display: none;
-
-            border: 1px solid #DDD;
-            background-color: #FFF;
-        }
-        #select-layer li {
-            cursor: pointer;
-            padding: 5px 10px;
-            border-top: 1px solid #EEE;
-        }
-        #select-layer li:first-child {
-            border-top: none;
-        }
-
     </style>
 </head>
 <body>
 
-    <div id="ui-select">
-        <span id="select-trigger">
-            <b>请选择</b>
-            <i class="icon-arrow-down"></i>
-        </span>
-        <ul id="select-layer">
-            <li>11111111111</li>
-            <li>22222222222</li>
-            <li>33333333333</li>
-            <li>44444444444</li>
+    <div class="dropdown">
+        <div class="button secondary">
+            <span class="text">
+                请选择
+            </span>
+            <i class="fa fa-caret-down"></i>
+        </div>
+        <ul class="menu">
+            <li class="item">11111111111</li>
+            <li class="item">22222222222</li>
+            <li class="item">33333333333</li>
+            <li class="item">44444444444</li>
         </ul>
     </div>
+
+    <div class="delegate dropdowns">
+        <div class="dropdown">
+            <div class="button secondary">
+                <span class="text">
+                    请选择
+                </span>
+                <i class="fa fa-caret-down"></i>
+            </div>
+            <ul class="menu">
+                <li class="item">11111111111</li>
+                <li class="item">22222222222</li>
+                <li class="item">33333333333</li>
+                <li class="item">44444444444</li>
+            </ul>
+        </div>
+        <div class="dropdown">
+            <div class="button secondary">
+                <span class="text">
+                    请选择
+                </span>
+                <i class="fa fa-caret-down"></i>
+            </div>
+            <ul class="menu">
+                <li class="item">11111111111</li>
+                <li class="item">22222222222</li>
+                <li class="item">33333333333</li>
+                <li class="item">44444444444</li>
+            </ul>
+        </div>
+        <div class="dropdown">
+            <div class="button secondary">
+                <span class="text">
+                    请选择
+                </span>
+                <i class="fa fa-caret-down"></i>
+            </div>
+            <ul class="menu">
+                <li class="item">11111111111</li>
+                <li class="item">22222222222</li>
+                <li class="item">33333333333</li>
+                <li class="item">44444444444</li>
+            </ul>
+        </div>
+    </div>
+
+
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -85,48 +88,35 @@
 
             function (Popup) {
 
-                var layer = $('#select-layer');
-
-                window.popup = new Popup({
-                    triggerElement: $('#select-trigger'),
-                    layerElement: layer,
-
-                    showTrigger: 'click',
-                    //showDelay: 100,
-                    showAnimation: function (options) {
-                        options.layerElement.slideDown(100);
-                    },
-
-                    hideTrigger: 'click',
-                    //hideDelay: 100,
-                    hideAnimation: function (options) {
-                        options.layerElement.slideUp(10);
-                    },
-
-                    onafteropen: function () {
-                        $('#select-trigger i').removeClass('icon-arrow-down')
-                                              .addClass('icon-arrow-up');
-                    },
-                    onafterclose: function () {
-                        $('#select-trigger i').removeClass('icon-arrow-up')
-                                              .addClass('icon-arrow-down');
-                    },
-
+                var popup = new Popup({
+                    triggerElement: $('body > .dropdown > .button'),
+                    layerElement: $('body > .dropdown > .menu'),
                     ondebug: function (event, data) {
                         console.log(
                             event.type,
-                            event.target.tagName ? true : false, // 是否原生
+                            event.target.tagName ? true : false, // 是否 DOM 事件
                             data,
                             this
                         );
+                        console.log('opened', this.is('opened'));
                     }
                 });
 
-
-
-                layer.on('click', 'li', function (e) {
-                    popup.close();
-                    $('#select-trigger b').html(e.target.innerHTML);
+                var popup = new Popup({
+                    triggerSelector: '.dropdown > .button',
+                    layerElement: function (e) {
+                        var element = $(e.currentTarget).closest('.dropdown');
+                        return element.find('.menu');
+                    },
+                    ondebug: function (event, data) {
+                        console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否 DOM 事件
+                            data,
+                            this
+                        );
+                        console.log('opened', this.is('opened'));
+                    }
                 });
 
             }

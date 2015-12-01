@@ -97,14 +97,14 @@ define(function (require, exports, module) {
      * @property {Object=} options.bottomClass 设置下侧 class
      * @property {Object=} options.leftClass 设置左侧 class
      *
-     * @property {Object=} options.topOffsetX 设置上侧偏移量
-     * @property {Object=} options.topOffsetY 设置上侧偏移量
-     * @property {Object=} options.rightOffsetX 设置右侧偏移量
-     * @property {Object=} options.rightOffsetY 设置右侧偏移量
-     * @property {Object=} options.bottomOffsetX 设置下侧偏移量
-     * @property {Object=} options.bottomOffsetY 设置下侧偏移量
-     * @property {Object=} options.leftOffsetX 设置左侧偏移量
-     * @property {Object=} options.leftOffsetY 设置左侧偏移量
+     * @property {Object=} options.topOffsetX 设置上侧水平偏移量
+     * @property {Object=} options.topOffsetY 设置上侧垂直偏移量
+     * @property {Object=} options.rightOffsetX 设置右侧水平偏移量
+     * @property {Object=} options.rightOffsetY 设置右侧垂直偏移量
+     * @property {Object=} options.bottomOffsetX 设置下侧水平偏移量
+     * @property {Object=} options.bottomOffsetY 设置下侧垂直偏移量
+     * @property {Object=} options.leftOffsetX 设置左侧水平偏移量
+     * @property {Object=} options.leftOffsetY 设置左侧垂直偏移量
      *
      */
     function Tooltip(options) {
@@ -388,9 +388,6 @@ define(function (require, exports, module) {
         }
     };
 
-    /**
-     * 定位
-     */
     proto.pin = function () {
 
         var me = this;

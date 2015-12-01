@@ -34,7 +34,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.watchElement 需要监听键盘事件的元素
+     * @property {jQuery} options.mainElement 需要监听键盘事件的元素
      *
      * @property {Object=} options.shortcut 配置快捷键
      *                                      组合键使用 + 连接，如 'ctrl+c',
@@ -49,7 +49,7 @@ define(function (require, exports, module) {
      * @example
      *
      * new Keyboard({
-     *    watchElement: $('textarea'),
+     *    mainElement: $('textarea'),
      *    shortcut: {
      *        'ctrl+enter': function () {
      *            // send message
@@ -93,7 +93,7 @@ define(function (require, exports, module) {
 
         var namespace = me.namespace();
 
-        me.option('watchElement')
+        me.option('mainElement')
         .on('keydown' + namespace, function (e) {
 
             var currentKeyCode = e.keyCode;
@@ -170,7 +170,7 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
-        me.option('watchElement').off(
+        me.option('mainElement').off(
             me.namespace()
         );
 
@@ -206,10 +206,7 @@ define(function (require, exports, module) {
 
                 // 加号需要特殊处理
                 var plus = 'plus';
-                var keys = split(
-                                key.replace(/\$\+/g, plus),
-                                '+'
-                            );
+                var keys = split(key.replace(/\$\+/g, plus), '+');
 
                 $.each(
                     keyboardUtil.combinationKey,

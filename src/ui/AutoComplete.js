@@ -86,7 +86,7 @@ define(function (require, exports, module) {
         };
 
         var iterator = new Iterator({
-            watchElement: inputElement,
+            mainElement: inputElement,
             minIndex: me.option('includeInput') ? 0 : 1,
             defaultIndex: 0,
             step: 1,

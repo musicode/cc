@@ -36,7 +36,7 @@ define(function (require, exports, module) {
 
 
     /**
-     * 封装一些输入功能，包括兼容最常用的 input 事件（以 propertychange 事件对外广播）
+     * 封装一些输入功能，包括兼容最常用的 input 事件
      *
      * @constructor
      * @param {Object} options
@@ -63,10 +63,6 @@ define(function (require, exports, module) {
      *                                          }
      *                                      }
      *
-     * @property {Function=} options.onkeydown
-     * @property {Function=} options.onkeyup
-     * @property {Function=} options.onbeforelongpress
-     * @property {Function=} options.onafterlongpress
      */
     function Input(options) {
         lifeUtil.init(this, options);
@@ -87,7 +83,7 @@ define(function (require, exports, module) {
 
 
         var keyboard = new Keyboard({
-            watchElement: mainElement,
+            mainElement: mainElement,
             shortcut: me.option('shortcut')
         });
 
@@ -95,21 +91,21 @@ define(function (require, exports, module) {
 
         var updateValue = function (value) {
 
-            var options = { };
-
             if ($.type(value) !== 'string') {
                 value = mainElement.val();
-                options.from = 'dom';
             }
 
-            me.set('value', value, options);
+            me.set('value', value);
 
         };
 
 
         keyboard.on('dispatch', function (e, data) {
 
-            switch (data.event.type) {
+            var event = data.event;
+            data = data.data;
+
+            switch (event.type) {
 
                 case 'beforelongpress':
                     isLongPress = true;
@@ -126,7 +122,7 @@ define(function (require, exports, module) {
 
             }
 
-            me.emit(data.event, data.data, true);
+            me.emit(event, data, true);
 
         });
 
@@ -136,7 +132,9 @@ define(function (require, exports, module) {
         mainElement
         .on('blur' + namespace, updateValue)
         .on('input' + namespace, function () {
-            if (!isLongPress || !me.option('silentOnLongPress')) {
+            if (!isLongPress
+                || !me.option('silentOnLongPress')
+            ) {
                 updateValue();
             }
         });
@@ -173,9 +171,10 @@ define(function (require, exports, module) {
     lifeUtil.extend(proto);
 
     Input.propertyUpdater = {
-        value: function (newValue, oldValue, changes) {
-            if (changes.value.from !== 'dom') {
-                this.inner('main').val(newValue);
+        value: function (value) {
+            var inputElement = this.inner('main');
+            if (inputElement.val() !== value) {
+                inputElement.val(value);
             }
         }
     };

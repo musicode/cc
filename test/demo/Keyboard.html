@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Keyboard</title>
+    <link rel="stylesheet" href="./css/cs.css">
 </head>
 <body>
 
-    <input type="text" />
+    <input type="text" class="input" />
 
     <script src="./js/jquery.js"></script>
     <script src="./js/esl.js"></script>
@@ -21,7 +22,7 @@
 
                 window.keyboard = new Keyboard({
 
-                    watchElement: $(document.body),
+                    mainElement: $(document.body),
 
                     onbeforelongpress: function (event, data) {
                         console.log('>>>>>>>>>> before longpress: ');

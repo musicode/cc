@@ -67,7 +67,7 @@ define(function (require, exports, module) {
      *
      * @property {jQuery|Function} options.layerElement 弹出的元素
      *
-     * @property {boolean=} options.opened 弹出的元素是否默认展开，如果不传，会自动根据 DOM 判断
+     * @property {boolean=} options.opened 弹出的元素是否默认展开。如果不传，会自动根据 DOM 判断
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式，可选值有 click enter focus context，可组合使用，以逗号分隔
      * @property {number=} options.showLayerDelay 显示延时
@@ -344,10 +344,9 @@ define(function (require, exports, module) {
 
     Popup.stateUpdater = {
         opened: function (opened) {
-            var me = this;
-            var layerElement = me.inner('layer');
+            var layerElement = this.inner('layer');
             if (layerElement) {
-                me.execute(
+                this.execute(
                     opened ? 'showLayerAnimation' : 'hideLayerAnimation',
                     {
                         layerElement: layerElement
@@ -379,7 +378,6 @@ define(function (require, exports, module) {
      */
     function createShowHandler(instance, before) {
         return function (e) {
-
 
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {
