@@ -10,19 +10,18 @@ define(function (require, exports, module) {
     var Switchable = require('../helper/Switchable');
 
     /**
-     * 标签页
      *
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 navActiveClass 算出索引
+     * @property {number=} options.index 当前选中的索引，如果未传此项，会通过 navActiveClass 自动计算
      *
-     * @property {string} options.navTrigger 触发方式，可选值包括 enter click
-     * @property {number=} options.navDelay 触发延时，当 navTrigger 是 enter 时可用
-     * @property {Function} options.navAnimation 切换动画
+     * @property {string} options.navTrigger 触发切换的方式，可选值包括 enter click
+     * @property {number=} options.navDelay 触发切换的延时，当 navTrigger 是 enter 时可用
+     * @property {Function} options.navAnimation 切换的动画
      *
      * @property {string} options.navSelector 导航项的选择器，如 .nav-item
-     * @property {string} options.navActiveClass 导航项选中状态的 className
+     * @property {string=} options.navActiveClass 导航项选中状态的 className
      *
      * @property {string} options.contentSelector 内容项的选择器，如 .tab-panel
      * @property {string=} options.contentActiveClass 内容项选中状态的 className
