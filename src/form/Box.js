@@ -80,7 +80,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
-            native: common.findNative(me, toggle ? ':checkbox' : ':radio')
+            native: common.findNative(me, toggle ? 'input[type="checkbox"]' : 'input[type="radio"]')
         });
 
         me.set({

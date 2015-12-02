@@ -288,8 +288,8 @@ define(function (require, exports, module) {
             if (autoScroll && errors.length > 0) {
 
                 var fieldElement = errors[ 0 ].fieldElement;
-                if (fieldElement.is(':hidden')) {
-                    fieldElement = fieldElement.closest(':visible');
+                if (fieldElement.is('input[type="hidden"]')) {
+                    fieldElement = fieldElement.parent();
                 }
 
                 var top = fieldElement.offset().top;

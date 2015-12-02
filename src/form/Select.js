@@ -130,7 +130,7 @@ define(function (require, exports, module) {
             me.emit(data.event, data.data, true);
         });
 
-        var nativeElement = common.findNative(me, '> input:hidden');
+        var nativeElement = common.findNative(me, '> input[type="hidden"]');
 
         // 模拟 focus/blur，便于表单验证
         me

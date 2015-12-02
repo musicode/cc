@@ -94,7 +94,7 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
-            native: common.findNative(me, '> input:hidden'),
+            native: common.findNative(me, '> input[type="hidden"]'),
             boxes: boxes
         });
 

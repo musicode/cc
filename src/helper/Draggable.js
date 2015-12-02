@@ -159,8 +159,8 @@ define(function (require, exports, module) {
             // 所以偏移量应该是全局坐标的偏移量
             var rectContainsElement = contains(rectElement, mainElement);
             if (rectContainsElement) {
-                offsetX += rectInnerOffset.x;
-                offsetY += rectInnerOffset.y;
+                offsetX += rectInnerOffset.x - rectElement.scrollLeft();
+                offsetY += rectInnerOffset.y - rectElement.scrollTop();
             }
 
 
@@ -181,21 +181,38 @@ define(function (require, exports, module) {
             var width;
             var height;
 
+            // 计算可拖拽范围有 2 种情况：
+            // 1. 在容器内部定位
+            // 2. 不在容器内部定位，但需要参考容器位置和大小
+
+            // 当加入 fixed 定位时，情况又变复杂了
+            // fixed 是 2 的一种特殊情况
+
             var isFixed = style.position === 'fixed';
             var vHeight = viewportHeight();
 
+            // 先处理 fixed 这种特殊情况
             if (isFixed) {
                 var byViewport = !containerElement || containerElement.is('body');
-                width = byViewport ? viewportWidth() : containerElement.innerWidth();
-                height = byViewport ? vHeight : containerElement.innerHeight();
-            }
-            else {
-                width = rectElement.innerWidth();
-                height = rectElement.innerHeight();
+                if (byViewport) {
+                    width = viewportWidth();
+                    height = vHeight;
+                }
             }
 
-            if (rectElement.is('body') || rectElement.is('html')) {
-                if (height < vHeight) {
+            if ($.type(width) !== 'number') {
+                if (rectContainsElement) {
+                    width = rectElement.prop('scrollWidth');
+                    height = rectElement.prop('scrollHeight');
+                }
+                else {
+                    width = rectElement.innerWidth();
+                    height = rectElement.innerHeight();
+                }
+            }
+
+            if (height < vHeight) {
+                if (rectElement.is('body') || rectElement.is('html')) {
                     height = vHeight;
                 }
             }
@@ -315,7 +332,6 @@ define(function (require, exports, module) {
 
         me.execute('init', {
             mainElement: mainElement,
-            containerElement: containerElement,
             namespace: me.namespace(),
             downHandler: beforeDragHandler,
             moveHandler: dragHandler,
