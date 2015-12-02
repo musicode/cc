@@ -111,12 +111,12 @@ define(function (require, exports, module) {
 
         });
 
-        if (mainElement.is(':text')) {
+        if (mainElement.is('input[type="text"]')) {
             keyboard
                 .on('keydown', function (e) {
                     // 处理某些浏览器按方向键上会导致光标跑到最左侧
                     if (e.keyCode === keyboardUtil.up) {
-                        e.preventDefault();
+                        return false;
                     }
                 });
         }

@@ -15,12 +15,12 @@ define(function (require, exports, module) {
      *
      * @constrctor
      * @param {Object} options
-     * @property {number} options.index 当前索引
-     * @property {number} options.minIndex 最小索引
-     * @property {number} options.maxIndex 最大索引
-     * @property {number} options.defaultIndex 默认索引，调用 stop() 会重置为该索引
-     * @property {number} options.step prev 和 next 的步进值
-     * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
+     * @property {number} options.index 当前索引，从 0 开始
+     * @property {number} options.minIndex 允许的最小索引值
+     * @property {number} options.maxIndex 允许的最大索引值
+     * @property {number} options.defaultIndex 默认索引值，调用 stop() 会重置为该索引
+     * @property {number} options.step 前一个/后一个操作的步进值
+     * @property {number} options.interval 自动遍历的时间间隔，单位是毫秒，值越小遍历速度越快
      * @property {boolean=} options.loop 是否循环遍历
      */
     function Iterator(options) {
@@ -58,6 +58,10 @@ define(function (require, exports, module) {
         var fn = reverse ? me.prev : me.next;
         var interval = me.option('interval');
 
+        if ($.type(interval) !== 'number') {
+            me.error('interval must be a number.');
+        }
+
         timer = createTimer(
             $.proxy(fn, me),
             interval,
@@ -82,12 +86,6 @@ define(function (require, exports, module) {
 
     };
 
-    proto._pause = function () {
-        if (!this.inner('timer')) {
-            return false;
-        }
-    };
-
     /**
      * 停止自动遍历 + 重置索引
      */
@@ -101,6 +99,13 @@ define(function (require, exports, module) {
             me.option('defaultIndex')
         );
 
+    };
+
+    proto._pause =
+    proto._stop = function () {
+        if (!this.inner('timer')) {
+            return false;
+        }
     };
 
     /**
@@ -132,10 +137,10 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        if (me.get('index') - me.option('step') < me.get('minIndex')) {
-            if (!me.option('loop')) {
-                return false;
-            }
+        if (!me.option('loop')
+            && me.get('index') - me.option('step') < me.get('minIndex')
+        ) {
+            return false;
         }
 
     };
@@ -169,10 +174,10 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        if (me.get('index') + me.option('step') > me.get('maxIndex')) {
-            if (!me.option('loop')) {
-                return false;
-            }
+        if (!me.option('loop')
+            && me.get('index') + me.option('step') > me.get('maxIndex')
+        ) {
+            return false;
         }
 
     };

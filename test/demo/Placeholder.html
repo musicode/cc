@@ -39,7 +39,7 @@
             function (Placeholder) {
 
                 window.nativePlaceholder = new Placeholder({
-                    mainElement: $(':text').eq(0),
+                    mainElement: $('input[type="text"]').eq(0),
                     nativeFirst: true,
 
                     ondebug: function (event, data) {

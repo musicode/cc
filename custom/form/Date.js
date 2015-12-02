@@ -20,7 +20,7 @@ define(function (require, exports, module) {
             return new window.Date(text);
         },
 
-        inputSelector: ':text',
+        inputSelector: 'input[type="text"]',
         layerSelector: '.calendar',
 
         itemSelector: '[data-value]',
