@@ -37,7 +37,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hidden 初始化时是否隐藏
      * @property {boolean=} options.fixed 是否 fixed 定位
      * @property {boolean=} options.modal 是否是窗口模态
-     * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableHandleSelector 和 draggableCancelSelector 配置
+     * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableIncludeSelector 和 draggableExcludeSelector 配置
      * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 或 footer 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件
@@ -58,8 +58,8 @@ define(function (require, exports, module) {
      * @property {string=} options.draggableClass 可拖拽时给 mainElement 添加的 class
      * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 class
      *
-     * @property {(string|Array)=} options.draggableHandleSelector 可拖拽的元素
-     * @property {(string|Array)=} options.draggableCancelSelector 不可拖拽的元素
+     * @property {(string|Array)=} options.draggableIncludeSelector 可拖拽的元素
+     * @property {(string|Array)=} options.draggableExcludeSelector 不可拖拽的元素
      *
      * @property {string=} options.headerSelector 头部元素
      * @property {string=} options.titleSelector 填充 title 的元素
@@ -379,8 +379,8 @@ define(function (require, exports, module) {
                 if (me.option('draggable')) {
                     dragger = dragGlobal({
                         element: mainElement,
-                        handleSelector: me.option('draggableHandleSelector'),
-                        cancelSelector: me.option('draggableCancelSelector'),
+                        includeSelector: me.option('draggableIncludeSelector'),
+                        excludeSelector: me.option('draggableExcludeSelector'),
                         draggingClass: me.option('draggingClass'),
                         dragAnimation: me.option('dragAnimation')
                     });

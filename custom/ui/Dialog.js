@@ -22,8 +22,8 @@ define(function (require, exports, module) {
 
         draggableClass: 'draggable',
 
-        draggableHandleSelector: '.dialog-header',
-        draggableCancelSelector: [ '.dialog-header h1', '.dialog-close' ],
+        draggableIncludeSelector: '.dialog-header',
+        draggableExcludeSelector: [ '.dialog-header h1', '.dialog-close' ],
 
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',

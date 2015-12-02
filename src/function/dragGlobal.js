@@ -13,8 +13,8 @@ define(function (require, exports, module) {
     /**
      * @param {Object} options
      * @property {string} options.element 要定位的元素
-     * @property {string|Array.<string>} options.handleSelector
-     * @property {string|Array.<string>} options.cancelSelector
+     * @property {string|Array.<string>} options.includeSelector
+     * @property {string|Array.<string>} options.excludeSelector
      * @property {string=} options.draggingClass 拖拽时给 element 添加的 class
      * @return {Draggable}
      */
@@ -24,8 +24,8 @@ define(function (require, exports, module) {
             mainElement: options.element,
             containerElement: instance.body,
             mainDraggingClass: options.draggingClass,
-            handleSelector: options.handleSelector,
-            cancelSelector: options.cancelSelector,
+            includeSelector: options.includeSelector,
+            excludeSelector: options.excludeSelector,
             dragAnimation: options.dragAnimation,
             init: function (options) {
 

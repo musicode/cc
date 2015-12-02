@@ -129,23 +129,23 @@ define(function (require, exports, module) {
                 };
 
                 thumbnailElement
-                    .on(enterType, function (e) {
+                    .on(enterType, function () {
 
                         if (delayTimer) {
                             clearTimer();
                             return;
                         }
 
-                        var offset = {
-                            x: finderWidth / 2,
-                            y: finderHeight / 2
+                        var options = {
+                            offsetX: finderWidth / 2,
+                            offsetY: finderHeight / 2
                         };
 
-                        if (!options.downHandler(e, offset)) {
+                        if (!options.downHandler(options)) {
                             return;
                         }
 
-                        thumbnailOffset = thumbnailElement.position();;
+                        thumbnailOffset = thumbnailElement.position();
 
                         document
                             .off(namespace)

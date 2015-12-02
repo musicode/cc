@@ -53,8 +53,8 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.axis 限制方向，可选值包括 x y
      *
-     * @property {(string|Array.<string>)=} options.handleSelector 触发拖拽的区域
-     * @property {(string|Array.<string>)=} options.cancelSelector 不触发拖拽的区域
+     * @property {(string|Array.<string>)=} options.includeSelector 触发拖拽的区域
+     * @property {(string|Array.<string>)=} options.excludeSelector 不触发拖拽的区域
      *
      * @property {Function} options.init
      * @property {Function} options.dragAnimation
@@ -90,24 +90,43 @@ define(function (require, exports, module) {
         var containerDraggingClass = me.option('containerDraggingClass');
         var bodyDraggingClass = me.option('bodyDraggingClass');
 
-        var beforeDragHandler = function (e, offset) {
+        var beforeDragHandler = function (e) {
 
-            // 这里本想使用 not 选择器来实现 cancal
-            // 但是当 cancel 位于 handle 内部时，mousedown cancel 区域，jq 依然会触发事件
-            // 因为有这个问题，索性整个判断都放在这里
+            var coord;
 
-            var handleSelector = me.option('handleSelector');
-            var cancelSelector = me.option('cancelSelector');
+            var isEvent = e[ $.expando ];
+            if (isEvent) {
 
-            var target = e.target;
+                // 这里本想使用 not 选择器来实现 exclude
+                // 但是当 exclude 位于 include 内部时，mousedown exclude 区域，jq 依然会触发事件
+                // 因为有这个问题，索性整个判断都放在这里
 
-            if (handleSelector && !hitTarget(mainElement, handleSelector, target)
-                || cancelSelector && hitTarget(mainElement, cancelSelector, target)
-            ) {
-                return;
+                var includeSelector = me.option('includeSelector');
+                var excludeSelector = me.option('excludeSelector');
+
+                var target = e.target;
+
+                if (includeSelector && !hitTarget(mainElement, includeSelector, target)
+                    || excludeSelector && hitTarget(mainElement, excludeSelector, target)
+                ) {
+                    return;
+                }
+
+                $.each(globalCoord, function (key, value) {
+                    if (e.type.indexOf(key) === 0) {
+                        coord = value;
+                        return false;
+                    }
+                });
+
+            }
+            else if (e.type) {
+                coord = globalCoord[ e.type ];
             }
 
-
+            if (!coord) {
+                coord = globalCoord.mouse;
+            }
 
 
             // 重新取值比较靠谱
@@ -121,32 +140,19 @@ define(function (require, exports, module) {
             // 这样方便 onDrag 时作为当前全局坐标的减数，减少计算量
             // =====================================================================
 
-            var coord;
-
-            $.each(globalCoord, function (key, value) {
-                if (e.type.indexOf(key) === 0) {
-                    coord = value;
-                    return false;
-                }
-            });
-
-            if (!coord) {
-                me.error('event[' + type + '] is not supported.');
-            }
-
             var mainOuterOffset = outerOffset(mainElement);
             var rectInnerOffset = innerOffset(rectElement);
 
             var offsetX;
             var offsetY;
 
-            if (offset) {
-                offsetX = offset.x;
-                offsetY = offset.y;
-            }
-            else {
+            if (isEvent) {
                 offsetX = coord.absoluteX(e) - mainOuterOffset.x;
                 offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+            }
+            else {
+                offsetX = e.offsetX;
+                offsetY = e.offsetY;
             }
 
             // 因为 onDrag 是用`全局坐标`减去`偏移量`
@@ -238,9 +244,16 @@ define(function (require, exports, module) {
             point.left = x;
             point.top = y;
 
+            var event;
+
             // 不写在 mousedown 是因为鼠标按下不表示开始拖拽
             // 只有坐标发生变动才算
-            if (++counter === 1) {
+            if (counter === 0) {
+
+                event = me.emit('beforedrag', point);
+                if (event.isDefaultPrevented()) {
+                    return;
+                }
 
                 disableSelection();
 
@@ -256,39 +269,41 @@ define(function (require, exports, module) {
                     bodyElement.addClass(bodyDraggingClass);
                 }
 
-                me.emit('beforedrag', point);
-
             }
 
-            me.execute(
-                'dragAnimation',
-                {
-                    mainElement: mainElement,
-                    mainStyle: point
-                }
-            );
+            counter++;
 
-            me.emit('drag', point);
+            event = me.emit('drag', point);
+            if (!event.isDefaultPrevented()) {
+                me.execute(
+                    'dragAnimation',
+                    {
+                        mainElement: mainElement,
+                        mainStyle: point
+                    }
+                );
+            }
 
         };
 
-        var afterDragHandler = function (e) {
-
-            enableSelection();
-
-            if (draggingClass) {
-                mainElement.removeClass(draggingClass);
-            }
-
-            if (containerDraggingClass) {
-                containerElement.removeClass(containerDraggingClass);
-            }
-
-            if (bodyDraggingClass) {
-                bodyElement.removeClass(bodyDraggingClass);
-            }
+        var afterDragHandler = function () {
 
             if (counter > 0) {
+
+                enableSelection();
+
+                if (draggingClass) {
+                    mainElement.removeClass(draggingClass);
+                }
+
+                if (containerDraggingClass) {
+                    containerElement.removeClass(containerDraggingClass);
+                }
+
+                if (bodyDraggingClass) {
+                    bodyElement.removeClass(bodyDraggingClass);
+                }
+
                 me.emit('afterdrag', point);
             }
 
