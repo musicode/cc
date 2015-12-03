@@ -5,6 +5,7 @@ define(function (require, exports, module) {
     var AutoComplete = require('cc/ui/AutoComplete');
 
     AutoComplete.defaultOptions = {
+        loop: true,
         interval: 60,
         includeInput: true,
         itemSelector: 'li',

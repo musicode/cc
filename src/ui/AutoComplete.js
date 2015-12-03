@@ -29,6 +29,7 @@ define(function (require, exports, module) {
      * @property {string} options.itemSelector 菜单项选择器
      * @property {string=} options.itemActiveClass 菜单项选中状态时的 className
      *
+     * @property {boolean=} options.loop 是否循环遍历
      * @property {number} options.interval 长按上下键自动遍历的时间间隔
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      * @property {boolean=} options.autoScroll 遍历时补全菜单是否自动滚动，当补全数据很多时开启体验更好
@@ -120,7 +121,7 @@ define(function (require, exports, module) {
             minIndex: me.option('includeInput') ? 0 : 1,
             defaultIndex: 0,
             step: 1,
-            loop: true,
+            loop: me.option('loop'),
             prevKey: 'up',
             nextKey: 'down',
             interval: me.option('interval'),
