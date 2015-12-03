@@ -222,6 +222,8 @@ define(function (require, exports, module) {
 
             triggerElement = $(event.currentTarget);
 
+            me.inner('trigger', triggerElement);
+
             var skinAttribute = me.option('skinAttribute');
             var placementAttribute = me.option('placementAttribute');
             var maxWidthAttribute = me.option('maxWidthAttribute');
@@ -262,7 +264,6 @@ define(function (require, exports, module) {
 
             var clean = function () {
                 me.inner({
-                    trigger: null,
                     skinClass: null,
                     placement: null,
                     maxWidth: null
@@ -318,7 +319,6 @@ define(function (require, exports, module) {
                 }
 
                 me.inner({
-                    trigger: triggerElement,
                     skinClass: skinClass,
                     placement: placement,
                     maxWidth: maxWidth
