@@ -86,6 +86,12 @@ define(function (require, exports, module) {
 
     };
 
+    proto._pause = function () {
+        if (!this.inner('timer')) {
+            return false;
+        }
+    };
+
     /**
      * 停止自动遍历 + 重置索引
      */
@@ -101,12 +107,7 @@ define(function (require, exports, module) {
 
     };
 
-    proto._pause =
-    proto._stop = function () {
-        if (!this.inner('timer')) {
-            return false;
-        }
-    };
+
 
     /**
      * 前一个

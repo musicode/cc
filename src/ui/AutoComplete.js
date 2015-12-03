@@ -33,13 +33,13 @@ define(function (require, exports, module) {
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      * @property {boolean=} options.autoScroll 遍历时补全菜单是否自动滚动，当补全数据很多时开启体验更好
      *
-     * @property {string} options.showMenuTrigger 显示补全菜单的触发方式
+     * @property {string=} options.showMenuTrigger 显示补全菜单的触发方式
      * @property {number=} options.showMenuDelay 显示补全菜单的延时
-     * @property {Function} options.showMenuAnimation 显示补全菜单的动画
+     * @property {Function=} options.showMenuAnimation 显示补全菜单的动画
      *
-     * @property {string} options.hideMenuTrigger 隐藏补全菜单的触发方式
+     * @property {string=} options.hideMenuTrigger 隐藏补全菜单的触发方式
      * @property {number=} options.hideMenuDelay 隐藏补全菜单的延时
-     * @property {Function} options.hideMenuAnimation 隐藏补全菜单的动画
+     * @property {Function=} options.hideMenuAnimation 隐藏补全菜单的动画
      *
      * @property {Function} options.render 配置模板引擎
      *
@@ -199,73 +199,78 @@ define(function (require, exports, module) {
         });
 
 
+        var popup;
 
+        var showMenuTrigger = me.option('showMenuTrigger');
+        var hideMenuTrigger = me.option('hideMenuTrigger');
 
-        var popup = new Popup({
-            triggerElement: inputElement,
-            layerElement: menuElement,
-            showLayerTrigger: me.option('showMenuTrigger'),
-            showLayerDelay: me.option('showMenuDelay'),
-            hideLayerTrigger: me.option('hideMenuTrigger'),
-            hideLayerDelay: me.option('hideMenuDelay'),
-            showLayerAnimation: function () {
-                me.execute(
-                    'showMenuAnimation',
-                    {
-                        menuElement: menuElement
-                    }
-                );
-            },
-            hideLayerAnimation: function () {
-                me.execute(
-                    'hideMenuAnimation',
-                    {
-                        menuElement: menuElement
-                    }
-                );
-            },
-            stateChange: {
-                opened: function (opened) {
-                    if (opened) {
-                        me.open();
-                    }
-                    else {
-                        me.close();
+        if (showMenuTrigger && hideMenuTrigger) {
+            popup = new Popup({
+                triggerElement: inputElement,
+                layerElement: menuElement,
+                showLayerTrigger: showMenuTrigger,
+                showLayerDelay: me.option('showMenuDelay'),
+                hideLayerTrigger: hideMenuTrigger,
+                hideLayerDelay: me.option('hideMenuDelay'),
+                showLayerAnimation: function () {
+                    me.execute(
+                        'showMenuAnimation',
+                        {
+                            menuElement: menuElement
+                        }
+                    );
+                },
+                hideLayerAnimation: function () {
+                    me.execute(
+                        'hideMenuAnimation',
+                        {
+                            menuElement: menuElement
+                        }
+                    );
+                },
+                stateChange: {
+                    opened: function (opened) {
+                        if (opened) {
+                            me.open();
+                        }
+                        else {
+                            me.close();
+                        }
                     }
                 }
-            }
-        });
+            });
 
 
-        popup
-        .on('dispatch', function (e, data) {
+            popup
+            .on('dispatch', function (e, data) {
 
-            var target = data.data.event.target;
-            var event = data.event;
+                var target = data.data.event.target;
+                var event = data.event;
 
-            switch (event.type) {
+                switch (event.type) {
 
-                case 'beforeopen':
-                    // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
-                    if (contains(inputElement, target)) {
-                        suggest();
-                        return false;
-                    }
-                    break;
+                    case 'beforeopen':
+                        // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
+                        if (contains(inputElement, target)) {
+                            suggest();
+                            return false;
+                        }
+                        break;
 
-                case 'beforeclose':
-                    // 点击输入框或 menu 不需要隐藏
-                    if (contains(inputElement, target)
-                        || contains(menuElement, target)
-                    ) {
-                        return false;
-                    }
-                    break;
-            }
+                    case 'beforeclose':
+                        // 点击输入框或 menu 不需要隐藏
+                        if (contains(inputElement, target)
+                            || contains(menuElement, target)
+                        ) {
+                            return false;
+                        }
+                        break;
+                }
 
-            me.emit(event, data.data, true);
+                me.emit(event, data.data, true);
 
-        });
+            });
+        }
 
         me
         .after('open', function () {
@@ -277,8 +282,6 @@ define(function (require, exports, module) {
 
             iterator.stop();
             iterator.set('maxIndex', 0);
-
-            activeIndex = 0;
 
             mouseEnterElement = null;
 
@@ -413,6 +416,13 @@ define(function (require, exports, module) {
 
         });
 
+        if (!popup) {
+            inputElement
+            .on('blur', function () {
+                iterator.stop();
+            });
+        }
+
         me.inner({
             iterator: iterator,
             input: input,
@@ -446,7 +456,9 @@ define(function (require, exports, module) {
     };
 
     proto._open = function () {
-        if (this.is('opened')) {
+        if (this.is('opened')
+            || !this.inner('popup')
+        ) {
             return false;
         }
     };
@@ -457,7 +469,9 @@ define(function (require, exports, module) {
     };
 
     proto._close = function () {
-        if (!this.is('opened')) {
+        if (!this.is('opened')
+            || !this.inner('popup')
+        ) {
             return false;
         }
     };
@@ -471,7 +485,11 @@ define(function (require, exports, module) {
 
         me.inner('iterator').dispose();
         me.inner('input').dispose();
-        me.inner('popup').dispose();
+
+        var popup = me.inner('popup');
+        if (popup) {
+            popup.dispose();
+        }
 
         me.option('menuElement').off(
             me.namespace()
@@ -489,7 +507,10 @@ define(function (require, exports, module) {
 
     AutoComplete.stateUpdater = {
         opened: function (opened) {
-            this.inner('popup').state('opened', opened);
+            var popup = this.inner('popup');
+            if (popup) {
+                popup.state('opened', opened);
+            }
         }
     };
 
