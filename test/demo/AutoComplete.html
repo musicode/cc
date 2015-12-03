@@ -3,58 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <title>AutoComplete</title>
+    <link rel="stylesheet" href="./css/cs.css">
     <style>
-
-        body {
-            font-size: 13px;
-        }
-
-        #auto-complete {
-            display: inline-block;
-            position: relative;
-        }
-
-        input {
-            margin: 0;
-            padding: 4px 8px;
-        }
-
-        #menu {
-            border: 1px solid #CCC;
-            display: none;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            position: absolute;
-            top: 28px;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-        li {
-            border-top: 1px solid #DDD;
-            padding: 0.5em 0.2em;
-        }
-        li:first-child {
-            border-top: none;
-        }
-
-        .item-hover {
-            background-color: #EEE;
-        }
-        .item-active {
-            background-color: #49A8B6;
-            color: #FFF;
+        .dropdown > .menu {
+            display: block;
         }
     </style>
 </head>
 <body>
 
-    <div id="auto-complete">
-        <input type="text" />
-        <ul id="menu"></ul>
+    <div class="dropdown">
+        <input type="text" class="input" />
+        <ul class="menu">
+
+        </ul>
     </div>
 
     <script src="./js/jquery.js"></script>
@@ -65,17 +27,14 @@
         require(
 
             [
-                'custom/ui/Autocomplete'
+                'custom/ui/AutoComplete'
             ],
 
             function (AutoComplete, etpl) {
 
-                var input = $('input');
-                var menu = $('#menu');
-
                 window.autoComplete = new AutoComplete({
-                    inputElement: input,
-                    menuElement: menu,
+                    inputElement: $('.input'),
+                    menuElement: $('.menu'),
 
                     render: function (data) {
 
@@ -85,17 +44,18 @@
                             data,
                             function (index, item) {
                                 html.push(
-                                    '<li>' + item.word + '</li>'
+                                    '<li class="item">' + item.word + '</li>'
                                 );
                             }
                         );
 
                         return html.join('');
                     },
+
+                    includeInput: true,
                     autoScroll: true,
                     itemSelector: 'li',
-
-                    itemActiveClass: 'item-active',
+                    itemActiveClass: 'active',
 
                     ondebug: function (event, data) {
                         console.log(
@@ -122,7 +82,7 @@
                                 dataType: 'jsonp'
                             }
                         )
-                        .done(function (response) {
+                        .then(function (response) {
                             var data;
                             if (response.status === 0) {
                                 data = response.data;

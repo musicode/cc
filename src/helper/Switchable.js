@@ -128,7 +128,6 @@ define(function (require, exports, module) {
     };
 
     var triggers = {
-
         enter: {
             startDelay: function (instance) {
                 return function (fn) {
@@ -148,7 +147,6 @@ define(function (require, exports, module) {
                 };
             }
         },
-
         click: {
 
         }

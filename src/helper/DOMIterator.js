@@ -59,6 +59,16 @@ define(function (require, exports, module) {
             }
         });
 
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+
+        iterator
+            .before('prev', dispatchEvent)
+            .after('prev', dispatchEvent)
+            .before('next', dispatchEvent)
+            .after('next', dispatchEvent);
+
 
         var prevKey = me.option('prevKey');
         var nextKey = me.option('nextKey');
@@ -98,7 +108,7 @@ define(function (require, exports, module) {
 
             if (reserve != null) {
                 playing = true;
-                iterator.start(reserve);
+                me.start(reserve);
             }
 
         })
@@ -106,7 +116,7 @@ define(function (require, exports, module) {
 
             if (playing) {
                 playing = false;
-                iterator.pause();
+                me.pause();
             }
 
         });

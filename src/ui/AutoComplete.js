@@ -23,25 +23,25 @@ define(function (require, exports, module) {
      * @param {Object} options
      * @property {jQuery} options.inputElement 输入框元素
      *
-     * @property {jQuery} options.menuElement 菜单元素
-     * @property {string=} options.menuTemplate 菜单模板
+     * @property {jQuery} options.menuElement 补全菜单元素
+     * @property {string=} options.menuTemplate 补全菜单模板
      *
-     * @property {string=} options.itemSelector 菜单项选择器
-     * @property {string=} options.itemActiveClass 菜单项 active 时的 className
+     * @property {string} options.itemSelector 菜单项选择器
+     * @property {string=} options.itemActiveClass 菜单项选中状态时的 className
      *
-     * @property {number=} options.interval 长按上下键遍历的等待间隔时间
+     * @property {number} options.interval 长按上下键自动遍历的时间间隔
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
-     * @property {boolean=} options.autoScroll 遍历时是否自动滚动，菜单出现滚动条时可开启
+     * @property {boolean=} options.autoScroll 遍历时补全菜单是否自动滚动，当补全数据很多时开启体验更好
      *
-     * @property {string=} options.showMenuTrigger 显示的触发方式
-     * @property {number=} options.showMenuDelay 显示延时
-     * @property {Function=} options.showMenuAnimation 显示动画
+     * @property {string} options.showMenuTrigger 显示补全菜单的触发方式
+     * @property {number=} options.showMenuDelay 显示补全菜单的延时
+     * @property {Function} options.showMenuAnimation 显示补全菜单的动画
      *
-     * @property {string=} options.hideMenuTrigger 隐藏的触发方式
-     * @property {number=} options.hideMenuDelay 隐藏延时
-     * @property {Function=} options.hideMenuAnimation 隐藏动画
+     * @property {string} options.hideMenuTrigger 隐藏补全菜单的触发方式
+     * @property {number=} options.hideMenuDelay 隐藏补全菜单的延时
+     * @property {Function} options.hideMenuAnimation 隐藏补全菜单的动画
      *
-     * @property {Function=} options.render 配置模板引擎
+     * @property {Function} options.render 配置模板引擎
      *
      * @property {Function} options.load 加载数据，可以是远程或本地数据，方法签名是 (query, callback)
      *
@@ -59,7 +59,6 @@ define(function (require, exports, module) {
         var me = this;
 
         var inputElement = me.option('inputElement');
-
         var menuElement = me.option('menuElement');
         var autoScroll = me.option('autoScroll');
         var itemSelector = me.option('itemSelector');
@@ -85,6 +84,37 @@ define(function (require, exports, module) {
             }
         };
 
+        var updateScrollPosition = function (fn) {
+            processIndex(
+                activeIndex,
+                function (itemElement) {
+                    fn(menuElement, itemElement);
+                }
+            );
+        };
+
+        var updateActiveItemClass = function (action) {
+            if (itemActiveClass) {
+                processIndex(
+                    activeIndex,
+                    function (itemElement) {
+                        if (itemElement[ 0 ] !== inputElement[ 0 ]) {
+                            itemElement[ action ](itemActiveClass);
+                        }
+                    }
+                );
+            }
+        };
+
+        var updateInputValue = function (index) {
+            processIndex(
+                index,
+                function (itemElement, itemData) {
+                    inputElement.val(itemData.text);
+                }
+            );
+        };
+
         var iterator = new Iterator({
             mainElement: inputElement,
             minIndex: me.option('includeInput') ? 0 : 1,
@@ -97,64 +127,27 @@ define(function (require, exports, module) {
             propertyChange: {
                 index: function (newIndex, oldIndex, changes) {
 
-                    var action = changes.index.action;
-
-                    processIndex(activeIndex, function (itemElement) {
-                        if (itemActiveClass
-                            && itemElement[ 0 ] !== inputElement[ 0 ]
-                        ) {
-                            itemElement.removeClass(itemActiveClass);
-                        }
-                    });
-
+                    updateActiveItemClass('removeClass');
                     activeIndex = newIndex;
+                    updateActiveItemClass('addClass');
 
-                    processIndex(activeIndex, function (itemElement, itemData) {
+                    var action = changes.index.action;
+                    var scroll;
 
-                        if (itemActiveClass
-                            && itemElement[ 0 ] !== inputElement[ 0 ]
-                        ) {
-                            itemElement.addClass(itemActiveClass);
-                        }
+                    if (action === 'prev') {
+                        updateInputValue(activeIndex);
+                        scroll = autoScrollUp;
+                    }
+                    else if (action === 'next') {
+                        updateInputValue(activeIndex);
+                    }
 
-                        if (valueActionMap[ action ]) {
-                            inputElement.val(itemData.text);
-                        }
+                    updateScrollPosition(scroll || autoScrollDown);
 
-                        if (autoScroll) {
-                            var fn = action === 'prev'
-                                   ? autoScrollUp
-                                   : autoScrollDown;
-
-                            fn(menuElement, itemElement);
-                        }
-
-                    });
                 }
             }
         });
 
-
-
-
-
-        var keyboardAction = {
-            enter: function (e, data) {
-
-                if (data.isLongPress) {
-                    return;
-                }
-
-                if (me.is('opened')) {
-                    me.close();
-                }
-
-                processIndex(activeIndex, function (element, data) {
-                    me.emit('enter', data);
-                });
-
-            }
-        };
 
         var suggest = function () {
             me.execute(
@@ -177,7 +170,26 @@ define(function (require, exports, module) {
         var input = new Input({
             mainElement: inputElement,
             silentOnLongPress: true,
-            shortcut: keyboardAction,
+            shortcut: {
+                enter: function (e, data) {
+
+                    if (data.isLongPress) {
+                        return;
+                    }
+
+                    if (me.is('opened')) {
+                        me.close();
+                    }
+
+                    processIndex(
+                        activeIndex,
+                        function (element, data) {
+                            me.emit('enter', data);
+                        }
+                    );
+
+                }
+            },
             propertyChange: {
                 value: function (value) {
                     iteratorData[ 0 ].data.text = value;
@@ -214,7 +226,12 @@ define(function (require, exports, module) {
             },
             stateChange: {
                 opened: function (opened) {
-                    me.state('opened', opened);
+                    if (opened) {
+                        me.open();
+                    }
+                    else {
+                        me.close();
+                    }
                 }
             }
         });
@@ -237,7 +254,7 @@ define(function (require, exports, module) {
                     break;
 
                 case 'beforeclose':
-                    // 点击输入框或 layer 不需要隐藏
+                    // 点击输入框或 menu 不需要隐藏
                     if (contains(inputElement, target)
                         || contains(menuElement, target)
                     ) {
@@ -275,7 +292,7 @@ define(function (require, exports, module) {
 
             iteratorData.length = 1;
 
-            var maxIndex = iteratorData.length - 1;
+            var maxIndex = 0;
 
             menuElement
             .find(itemSelector)
@@ -345,20 +362,17 @@ define(function (require, exports, module) {
 
             var index = $(this).data(ITEM_INDEX);
 
-            processIndex(index, function (itemElement, itemData) {
+            processIndex(
+                index,
+                function (itemElement, itemData) {
 
-                // 通常 mouseenter 会先触发设值
-                // 因此 click 需要 force
-                iterator.set('index', index, {
-                    action: ACTION_CLICK,
-                    force: true
-                });
+                    updateInputValue(index);
 
-                me.close();
+                    me.close();
+                    me.emit('select', itemData);
 
-                me.emit('select', itemData);
-
-            });
+                }
+            );
 
         })
         .on('mouseenter' + namespace, itemSelector, function () {
@@ -480,16 +494,6 @@ define(function (require, exports, module) {
     };
 
     var ITEM_INDEX = '__index__';
-
-    var ACTION_CLICK = 'click';
-
-    // 会引起 value 变化的 action
-    var valueActionMap = {
-        prev: 1,
-        next: 1
-    };
-
-    valueActionMap[ ACTION_CLICK ] = 1;
 
 
     return AutoComplete;
