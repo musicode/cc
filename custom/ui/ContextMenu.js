@@ -6,7 +6,6 @@ define(function (require, exports, module) {
 
     ContextMenu.defaultOptions = {
         underBody: true,
-        hideTrigger: 'click,context',
         showAnimation: function (options) {
             options.mainElement.show();
         },

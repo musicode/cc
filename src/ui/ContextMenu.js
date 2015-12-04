@@ -20,13 +20,10 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.mainElement 菜单元素
-     * @property {jQuery=} options.watchElement 在 watchElement 内部响应右键菜单，默认是 body
+     * @property {jQuery=} options.watchElement 在 watchElement 内部响应右键菜单
      *
-     * @property {Function=} options.showAnimation 显示动画
-     *
-     * @property {string=} options.hideTrigger 隐藏的触发方式
-     * @property {number=} options.hideDelay 隐藏延时
-     * @property {Function=} options.hideAnimation 隐藏动画
+     * @property {Function=} options.showAnimation 菜单显示动画
+     * @property {Function=} options.hideAnimation 菜单隐藏动画
      *
      * @property {Object=} options.action 可选，配置点击事件处理器
      *                     {
@@ -73,8 +70,7 @@ define(function (require, exports, module) {
 
         var popup = new Popup({
             layerElement: mainElement,
-            hideLayerTrigger: me.option('hideTrigger'),
-            hideLayerDelay: me.option('hideDelay'),
+            hideLayerTrigger: 'click,context',
             showLayerAnimation: function () {
                 me.execute(
                     'showAnimation',
@@ -162,10 +158,10 @@ define(function (require, exports, module) {
 
     };
 
+
     proto.show = function () {
         this.state('hidden', false);
     };
-
     proto._show = function (e) {
         if (!this.is('hidden')) {
             return false;
@@ -174,10 +170,10 @@ define(function (require, exports, module) {
     };
     proto.show_ = dispatchEvent;
 
+
     proto.hide = function () {
         this.state('hidden', true);
     };
-
     proto._hide = function (e) {
         if (this.is('hidden')) {
             return false;
@@ -185,6 +181,7 @@ define(function (require, exports, module) {
         return dispatchEvent(e);
     };
     proto.hide_ = dispatchEvent;
+
 
     proto.dispose = function () {
 

@@ -101,22 +101,22 @@
                         '[data-action="play"]': function (e) {
                             var target = $(e.target);
                             console.log('播放: ' + target.data('url'));
-                            this.close();
+                            this.hide();
                         },
                         '[data-action="like"]': function (e) {
                             var target = $(e.target);
                             console.log('收藏: ' + target.data('url'));
-                            this.close();
+                            this.hide();
                         },
                         '[data-action="download"]': function (e) {
                             var target = $(e.target);
                             console.log('下载: ' + target.data('url'));
-                            this.close();
+                            this.hide();
                         },
                         '[data-action="remove"]': function (e) {
                             var target = $(e.target);
                             console.log('删除: ' + target.data('url'));
-                            this.close();
+                            this.hide();
                         }
                     }
                 });
