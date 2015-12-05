@@ -100,9 +100,9 @@
                         var barElement = options.barElement;
 
                         if (options.action === 'click') {
-                            thumbElement.animate(options.thumbStyle, 100);
+                            thumbElement.css(options.thumbStyle);
                             if (options.barStyle) {
-                                barElement.animate(options.barStyle, 100);
+                                barElement.css(options.barStyle);
                             }
                         }
                         else {
@@ -128,7 +128,7 @@
                     orientation: 'vertical',
                     thumbSelector: '.slider-thumb',
                     slideAnimation: function (options) {
-                        options.thumbElement.animate(options.thumbStyle, 10);
+                        options.thumbElement.css(options.thumbStyle);
                     },
                     ondebug: function (event, data) {
                         console.log(

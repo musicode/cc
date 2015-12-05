@@ -211,7 +211,7 @@ define(function (require, exports, module) {
                 .on('click' + namespace, labelSelector, function () {
                     inputElement.focus();
                 })
-                .on('input' + namespace, inputSelector, function () {
+                .on(inputUtil.INPUT + namespace, inputSelector, function () {
                     var hidden = $.trim(inputElement.val()).length > 0;
                     if (hidden !== instance.is('hidden')) {
                         // 为了触发 before 和 after 事件才调用实例方法

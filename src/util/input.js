@@ -27,12 +27,33 @@ define(function (require, exports, module) {
      *
      */
 
+    var guid = require('../function/guid');
     var around = require('../function/around');
+
     var detection = require('./detection');
 
-    var namespace = '.cobble_util_input';
+    var DATA_KEY = '.cc_util_input';
 
-    var bindInput = $.noop;
+    var EVENT_INPUT = 'cc-input';
+
+    /**
+     * 初始化标准浏览器的事件监听
+     *
+     * @inner
+     * @param {jQuery} element
+     */
+    function bindInput(element) {
+
+        var namespace = '.' + guid();
+
+        element
+            .data(DATA_KEY, namespace)
+            .on('input' + namespace, function (e) {
+                e.type = EVENT_INPUT;
+                element.trigger(e);
+            });
+
+    }
 
     /**
      * 初始化 IE8- 的 propertychange 事件监听
@@ -53,9 +74,11 @@ define(function (require, exports, module) {
         // 比如使用 element[0].value = 'xx' 无法检测到
         var changeByVal = false;
 
-        element.on(
-            'propertychange' + namespace,
-            function (e) {
+        var namespace = '.' + guid();
+
+        element
+            .data(DATA_KEY, namespace)
+            .on('propertychange' + namespace, function (e) {
                 if (changeByVal) {
                     changeByVal = false;
                     return;
@@ -63,12 +86,14 @@ define(function (require, exports, module) {
                 if (e.originalEvent.propertyName === 'value') {
                     var newValue = element.val();
                     if (newValue !== oldValue) {
-                        element.trigger('input');
-                        oldValue = newValue;
+                        e.type = EVENT_INPUT;
+                        element.trigger(e);
+                        if (!e.isDefaultPrevented()) {
+                            oldValue = newValue;
+                        }
                     }
                 }
-            }
-        );
+            });
 
         around(
             element,
@@ -79,14 +104,24 @@ define(function (require, exports, module) {
                 }
             }
         );
+
     }
+
+    exports.INPUT = EVENT_INPUT;
 
     exports.init = detection.supportInput()
                  ? bindInput
                  : bindPropertyChange;
 
     exports.dispose = function (element) {
-        element.off(namespace);
+
+        var namespace = element.data(DATA_KEY);
+        if (namespace) {
+            element
+                .removeData(DATA_KEY)
+                .off(namespace);
+        }
+
     };
 
 

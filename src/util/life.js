@@ -12,6 +12,7 @@ define(function (require, exports, module) {
     var ucFirst = require('../function/ucFirst');
     var nextTick = require('../function/nextTick');
     var toBoolean = require('../function/toBoolean');
+    var createEvent = require('../function/createEvent');
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
 
@@ -20,25 +21,6 @@ define(function (require, exports, module) {
     var instances = { };
 
     var UPDATE_ASYNC = '__update_async__';
-
-    /**
-     * 创建 jQuery Event 对象
-     *
-     * @inner
-     * @param {string|Object|Event} event
-     * @return {Event}
-     */
-    function createEvent(event) {
-
-        if (event && !event[ $.expando ]) {
-            event = $.type(event) === 'string' || event.type
-                  ? $.Event(event)
-                  : $.Event(null, event);
-        }
-
-        return event || $.Event();
-
-    }
 
     /**
      * setter 构造器

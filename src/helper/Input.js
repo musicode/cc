@@ -135,7 +135,7 @@ define(function (require, exports, module) {
 
         mainElement
         .on('blur' + namespace, updateValue)
-        .on('input' + namespace, function () {
+        .on(inputUtil.INPUT + namespace, function () {
             if (!isLongPress
                 || !me.option('silentOnLongPress')
             ) {

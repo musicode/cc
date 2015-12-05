@@ -6,38 +6,46 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var namespace = '.cobble_util_swipe';
+    var guid = require('../function/guid');
+
+    var EVENT_SWIPE = 'cc-swipe';
+    var EVENT_SWIPING = 'cc-swiping';
+
+    var DATA_KEY = 'cc_util_swipe';
 
     function getPoint(e) {
 
         e = e.originalEvent;
 
         var touches = e.changedTouches || e.touches;
-
         if (touches.length === 1) {
             return touches[0];
         }
 
     }
 
+    exports.SWIPE = EVENT_SWIPE;
+    exports.SWIPING = EVENT_SWIPING;
+
     exports.init = function (element) {
 
-        var trigger = function (type, point) {
+        var namespace = '.' + guid();
+
+        var trigger = function (e, type, point) {
 
             var x = point.pageX - start.x;
             var y = point.pageY - start.y;
 
-            var event = $.Event(
-                type,
+            e.type = type;
+
+            element.trigger(
+                e,
                 {
                     x: x,
                     y: y
                 }
             );
 
-            element.trigger(event);
-
-            return event;
         };
 
         var start = { };
@@ -53,11 +61,7 @@ define(function (require, exports, module) {
 
             if (point) {
 
-                var event = trigger('swiping', point);
-
-                if (event.isDefaultPrevented()) {
-                    e.preventDefault();
-                }
+                trigger(e, EVENT_SWIPING, point);
 
                 if (touchEndTimer) {
                     clearTimeout(touchEndTimer);
@@ -84,7 +88,7 @@ define(function (require, exports, module) {
             var point = getPoint(e);
 
             if (point) {
-                trigger('swipe', point);
+                trigger(e, EVENT_SWIPE, point);
             }
 
             element.off(eventGroup);
@@ -93,26 +97,33 @@ define(function (require, exports, module) {
 
 
         element
+            .data(DATA_KEY, namespace)
+            .on('touchstart' + namespace, function (e) {
 
-        .on('touchstart' + namespace, function (e) {
+                var point = getPoint(e);
 
-            var point = getPoint(e);
+                if (point) {
 
-            if (point) {
+                    start.x = point.pageX;
+                    start.y = point.pageY;
+                    start.time = + new Date();
 
-                start.x = point.pageX;
-                start.y = point.pageY;
-                start.time = + new Date();
+                    element.on(eventGroup);
+                }
 
-                element.on(eventGroup);
-            }
-
-        });
+            });
 
     };
 
     exports.dispose = function (element) {
-        element.off(namespace);
+
+        var namespace = element.data(DATA_KEY);
+        if (namespace) {
+            element
+                .removeData(DATA_KEY)
+                .off(namespace);
+        }
+
     };
 
 });

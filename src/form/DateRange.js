@@ -113,7 +113,7 @@ define(function (require, exports, module) {
         });
 
         inputUtil.init(inputElement);
-        inputElement.on('input', function () {
+        inputElement.on(inputUtil.INPUT, function () {
             me.set('value', this.value);
         });
 

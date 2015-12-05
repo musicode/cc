@@ -1,8 +1,8 @@
 {
-    "name": "cobble",
-    "author": "zhujl",
-    "version": "0.2.1",
-    "description": "javascript tools for web develop",
+    "name": "cc",
+    "author": "musicode",
+    "version": "1.0.0",
+    "description": "javascript component for web develop",
     "main": "",
     "directories": {
         "doc": "doc"
@@ -19,7 +19,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/zhujl/cobble"
+        "url": "https://github.com/musicode/cc"
     },
     "keywords": [
         "javascript",
@@ -27,9 +27,8 @@
     ],
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/zhujl/cobble/issues"
+        "url": "https://github.com/musicode/cc/issues"
     },
-    "homepage": "http://zhujl.com/cobble",
     "edp": {
         "wwwroot": "/",
         "depDir": "dep",

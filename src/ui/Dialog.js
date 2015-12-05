@@ -21,10 +21,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery=} options.mainElement 对话框元素，此配置可选
-     *                                         如果传参，可把 title/content 写到模板上，把元素传进来
-     *                                         如果未传，必须传 title/content
-     *
+     * @property {jQuery=} options.mainElement 对话框元素
      * @property {string=} options.mainTemplate 对话框模板
      *
      * @property {string=} options.title 对话框标题
@@ -55,8 +52,8 @@ define(function (require, exports, module) {
      * @property {string=} options.maskTemplate 如果没传遮罩，可传模板动态创建
      *
      * @property {string=} options.skinClass 皮肤
-     * @property {string=} options.draggableClass 可拖拽时给 mainElement 添加的 class
-     * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 class
+     * @property {string=} options.draggableClass 如果对话框可拖拽，给 mainElement 添加的 className
+     * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 className
      *
      * @property {(string|Array)=} options.draggableIncludeSelector 可拖拽的元素
      * @property {(string|Array)=} options.draggableExcludeSelector 不可拖拽的元素

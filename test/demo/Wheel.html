@@ -22,25 +22,17 @@
 
     require(
 
-    [ 'custom/helper/Wheel' ],
+    [ 'cc/util/wheel' ],
 
-    function (Wheel) {
+    function (wheel) {
 
         var element = $(document.body);
 
-        var wheel = new Wheel({
-            mainElement: element,
-            ondebug: function (event, data) {
-                console.log(
-                    event.type,
-                    event.target.tagName ? true : false, // 是否原生
-                    data,
-                    this
-                );
-            },
-            onwheel: function () {
-                //return false;
-            }
+        wheel.init(element);
+
+        element.on(wheel.WHEEL, function (e, data) {
+            console.log(data);
+            //return false;
         });
     }
     );

@@ -16,10 +16,10 @@ define(function (require, exports, module) {
     var contains = require('../function/contains');
     var eventOffset = require('../function/eventOffset');
 
-    var Wheel = require('../helper/Wheel');
     var Draggable = require('../helper/Draggable');
 
     var lifeUtil = require('../util/life');
+    var wheelUtil = require('../util/wheel');
     var touchUtil = require('../util/touch');
     var orientationUtil = require('../util/orientation');
 
@@ -210,21 +210,17 @@ define(function (require, exports, module) {
 
             };
 
-            wheels.push(
-                new Wheel({
-                    mainElement: trackElement,
-                    onwheel: wheelHandler
-                })
-            );
+            var addWheel = function (element) {
+                wheelUtil.init(element);
+                element.on(wheelUtil.WHEEL, wheelHandler);
+                wheels.push(element);
+            };
+
+            addWheel(trackElement);
 
             var scrollElement = me.option('scrollElement');
             if (scrollElement) {
-                wheels.push(
-                    new Wheel({
-                        mainElement: scrollElement,
-                        onwheel: wheelHandler
-                    })
-                );
+                addWheel(scrollElement);
             }
 
         }
@@ -381,8 +377,8 @@ define(function (require, exports, module) {
 
         var wheels = me.inner('wheels');
         if (wheels) {
-            $.each(wheels, function (index, wheel) {
-                wheel.dispose();
+            $.each(wheels, function (index, element) {
+                wheelUtil.dispose(element);
             });
         }
 
