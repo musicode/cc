@@ -27,10 +27,10 @@ define(function (require, exports, module) {
 
     var isHidden = require('../function/isHidden');
     var toString = require('../function/toString');
+    var supportPlaceholder = require('../function/supportPlaceholder')();
 
     var lifeUtil = require('../util/life');
     var inputUtil = require('../util/input');
-    var detectionUtil = require('../util/detection');
 
     /**
      * 使输入框元素具有 placeholder 功能
@@ -67,7 +67,7 @@ define(function (require, exports, module) {
 
         me.inner({
             proxy: me.option('nativeFirst')
-                && detectionUtil.supportPlaceholder()
+                && supportPlaceholder
                  ? nativeProxy
                  : fakeProxy
         });

@@ -29,6 +29,7 @@ define(function (require, exports, module) {
 
     var guid = require('../function/guid');
     var around = require('../function/around');
+    var supportInput = require('../function/supportInput');
 
     var detection = require('./detection');
 
@@ -109,7 +110,7 @@ define(function (require, exports, module) {
 
     exports.INPUT = EVENT_INPUT;
 
-    exports.init = detection.supportInput()
+    exports.init = supportInput()
                  ? bindInput
                  : bindPropertyChange;
 

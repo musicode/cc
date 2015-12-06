@@ -38,7 +38,7 @@ define(function (require, exports, module) {
      * 厂商前缀
      *
      * @inner
-     * @type {Array}
+     * @type {Array.<string>}
      */
     var prefixs = ['Webkit', 'Moz', 'O', 'ms'];
 
@@ -94,15 +94,6 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 是否支持 web socket
-     *
-     * @return {boolean}
-     */
-    exports.supportWebSocket = function () {
-        return typeof window.WebSocket !== 'undefined';
-    };
-
-    /**
      * 是否支持 flexbox
      *
      * @return {boolean}
@@ -121,54 +112,38 @@ define(function (require, exports, module) {
     };
 
     /**
+     * 是否支持 web socket
+     *
+     * @return {boolean}
+     */
+    exports.supportWebSocket = require('../function/supportWebSocket');
+
+    /**
      * 是否支持 flash
      *
      * @return {boolean}
      */
-    exports.supportFlash = function () {
-
-        var swf;
-        var plugins = navigator.plugins;
-
-        if (plugins && plugins.length > 0) {
-            swf = plugins['Shockwave Flash'];
-        }
-        else if (document.all) {
-            swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
-        }
-
-        return !!swf;
-
-    };
+    exports.supportFlash = require('../function/supportFlash');
 
     /**
      * 是否支持 canvas
      *
      * @return {boolean}
      */
-    exports.supportCanvas = function () {
-        var canvas = document.createElement('canvas');
-        return canvas && canvas.getContext;
-    };
+    exports.supportCanvas = require('../function/supportCanvas');
 
     /**
      * 是否支持 placeholder
      *
      * @return {boolean}
      */
-    exports.supportPlaceholder = function () {
-        var element = $('<input type="text" />')[0];
-        return 'placeholder' in element;
-    };
+    exports.supportPlaceholder = require('../function/supportPlaceholder');
 
     /**
      * 是否支持 input 事件
      *
      * @return {boolean}
      */
-    exports.supportInput = function () {
-        var element = $('<input type="text" />')[0];
-        return 'oninput' in element;
-    };
+    exports.supportInput = require('../function/supportInput');
 
 });

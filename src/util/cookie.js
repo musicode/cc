@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 操作 cookie
      *
@@ -19,8 +21,8 @@ define(function (require, exports, module) {
      *
      *    key value domain path expires secure
      *
-     *    domain: 浏览器只向指定域的服务器发送 cookie，默认是产生 Set-Cookie 响应的服务器的主机名
-     *    path: 为特定页面指定 cookie，默认是产生 Set-Cookie 响应的 URL 的路径
+     *    domain: 浏览器只向指定域的服务器发送 cookie
+     *    path: 为特定页面指定 cookie
      *    expires: 日期格式为（Weekday, DD-MON-YY HH:MM:SS GMT）唯一合法的时区是 GMT，默认是会话结束时过期
      *    secure: 使用 ssl 安全连接时才会发送 cookie
      *
@@ -28,16 +30,8 @@ define(function (require, exports, module) {
      *
      */
 
-    'use strict';
-
-    /**
-     * 一小时的毫秒数
-     *
-     * @inner
-     * @const
-     * @type {number}
-     */
-    var HOUR_TIME = 60 * 60 * 1000;
+    var split = require('../function/split');
+    var offsetHour = require('../function/offsetDate');
 
     /**
      * 把 cookie 字符串解析成对象
@@ -64,12 +58,11 @@ define(function (require, exports, module) {
             cookieStr = decodeURIComponent(cookieStr.replace(/\+/g, ' '));
 
             $.each(
-                cookieStr.split(';'),
+                split(cookieStr, ';'),
                 function (index, part) {
-                    var pair = part.split('=');
-                    var key = $.trim(pair[0]);
-                    var value = $.trim(pair[1]);
-
+                    var terms = split(part, '=');
+                    var key = terms[0];
+                    var value = terms[1];
                     if (key) {
                         result[key] = value;
                     }
@@ -84,6 +77,7 @@ define(function (require, exports, module) {
     /**
      * 设置一枚 cookie
      *
+     * @inner
      * @param {string} key
      * @param {string} value
      * @param {Object} options
@@ -93,9 +87,7 @@ define(function (require, exports, module) {
         var expires = options.expires;
 
         if ($.isNumeric(expires)) {
-            var hours = expires;
-            expires = new Date();
-            expires.setTime(expires.getTime() + hours * HOUR_TIME);
+            expires = offsetHour(new Date(), expires);
         }
 
         document.cookie = [
@@ -105,6 +97,7 @@ define(function (require, exports, module) {
             options.domain ? ';domain=' + options.domain : '',
             options.secure ? ';secure' : ''
         ].join('');
+
     }
 
     /**
@@ -128,9 +121,9 @@ define(function (require, exports, module) {
      * @param {*=} value
      * @param {Object=} options
      * @property {number=} options.expires 过期小时数，如 1 表示 1 小时后过期
-     * @property {string=} options.path 路径，默认是 /
-     * @property {string=} options.domain 域名
-     * @property {boolean=} options.secure 是否加密传输
+     * @property {string=} options.path
+     * @property {string=} options.domain
+     * @property {boolean=} options.secure
      */
     exports.set = function (key, value, options) {
 
@@ -139,7 +132,11 @@ define(function (require, exports, module) {
             value = null;
         }
 
-        options = $.extend({ }, exports.defaultOptions, options);
+        options = $.extend(
+            { },
+            exports.defaultOptions,
+            options
+        );
 
         if (value === null) {
             $.each(
@@ -165,18 +162,19 @@ define(function (require, exports, module) {
      */
     exports.remove = function (key, options) {
 
-        if (key == null) {
-            return;
-        }
-
         options = options || { };
         options.expires = -1;
 
         setCookie(
             key,
             '',
-            $.extend({ }, exports.defaultOptions, options)
+            $.extend(
+                { },
+                exports.defaultOptions,
+                options
+            )
         );
+
     };
 
     /**
@@ -184,8 +182,6 @@ define(function (require, exports, module) {
      *
      * @type {Object}
      */
-    exports.defaultOptions = {
-        path: '/'
-    };
+    exports.defaultOptions = { };
 
 });
