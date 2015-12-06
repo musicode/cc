@@ -8,10 +8,10 @@ define(function (require, exports, module) {
 
     var guid = require('../function/guid');
 
+    var DATA_KEY = 'cc-util-swipe';
+
     var EVENT_SWIPE = 'cc-swipe';
     var EVENT_SWIPING = 'cc-swiping';
-
-    var DATA_KEY = 'cc_util_swipe';
 
     function getPoint(e) {
 

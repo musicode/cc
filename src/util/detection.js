@@ -94,7 +94,7 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 是否支持 flexbox
+     * 是否支持 flexbox 布局
      *
      * @return {boolean}
      */

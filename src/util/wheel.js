@@ -20,7 +20,7 @@ define(function (require, exports, module) {
 
     var guid = require('../function/guid');
 
-    var DATA_KEY = '.cc_util_wheel';
+    var DATA_KEY = 'cc-util-wheel';
 
     var EVENT_WHEEL = 'cc-wheel';
 

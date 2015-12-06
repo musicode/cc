@@ -65,7 +65,9 @@ define(function (require, exports, module) {
 
     }
 
-    if (localStorage) {
+    var support = typeof localStorage !== 'undefined';
+
+    if (support) {
         exports.set = set;
         exports.get = get;
         exports.remove = remove;
@@ -75,5 +77,7 @@ define(function (require, exports, module) {
         exports.get =
         exports.remove = $.noop;
     }
+
+    exports.support = support;
 
 });

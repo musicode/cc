@@ -24,14 +24,10 @@ define(function (require, exports, module) {
 
     /**
      * @param {Object} options
-     * @property {number} options.max 数组最大长度
-     * @property {Function} options.validate 验证是否满足删除第一个元素的条件
-     *                                       如果没有验证，只是单纯的想控制数组长度，可不传
-     * @argument {*} options.last
-     * @argument {*} options.first
+     * @property {number} options.maxLength 数组最大长度
      */
     function FiniteArray(options) {
-        $.extend(this, FiniteArray.defaultOptions, options);
+        $.extend(this, options);
         this.init();
     }
 
@@ -52,12 +48,10 @@ define(function (require, exports, module) {
         var list = me.list;
 
         if (me.isFull()) {
-            if (me.validate(item, list[0])) {
-                list.shift();
-            }
+            list.shift();
         }
 
-        if (list.length < me.max) {
+        if (list.length < me.maxLength) {
             list.push(item);
         }
 
@@ -97,7 +91,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     proto.isFull = function () {
-        return this.list.length === this.max;
+        return this.list.length === this.maxLength;
     };
 
     /**
@@ -128,12 +122,6 @@ define(function (require, exports, module) {
      */
     proto.clear = function () {
         this.list.length = 0;
-    };
-
-    FiniteArray.defaultOptions = {
-        validate: function () {
-            return true;
-        }
     };
 
     return FiniteArray;

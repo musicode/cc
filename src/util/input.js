@@ -31,9 +31,7 @@ define(function (require, exports, module) {
     var around = require('../function/around');
     var supportInput = require('../function/supportInput');
 
-    var detection = require('./detection');
-
-    var DATA_KEY = '.cc_util_input';
+    var DATA_KEY = 'cc-util-input';
 
     var EVENT_INPUT = 'cc-input';
 
