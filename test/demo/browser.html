@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>browser</title>
+</head>
+<body>
+
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+    require(
+        [ 'cc/util/browser', 'cc/util/os' ],
+        function (browser, os) {
+            console.log(navigator.userAgent);
+            console.log(browser, os);
+        }
+    );
+</script>
+</body>
+</html>
