@@ -131,7 +131,7 @@ define(function (require, exports, module) {
 
             // 重新取值比较靠谱
             var style = position(mainElement);
-
+            var isFixed = style.position === 'fixed';
 
 
 
@@ -159,10 +159,13 @@ define(function (require, exports, module) {
             // 所以偏移量应该是全局坐标的偏移量
             var rectContainsElement = contains(rectElement, mainElement);
             if (rectContainsElement) {
-                offsetX += rectInnerOffset.x - rectElement.scrollLeft();
-                offsetY += rectInnerOffset.y - rectElement.scrollTop();
+                offsetX += rectInnerOffset.x;
+                offsetY += rectInnerOffset.y;
+                if (!isFixed) {
+                    offsetX -= rectElement.scrollLeft();
+                    offsetY -= rectElement.scrollTop();
+                }
             }
-
 
 
 
@@ -188,7 +191,6 @@ define(function (require, exports, module) {
             // 当加入 fixed 定位时，情况又变复杂了
             // fixed 是 2 的一种特殊情况
 
-            var isFixed = style.position === 'fixed';
             var vHeight = viewportHeight();
 
             // 先处理 fixed 这种特殊情况

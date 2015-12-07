@@ -4,6 +4,8 @@
  */
 define(function (require, exports, module) {
 
+    'use strict';
+
     /**
      * 操作 input 或 textarea 的选区
      *
@@ -17,17 +19,20 @@ define(function (require, exports, module) {
      * http://yiminghe.iteye.com/blog/508999
      */
 
-    'use strict';
-
     var isOldIE = !window.getSelection;
 
     /**
      * 封装标准浏览器的 Range
      *
      * @constructor
-     * @param {HTMLElement} element
+     * @param {Object} options
+     * @property {jQuery|HTMLElement} options.element
      */
-    function Range(element) {
+    function Range(options) {
+        var element = options.element;
+        if (element.jquery) {
+            element = element[0];
+        }
         this.element = element;
     }
 
@@ -143,7 +148,8 @@ define(function (require, exports, module) {
         range.collapse(true);
 
         range.moveStart('character', start);
-        range.moveEnd('character', end - 1);
+        range.moveEnd('character', end - start);
+
         range.select();
 
     }

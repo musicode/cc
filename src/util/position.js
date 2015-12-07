@@ -8,8 +8,6 @@ define(function (require, exports, module) {
 
     var pin = require('../function/pin');
 
-    exports.pin = pin;
-
     /**
      * 把元素定位到参照元素的左上方
      *

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Range</title>
+    <link rel="stylesheet" href="./css/cs.css">
+
+</head>
+<body>
+
+<input class="input" type="text" />
+<textarea class="input"></textarea>
+
+<script src="./js/jquery.js"></script>
+<script src="./js/esl.js"></script>
+<script src="./js/config.js"></script>
+<script>
+
+    require(
+
+    [ 'cc/util/Range' ],
+
+    function (Range) {
+
+        window.inputRange = new Range({
+            element: $('input')
+        });
+
+        window.textareaRange = new Range({
+            element: $('textarea')
+        });
+
+    }
+    );
+</script>
+</body>
+</html>

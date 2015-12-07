@@ -1,5 +1,5 @@
 /**
- * @file 使用 js 触发的跳转
+ * @file 使用 js 触发跳转
  * @author musicode
  */
 define(function (require, exports, module) {
@@ -11,6 +11,7 @@ define(function (require, exports, module) {
     /**
      * 创建表单元素
      *
+     * @inner
      * @param {string} url
      * @param {string=} charset
      * @return {jQuery}
@@ -38,34 +39,36 @@ define(function (require, exports, module) {
     }
 
     /**
-     * 通过表单方式打开一个新 Tab
+     * 通过提交表单打开一个新 Tab
      *
      * @param {string} url
      * @param {string=} charset 编码
      */
-    exports.openForm = function (url, charset) {
-        var form = createForm(url, charset);
-        form.appendTo('body');
-        form.submit();
+    exports.byForm = function (url, charset) {
+        var formElement = createForm(url, charset);
+        formElement.appendTo('body').submit().remove();
     };
 
     /**
-     * 通过链接方式打开一个新 Tab
+     * 通过点击链接打开一个新 Tab
      *
      * @param {string} url
      */
-    exports.openLink = function (url) {
+    exports.byLink = function (url) {
 
-        var link = $('<a href="' + url + '" target="_blank"><b></b></a>');
-        link.appendTo('body');
+        var linkElement = $('<a href="' + url + '" target="_blank"></a>');
+        linkElement.appendTo('body');
 
         // safari 和 IE11 不支持 click()
         try {
-            link.find('b')[0].click();
+            linkElement[0].click();
         }
         catch (e) {
             exports.openForm(url);
         }
+
+        linkElement.remove();
+
     };
 
 });

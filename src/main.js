@@ -22,10 +22,12 @@ define(function (require, exports, module) {
     require('./function/offsetDate');
     require('./function/debounce');
     require('./function/decimalLength');
+    require('./function/decodeHTML');
     require('./function/disableSelection');
     require('./function/divide');
     require('./function/dragGlobal');
     require('./function/enableSelection');
+    require('./function/encodeHTML');
     require('./function/eventOffset');
     require('./function/eventPage');
     require('./function/extend');
@@ -86,7 +88,6 @@ define(function (require, exports, module) {
     require('./helper/Placeholder');
     require('./helper/Popup');
     require('./helper/Switchable');
-    require('./helper/Wheel');
 
     require('./ui/AutoComplete');
     require('./ui/Calendar');
@@ -107,7 +108,6 @@ define(function (require, exports, module) {
 
     require('./util/browser');
     require('./util/cookie');
-    require('./util/detection');
     require('./util/etpl');
     require('./util/FiniteArray');
     require('./util/fullScreen');
@@ -119,12 +119,13 @@ define(function (require, exports, module) {
     require('./util/localStorage');
     require('./util/Message');
     require('./util/mimeType');
+    require('./util/newTab');
     require('./util/orientation');
     require('./util/position');
     require('./util/Queue');
     require('./util/Range');
-    require('./util/redirect');
     require('./util/string');
+    require('./util/support');
     require('./util/swipe');
     require('./util/timer');
     require('./util/touch');
@@ -132,6 +133,7 @@ define(function (require, exports, module) {
     require('./util/url');
     require('./util/validator');
     require('./util/visibility');
+    require('./util/wheel');
 
     require('./util/supload/supload');
 

@@ -62,7 +62,7 @@ define(function (require, exports, module) {
      * @param {string} str
      * @return {number}
      */
-    exports.getLength = function (str) {
+    exports.size = function (str) {
         var result = 0;
 
         if ($.type(str) === 'string') {
@@ -85,10 +85,10 @@ define(function (require, exports, module) {
      * @param {string=} suffix 截断后缀，默认是 ...
      * @return {string}
      */
-    exports.truncate = function (str, length, suffix) {
+    exports.cut = function (str, length, suffix) {
 
         if ($.type(length) !== 'number'
-            || exports.getLength(str) <= length
+            || exports.size(str) <= length
         ) {
             return str;
         }
@@ -110,48 +110,6 @@ define(function (require, exports, module) {
                : '...';
 
         return result + suffix;
-
-    };
-
-    /**
-     * 对字符串进行 HTML 编码
-     *
-     * @param {string} source 字符串
-     * @return {string}
-     */
-    exports.encodeHTML = function (source) {
-
-        return String(source)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-
-    };
-
-    /**
-     * 对字符串进行 HTML 解码
-     *
-     * @param {string} source 字符串
-     * @return {string}
-     */
-    exports.decodeHTML = function (source) {
-
-        var str = String(source)
-                    .replace(/&amp;/g, '&')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&quot;/g, '"')
-                    .replace(/&#39;/g, "'");
-
-        // 处理转义的中文和实体字符
-        return str.replace(
-            /&#([\d]+);/g,
-            function ($0, $1) {
-                return String.fromCharCode(parseInt($1, 10));
-            }
-        );
 
     };
 
