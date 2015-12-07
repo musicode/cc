@@ -103,19 +103,14 @@ define(function (require, exports, module) {
         me.once('aftersync', function () {
 
             combobox.set('value', me.get('value'));
+            combobox.state('opened', combobox.is('opened'));
+
             combobox.option(
-                'propertyChange',
+                'watch',
                 {
                     value: function (value) {
                         me.set('value', value);
-                    }
-                }
-            );
-
-            combobox.state('opened', combobox.is('opened'));
-            combobox.option(
-                'stateChange',
-                {
+                    },
                     opened: function (opened) {
                         me.state('opened', opened);
                     }

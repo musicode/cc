@@ -62,7 +62,7 @@ define(function (require, exports) {
 
             placeholder.set('placeholder', me.get('placeholder'));
             placeholder.option(
-                'propertyChange',
+                'watch',
                 {
                     value: function (value) {
                         me.set('placeholder', value);
@@ -72,7 +72,7 @@ define(function (require, exports) {
 
             input.set('value', me.get('value'));
             input.option(
-                'propertyChange',
+                'watch',
                 {
                     value: function (value) {
                         me.set('value', value);

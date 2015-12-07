@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             step: step,
             prevKey: 'down',
             nextKey: 'up',
-            propertyChange: {
+            watch: {
                 index: function (index) {
                     me.set('value', index);
                 },

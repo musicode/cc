@@ -125,7 +125,7 @@ define(function (require, exports, module) {
             prevKey: 'up',
             nextKey: 'down',
             interval: me.option('interval'),
-            propertyChange: {
+            watch: {
                 index: function (newIndex, oldIndex, changes) {
 
                     updateActiveItemClass('removeClass');
@@ -191,7 +191,7 @@ define(function (require, exports, module) {
 
                 }
             },
-            propertyChange: {
+            watch: {
                 value: function (value) {
                     iteratorData[ 0 ].data.text = value;
                     suggest();
@@ -229,7 +229,7 @@ define(function (require, exports, module) {
                         }
                     );
                 },
-                stateChange: {
+                watch: {
                     opened: function (opened) {
                         if (opened) {
                             me.open();

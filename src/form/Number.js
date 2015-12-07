@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             });
 
             spinbox.option(
-                'propertyChange',
+                'watch',
                 {
                     value: function (value) {
                         me.set('value', value);

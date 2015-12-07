@@ -115,7 +115,7 @@ define(function (require, exports, module) {
                 switchDelay: me.option('navDelay'),
                 itemSelector: navSelector,
                 itemActiveClass: navActiveClass,
-                propertyChange: {
+                watch: {
                     index: function (toIndex, fromIndex) {
 
                         me.set('index', toIndex, { action: navTrigger });
@@ -132,7 +132,7 @@ define(function (require, exports, module) {
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
-            propertyChange: {
+            watch: {
                 index: function (toIndex, fromIndex, changes) {
 
                     me.set('index', toIndex, changes.index);

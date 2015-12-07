@@ -48,7 +48,7 @@ define(function (require, exports, module) {
      *     value: 2,                        // 当前选中 2 颗星
      *     count: 5,                        // 总共有 5 颗星
      *     itemActiveClass: 'on',
-     *     propertyChange: {
+     *     watch: {
      *         value: function (value) {
      *             console.log('value change');
      *         }

@@ -46,7 +46,7 @@ define(function (require, exports, module) {
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
-            propertyChange: {
+            watch: {
                 index: function (newIndex, oldIndex, changes) {
                     me.set('index', newIndex, changes.index);
                 },

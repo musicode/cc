@@ -102,7 +102,7 @@ define(function (require, exports, module) {
 
             popup.state('opened', me.is('opened'));
             popup.option(
-                'stateChange',
+                'watch',
                 {
                     opened: function (opened) {
                         me.state('opened', opened);

@@ -572,6 +572,8 @@ if (event.type !== 'dispatch') {
                 };
             };
 
+            var watch = me.option('watch');
+
             $.each(
                 [ 'property', 'state' ],
                 function (index, key) {
@@ -586,11 +588,10 @@ if (event.type !== 'dispatch') {
                             );
                         }
 
-                        var instanceUpdater = me.option(key + 'Change');
-                        if (instanceUpdater) {
+                        if (watch) {
                             $.each(
                                 changes,
-                                createUpdater(instanceUpdater, changes)
+                                createUpdater(watch, changes)
                             );
                         }
 

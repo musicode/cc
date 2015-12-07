@@ -71,7 +71,7 @@ define(function (require, exports, module) {
                 boxes,
                 function (index, box) {
                     box.option(
-                        'stateChange',
+                        'watch',
                         {
                             checked: function (checked) {
 

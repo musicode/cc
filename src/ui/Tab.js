@@ -55,7 +55,7 @@ define(function (require, exports, module) {
             switchDelay: me.option('navDelay'),
             itemSelector: navSelector,
             itemActiveClass: navActiveClass,
-            propertyChange: {
+            watch: {
                 index: function (toIndex, fromIndex) {
 
                     me.set('index', toIndex);

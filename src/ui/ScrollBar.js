@@ -87,7 +87,7 @@ define(function (require, exports, module) {
                     options
                 );
             },
-            propertyChange: {
+            watch: {
                 value: function (value) {
 
                     var pixel = slider.valueToPixel(value);

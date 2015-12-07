@@ -20,7 +20,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery=} options.mainElement 菜单元素
-     * @property {jQuery=} options.watchElement 在 watchElement 内部响应右键菜单
+     * @property {jQuery=} options.containerElement 在 containerElement 内部响应右键菜单
      *
      * @property {Function=} options.showAnimation 菜单显示动画
      * @property {Function=} options.hideAnimation 菜单隐藏动画
@@ -87,7 +87,7 @@ define(function (require, exports, module) {
                     }
                 );
             },
-            stateChange: {
+            watch: {
                 opened: function (opened) {
                     me.state('hidden', !opened);
                 }
@@ -127,7 +127,7 @@ define(function (require, exports, module) {
             main: mainElement
         });
 
-        me.option('watchElement')
+        me.option('containerElement')
         .on('contextmenu' + namespace, function (e) {
 
             if (activeMenu) {
@@ -190,7 +190,7 @@ define(function (require, exports, module) {
         lifeUtil.dispose(me);
 
         me.inner('popup').dispose();
-        me.option('watchElement').off(
+        me.option('containerElement').off(
             me.namespace()
         );
 

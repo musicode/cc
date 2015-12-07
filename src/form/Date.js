@@ -161,7 +161,7 @@ define(function (require, exports, module) {
 
             calendar.set('value', me.get('value'));
             calendar.option(
-                'propertyChange',
+                'watch',
                 {
                     value: function (value) {
                         me.set('value', value);
@@ -171,7 +171,7 @@ define(function (require, exports, module) {
 
             popup.state('opened', me.is('opened'));
             popup.option(
-                'stateChange',
+                'watch',
                 {
                     opened: function (opened) {
                         me.state('opened', opened);

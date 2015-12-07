@@ -87,7 +87,7 @@ define(function (require, exports, module) {
                     }
                 );
             },
-            stateChange: {
+            watch: {
                 opened: function (opened) {
                     me.state('opened', opened);
                 }
