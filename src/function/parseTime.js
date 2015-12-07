@@ -27,11 +27,7 @@ define(function (require, exports, module) {
                 minute = hour.minute;
                 hour = hour.hour;
             }
-
-        }
-        else if (arguments.length === 2) {
-
-            if ($.type(hour) === 'string') {
+            else if ($.type(hour) === 'string') {
 
                 var parts = hour.split(':');
 
@@ -46,6 +42,7 @@ define(function (require, exports, module) {
                 }
 
             }
+
         }
 
 
