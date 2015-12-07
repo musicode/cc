@@ -26,7 +26,7 @@ define(function (require, exports, module) {
 
         var pinOptions = {
 
-            silence: true,
+            silent: true,
 
             element: options.element,
 

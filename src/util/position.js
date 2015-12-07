@@ -45,7 +45,7 @@ define(function (require, exports, module) {
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
-    exports.topCenter = function (options) {
+    exports.top = function (options) {
         pin({
             element: options.element,
             x: 'center',
@@ -97,7 +97,7 @@ define(function (require, exports, module) {
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
-    exports.middleLeft = function (options) {
+    exports.left = function (options) {
         pin({
             element: options.element,
             x: 'right',
@@ -123,7 +123,7 @@ define(function (require, exports, module) {
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
-    exports.middleCenter = function (options) {
+    exports.center = function (options) {
         pin({
             element: options.element,
             x: 'center',
@@ -149,7 +149,7 @@ define(function (require, exports, module) {
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
-    exports.middleRight = function (options) {
+    exports.right = function (options) {
         pin({
             element: options.element,
             x: 'left',
@@ -201,7 +201,7 @@ define(function (require, exports, module) {
      * @property {number=} options.offsetX
      * @property {number=} options.offsetY
      */
-    exports.bottomCenter = function (options) {
+    exports.bottom = function (options) {
         pin({
             element: options.element,
             x: 'center',

@@ -27,40 +27,35 @@ define(function (require, exports, module) {
     var proto = Queue.prototype;
 
     proto.init = function () {
-
         this.list = [ ];
-
     };
 
     proto.add = function (item) {
 
         var me = this;
+        var list = me.list;
 
-        me.list.push(item);
+        list.push(item);
 
         if (!$.isFunction(me.waiting)) {
-            me.remove();
-        }
 
-    };
-
-    proto.remove = function () {
-
-        var me = this;
-        var item = me.list.shift();
-
-        if (item) {
-
-            var waiting =
-
-            me.waiting = function () {
+            var waiting = function () {
                 me.waiting = null;
+                remove();
+            };
+
+            var remove = function () {
                 if (me.list) {
-                    me.remove();
+                    var item = list.shift();
+                    if (item) {
+                        me.waiting = waiting;
+                        me.process(item, waiting);
+                    }
                 }
             };
 
-            me.process(item, waiting);
+            remove();
+
         }
 
     };
@@ -69,13 +64,13 @@ define(function (require, exports, module) {
         return this.list.length;
     };
 
+    proto.clear = function () {
+        this.list.length = 0;
+    };
+
     proto.dispose = function () {
-
-        var me = this;
-
-        me.list =
-        me.waiting = null;
-
+        this.list =
+        this.waiting = null;
     };
 
     return Queue;

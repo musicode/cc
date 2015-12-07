@@ -137,9 +137,9 @@ define(function (require, exports, module) {
      * @property {number=} options.offset.x 水平方向偏移量，单位是 px
      * @property {number=} options.offset.y 垂直方向偏移量，单位是 px
      *
-     * @property {boolean=} options.silence 是否不设置样式，而是返回样式
+     * @property {boolean=} options.silent 是否不设置样式，而是返回样式
      *
-     * @return {?Object} 如果 options.silence 为 true 返回定位坐标
+     * @return {?Object} 如果 options.silent 为 true 返回定位坐标
      */
     return function (options) {
 
@@ -179,7 +179,7 @@ define(function (require, exports, module) {
             style.position = 'absolute';
         }
 
-        if (options.silence) {
+        if (options.silent) {
             return style;
         }
         else {

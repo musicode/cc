@@ -68,7 +68,7 @@ define(function (require, exports, module) {
         if ($.type(str) === 'string') {
             traverse(
                 str,
-                function (length, index) {
+                function (length) {
                     result = length;
                 }
             );

@@ -80,7 +80,7 @@ define(function (require, exports, module) {
      *
      * @return {boolean}
      */
-    exports.supportAnimation = function () {
+    exports.animation = function () {
         return testCSS('animationName');
     };
 
@@ -89,7 +89,7 @@ define(function (require, exports, module) {
      *
      * @return {boolean}
      */
-    exports.supportBoxShadow = function () {
+    exports.boxShadow = function () {
         return testCSS('boxShadow');
     };
 
@@ -98,7 +98,7 @@ define(function (require, exports, module) {
      *
      * @return {boolean}
      */
-    exports.supportFlexbox = function () {
+    exports.flexbox = function () {
         return testCSS('flexWrap');
     };
 
@@ -107,7 +107,7 @@ define(function (require, exports, module) {
      *
      * @return {boolean}
      */
-    exports.supportTransform = function () {
+    exports.transform = function () {
         return testCSS('transform');
     };
 
@@ -116,34 +116,34 @@ define(function (require, exports, module) {
      *
      * @return {boolean}
      */
-    exports.supportWebSocket = require('../function/supportWebSocket');
+    exports.webSocket = require('../function/supportWebSocket');
 
     /**
      * 是否支持 flash
      *
      * @return {boolean}
      */
-    exports.supportFlash = require('../function/supportFlash');
+    exports.flash = require('../function/supportFlash');
 
     /**
      * 是否支持 canvas
      *
      * @return {boolean}
      */
-    exports.supportCanvas = require('../function/supportCanvas');
+    exports.canvas = require('../function/supportCanvas');
 
     /**
      * 是否支持 placeholder
      *
      * @return {boolean}
      */
-    exports.supportPlaceholder = require('../function/supportPlaceholder');
+    exports.placeholder = require('../function/supportPlaceholder');
 
     /**
      * 是否支持 input 事件
      *
      * @return {boolean}
      */
-    exports.supportInput = require('../function/supportInput');
+    exports.input = require('../function/supportInput');
 
 });

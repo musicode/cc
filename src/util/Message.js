@@ -46,7 +46,7 @@ define(function (require, exports, module) {
     var guid = require('../function/guid');
 
     var urlUtil = require('./url');
-    var timer = require('./timer');
+    var timerUtil = require('./timer');
 
     /**
      * Message 构造函数
@@ -64,8 +64,6 @@ define(function (require, exports, module) {
 
     var proto = Message.prototype;
 
-    proto.type = 'Message';
-
     proto.init = function () {
 
         var me = this;
@@ -73,15 +71,18 @@ define(function (require, exports, module) {
         me.id = guid();
         me.origin = urlUtil.getOrigin(me.agentUrl);
 
-        me.timer = timer(
+        var interval = me.interval;
+
+        var timer =
+        me.timer = timerUtil(
             function () {
                 me.send(me.reader() || { });
             },
-            me.interval,
-            me.interval
+            interval,
+            interval
         );
 
-        me.timer.start();
+        timer.start();
 
     };
 
@@ -103,7 +104,7 @@ define(function (require, exports, module) {
 
             var iframe = $('#' + me.id);
             if (iframe.length === 0) {
-                iframe = $('<iframe id="' + me.id  + '"></iframe>')
+                iframe = $('<iframe id="' + me.id  + '"></iframe>');
                 iframe.hide().appendTo('body');
             }
 

@@ -15,20 +15,13 @@ define(function (require, exports, module) {
     function set(key, value) {
 
         if ($.isPlainObject(key)) {
-            $.each(
-                key,
-                function (key, value) {
-                    exports.set(key, value);
-                }
-            );
+            $.each(key, set);
         }
         else {
-
             try {
                 localStorage[key] = value;
             }
             catch (e) { }
-
         }
     }
 
@@ -36,11 +29,11 @@ define(function (require, exports, module) {
      * 获取值
      *
      * @param {string} key 键
-     * @return {string}
+     * @return {string?}
      */
     function get(key) {
 
-        var result = '';
+        var result;
 
         try {
             result = localStorage[key];

@@ -179,7 +179,7 @@ define(function (require, exports, module) {
 
             // 只能执行一次
             me.initStruct = function () {
-                me.error('component.initStruct() can just call one time.');
+                me.error('initStruct() can just call one time.');
             };
 
         },
