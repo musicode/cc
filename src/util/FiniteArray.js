@@ -24,7 +24,7 @@ define(function (require, exports, module) {
 
     /**
      * @param {Object} options
-     * @property {number} options.maxLength 数组最大长度
+     * @property {number} options.max 数组最大长度
      */
     function FiniteArray(options) {
         $.extend(this, options);
@@ -51,7 +51,7 @@ define(function (require, exports, module) {
             list.shift();
         }
 
-        if (list.length < me.maxLength) {
+        if (list.length < me.max) {
             list.push(item);
         }
 
@@ -91,7 +91,7 @@ define(function (require, exports, module) {
      * @return {boolean}
      */
     proto.isFull = function () {
-        return this.list.length === this.maxLength;
+        return this.list.length === this.max;
     };
 
     /**

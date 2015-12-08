@@ -117,7 +117,6 @@ define(function (require, exports, module) {
     require('./util/keyboard');
     require('./util/life');
     require('./util/localStorage');
-    require('./util/Message');
     require('./util/mimeType');
     require('./util/newTab');
     require('./util/orientation');
@@ -127,7 +126,7 @@ define(function (require, exports, module) {
     require('./util/string');
     require('./util/support');
     require('./util/swipe');
-    require('./util/timer');
+    require('./util/Timer');
     require('./util/touch');
     require('./util/trigger');
     require('./util/url');

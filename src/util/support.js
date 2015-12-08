@@ -119,6 +119,13 @@ define(function (require, exports, module) {
     exports.webSocket = require('../function/supportWebSocket');
 
     /**
+     * 是否支持 local storage
+     *
+     * @return {boolean}
+     */
+    exports.localStorage = require('../function/supportLocalStorage');
+
+    /**
      * 是否支持 flash
      *
      * @return {boolean}
@@ -133,14 +140,14 @@ define(function (require, exports, module) {
     exports.canvas = require('../function/supportCanvas');
 
     /**
-     * 是否支持 placeholder
+     * 输入框是否支持 placeholder
      *
      * @return {boolean}
      */
     exports.placeholder = require('../function/supportPlaceholder');
 
     /**
-     * 是否支持 input 事件
+     * 输入框是否支持 input 事件
      *
      * @return {boolean}
      */

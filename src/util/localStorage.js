@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var support = require('../function/supportLocalStorage')();
+
     /**
      * 设置键值
      *
@@ -58,8 +60,6 @@ define(function (require, exports, module) {
 
     }
 
-    var support = typeof localStorage !== 'undefined';
-
     if (support) {
         exports.set = set;
         exports.get = get;
@@ -70,7 +70,5 @@ define(function (require, exports, module) {
         exports.get =
         exports.remove = $.noop;
     }
-
-    exports.support = support;
 
 });

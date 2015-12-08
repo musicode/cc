@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var toNumber = require('../function/toNumber');
-    var createTimer = require('../util/timer');
+    var Timer = require('../util/Timer');
     var lifeUtil = require('../util/life');
 
     /**
@@ -62,13 +62,17 @@ define(function (require, exports, module) {
             me.error('interval must be a number.');
         }
 
-        timer = createTimer(
-            $.proxy(fn, me),
-            interval,
+        timer = new Timer({
+            task: $.proxy(fn, me),
+            interval: interval
+        });
+
+        setTimeout(
+            function () {
+                timer.start();
+            },
             interval
         );
-
-        timer.start();
 
         me.inner('timer', timer);
 

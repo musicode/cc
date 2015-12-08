@@ -6,73 +6,44 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var split = require('../function/split');
+
     /**
      * 把查询字符串解析成对象，反向操作可用 $.param
      *
-     * @param {string} queryStr 查询字符串，可直接把 location.search 或 location.hash 扔进来解析
+     * @param {string} queryStr 查询字符串，可直接把 location.search 扔进来解析
      * @return {Object}
      */
     exports.parseQuery = function (queryStr) {
 
         var result = { };
 
-        if ($.type(queryStr) === 'string' && queryStr.length > 1) {
+        if ($.type(queryStr) === 'string' && queryStr.indexOf('=') >= 0) {
 
-            var startIndex = 0;
-
-            var firstChar = queryStr.charAt(0);
-
-            // query 如 ?a=1
-            if (firstChar === '?') {
-                startIndex = 1;
-            }
-            // hash 如 #a=1
-            else if (firstChar === '#') {
-                startIndex = 1;
-
-                var secondChar = queryStr.charAt(1);
-                // hash 如 #/a=1&b=2
-                if (secondChar === '/') {
-                    startIndex = 2;
-                }
-            }
-
+            var startIndex = queryStr.charAt(0) === '?' ? 1 : 0;
             if (startIndex > 0) {
                 queryStr = queryStr.substr(startIndex);
             }
 
+            // 避免把 hash 算入 value
+            queryStr = queryStr.split('#')[0];
 
             $.each(
-                queryStr.split('&'),
+                split(queryStr, '&'),
                 function (index, item) {
-                    var parts = item.split('=');
-                    if (parts.length === 2) {
-                        var key = $.trim(parts[0]);
+                    var terms = split(item, '=');
+                    if (terms.length === 2) {
+                        var key = terms[0];
                         if (key) {
-                            result[key] = decodeURIComponent($.trim(parts[1]));
+                            result[key] = decodeURIComponent(terms[1]);
                         }
                     }
                 }
             );
+
         }
 
         return result;
-    };
-
-    /**
-     * 获取当前网页的 origin（可在现代浏览器控制台输入 location.origin）
-     *
-     * @param {?string} url
-     * @return {string}
-     */
-    exports.getOrigin = function (url) {
-
-        if (!url) {
-            url = document.URL;
-        }
-
-        return exports.parse(url).origin;
-
     };
 
     /**
