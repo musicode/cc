@@ -26,23 +26,23 @@ define(function (require) {
      * @property {jQuery} options.mainElement 主元素
      * @property {string} options.mainTemplate 因为要动态刷新，所以必须要传模板
      *
-     * @property {string=} options.value 选中的值，多选时以 , 分隔
+     * @property {string=} options.value 选中的值，多选时以 `,` 分隔
      *
      * @property {Date=} options.today 今天的日期，可传入服务器时间用于校正，默认是浏览器的今天
      * @property {Date=} options.date 视图所在的日期，默认取 today
      * @property {number} options.firstDay 一周的第一天，0 表示周日，1 表示周一，以此类推
      * @property {string} options.mode 视图类型，可选值包括 month, week
      *
-     * @property {boolean=} options.multiple 是否可多选
+     * @property {boolean=} options.multiple 是否可多选，多选时，value 以 `,` 分隔
      * @property {boolean=} options.toggle 是否 toggle 反选
-     * @property {boolean=} options.stable 是否稳定，当 mode 是 month 时可用
+     * @property {boolean=} options.stable 视图是否稳定，当 mode 是 month 时可用
      *                                     月份的日期分布不同，有些 4 行，有些 5 行
      *                                     当 stable 为 true，所有月份都以 5 行显示
      *
-     * @property {string} options.itemSelector 日期选择器
-     * @property {string=} options.itemActiveClass 日期被选中时添加的 className
+     * @property {string} options.itemSelector 日期项选择器
+     * @property {string=} options.itemActiveClass 日期项元素选中时的 className
      *
-     * @property {string} options.valueAttribute
+     * @property {string} options.valueAttribute 从日期项元素读取 value 的属性名称
      *
      * @property {string=} options.prevSelector 上月/上周 选择器
      * @property {string=} options.nextSelector 下月/下周 选择器
@@ -76,26 +76,21 @@ define(function (require) {
                 me.error('valueAttribute is missing.');
             }
 
-            mainElement.on(clickType, itemSelector, function (e) {
+            mainElement.on(clickType, itemSelector, function () {
 
-                var itemValue = $(this).attr(valueAttribute);
-                if (!itemValue) {
-                    me.error('value is not found by valueAttribute.');
+                var value = $(this).attr(valueAttribute);
+
+                var date = me.execute('parse', value);
+                if ($.type(date) !== 'date') {
+                    return;
                 }
 
-                var oldValue = me.get('value');
-                var newValue = me.inner('values')(itemValue, true);
+                me.set(
+                    'value',
+                    me.inner('values')(value, true)
+                );
 
-                var oldCount = split(oldValue, ',').length;
-                var newCount = split(newValue, ',').length;
-
-                e.type = newCount < oldCount
-                       ? 'unselect'
-                       : 'select';
-
-                me.emit(e, { value: itemValue });
-
-                me.set('value', newValue);
+                me.sync();
 
             });
         }
@@ -134,101 +129,18 @@ define(function (require) {
 
     };
 
+    /**
+     * 上月/上周
+     */
     proto.prev = function () {
         offsetCalendar(this, -1);
     };
 
+    /**
+     * 下月/下周
+     */
     proto.next = function () {
         offsetCalendar(this, 1);
-    };
-
-    /**
-     * date 是否在当前视图的数据区间内
-     *
-     * @param {Date} date
-     * @return {boolean}
-     */
-    proto.inRange = function (date) {
-
-        var data = this.get('data');
-
-        return data
-            && date >= parseDate(data.start)
-            && date < (parseDate(data.end).getTime() + DAY);
-
-    };
-
-    /**
-     * 创建渲染日历需要的数据
-     *
-     * @param {Date} date
-     * @return {Object}
-     */
-    proto.createRenderData = function (date) {
-
-        var me = this;
-
-        var firstDay = me.option('firstDay');
-
-        var weekFirstDate;
-        var weekLastDate;
-
-        var isMonthMode = me.option('mode') === MODE_MONTH;
-        if (isMonthMode) {
-            weekFirstDate = firstDateInWeek(firstDateInMonth(date), firstDay);
-            weekLastDate = lastDateInWeek(lastDateInMonth(date), firstDay);
-        }
-        else {
-            weekFirstDate = firstDateInWeek(date, firstDay);
-            weekLastDate = lastDateInWeek(date, firstDay);
-        }
-
-        weekFirstDate = normalizeDate(weekFirstDate);
-        weekLastDate = normalizeDate(weekLastDate);
-
-        if (isMonthMode && me.option('stable')) {
-
-            var duration = weekLastDate - weekFirstDate;
-            var offset = stableDuration - duration;
-
-            if (offset > 0) {
-                weekLastDate += offset;
-            }
-
-        }
-
-        var values = [ ];
-
-        $.each(
-            split(me.get('value'), ','),
-            function (index, literal) {
-                if (literal) {
-                    var date = me.execute('parse', literal);
-                    if (date) {
-                        values.push(
-                            normalizeDate(date)
-                        );
-                    }
-                }
-            }
-        );
-
-        var list = createDatasource(
-            weekFirstDate,
-            weekLastDate,
-            normalizeDate(me.get('today')),
-            values
-        );
-
-        return $.extend(
-            simplifyDate(date),
-            {
-                start: list[ 0 ],
-                end: list[ list.length - 1 ],
-                list: list
-            }
-        );
-
     };
 
     proto.render = function () {
@@ -269,11 +181,11 @@ define(function (require) {
 
         if (change.date) {
             var date = change.date.newValue;
-            if (!me.inRange(date)) {
+            if (!inRange(me, date)) {
                 needRender = true;
                 me.set(
                     'data',
-                    me.createRenderData(date),
+                    createRenderData(me, date),
                     {
                         silent: true
                     }
@@ -310,15 +222,11 @@ define(function (require) {
         $.each(
             split(me.get('value'), ','),
             function (index, value) {
-
-                if (!value) {
-                    return;
+                if (value) {
+                    mainElement
+                        .find('[' + valueAttribute + '="' + value + '"]')
+                        .addClass(itemActiveClass);
                 }
-
-                mainElement
-                    .find('[' + valueAttribute + '="' + value + '"]')
-                    .addClass(itemActiveClass);
-
             }
         );
 
@@ -356,6 +264,97 @@ define(function (require) {
      * @type {number}
      */
     var stableDuration = 41 * DAY;
+
+    /**
+     * date 是否在当前视图的数据区间内
+     *
+     * @inner
+     * @param {Calendar} instance
+     * @param {Date} date
+     * @return {boolean}
+     */
+    function inRange(instance, date) {
+
+        var data = instance.get('data');
+
+        return data
+            && date >= parseDate(data.start)
+            && date < (parseDate(data.end).getTime() + DAY);
+
+    }
+
+    /**
+     * 创建渲染日历需要的数据
+     *
+     * @inner
+     * @param {Calendar} instance
+     * @param {Date} date
+     * @return {Object}
+     */
+    function createRenderData(instance, date) {
+
+        var firstDay = instance.option('firstDay');
+
+        var weekFirstDate;
+        var weekLastDate;
+
+        var isMonthMode = instance.option('mode') === MODE_MONTH;
+        if (isMonthMode) {
+            weekFirstDate = firstDateInWeek(firstDateInMonth(date), firstDay);
+            weekLastDate = lastDateInWeek(lastDateInMonth(date), firstDay);
+        }
+        else {
+            weekFirstDate = firstDateInWeek(date, firstDay);
+            weekLastDate = lastDateInWeek(date, firstDay);
+        }
+
+        weekFirstDate = normalizeDate(weekFirstDate);
+        weekLastDate = normalizeDate(weekLastDate);
+
+        if (isMonthMode && instance.option('stable')) {
+
+            var duration = weekLastDate - weekFirstDate;
+            var offset = stableDuration - duration;
+
+            if (offset > 0) {
+                weekLastDate += offset;
+            }
+
+        }
+
+        var values = [ ];
+
+        $.each(
+            split(instance.get('value'), ','),
+            function (index, literal) {
+                if (literal) {
+                    var date = instance.execute('parse', literal);
+                    if ($.type(date) === 'date') {
+                        values.push(
+                            normalizeDate(date)
+                        );
+                    }
+                }
+            }
+        );
+
+        var list = createDatasource(
+            weekFirstDate,
+            weekLastDate,
+            normalizeDate(instance.get('today')),
+            values
+        );
+
+        return $.extend(
+            simplifyDate(date),
+            {
+                start: list[ 0 ],
+                end: list[ list.length - 1 ],
+                list: list
+            }
+        );
+
+    }
 
     /**
      * 获得渲染模板的数据
@@ -415,7 +414,7 @@ define(function (require) {
 
         instance.set({
             date: date,
-            data: instance.createRenderData(date)
+            data: createRenderData(instance, date)
         });
 
     }

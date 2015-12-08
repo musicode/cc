@@ -93,9 +93,6 @@ define(function (require, exports, module) {
             itemSelector: me.option('itemSelector'),
             itemActiveClass: me.option('itemActiveClass'),
             valueAttribute: me.option('valueAttribute'),
-            onselect: function () {
-                popup.close();
-            },
             render: function (data, tpl) {
                 return me.execute('render', [ data, tpl ]);
             }
@@ -165,6 +162,7 @@ define(function (require, exports, module) {
                 {
                     value: function (value) {
                         me.set('value', value);
+                        popup.close();
                     }
                 }
             );
