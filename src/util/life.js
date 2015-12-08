@@ -171,10 +171,10 @@ define(function (require, exports, module) {
 
             }
 
-            if (me.option('underBody')
-                && !offsetParent(mainElement).is('body')
-            ) {
-                body.append(mainElement);
+
+            var parentSelector = me.option('parentSelector');
+            if (parentSelector && !mainElement.parent().is(parentSelector)) {
+                mainElement.appendTo(parentSelector);
             }
 
             // 只能执行一次

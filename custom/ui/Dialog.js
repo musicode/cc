@@ -13,7 +13,6 @@ define(function (require, exports, module) {
         fixed: true,
         hidden: false,
         draggable: true,
-        underBody: true,
         hideOnBlur: false,
         removeOnEmpty: true,
         disposeOnHide: true,
@@ -24,6 +23,8 @@ define(function (require, exports, module) {
 
         draggableIncludeSelector: '.dialog-header',
         draggableExcludeSelector: [ '.dialog-header h1', '.dialog-close' ],
+
+        parentSelector: 'body',
 
         headerSelector: '.dialog-header',
         titleSelector: '.dialog-header h1',

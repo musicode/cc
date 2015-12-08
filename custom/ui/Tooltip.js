@@ -17,11 +17,11 @@ define(function (require, exports, module) {
             options.mainElement.hide();
         },
 
-        mainTemplate: '<div class="tooltip secondary"></div>',
+        mainTemplate: '<div class="tooltip"></div>',
         triggerSelector: '[data-title]',
+        parentSelector: 'body',
 
         share: true,
-        underBody: true,
         placement: 'bottom,auto',
 
         skinAttribute: 'data-skin',

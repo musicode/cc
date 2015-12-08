@@ -5,7 +5,7 @@ define(function (require, exports, module) {
     var ContextMenu = require('cc/ui/ContextMenu');
 
     ContextMenu.defaultOptions = {
-        underBody: true,
+        parentSelector: 'body',
         showAnimation: function (options) {
             options.mainElement.show();
         },

@@ -24,7 +24,7 @@ define(function (require) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {string} options.mainTemplate
+     * @property {string} options.mainTemplate 因为要动态刷新，所以必须要传模板
      *
      * @property {string=} options.value 选中的值，多选时以 , 分隔
      *
@@ -371,7 +371,7 @@ define(function (require) {
 
         var data = [ ];
 
-        for (var time = start, date, item; time <= end; time += DAY) {
+        for (var time = start, item; time <= end; time += DAY) {
 
             item = simplifyDate(time);
 

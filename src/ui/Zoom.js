@@ -49,7 +49,7 @@ define(function (require, exports, module) {
         var thumbnailHeight = thumbnailElement.prop('height');
 
         // 取景器尺寸
-        var finderWidth = finderElement.outerWidth();;
+        var finderWidth = finderElement.outerWidth();
         var finderHeight = finderElement.outerHeight();
 
         // 缩放比例
@@ -110,18 +110,18 @@ define(function (require, exports, module) {
 
                 var delayTimer;
 
-                var clearTimer = function (e) {
+                var clearTimer = function () {
                     if (delayTimer) {
                         clearTimeout(delayTimer);
                         delayTimer = null;
                     }
                 };
 
-                var leaveHandler = function (e) {
+                var leaveHandler = function () {
                     delayTimer = setTimeout(
                         function () {
                             delayTimer = null;
-                            options.upHandler(e);
+                            options.upHandler();
                             document.off(namespace);
                         },
                         50
