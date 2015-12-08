@@ -14,30 +14,34 @@ define(function (require, exports, module) {
         hidden: false,
         draggable: true,
         hideOnBlur: false,
-        removeOnEmpty: true,
+        removeOnEmpty: false,
         disposeOnHide: true,
         removeOnDispose: true,
         positionOnResize: true,
 
         draggableClass: 'draggable',
 
-        draggableIncludeSelector: '.dialog-header',
-        draggableExcludeSelector: [ '.dialog-header h1', '.dialog-close' ],
+        draggableIncludeSelector: '> .header',
+        draggableExcludeSelector: [ '> .header > .title', '> .header > .close' ],
 
         parentSelector: 'body',
 
-        headerSelector: '.dialog-header',
-        titleSelector: '.dialog-header h1',
-        closeSelector: '.dialog-close',
-        contentSelector: '.dialog-body',
+        headerSelector: '> .header',
+        titleSelector: '> .header > .title',
+        closeSelector: '> .header > .close',
+        contentSelector: '> .body',
+        footerSelector: '> .footer',
 
         mainTemplate: '<div class="dialog">'
-                    +     '<i class="dialog-close">&times;</i>'
-                    +     '<div class="dialog-header"><h1></h1></div>'
-                    +     '<div class="dialog-body"></div>'
-                    + '</div>',
+                   +     '<div class="header">'
+                   +         '<div class="title"></div>'
+                   +         '<span class="close">&times;</span>'
+                   +     '</div>'
+                   +     '<div class="body"></div>'
+                   +     '<div class="footer"></div>'
+                   + '</div>',
 
-        maskTemplate: '<div class="dialog-mask"></div>',
+        maskTemplate: '<div class="mask"></div>',
 
         showAnimation: function (options) {
             options.mainElement.show();
@@ -56,11 +60,16 @@ define(function (require, exports, module) {
         },
         refreshAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
+            var maskElement = options.maskElement;
+            if (maskElement) {
+                maskElement.css(options.maskStyle);
+            }
         },
         resizeWindowAnimation: function (options) {
             options.mainElement.css(options.mainStyle);
-            if (options.maskElement) {
-                options.maskElement.css(options.maskStyle);
+            var maskElement = options.maskElement;
+            if (maskElement) {
+                maskElement.css(options.maskStyle);
             }
         }
 
