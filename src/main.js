@@ -131,6 +131,7 @@ define(function (require, exports, module) {
     require('./util/trigger');
     require('./util/url');
     require('./util/validator');
+    require('./util/Value');
     require('./util/visibility');
     require('./util/wheel');
 

@@ -6,8 +6,6 @@ define(function (require) {
 
     'use strict';
 
-    var split = require('../function/split');
-    var createValues = require('../function/values');
     var offsetWeek = require('../function/offsetWeek');
     var offsetMonth = require('../function/offsetMonth');
     var firstDateInWeek = require('../function/firstDateInWeek');
@@ -18,6 +16,7 @@ define(function (require) {
     var simplifyDate = require('../function/simplifyDate');
 
     var lifeUtil = require('../util/life');
+    var Value = require('../util/Value');
 
     /**
      *
@@ -80,14 +79,19 @@ define(function (require) {
 
                 var value = $(this).attr(valueAttribute);
 
-                var date = me.execute('parse', value);
-                if ($.type(date) !== 'date') {
-                    return;
+                var valueUtil = me.inner('value');
+                if (valueUtil.has(value)) {
+                    if (me.option('toggle')) {
+                        valueUtil.remove(value);
+                    }
+                }
+                else {
+                    valueUtil.add(value);
                 }
 
                 me.set(
                     'value',
-                    me.inner('values')(value, true)
+                    valueUtil.get()
                 );
 
                 me.sync();
@@ -113,11 +117,16 @@ define(function (require) {
             );
         }
 
-
         me.inner({
-            main: mainElement
+            main: mainElement,
+            value: new Value({
+                multiple: me.option('multiple'),
+                validate: function (value) {
+                    var date = me.execute('parse', value);
+                    return $.type(date) === 'date';
+                }
+            })
         });
-
 
         var today = me.option('today') || new Date();
 
@@ -219,12 +228,11 @@ define(function (require) {
             .find('.' + itemActiveClass)
             .removeClass(itemActiveClass);
 
-        $.each(
-            split(me.get('value'), ','),
-            function (index, value) {
-                if (value) {
+        me.inner('value').each(
+            function (literal) {
+                if (literal) {
                     mainElement
-                        .find('[' + valueAttribute + '="' + value + '"]')
+                        .find('[' + valueAttribute + '="' + literal + '"]')
                         .addClass(itemActiveClass);
                 }
             }
@@ -238,23 +246,17 @@ define(function (require) {
 
             var me = this;
 
-            var values = createValues(
-                value,
-                me.option('multiple'),
-                me.option('toggle')
-            );
+            var valueUtil = me.inner('value');
 
-            this.inner('values', values);
+            valueUtil.set(value);
 
-            return values();
+            return valueUtil.get();
 
         }
 
     };
 
     var MODE_MONTH = 'month';
-    var MODE_WEEK = 'week';
-
     var DAY = 24 * 60 * 60 * 1000;
 
     /**
@@ -264,24 +266,6 @@ define(function (require) {
      * @type {number}
      */
     var stableDuration = 41 * DAY;
-
-    /**
-     * date 是否在当前视图的数据区间内
-     *
-     * @inner
-     * @param {Calendar} instance
-     * @param {Date} date
-     * @return {boolean}
-     */
-    function inRange(instance, date) {
-
-        var data = instance.get('data');
-
-        return data
-            && date >= parseDate(data.start)
-            && date < (parseDate(data.end).getTime() + DAY);
-
-    }
 
     /**
      * 创建渲染日历需要的数据
@@ -294,56 +278,47 @@ define(function (require) {
     function createRenderData(instance, date) {
 
         var firstDay = instance.option('firstDay');
+        var today = normalizeDate(instance.get('today'));
 
-        var weekFirstDate;
-        var weekLastDate;
+        var startDate;
+        var endDate;
 
         var isMonthMode = instance.option('mode') === MODE_MONTH;
         if (isMonthMode) {
-            weekFirstDate = firstDateInWeek(firstDateInMonth(date), firstDay);
-            weekLastDate = lastDateInWeek(lastDateInMonth(date), firstDay);
+            startDate = firstDateInWeek(firstDateInMonth(date), firstDay);
+            endDate = lastDateInWeek(lastDateInMonth(date), firstDay);
         }
         else {
-            weekFirstDate = firstDateInWeek(date, firstDay);
-            weekLastDate = lastDateInWeek(date, firstDay);
+            startDate = firstDateInWeek(date, firstDay);
+            endDate = lastDateInWeek(date, firstDay);
         }
 
-        weekFirstDate = normalizeDate(weekFirstDate);
-        weekLastDate = normalizeDate(weekLastDate);
+        startDate = normalizeDate(startDate);
+        endDate = normalizeDate(endDate);
 
         if (isMonthMode && instance.option('stable')) {
 
-            var duration = weekLastDate - weekFirstDate;
+            var duration = endDate - startDate;
             var offset = stableDuration - duration;
 
             if (offset > 0) {
-                weekLastDate += offset;
+                endDate += offset;
             }
 
         }
 
-        var values = [ ];
+        var values = { };
 
-        $.each(
-            split(instance.get('value'), ','),
-            function (index, literal) {
+        instance.inner('value').each(
+            function (literal) {
                 if (literal) {
                     var date = instance.execute('parse', literal);
-                    if ($.type(date) === 'date') {
-                        values.push(
-                            normalizeDate(date)
-                        );
-                    }
+                    values[ normalizeDate(date) ] = 1;
                 }
             }
         );
 
-        var list = createDatasource(
-            weekFirstDate,
-            weekLastDate,
-            normalizeDate(instance.get('today')),
-            values
-        );
+        var list = createDatasource(startDate, endDate, today, values);
 
         return $.extend(
             simplifyDate(date),
@@ -363,7 +338,7 @@ define(function (require) {
      * @param {number} start 开始日期时间戳
      * @param {number} end 结束日期时间戳
      * @param {number} today 今天的时间戳
-     * @param {Array.<number>} values
+     * @param {Object} values
      * @return {Array.<Object>}
      */
     function createDatasource(start, end, today, values) {
@@ -385,7 +360,7 @@ define(function (require) {
                 item.phase = 'today';
             }
 
-            if ($.inArray(time, values) >= 0) {
+            if (values[ time ]) {
                 item.active = true;
             }
 
@@ -394,6 +369,24 @@ define(function (require) {
         }
 
         return data;
+
+    }
+
+    /**
+     * date 是否在当前视图的数据区间内
+     *
+     * @inner
+     * @param {Calendar} instance
+     * @param {Date} date
+     * @return {boolean}
+     */
+    function inRange(instance, date) {
+
+        var data = instance.get('data');
+
+        return data
+            && date >= parseDate(data.start)
+            && date < (parseDate(data.end).getTime() + DAY);
 
     }
 
@@ -408,9 +401,9 @@ define(function (require) {
 
         var date = instance.get('date');
 
-        date = instance.option('mode') === MODE_WEEK
-             ? offsetWeek(date, offset)
-             : offsetMonth(date, offset);
+        date = instance.option('mode') === MODE_MONTH
+             ? offsetMonth(date, offset)
+             : offsetWeek(date, offset);
 
         instance.set({
             date: date,
