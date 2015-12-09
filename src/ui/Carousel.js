@@ -29,7 +29,7 @@ define(function (require, exports, module) {
      * @property {number} options.interval 自动播放时，切换的时间间隔，单位毫秒
      * @property {boolean=} options.loop 是否循环播放
      * @property {boolean=} options.reverse 是否反向，正向是从左到右，反向是从右到左
-     * @property {boolean=} options.autoplay 是否自动播放
+     * @property {boolean=} options.autoPlay 是否自动播放
      * @property {boolean=} options.pauseOnHover 鼠标 hover item 时是否暂停播放，从用户体验来看，为 true 比较好
      *
      * @property {string=} options.navTrigger 当有图标按钮时，触发改变的方式，可选值有 enter click
@@ -85,7 +85,8 @@ define(function (require, exports, module) {
         }
 
         var itemSelector = me.option('itemSelector');
-        if (me.option('autoplay')
+
+        if (me.option('autoPlay')
             && me.option('pauseOnHover')
         ) {
             mainElement
@@ -116,45 +117,20 @@ define(function (require, exports, module) {
                 itemSelector: navSelector,
                 itemActiveClass: navActiveClass,
                 watch: {
-                    index: function (toIndex, fromIndex) {
-
-                        me.set('index', toIndex, { action: navTrigger });
-
+                    index: function (index) {
+                        me.set('index', index);
                     }
                 }
             });
         }
 
         var iterator = new Iterator({
-            index: me.option('index'),
-            minIndex: me.option('minIndex'),
-            maxIndex: me.option('maxIndex'),
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
             watch: {
-                index: function (toIndex, fromIndex, changes) {
-
-                    me.set('index', toIndex, changes.index);
-
-                    if (switcher) {
-                        me.execute('navAnimation', {
-                            mainElement: mainElement,
-                            navSelector: navSelector,
-                            navActiveClass: navActiveClass,
-                            fromIndex: fromIndex,
-                            toIndex: toIndex
-                        });
-                    }
-
-                    me.execute('itemAnimation', {
-                        mainElement: mainElement,
-                        itemSelector: itemSelector,
-                        itemActiveClass: me.option('itemActiveClass'),
-                        fromIndex: fromIndex,
-                        toIndex: toIndex
-                    });
-
+                index: function (index) {
+                    me.set('index', index);
                 },
                 minIndex: function (minIndex) {
                     me.set('minIndex', minIndex);
@@ -165,10 +141,26 @@ define(function (require, exports, module) {
             }
         });
 
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+
+        $.each(exclude, function (index, name) {
+            iterator
+                .before(name, dispatchEvent)
+                .after(name, dispatchEvent);
+        });
+
         me.inner({
             main: mainElement,
             switcher: switcher,
             iterator: iterator
+        });
+
+        me.set({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex')
         });
 
     };
@@ -210,22 +202,40 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    var exclude = [ 'prev', 'next', 'play', 'pause' ];
+
+    lifeUtil.extend(proto, exclude);
 
     Carousel.propertyUpdater = {
 
-        index: function (index) {
+        index: function (index, oldIndex) {
 
             var me = this;
+            var mainElement = me.inner('main');
 
             me.inner('iterator').set('index', index);
 
             var switcher = me.inner('switcher');
             if (switcher) {
                 switcher.set('index', index);
+                me.execute('navAnimation', {
+                    mainElement: mainElement,
+                    navSelector: me.option('navSelector'),
+                    navActiveClass: me.option('navActiveClass'),
+                    fromIndex: oldIndex,
+                    toIndex: index
+                });
             }
 
-            if (me.option('autoplay')) {
+            me.execute('itemAnimation', {
+                mainElement: mainElement,
+                itemSelector: me.option('itemSelector'),
+                itemActiveClass: me.option('itemActiveClass'),
+                fromIndex: oldIndex,
+                toIndex: index
+            });
+
+            if (me.option('autoPlay')) {
                 me.play();
             }
 
@@ -249,9 +259,8 @@ define(function (require, exports, module) {
             maxIndex = toNumber(maxIndex, null);
 
             if (maxIndex == null) {
-                var me = this;
-                var items = me.inner('main').find(
-                    me.option('itemSelector')
+                var items = this.inner('main').find(
+                    this.option('itemSelector')
                 );
                 maxIndex = items.length - 1;
             }

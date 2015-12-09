@@ -44,7 +44,12 @@ define(function (require, exports, module) {
         }
     };
 
-    proto.dispose = proto.stop;
+    proto.dispose = function () {
+        var me = this;
+        me.stop();
+        me.task =
+        me.interval = null;
+    };
 
     return Timer;
 

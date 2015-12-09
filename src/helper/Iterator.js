@@ -52,7 +52,7 @@ define(function (require, exports, module) {
 
         var timer = me.inner('timer');
         if (timer) {
-            timer.stop();
+            timer.dispose();
         }
 
         var fn = reverse ? me.prev : me.next;
@@ -69,7 +69,9 @@ define(function (require, exports, module) {
 
         setTimeout(
             function () {
-                timer.start();
+                if (timer.task) {
+                    timer.start();
+                }
             },
             interval
         );
@@ -85,7 +87,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        me.inner('timer').stop();
+        me.inner('timer').dispose();
         me.inner('timer', null);
 
     };

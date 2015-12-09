@@ -676,8 +676,9 @@ if (event.type !== 'dispatch') {
      * 扩展原型
      *
      * @param {Object} proto
+     * @param {Array.<string>} exclude 不需要拦截的方法
      */
-    exports.extend = function (proto) {
+    exports.extend = function (proto, exclude) {
 
         // 前置方法返回 false 可拦截方法执行，后置方法返回 false 可阻止广播 after 事件
         //
@@ -701,6 +702,11 @@ if (event.type !== 'dispatch') {
                 return;
             }
 
+            if ($.isArray(exclude)
+                && $.inArray(name, exclude) >= 0
+            ) {
+                return;
+            }
 
 
             var beforeHandler = function (e) {

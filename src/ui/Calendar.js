@@ -174,6 +174,8 @@ define(function (require) {
             me.namespace()
         );
 
+        me.inner('value').dispose();
+
     };
 
     lifeUtil.extend(proto);

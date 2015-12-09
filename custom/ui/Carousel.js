@@ -9,7 +9,7 @@ define(function (require, exports, module) {
         minIndex: 0,
         step: 1,
         loop: true,
-        autoplay: true,
+        autoPlay: true,
         pauseOnHover: true,
         interval: 5000,
         navTrigger: 'enter',
