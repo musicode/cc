@@ -47,7 +47,6 @@ define(function (require, exports, module) {
         var navSelector = me.option('navSelector');
         var navActiveClass = me.option('navActiveClass');
 
-        // nav 驱动 content
         var switcher = new Switchable({
             mainElement: mainElement,
             index: me.option('index'),

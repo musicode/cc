@@ -138,27 +138,24 @@ define(function (require, exports, module) {
             hideLayerTrigger: me.option('hideTrigger'),
             hideLayerDelay: me.option('hideDelay'),
             showLayerAnimation: function () {
-
                 me.execute(
                     'showAnimation',
                     {
                         mainElement: mainElement
                     }
                 );
-
             },
             hideLayerAnimation: function () {
-
                 me.execute(
                     'hideAnimation',
                     {
                         mainElement: mainElement
                     }
                 );
-
             },
             watch: {
                 opened: function (opened) {
+                    console.log('set hidden', !opened)
                     me.state('hidden', !opened);
                 }
             }
@@ -169,10 +166,9 @@ define(function (require, exports, module) {
         popup
         .on('dispatch', function (e, data) {
 
-            var type;
-            var event = data.event;
+            var type = data.event.type;
 
-            switch (event.type) {
+            switch (type) {
                 case 'beforeopen':
                     return;
                     break;
@@ -188,11 +184,10 @@ define(function (require, exports, module) {
                     break;
             }
 
-            if (type) {
-                event.type = type;
-            }
+            var event = $.Event(data.data.event.originalEvent);
+            event.type = type;
 
-            me.emit(event, data.data, true);
+            me.emit(event, true);
 
         })
         .before('open', function (e, data) {
@@ -283,11 +278,12 @@ define(function (require, exports, module) {
 
             var update = function () {
 
-                e.type = 'beforeshow';
+                var event = $.Event(data.event.originalEvent);
+                event.type = 'beforeshow';
 
-                me.emit(e, data, true);
+                me.emit(event, true);
 
-                if (e.isDefaultPrevented()) {
+                if (event.isDefaultPrevented()) {
                     clean();
                     return;
                 }
@@ -372,20 +368,8 @@ define(function (require, exports, module) {
         this.state('hidden', false);
     };
 
-    proto._show = function () {
-        if (!this.is('hidden')) {
-            return false;
-        }
-    };
-
     proto.hide = function () {
         this.state('hidden', true);
-    };
-
-    proto._hide = function () {
-        if (this.is('hidden')) {
-            return false;
-        }
     };
 
     proto.pin = function () {
@@ -426,12 +410,18 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'show', 'hide' ]);
 
     Tooltip.stateUpdater = {
 
         hidden: function (hidden) {
-            this.inner('popup')[ hidden ? 'close' : 'open' ]();
+            var popup = this.inner('popup');
+            if (hidden) {
+                popup.close();
+            }
+            else {
+                popup.open();
+            }
         }
 
     };
@@ -499,7 +489,7 @@ define(function (require, exports, module) {
     var placementMap = {
 
         bottom: {
-            name: 'bottomCenter',
+            name: 'bottom',
             test: [ testBottom ],
             gap: function (options) {
                 options.offsetX = 0;
@@ -507,7 +497,7 @@ define(function (require, exports, module) {
         },
 
         top: {
-            name: 'topCenter',
+            name: 'top',
             test: [ testTop ],
             gap: function (options) {
                 options.offsetY *= -1;
@@ -516,7 +506,7 @@ define(function (require, exports, module) {
         },
 
         right: {
-            name: 'middleRight',
+            name: 'right',
             test: [ testRight ],
             gap: function (options) {
                 options.offsetY = 0;
@@ -524,7 +514,7 @@ define(function (require, exports, module) {
         },
 
         left: {
-            name: 'middleLeft',
+            name: 'left',
             test: [ testLeft ],
             gap: function (options) {
                 options.offsetX *= -1;

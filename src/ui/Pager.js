@@ -25,25 +25,24 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.mainElement
-     * @property {number} options.page 当前页码，从 1 开始
+     * @property {jQuery} options.mainElement 分页元素，比如 `$('.pagination')`
+     * @property {number} options.page 从 `1` 开始计数
      * @property {number} options.count 总页数
-     * @property {number} options.showCount 中间显示的数量
-     * @property {number=} options.startCount 省略号前面的数量，默认是 1
-     * @property {number=} options.endCount 省略号后面的数量，默认是 2
+     * @property {number} options.showCount 中间显示的页码数量
+     * @property {number=} options.startCount 省略号前面的页码数量
+     * @property {number=} options.endCount 省略号后面的页码数量
      *
-     * @property {boolean=} options.hideOnSingle 是否在只有一页时自动隐藏
+     * @property {boolean=} options.hideOnSingle 当总页数只有一页时，是否自动隐藏组件
      *
-     * @property {string=} options.pageSelector 如果是静态链接（a）可不传
-     * @property {string=} options.pageAttribute 如果是静态链接（a）可不传
-     * @property {string=} options.pageActiveClass 当前选中页码元素添加的 className
+     * @property {string=} options.pageSelector 页码元素选择器，如果是静态链接`<a href="xx">`可不传
+     * @property {string=} options.pageAttribute 页码取值的属性名称，如果是静态链接`<a href="xx">`可不传
      *
-     * @property {string=} options.pageTemplate 页码模板
-     * @property {string=} options.prevTemplate 上一页模板
-     * @property {string=} options.nextTemplate 下一页模板
-     * @property {string=} options.ellipsisTemplate 省略号模板
+     * @property {string} options.pageTemplate 页码元素模板
+     * @property {string=} options.prevTemplate 上一页元素模板
+     * @property {string=} options.nextTemplate 下一页元素模板
+     * @property {string=} options.ellipsisTemplate 省略号元素模板
      *
-     * @property {Function=} options.render 渲染方法
+     * @property {Function} options.render 渲染方法
      *
      */
     function Pager(options) {
