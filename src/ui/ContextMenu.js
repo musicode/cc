@@ -11,7 +11,7 @@ define(function (require, exports, module) {
 
     var Popup = require('../helper/Popup');
 
-    var instanceUtil = require('../util/instance');
+    var body = require('../util/instance').body;
     var lifeUtil = require('../util/life');
 
     /**
@@ -69,6 +69,7 @@ define(function (require, exports, module) {
         }
 
         var popup = new Popup({
+            opened: false,
             layerElement: mainElement,
             hideLayerTrigger: 'click,context',
             showLayerAnimation: function () {
@@ -127,17 +128,20 @@ define(function (require, exports, module) {
             main: mainElement
         });
 
-        me.option('containerElement')
+        var containerElement = me.option('containerElement') || body;
+
+        containerElement
         .on('contextmenu' + namespace, function (e) {
 
             if (activeMenu) {
-                activeMenu.hide(e);
+                activeMenu.inner('popup').close(e);
             }
 
             contextEvent = e;
 
             activeMenu = me;
-            activeMenu.show(e);
+
+            popup.open(e);
 
             var pos = eventPage(e);
 
@@ -146,7 +150,7 @@ define(function (require, exports, module) {
                 x: 0,
                 y: 0,
                 attachment: {
-                    element: instanceUtil.body,
+                    element: body,
                     x: pos.x,
                     y: pos.y
                 }
@@ -162,26 +166,10 @@ define(function (require, exports, module) {
     proto.show = function () {
         this.state('hidden', false);
     };
-    proto._show = function (e) {
-        if (!this.is('hidden')) {
-            return false;
-        }
-        return dispatchEvent(e);
-    };
-    proto.show_ = dispatchEvent;
-
 
     proto.hide = function () {
         this.state('hidden', true);
     };
-    proto._hide = function (e) {
-        if (this.is('hidden')) {
-            return false;
-        }
-        return dispatchEvent(e);
-    };
-    proto.hide_ = dispatchEvent;
-
 
     proto.dispose = function () {
 
@@ -200,7 +188,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'show', 'hide' ]);
 
     ContextMenu.stateUpdater = {
 
@@ -217,14 +205,6 @@ define(function (require, exports, module) {
     };
 
     var activeMenu;
-
-    function dispatchEvent(e) {
-        if (e) {
-            return {
-                dispatch: true
-            };
-        }
-    }
 
 
     return ContextMenu;

@@ -67,12 +67,14 @@
         <a data-url="http://music.baidu.com/8.mp3">avril lavigne - losing grip</a>
     </div>
 
-    <!-- 右键点击歌曲列表后出现的菜单 -->
-    <div id="song-list-menu" class="context-menu">
-        <a data-action="play">播放</a>
-        <a data-action="like">收藏</a>
-        <a data-action="download">下载</a>
-        <a data-action="remove">删除</a>
+    <div class="container">
+        <!-- 右键点击歌曲列表后出现的菜单 -->
+        <div id="song-list-menu" class="context-menu">
+            <a data-action="play">播放</a>
+            <a data-action="like">收藏</a>
+            <a data-action="download">下载</a>
+            <a data-action="remove">删除</a>
+        </div>
     </div>
 
     <script src="./js/jquery.js"></script>
@@ -88,7 +90,7 @@
 
                 window.contextMenu = new ContextMenu({
                     mainElement: $('#song-list-menu'),
-                    watchElement: $('#song-list'),
+                    //containerElement: $('#song-list'),
                     ondebug: function (event, data) {
                         console.log(
                             event.type,

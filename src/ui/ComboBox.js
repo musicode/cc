@@ -191,9 +191,7 @@ define(function (require, exports, module) {
 
     };
 
-    var exclude = [ 'open', 'close' ];
-
-    lifeUtil.extend(proto, exclude);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     ComboBox.propertyUpdater = { };
 
