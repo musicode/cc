@@ -97,10 +97,9 @@ define(function (require, exports, module) {
 
         popup.on('dispatch', function (e, data) {
 
-            var type;
-            var event = data.event;
+            var type = data.event.type;
 
-            switch (event.type) {
+            switch (type) {
                 case 'beforeopen':
                     type = 'beforeshow';
                     break;
@@ -115,11 +114,10 @@ define(function (require, exports, module) {
                     break
             }
 
-            if (type) {
-                event.type = type;
-            }
+            var event = $.Event(data.data.event.originalEvent);
 
-            me.emit(event, data.data, true);
+            event.type = type;
+            me.emit(event, true);
 
         });
 

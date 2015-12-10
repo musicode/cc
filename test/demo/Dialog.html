@@ -12,7 +12,9 @@
         .modal {
             background-color: rgba(0,0,0,.5);
             overflow: hidden !important;
+            display: block;
         }
+
     </style>
 </head>
 <body>
@@ -43,21 +45,23 @@
 
                     title: '标题',
                     content: '内容',
-                    hidden: false,
+                    hidden: true,
                     modal: true,
                     draggable: true,
                     disposeOnHide: false,
                     hideOnClickMask: true,
                     fixed: true,
                     removeClose: true,
-                    x: '20%',
+                    x: '50%',
+                    y: '50%',
 
                     headerSelector: '.modal-header',
                     titleSelector: '.modal-title',
                     contentSelector: '.modal-body',
                     closeSelector: '.close',
 
-                    draggableHandleSelector: '.modal-header',
+                    draggableIncludeSelector: '.modal-header',
+                    draggableExcludeSelector: '',
 
                     maskTemplate: '<div class="modal"></div>',
 
@@ -86,9 +90,22 @@
                         options.maskElement.hide(1000);
                     },
                     resizeWindowAnimation: function (options) {
-                        options.mainElement.animate(options.mainStyle, 100);
+                        options.mainElement.css(options.mainStyle);
                     },
 
+                    onbeforeshow: function () {
+                        console.log(arguments);
+                        //return false;
+                    },
+                    onaftershow: function () {
+                        console.log(arguments);
+                    },
+                    onbeforehide: function () {
+                        console.log(arguments);
+                    },
+                    onafterhide: function () {
+                        console.log(arguments);
+                    },
 
                     ondebug: function (event, data) {
                         console.log(

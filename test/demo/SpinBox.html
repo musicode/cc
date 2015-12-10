@@ -3,33 +3,35 @@
     <head>
         <meta charset="UTF-8">
         <title>SpinBox</title>
+        <link rel="stylesheet" href="./css/cs.css">
+        <link rel="stylesheet" href="./css/font-awesome.css">
         <style>
-            .input-number {
-                position: relative;
-                display: inline-block;
+            .floated {
+                top: 18px;
             }
-            input {
-                margin: 0;
-            }
-            .btn-up,
-            .btn-down {
-                border: 5px solid transparent;
+            .fa-caret-up,
+            .fa-caret-down {
                 position: absolute;
-                right: 2px;
+                right: 0;
             }
-            .btn-up {
-                border-bottom-color: #CCC;
+            .fa-caret-down {
                 top: 0;
             }
-            .btn-down {
-                border-top-color: #CCC;
-                top: 13px;
+            .fa-caret-up {
+                bottom: 0;
             }
         </style>
     </head>
     <body>
 
-        <div class="input-number"></div>
+
+        <div class="input-number input-group">
+            <input type="text" class="input" />
+            <div class="floated">
+                <i class="fa fa-caret-up"></i>
+                <i class="fa fa-caret-down"></i>
+            </div>
+        </div>
 
         <script src="./js/jquery.js"></script>
         <script src="./js/esl.js"></script>
@@ -46,19 +48,24 @@
 
                         mainElement: $('.input-number'),
 
-                        mainTemplate: '<input type="text" />'
-                                    + '<i class="btn-up"></i>'
-                                    + '<i class="btn-down"></i>',
-
                         defaultValue: '',
                         value: 0,
                         maxValue: 10,
                         minValue: 0,
 
-                        interval: 1000,
+                        interval: 100,
 
-                        upSelector: '.btn-up',
-                        downSelector: '.btn-down'
+                        upSelector: '.fa-caret-up',
+                        downSelector: '.fa-caret-down',
+
+                        ondebug: function (event, data) {
+                            console.log(
+                            event.type,
+                            event.target.tagName ? true : false, // 是否原生
+                            data,
+                            this
+                            );
+                        }
                     });
 
                 }

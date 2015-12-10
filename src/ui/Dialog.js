@@ -24,17 +24,18 @@ define(function (require, exports, module) {
      * @property {jQuery=} options.mainElement 对话框元素
      * @property {string=} options.mainTemplate 对话框模板
      *
-     * @property {string=} options.title 对话框标题
-     * @property {string=} options.content 对话框内容
+     * @property {string=} options.title 对话框标题模板
+     * @property {string=} options.content 对话框内容模板
+     * @property {string=} options.footer 对话框底部模板
      *
-     * @property {number=} options.width 对话框整体宽度
-     * @property {(number|string)=} options.x 窗口出现的 x 位置，可以是 数字(10) 或 百分比(50%)
-     * @property {(number|string)=} options.y 窗口出现的 y 位置，可以是 数字(10) 或 百分比(50%)
+     * @property {(number|number)=} options.width 对话框整体宽度
+     * @property {(number|string)=} options.x 对话框的 x 位置，可以是 数字(10) 或 百分比(50%)
+     * @property {(number|string)=} options.y 对话框的 y 位置，可以是 数字(10) 或 百分比(50%)
      *
-     * @property {boolean=} options.hidden 初始化时是否隐藏
-     * @property {boolean=} options.fixed 是否 fixed 定位
-     * @property {boolean=} options.modal 是否是窗口模态
-     * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableIncludeSelector 和 draggableExcludeSelector 配置
+     * @property {boolean=} options.hidden 对话框初始化是否默认隐藏
+     * @property {boolean=} options.fixed 对话框是否是 fixed 定位
+     * @property {boolean=} options.modal 对话框是否模态
+     * @property {boolean=} options.draggable 对话框是否可拖拽，拖拽位置需要用 draggableIncludeSelector 和 draggableExcludeSelector 配置
      * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeClose 是否不需要关闭按钮
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 或 footer 元素
@@ -43,14 +44,14 @@ define(function (require, exports, module) {
      * @property {boolean=} options.hideOnClickMask 点击遮罩是否隐藏对话框
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
-     * @property {Function=} options.showAnimation 显示对话框和遮罩动画
-     * @property {Function=} options.hideAnimation 隐藏对话框和遮罩动画
-     * @property {Function=} options.dragAnimation 拖拽对话框移动的动画
-     * @property {Function=} options.refreshAnimation 调用 refresh() 时调整对话框和遮罩的动画
-     * @property {Function=} options.resizeWindowAnimation 窗口 resize 时调整对话框和遮罩的动画
+     * @property {Function} options.showAnimation 显示对话框和遮罩动画
+     * @property {Function} options.hideAnimation 隐藏对话框和遮罩动画
+     * @property {Function} options.dragAnimation 拖拽对话框移动的动画
+     * @property {Function} options.refreshAnimation 调用 refresh() 时调整对话框和遮罩的动画
+     * @property {Function} options.resizeWindowAnimation 浏览器 resize 时调整对话框和遮罩的动画
      *
      * @property {jQuery=} options.maskElement 遮罩元素
-     * @property {string=} options.maskTemplate 如果没传遮罩，可传模板动态创建
+     * @property {string=} options.maskTemplate 如果没传 maskElement，可传模板动态创建
      *
      * @property {string=} options.skinClass 皮肤
      * @property {string=} options.draggableClass 如果对话框可拖拽，给 mainElement 添加的 className
@@ -133,7 +134,7 @@ define(function (require, exports, module) {
             function (index, name) {
                 var value = me.option(name);
                 var selector = me.option(name + 'Selector');
-                if ($.type(value) === 'string') {
+                if (value) {
                     mainElement
                         .find(selector)
                         .html(value);
@@ -147,7 +148,7 @@ define(function (require, exports, module) {
         );
 
         var title = me.option('title');
-        if ($.type(title) === 'string') {
+        if (title) {
             mainElement
                 .find(
                     me.option('titleSelector')
@@ -162,11 +163,10 @@ define(function (require, exports, module) {
                 .remove();
         }
 
+        var closeSelector = me.option('closeSelector');
         if (me.option('removeClose')) {
             mainElement
-                .find(
-                    me.option('closeSelector')
-                )
+                .find(closeSelector)
                 .remove();
         }
 
@@ -214,13 +214,20 @@ define(function (require, exports, module) {
         var clickType = 'click' + me.namespace();
         var hideHandler = $.proxy(me.hide, me);
 
-        var closeSelector = me.option('closeSelector');
         if (closeSelector) {
             mainElement.on(clickType, closeSelector, hideHandler);
         }
 
         if (me.option('disposeOnHide')) {
-            me.after('hide', $.proxy(me.dispose, me));
+            me.on('statechange', function (e, change) {
+                var hidden = change.hidden;
+                if (hidden
+                    && hidden.newValue === true
+                    && hidden.oldValue === false
+                ) {
+                    me.dispose();
+                }
+            });
         }
 
         if (maskElement) {
@@ -240,9 +247,13 @@ define(function (require, exports, module) {
             mask: maskElement
         });
 
-        me.state({
-            hidden: me.option('hidden')
-        });
+        var hidden = me.option('hidden');
+        if (hidden) {
+            me.hide();
+        }
+        else {
+            me.show();
+        }
 
     };
 
@@ -252,7 +263,7 @@ define(function (require, exports, module) {
     };
 
     proto._show = function () {
-        if (!this.is('hidden')) {
+        if (this.is('hidden') === false) {
             return false;
         }
     };
@@ -263,7 +274,7 @@ define(function (require, exports, module) {
     };
 
     proto._hide = function () {
-        if (this.is('hidden')) {
+        if (this.is('hidden') === true) {
             return false;
         }
     };

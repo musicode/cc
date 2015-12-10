@@ -89,7 +89,9 @@
             function (ContextMenu) {
 
                 window.contextMenu = new ContextMenu({
-                    mainElement: $('#song-list-menu'),
+                    //mainElement: $('#song-list-menu'),
+                    mainTemplate: $('#song-list-menu').prop('outerHTML'),
+                    replace: true,
                     //containerElement: $('#song-list'),
                     ondebug: function (event, data) {
                         console.log(
@@ -120,6 +122,13 @@
                             console.log('删除: ' + target.data('url'));
                             this.hide();
                         }
+                    },
+                    onbeforeshow: function () {
+                        console.log(arguments);
+                        //return false;
+                    },
+                    onbeforehide: function () {
+                        return false;
                     }
                 });
 

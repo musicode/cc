@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     SpinBox.defaultOptions = {
         step: 1,
         interval: 100,
-        inputSelector: ':text',
+        inputSelector: 'input[type="text"]',
         upSelector: '.icon-caret-up',
         downSelector: '.icon-caret-down'
     };

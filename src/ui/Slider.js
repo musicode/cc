@@ -120,7 +120,6 @@ define(function (require, exports, module) {
             containerElement: trackElement,
             containerDraggingClass: me.option('draggingClass'),
             axis: props.axis,
-            context: me,
             init: function (options) {
                 $.each(touchUtil, function (type, item) {
                     if (!item.support) {
@@ -134,8 +133,8 @@ define(function (require, exports, module) {
                             document
                                 .off(namespace)
                                 .on(item.move + namespace, options.moveHandler)
-                                .on(item.up + namespace, function (e) {
-                                    options.upHandler(e);
+                                .on(item.up + namespace, function () {
+                                    options.upHandler();
                                     document.off(namespace);
                                 });
                         });
@@ -149,6 +148,15 @@ define(function (require, exports, module) {
                 );
             }
         });
+
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+
+        drager
+            .on('beforedrag', dispatchEvent)
+            .on('drag', dispatchEvent)
+            .on('afterdrag', dispatchEvent);
 
         trackElement.on(
             'click' + namespace,
