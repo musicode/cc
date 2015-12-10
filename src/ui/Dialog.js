@@ -36,10 +36,11 @@ define(function (require, exports, module) {
      * @property {boolean=} options.modal 是否是窗口模态
      * @property {boolean=} options.draggable 窗口是否可拖拽，拖拽位置需要用 draggableIncludeSelector 和 draggableExcludeSelector 配置
      * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
+     * @property {boolean=} options.removeClose 是否不需要关闭按钮
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 或 footer 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件
      * @property {boolean=} options.removeOnDispose 销毁时是否移除元素
-     * @property {boolean=} options.hideOnBlur 点击遮罩是否隐藏对话框
+     * @property {boolean=} options.hideOnClickMask 点击遮罩是否隐藏对话框
      * @property {number=} options.zIndex 不推荐使用这个，如果实在是被恶心的东西挡住了，只能加上一个更大的值
      *
      * @property {Function=} options.showAnimation 显示对话框和遮罩动画
@@ -59,10 +60,12 @@ define(function (require, exports, module) {
      * @property {(string|Array)=} options.draggableExcludeSelector 不可拖拽的元素
      *
      * @property {string=} options.headerSelector 头部元素
-     * @property {string=} options.titleSelector 填充 title 的元素
-     * @property {string=} options.closeSelector 点击可关闭对话框的元素
      * @property {string=} options.contentSelector 填充 content 的元素
      * @property {string=} options.footerSelector 填充 footer 的元素
+     *
+     * @property {string=} options.titleSelector 填充 title 的元素
+     * @property {string=} options.closeSelector 点击可关闭对话框的元素
+     *
      */
     function Dialog(options) {
         lifeUtil.init(this, options);
@@ -125,48 +128,47 @@ define(function (require, exports, module) {
 
         var removeOnEmpty = me.option('removeOnEmpty');
 
+        $.each(
+            [ 'content', 'footer' ],
+            function (index, name) {
+                var value = me.option(name);
+                var selector = me.option(name + 'Selector');
+                if ($.type(value) === 'string') {
+                    mainElement
+                        .find(selector)
+                        .html(value);
+                }
+                else if (removeOnEmpty) {
+                    mainElement
+                        .find(selector)
+                        .remove();
+                }
+            }
+        );
+
         var title = me.option('title');
-        if (title) {
+        if ($.type(title) === 'string') {
             mainElement
-            .find(
-                me.option('titleSelector')
-            )
-            .html(title);
+                .find(
+                    me.option('titleSelector')
+                )
+                .html(title);
         }
         else if (removeOnEmpty) {
             mainElement
-            .find(
-                me.option('headerSelector')
-            )
-            .remove();
+                .find(
+                    me.option('headerSelector')
+                )
+                .remove();
         }
 
-
-        var content = me.option('content');
-        var contentElement = mainElement.find(
-            me.option('contentSelector')
-        );
-
-        if (content) {
-            contentElement.html(content);
+        if (me.option('removeClose')) {
+            mainElement
+                .find(
+                    me.option('closeSelector')
+                )
+                .remove();
         }
-        else if (removeOnEmpty) {
-            contentElement.remove();
-        }
-
-
-        var footer = me.option('footer');
-        var footerElement = mainElement.find(
-            me.option('footerSelector')
-        );
-
-        if (footer) {
-            footerElement.html(footer);
-        }
-        else if (removeOnEmpty) {
-            footerElement.remove();
-        }
-
 
 
         var style = { };
@@ -222,7 +224,7 @@ define(function (require, exports, module) {
         }
 
         if (maskElement) {
-            if (me.option('hideOnBlur')) {
+            if (me.option('hideOnClickMask')) {
                 maskElement.on(clickType, hideHandler);
             }
             if (me.option('removeOnDispose')) {

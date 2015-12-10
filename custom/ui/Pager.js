@@ -18,7 +18,7 @@ define(function (require, exports, module) {
         pageAttribute: 'data-page',
         pageSelector: '[data-page]',
 
-        prevTemplate: '<li class="page-prev'
+        prevTemplate: '<li class="item button'
 
                     + '<!-- if: ${active} === ${first} -->'
                     +     ' disabled"'
@@ -28,10 +28,10 @@ define(function (require, exports, module) {
                     + '<!-- /if -->'
 
                     + '>'
-                    +     '<span><i class="fa fa-angle-double-left"></i></span>'
+                    +     '<i class="fa fa-angle-double-left"></i>'
                     + '</li>',
 
-        nextTemplate: '<li class="page-prev'
+        nextTemplate: '<li class="item button'
 
                     + '<!-- if: ${active} === ${last} -->'
                     +     ' disabled"'
@@ -41,20 +41,20 @@ define(function (require, exports, module) {
                     + '<!-- /if -->'
 
                     + '>'
-                    +     '<span><i class="fa fa-angle-double-right"></i></span>'
+                    +     '<i class="fa fa-angle-double-right"></i>'
                     + '</li>',
 
-        pageTemplate: '<li data-page="${page}">'
-                    +     '<span>${page}</span>'
+        pageTemplate: '<li class="item button'
+                    + '<!-- if: ${active} === ${page} -->'
+                    +     ' checked'
+                    + '<!-- /if -->'
+                    + '" data-page="${page}">'
+                    +     '${page}'
                     + '</li>',
 
-        ellipsisTemplate: '<li class="disabled">'
-                        +     '<span>...</span>'
+        ellipsisTemplate: '<li class="item">'
+                        +     '...'
                         + '</li>',
-
-        activeTemplate: '<li class="active">'
-                      +     '<span>${active}</span>'
-                      + '</li>',
 
         render: function (data, tpl) {
 
@@ -68,11 +68,11 @@ define(function (require, exports, module) {
         },
 
         showAnimation: function (options) {
-            options.mainElement.removeClass('invisible');
+            options.mainElement.show();
         },
 
         hideAnimation: function (options) {
-            options.mainElement.addClass('invisible');
+            options.mainElement.hide();
         }
     };
 

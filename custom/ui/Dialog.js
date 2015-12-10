@@ -13,29 +13,31 @@ define(function (require, exports, module) {
         fixed: true,
         hidden: false,
         draggable: true,
-        hideOnBlur: false,
+
         removeOnEmpty: false,
         disposeOnHide: true,
         removeOnDispose: true,
         positionOnResize: true,
 
+        hideOnClickMask: false,
+
         draggableClass: 'draggable',
 
         draggableIncludeSelector: '> .header',
-        draggableExcludeSelector: [ '> .header > .title', '> .header > .close' ],
+        draggableExcludeSelector: [ '> .header > .title', '> .close' ],
 
         parentSelector: 'body',
 
         headerSelector: '> .header',
         titleSelector: '> .header > .title',
-        closeSelector: '> .header > .close',
+        closeSelector: '> .close',
         contentSelector: '> .body',
         footerSelector: '> .footer',
 
         mainTemplate: '<div class="dialog">'
+                   +     '<span class="close">&times;</span>'
                    +     '<div class="header">'
                    +         '<div class="title"></div>'
-                   +         '<span class="close">&times;</span>'
                    +     '</div>'
                    +     '<div class="body"></div>'
                    +     '<div class="footer"></div>'

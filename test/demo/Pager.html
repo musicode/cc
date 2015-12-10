@@ -3,26 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Pager</title>
-    <style>
-        a {
-            background: lightblue;
-            display: inline-block;
-            padding: 3px 6px;
-            margin-left: 4px;
-        }
-        .pager-prev,
-        .pager-next {
-            background-color: red;
-        }
-
-        .pager-selected {
-            background-color: transparent;
-        }
-    </style>
+    <link rel="stylesheet" href="./css/cs.css">
+    <link rel="stylesheet" href="./css/font-awesome.css">
 </head>
 <body>
 
-    <div id="pager">
+    <div id="pager" class="pagination primary">
 
     </div>
 
@@ -34,11 +20,10 @@
         require(
 
             [
-                'custom/ui/Pager',
-                'cc/util/etpl'
+                'custom/ui/Pager'
             ],
 
-            function (Pager, etpl) {
+            function (Pager) {
 
                 window.pager = new Pager({
 
@@ -47,26 +32,6 @@
                     count: 20,
 
                     hideOnSingle: true,
-
-                    // 如果想用 ajax 处理翻页，必须写上 pageAttr 属性
-                    // 如果采取跳转的方式，则自行改写模板的 href 为跳转 url
-                    prevTemplate: '<!-- if: ${active} > ${first} -->'
-                                + '<!-- var: prev = ${active} - 1 -->'
-                                + '<a href="#" data-page="${prev}" onclick="return false;">prev</a>'
-                                + '<!-- /if -->',
-
-                    nextTemplate: '<!-- if: ${active} < ${last} -->'
-                                + '<!-- var: next = ${active} + 1 -->'
-                                + '<a href="#" data-page="${next}" onclick="return false;">next</a>'
-                                + '<!-- /if -->',
-
-                    pageTemplate: '<a class="pager-next" href="#" data-page="${page}" onclick="return false;">${page}</a>',
-                    ellipsisTemplate: '<a class="pager-ellipsis">...</a>',
-                    activeTemplate: '<a class="pager-selected" href="#" onclick="return false;">${active}</a>',
-
-                    render: function (data, tpl) {
-                        return etpl.compile(tpl)(data);
-                    },
 
                     ondebug: function (event, data) {
                         console.log(

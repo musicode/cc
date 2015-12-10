@@ -18,7 +18,6 @@ define(function (require, exports, module) {
      *
      * 如果非要翻页为 0，那初始化和刷新时，+ 1 处理吧
      *
-     * 希望点击触发翻页的元素，必须具有 data-page 属性，属性值为希望翻到的页码
      */
 
     /**
@@ -37,12 +36,12 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.pageSelector 如果是静态链接（a）可不传
      * @property {string=} options.pageAttribute 如果是静态链接（a）可不传
+     * @property {string=} options.pageActiveClass 当前选中页码元素添加的 className
      *
      * @property {string=} options.pageTemplate 页码模板
      * @property {string=} options.prevTemplate 上一页模板
      * @property {string=} options.nextTemplate 下一页模板
      * @property {string=} options.ellipsisTemplate 省略号模板
-     * @property {string=} options.activeTemplate 页码选中状态的模板
      *
      * @property {Function=} options.render 渲染方法
      *
@@ -70,15 +69,15 @@ define(function (require, exports, module) {
             .on(
                 'click' + me.namespace(),
                 pageSelector,
-                function () {
+                function (e) {
                     var page = $(this).attr(pageAttribute);
                     if (page >= FIRST_PAGE) {
 
-                        // 转成 number
-                        page = toNumber(page);
-
                         me.set('page', page);
-                        me.emit('select', { page: page });
+
+                        var event = $.Event(e.originalEvent);
+                        event.type = 'select';
+                        me.emit(event, true);
 
                     }
                 }
@@ -101,7 +100,6 @@ define(function (require, exports, module) {
         var me = this;
 
         var count = me.get('count');
-        var mainElement = me.inner('main');
 
         if (count < 2 && me.option('hideOnSingle')) {
             me.state('hidden', true);
@@ -117,7 +115,6 @@ define(function (require, exports, module) {
         var pageTemplate = me.option('pageTemplate');
         var prevTemplate = me.option('prevTemplate');
         var nextTemplate = me.option('nextTemplate');
-        var activeTemplate = me.option('activeTemplate');
         var ellipsisTemplate = me.option('ellipsisTemplate');
 
 
@@ -135,30 +132,10 @@ define(function (require, exports, module) {
             start = Math.max(FIRST_PAGE, end - showCount + 1);
         }
 
-        // 选中页面左侧
-        if (start < page) {
-            datasource.push({
-                range: [ start, page - 1 ],
-                tpl: pageTemplate
-            });
-        }
-
-        // 选中页码
         datasource.push({
-            tpl: activeTemplate
+            range: [ start, end ],
+            tpl: pageTemplate
         });
-
-        // 选中页面左侧
-        if (end > page) {
-            datasource.push({
-                range: [ page + 1, end ],
-                tpl: pageTemplate
-            });
-        }
-
-
-
-
 
         // startCount
         var offset;
@@ -228,7 +205,7 @@ define(function (require, exports, module) {
 
         var html = $.map(
             datasource,
-            function (item, index) {
+            function (item) {
 
                 var tpl = item.tpl;
                 if (!tpl) {
@@ -275,11 +252,9 @@ define(function (require, exports, module) {
 
     proto.prev = function () {
 
-        var me = this;
-
-        me.set(
+        this.set(
             'page',
-            me.get('page') - 1
+            this.get('page') - 1
         );
 
     };
@@ -296,20 +271,16 @@ define(function (require, exports, module) {
 
     proto.next = function () {
 
-        var me = this;
-
-        me.set(
+        this.set(
             'page',
-            me.get('page') + 1
+            this.get('page') + 1
         );
 
     };
 
     proto._next = function () {
 
-        var me = this;
-
-        if (me.get('page') < me.get('count')) {}
+        if (this.get('page') < this.get('count')) {}
         else {
             return false;
         }
@@ -376,16 +347,12 @@ define(function (require, exports, module) {
     Pager.stateUpdater = {
 
         hidden: function (hidden) {
-
-            var me = this;
-
-            me.execute(
+            this.execute(
                 hidden ? 'hideAnimation' : 'showAnimation',
                 {
-                    mainElement: me.inner('main')
+                    mainElement: this.inner('main')
                 }
             );
-
         }
 
     };

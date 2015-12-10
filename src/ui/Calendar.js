@@ -240,6 +240,8 @@ define(function (require) {
             }
         );
 
+        return false;
+
     };
 
     Calendar.propertyValidator = {
