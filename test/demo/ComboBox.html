@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Select</title>
-    <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
+    <link rel="stylesheet" href="./css/cs.css">
+    <link rel="stylesheet" href="./css/font-awesome.css">
 </head>
 <body>
 
     <div class="dropdown">
-        <div class="btn-default">
-            <span>选择</span>
-            <i class="caret"></i>
+        <div class="button secondary">
+            <i class="fa fa-caret-down"></i>
+            <span class="text">选择</span>
         </div>
-        <ul class="dropdown-menu">
-            <li data-value="1" data-id="222"><span>123</span>Action</li>
-            <li data-value="2">Another action</li>
-            <li data-value="3">Something else here</li>
-            <li class="divider"></li>
-            <li data-value="4">Separated link</li>
+        <ul class="menu">
+            <li class="item" data-value="1"><span>123</span>Action</li>
+            <li class="item" data-value="2">Another action</li>
+            <li class="item" data-value="3">Something else here</li>
+            <li class="item" data-value="4">Separated link</li>
         </ul>
     </div>
 
@@ -35,11 +35,11 @@
 
                 window.comboBox = new ComboBox({
                     mainElement: $('.dropdown'),
-                    buttonElement: $('.dropdown .btn-default'),
-                    menuElement: $('.dropdown-menu'),
+                    buttonElement: $('.dropdown .button'),
+                    menuElement: $('.menu'),
                     itemActiveClass: 'active',
                     menuActiveClass: 'opened',
-                    value: '2',
+                    value: null,
 
                     defaultText: 'hahah',
 

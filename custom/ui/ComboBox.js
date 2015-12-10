@@ -6,15 +6,15 @@ define(function (require, exports, module) {
 
     ComboBox.defaultOptions = {
 
-        itemSelector: 'li > a',
+        itemSelector: '.item',
         itemActiveClass: 'active',
 
         textAttribute: 'data-text',
         valueAttribute: 'data-value',
 
         defaultText: '- 请选择 -',
-        menuActiveClass: 'open',
-        itemActiveClass: 'active',
+        menuActiveClass: 'opened',
+        itemActiveClass: 'checked',
 
         showMenuTrigger: 'click',
         hideMenuTrigger: 'click',
@@ -54,28 +54,12 @@ define(function (require, exports, module) {
                     }
 
                     html.push(
-                        '<li><a' + attr + '>' + item.text + '</a></li>'
+                        '<li class="item"' + attr + '>' + item.text + '</a></li>'
                     );
                 }
             );
 
             return html.join('');
-
-        },
-        onafterinit: function () {
-
-            var me = this;
-
-            me
-            .before('open', function (e, data) {
-                var event = data.event;
-                if (event) {
-                    event.preventDefault();
-                }
-            })
-            .on('select', function (e) {
-                e.preventDefault();
-            });
 
         }
     };
