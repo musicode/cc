@@ -12,17 +12,20 @@ define(function (require, exports, module) {
         half: false,
         readOnly: false,
         itemSelector: 'i',
+        valueAttribute: 'data-value',
+
         mainTemplate: '<!-- for: ${list} as ${item} -->'
                     +     '<i class="icon-star'
                     +         '<!-- if: ${item.class} -->'
                     +             ' ${item.class}'
-                    +         '<!-- /if -->" '
-                    +         'data-value="${item.value}"'
+                    +         '<!-- /if -->"'
+                    +         ' data-value="${item.value}"'
                     +         '<!-- if: ${item.hint} -->'
                     +             ' data-title="${item.hint}"'
                     +         '<!-- /if -->'
                     +     '></i>'
                     + '<!-- /for -->',
+
         render: function (data, tpl) {
 
             var render = tplRender[ tpl ];

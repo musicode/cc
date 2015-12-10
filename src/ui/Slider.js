@@ -388,7 +388,7 @@ define(function (require, exports, module) {
 
     Slider.propertyUpdater = {
 
-        value: function (newValue, oldValue, changes) {
+        value: function (newValue, oldValue, change) {
 
             var me = this;
 
@@ -429,9 +429,9 @@ define(function (require, exports, module) {
                 options.barElement = barElement;
             }
 
-            var change = changes.value;
-            if (change.action) {
-                options.action = change.action;
+            var value = change.value;
+            if (value.action) {
+                options.action = value.action;
             }
 
             me.execute(
@@ -446,14 +446,13 @@ define(function (require, exports, module) {
     Slider.propertyValidator = {
 
         value: function (value) {
-
             var minValue = this.option('minValue');
             var maxValue = this.option('maxValue');
-
-            value = toNumber(value, minValue);
-
-            return restrain(value, minValue, maxValue);
-
+            return restrain(
+                toNumber(value, minValue),
+                minValue,
+                maxValue
+            );
         },
 
         minValue: function (minValue) {

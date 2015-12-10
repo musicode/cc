@@ -42,8 +42,8 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.orientation 滚动方向，可选值有 horizontal vertical
      * @property {(number|Function)=} options.scrollStep 滚动的单位像素
-     * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation  为 horizontal 时生效
-     * @property {number=} options.minHeight 滚动条的最小高度，当 orientation  为 vertical 时生效
+     * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation 为 horizontal 时生效
+     * @property {number=} options.minHeight 滚动条的最小高度，当 orientation 为 vertical 时生效
      *
      * @property {string=} options.thumbSelector 滑块选择器
      * @property {string=} options.draggingClass 拖拽滑块时给 mainElement 添加的 className
@@ -139,7 +139,6 @@ define(function (require, exports, module) {
         var orientation = me.option('orientation');
         var props = orientationUtil[ orientation ];
 
-        var mainElement = me.inner('main');
         var panelElement = me.option('panelElement');
         var viewportSize = panelElement[ props.innerSize ]();
         var contentSize = panelElement.prop(props.scrollSize);

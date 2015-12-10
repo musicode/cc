@@ -41,6 +41,7 @@ define(function (require, exports, module) {
      * @property {string} options.itemHalfClass 星星半选中状态的图标 className
      *
      * @property {string} options.itemSelector
+     * @property {string} options.valueAttribute
      *
      * @example
      * var rater = new Rater({
@@ -98,7 +99,9 @@ define(function (require, exports, module) {
 
         var getValueByItem = function (e, target) {
 
-            var value = target.data('value');
+            var value = target.attr(
+                me.option('valueAttribute')
+            );
 
             if (supportHalf) {
                 if (eventOffset(e).x / target.width() < 0.5) {
@@ -209,8 +212,8 @@ define(function (require, exports, module) {
 
         me.inner('value', value);
 
-        value = toNumber(value, null);
-        if (value == null) {
+        value = toNumber(value, -1);
+        if (value < 0) {
             value = me.get('value');
         }
 
@@ -236,17 +239,17 @@ define(function (require, exports, module) {
     Rater.propertyUpdater = { };
 
     Rater.propertyUpdater.value =
-    Rater.propertyUpdater.count = function (newValue, oldValue, changes) {
+    Rater.propertyUpdater.count = function (newValue, oldValue, change) {
 
         var me = this;
 
-        if (changes.count) {
+        if (change.count) {
             me.render();
         }
         else {
-            var valueChange = changes.value;
-            if (valueChange) {
-                refresh(me, valueChange.newValue);
+            var value = change.value;
+            if (value) {
+                refresh(me, value.newValue);
             }
         }
 
@@ -296,17 +299,17 @@ define(function (require, exports, module) {
         traverse(
             value,
             instance.get('count'),
-            function (index, value) {
+            function (index, score) {
 
                 var element = items.eq(index);
 
                 if (itemActiveClass) {
-                    element[ value === 1 ? 'addClass' : 'removeClass' ](
+                    element[ score === 1 ? 'addClass' : 'removeClass' ](
                         itemActiveClass
                     );
                 }
                 if (itemHalfClass) {
-                    element[ value === 0.5 ? 'addClass' : 'removeClass' ](
+                    element[ score === 0.5 ? 'addClass' : 'removeClass' ](
                         itemHalfClass
                     );
                 }
@@ -326,21 +329,21 @@ define(function (require, exports, module) {
      */
     function traverse(value, count, callback) {
 
-        for (var i = 0, result, item; i < count; i++) {
+        for (var i = 0, result, score; i < count; i++) {
 
             result = value - (i + 1);
 
             if (result >= 0) {
-                item = 1;
+                score = 1;
             }
             else if (result <= -1) {
-                item = 0;
+                score = 0;
             }
             else {
-                item = 0.5;
+                score = 0.5;
             }
 
-            callback(i, item);
+            callback(i, score);
 
         }
 
