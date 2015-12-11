@@ -16,6 +16,7 @@ define(function (require, exports, module) {
         collapsedClass: 'collapsed',
 
         nodeSelector: '.tree',
+        idAttribute: 'data-id',
 
         nodeTemplate: '<div class="tree'
 

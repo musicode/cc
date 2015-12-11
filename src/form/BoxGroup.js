@@ -171,8 +171,11 @@ define(function (require, exports, module) {
         },
         value: function (value) {
 
-            var valueUtil = this.inner('value');
+            if (value == null) {
+                value = common.validateValue(this, value);
+            }
 
+            var valueUtil = this.inner('value');
             valueUtil.set(value);
 
             return valueUtil.get();

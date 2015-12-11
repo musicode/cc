@@ -101,7 +101,7 @@ define(function (require, exports, module) {
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
 
-        var idAttribute = instance.option('idAttribute');
+        var idAttribute = me.option('idAttribute');
 
         var labelSelector = me.option('labelSelector');
         if (labelSelector) {
