@@ -36,6 +36,21 @@ define(function (require, exports, module) {
 
     };
 
+    proto.startDelay = function (delay) {
+
+        var me = this;
+
+        setTimeout(
+            function () {
+                if (me.task) {
+                    me.start();
+                }
+            },
+            delay
+        );
+
+    };
+
     proto.stop = function () {
         var me = this;
         if (me.timer) {

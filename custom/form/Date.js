@@ -2,13 +2,13 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var Date = require('cc/form/Date');
+    var FormDate = require('cc/form/Date');
     var lpad = require('cc/function/lpad');
     var etpl = require('cc/util/etpl');
 
     var tplRender = { };
 
-    Date.defaultOptions = {
+    FormDate.defaultOptions = {
         firstDay: 1,
         mode: 'month',
         toggle: false,
@@ -17,17 +17,17 @@ define(function (require, exports, module) {
 
         valueAttribute: 'data-value',
         parse: function (text) {
-            return new window.Date(text);
+            return new Date(text);
         },
 
         inputSelector: 'input[type="text"]',
         layerSelector: '.calendar',
 
         itemSelector: '[data-value]',
-        itemActiveClass: 'active',
+        itemActiveClass: 'checked',
 
-        prevSelector: '.fa-chevron-left',
-        nextSelector: '.fa-chevron-right',
+        prevSelector: '.icon-chevron-left',
+        nextSelector: '.icon-chevron-right',
 
         showLayerTrigger: 'focus',
         hideLayerTrigger: 'blur,click',
@@ -38,12 +38,12 @@ define(function (require, exports, module) {
             options.layerElement.hide();
         },
 
-        calendarTemplate: '<div class="calendar-heading">'
-                        +     '<i class="fa fa-chevron-left"></i>'
+        calendarTemplate: '<div class="header">'
+                        +     '<i class="icon icon-chevron-left"></i>'
                         +     '<strong>${year}年${month}月</strong>'
-                        +     '<i class="fa fa-chevron-right"></i>'
+                        +     '<i class="icon icon-chevron-right"></i>'
                         + '</div>'
-                        + '<table class="calendar-body">'
+                        + '<table class="body">'
                         +     '<thead>'
                         +          '<tr>'
                         +              '<th>一</th>'
@@ -73,13 +73,22 @@ define(function (require, exports, module) {
                         +               ' adjacent'
                         +               '<!-- /if -->'
 
+                        +               '<!-- if: ${item.phase} === "past" && ${disablePast} === true -->'
+                        +               ' disabled'
+                        +               '<!-- /if -->'
+
                         +               '"'
+
+                        +               '<!-- if: !(${item.phase} === "past" && ${disablePast} === true) -->'
+
                         +               ' data-value="${item.year}/'
                         +               '<!-- if: ${item.month} < 10 -->0<!-- /if -->'
                         +               '${item.month}/'
                         +               '<!-- if: ${item.date} < 10 -->0<!-- /if -->'
                         +               '${item.date}'
                         +               '"'
+
+                        +               '<!-- /if -->'
 
                         +               ' data-year="${item.year}"'
                         +               ' data-month="${item.month}"'
@@ -99,11 +108,13 @@ define(function (require, exports, module) {
                 render = tplRender[ tpl ] = etpl.compile(tpl);
             }
 
+            data.disablePast = this.option('disablePast');
+
             return render(data);
 
         }
     };
 
-    return Date;
+    return FormDate;
 
 });

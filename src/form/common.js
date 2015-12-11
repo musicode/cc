@@ -53,10 +53,10 @@ define(function (require, exports, module) {
 
     exports.findNative = function (instance, selector) {
         var nativeElement = instance.option('mainElement').find(selector);
-        if (nativeElement.length !== 1) {
+        if (nativeElement.length === 0) {
             instance.error('form/' + instance.type + ' 必须包含一个 [' + selector + '].');
         }
-        return nativeElement;
+        return nativeElement.eq(0);
     };
 
     exports.validateName = function (instance, name) {

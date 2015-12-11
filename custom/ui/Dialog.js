@@ -35,10 +35,10 @@ define(function (require, exports, module) {
         footerSelector: '> .footer',
 
         mainTemplate: '<div class="dialog">'
-                   +     '<span class="close">&times;</span>'
                    +     '<div class="header">'
                    +         '<div class="title"></div>'
                    +     '</div>'
+                   +     '<span class="close">&times;</span>'
                    +     '<div class="body"></div>'
                    +     '<div class="footer"></div>'
                    + '</div>',

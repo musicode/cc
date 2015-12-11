@@ -167,10 +167,14 @@ define(function (require, exports, module) {
         init: function (instance) {
 
             var mainElement = instance.option('mainElement');
+            var inputSelector = instance.option('inputSelector');
+            var tagName = mainElement.prop('tagName');
 
             instance.inner({
                 main: mainElement,
-                input: mainElement
+                input: tagName === 'INPUT' || tagName === 'TEXTAREA'
+                     ? mainElement
+                     : mainElement.find(inputSelector)
             });
 
         },

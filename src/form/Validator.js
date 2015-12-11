@@ -150,7 +150,7 @@ define(function (require, exports, module) {
             debounce(
                 function (e) {
                     var name = e.target.name;
-                    if (name) {
+                    if (name && me.$) {
                         var config = me.option('fields')[name];
                         if (config) {
                             var local = config.validateOnBlur;
@@ -308,13 +308,15 @@ define(function (require, exports, module) {
 
             nextTick(
                 function () {
-                    me.emit(
-                        'validatecomplete',
-                        {
-                            fields: result,
-                            errors: errors
-                        }
-                    );
+                    if (me.$) {
+                        me.emit(
+                            'validatecomplete',
+                            {
+                                fields: result,
+                                errors: errors
+                            }
+                        );
+                    }
                 }
             );
 

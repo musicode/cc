@@ -4,7 +4,10 @@ define(function (require, exports, module) {
 
     var BoxGroup = require('cc/form/BoxGroup');
 
-    BoxGroup.defaultOptions = { };
+    BoxGroup.defaultOptions = {
+        boxCheckedClass: 'checked',
+        boxDisabledClass: 'disabled'
+    };
 
     return BoxGroup;
 

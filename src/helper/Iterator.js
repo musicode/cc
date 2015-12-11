@@ -67,14 +67,7 @@ define(function (require, exports, module) {
             interval: interval
         });
 
-        setTimeout(
-            function () {
-                if (timer.task) {
-                    timer.start();
-                }
-            },
-            interval
-        );
+        timer.startDelay(interval);
 
         me.inner('timer', timer);
 

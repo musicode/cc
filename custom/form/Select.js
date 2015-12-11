@@ -6,9 +6,9 @@ define(function (require, exports, module) {
 
     Select.defaultOptions = {
 
-        buttonSelector: '> .btn-default',
-        menuSelector: '> .dropdown-menu',
-        labelSelector: '> .btn-default span',
+        buttonSelector: '> .button',
+        menuSelector: '> .menu',
+        labelSelector: '> .button > .text',
 
         itemSelector: 'li',
         itemActiveClass: 'active',
@@ -17,8 +17,7 @@ define(function (require, exports, module) {
         valueAttribute: 'data-value',
 
         defaultText: '- 请选择 -',
-        menuActiveClass: 'open',
-        itemActiveClass: 'active',
+        menuActiveClass: 'opened',
 
         showMenuTrigger: 'click',
         hideMenuTrigger: 'click',
@@ -56,22 +55,12 @@ define(function (require, exports, module) {
                     }
 
                     html.push(
-                        '<li><a' + attr + '>' + item.text + '</a></li>'
+                        '<li class="item"' + attr + '>' + item.text + '</li>'
                     );
                 }
             );
 
             return html.join('');
-
-        },
-        onafterinit: function () {
-
-            var me = this;
-
-            me
-            .on('select', function (e) {
-                e.preventDefault();
-            });
 
         }
     };
