@@ -6,7 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var split = require('../function/split');
     var contains = require('../function/contains');
     var replaceWith = require('../function/replaceWith');
 
@@ -114,7 +113,20 @@ define(function (require, exports, module) {
 
         popup
         .on('dispatch', function (e, data) {
-            me.emit(data.event, data.data, true);
+
+            var event = e.originalEvent;
+
+            if (event.type === 'beforeclose') {
+                var target = event.originalEvent.target;
+                if (contains(inputElement, target)
+                    || contains(layerElement, target)
+                ) {
+                    return false;
+                }
+            }
+
+            me.emit(event, data.data, true);
+
         });
 
         var inputElement = mainElement.find(
@@ -125,22 +137,6 @@ define(function (require, exports, module) {
         inputElement.on(inputUtil.INPUT, function () {
             me.set('value', this.value);
         });
-
-        me
-        .before('close', function (e, data) {
-
-            var event = data && data.event;
-            if (event) {
-                var target = event.target;
-                if (contains(inputElement, target)
-                    || contains(layerElement, target)
-                ) {
-                    return false;
-                }
-            }
-
-        });
-
 
 
         me.inner({
@@ -163,23 +159,9 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.close = function () {
         this.state('opened', false);
     };
-
-    proto._close = function () {
-        if (!this.is('opened')) {
-            return false;
-        }
-    };
-
 
     proto.render = function () {
 
@@ -190,7 +172,6 @@ define(function (require, exports, module) {
         );
 
     };
-
 
     proto.dispose = function () {
 
@@ -205,7 +186,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     Time.propertyUpdater = {
         name: function (name) {
@@ -234,8 +215,8 @@ define(function (require, exports, module) {
 
             if (itemActiveClass) {
                 layerElement
-                .find('.' + itemActiveClass)
-                .removeClass(itemActiveClass);
+                    .find('.' + itemActiveClass)
+                    .removeClass(itemActiveClass);
             }
 
             if (value) {
@@ -264,7 +245,13 @@ define(function (require, exports, module) {
     Time.stateUpdater = {
 
         opened: function (opened) {
-            this.inner('popup').state('opened', opened);
+            var popup = this.inner('popup');
+            if (opened) {
+                popup.open();
+            }
+            else {
+                popup.close();
+            }
         }
 
     };

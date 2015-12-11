@@ -269,6 +269,7 @@ define(function (require, exports, module) {
                 args.push(data);
             }
             else if (data === true && arguments.length === 2) {
+                data = null;
                 dispatch = true;
             }
 
@@ -299,13 +300,18 @@ if (event.type !== 'dispatch') {
             context.execute(ontype + '_', args);
 
             if (dispatch && !event.isPropagationStopped()) {
-                var dispatchEvent = me.emit(
-                    'dispatch',
-                    {
-                        event: event,
-                        data: data
-                    }
-                );
+
+                // event.originalEvent 通常是 DOM 事件
+                // 为了避免外部过多的判断，这里来保证
+                if (!event.originalEvent) {
+                    event.originalEvent = { };
+                }
+
+                var dispatchEvent = $.Event(event);
+                dispatchEvent.type = 'dispatch';
+
+                me.emit(dispatchEvent, data);
+
                 if (dispatchEvent.isPropagationStopped()) {
                     event.preventDefault();
                     event.stopPropagation();
@@ -647,19 +653,16 @@ if (event.type !== 'dispatch') {
             return false;
         }
 
-        if (event && event[ $.expando ]) {
-            if (!result) {
-                result = { };
-            }
-            result.event = event;
+        var dispatch = false;
+        if (result && result.dispatch) {
+            dispatch = true;
+            delete result.dispatch;
         }
 
+        event = $.Event(event);
+        event.type = type + name;
 
-        event = instance.emit(
-            createEvent(type + name),
-            result,
-            result && result.dispatch
-        );
+        instance.emit(event, result, dispatch);
 
         if (event.isDefaultPrevented()) {
             return false;

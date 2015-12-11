@@ -155,7 +155,6 @@ define(function (require, exports, module) {
             },
             watch: {
                 opened: function (opened) {
-                    console.log('set hidden', !opened)
                     me.state('hidden', !opened);
                 }
             }
@@ -166,11 +165,12 @@ define(function (require, exports, module) {
         popup
         .on('dispatch', function (e, data) {
 
-            var type = data.event.type;
+            var event = e.originalEvent;
+            var type = event.type;
 
             switch (type) {
                 case 'beforeopen':
-                    return;
+                    return false;
                     break;
                 case 'afteropen':
                     type = 'aftershow';
@@ -184,10 +184,9 @@ define(function (require, exports, module) {
                     break;
             }
 
-            var event = $.Event(data.data.event.originalEvent);
             event.type = type;
 
-            me.emit(event, true);
+            me.emit(event, data, true);
 
         })
         .before('open', function (e, data) {

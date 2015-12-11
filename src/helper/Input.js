@@ -102,8 +102,7 @@ define(function (require, exports, module) {
 
         keyboard.on('dispatch', function (e, data) {
 
-            var event = data.event;
-            data = data.data;
+            var event = e.originalEvent;
 
             switch (event.type) {
 
@@ -134,14 +133,14 @@ define(function (require, exports, module) {
         var namespace = me.namespace();
 
         mainElement
-        .on('blur' + namespace, updateValue)
-        .on(inputUtil.INPUT + namespace, function () {
-            if (!isLongPress
-                || !me.option('silentOnLongPress')
-            ) {
-                updateValue();
-            }
-        });
+            .on('blur' + namespace, updateValue)
+            .on(inputUtil.INPUT + namespace, function () {
+                if (!isLongPress
+                    || !me.option('silentOnLongPress')
+                ) {
+                    updateValue();
+                }
+            });
 
 
         me.inner({

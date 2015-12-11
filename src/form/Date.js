@@ -126,7 +126,21 @@ define(function (require, exports, module) {
 
         popup
         .on('dispatch', function (e, data) {
-            me.emit(data.event, data.data, true);
+
+            var event = e.originalEvent;
+
+            if (event.type === 'beforeclose') {
+                var target = event.originalEvent.target;
+                if (!contains(document, target) // 日历刷新后触发，所以元素没了
+                    || contains(inputElement, target)
+                    || contains(layerElement, target)
+                ) {
+                    return false;
+                }
+            }
+
+            me.emit(event, data, true);
+
         });
 
         var inputElement = mainElement.find(
@@ -136,22 +150,6 @@ define(function (require, exports, module) {
         inputUtil.init(inputElement);
         inputElement.on(inputUtil.INPUT, function () {
             me.set('value', this.value);
-        });
-
-        me
-        .before('close', function (e, data) {
-
-            var event = data && data.event;
-            if (event) {
-                var target = event.target;
-                if (!contains(document, target) // 日历刷新后触发，所以元素没了
-                    || contains(inputElement, target)
-                    || contains(layerElement, target)
-                ) {
-                    return false;
-                }
-            }
-
         });
 
         me.once('aftersync', function () {
@@ -201,28 +199,13 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.close = function () {
         this.state('opened', false);
     };
 
-    proto._close = function () {
-        if (!this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.render = function () {
         this.inner('calendar').render();
     };
-
 
     proto.dispose = function () {
 
@@ -238,7 +221,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     Date.propertyUpdater = {
 
@@ -258,30 +241,7 @@ define(function (require, exports, module) {
             return common.validateName(this, name);
         },
         value: function (value) {
-
-            var me = this;
-
-            value = common.validateValue(me, value);
-
-            if ($.type(value) === 'string') {
-
-                var list = [ ];
-
-                $.each(
-                    split(value, ','),
-                    function (index, value) {
-                        if (me.execute('parse', value)) {
-                            list.push(value);
-                        }
-                    }
-                );
-
-                value = list.join(',');
-
-            }
-
-            return value;
-
+            return common.validateValue(this, value);
         }
 
     };
@@ -289,7 +249,13 @@ define(function (require, exports, module) {
     Date.stateUpdater = {
 
         opened: function (opened) {
-            this.inner('popup').state('opened', opened);
+            var popup = this.inner('popup');
+            if (opened) {
+                popup.open();
+            }
+            else {
+                popup.close();
+            }
         }
 
     };

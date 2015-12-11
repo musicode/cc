@@ -120,22 +120,26 @@ define(function (require, exports, module) {
         });
 
 
-        combobox
-        .on('dispatch', function (e, data) {
-            me.emit(data.event, data.data, true);
-        });
-
         var nativeElement = common.findNative(me, '> input[type="hidden"]');
 
-        // 模拟 focus/blur，便于表单验证
-        me
-        .after('open', function () {
-            nativeElement.trigger('focusin');
-        })
-        .after('close', function () {
-            nativeElement.trigger('focusout');
-        });
+        combobox
+        .on('dispatch', function (e, data) {
 
+            var event = e.originalEvent;
+
+            // 模拟 focus/blur，便于表单验证
+            switch (event.type) {
+                case 'afteropen':
+                    nativeElement.trigger('focusin');
+                    break;
+                case 'afterclose':
+                    nativeElement.trigger('focusout');
+                    break;
+            }
+
+            me.emit(event, data, true);
+
+        });
 
         me.inner({
             main: mainElement,
@@ -156,35 +160,16 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.close = function () {
         this.state('opened', false);
     };
 
-    proto._close = function () {
-        if (!this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.dispose = function () {
-
-        var me = this;
-
-        lifeUtil.dispose(me);
-
-        me.inner('combobox').dispose();
-
+        lifeUtil.dispose(this);
+        this.inner('combobox').dispose();
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     Select.propertyUpdater = {
 
@@ -195,20 +180,20 @@ define(function (require, exports, module) {
     };
 
     Select.propertyUpdater.data =
-    Select.propertyUpdater.value = function (newValue, oldValue, changes) {
+    Select.propertyUpdater.value = function (newValue, oldValue, change) {
 
         var me = this;
 
         var properties = { };
 
-        var valueChange = changes.value;
+        var valueChange = change.value;
         if (valueChange) {
             var value = valueChange.newValue;
             common.prop(me, 'value', value);
             properties.value = value;
         }
 
-        var dataChange = changes.data;
+        var dataChange = change.data;
         if (dataChange) {
             properties.data = dataChange.newValue;
         }
@@ -233,7 +218,13 @@ define(function (require, exports, module) {
 
     Select.stateUpdater = {
         opened: function (opened) {
-            this.inner('combobox').state('opened', opened);
+            var combobox = this.inner('combobox');
+            if (opened) {
+                combobox.open();
+            }
+            else {
+                combobox.close();
+            }
         }
     };
 

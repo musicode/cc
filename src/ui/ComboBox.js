@@ -95,7 +95,7 @@ define(function (require, exports, module) {
         });
 
         popup.on('dispatch', function (e, data) {
-            me.emit(data.event, data.data, true);
+            me.emit(e.originalEvent, data, true);
         });
 
         var menuActiveClass = me.option('menuActiveClass');

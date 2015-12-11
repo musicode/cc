@@ -239,12 +239,10 @@ define(function (require, exports, module) {
             popup
             .on('dispatch', function (e, data) {
 
-                var event = data.data.event;
-                var target = event.target;
+                var event = e.originalEvent;
+                var target = event.originalEvent.target;
 
-                var type = data.event.type;
-
-                switch (type) {
+                switch (event.type) {
 
                     case 'beforeopen':
                         // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
@@ -264,10 +262,7 @@ define(function (require, exports, module) {
                         break;
                 }
 
-                event = $.Event(event.originalEvent);
-                event.type = type;
-
-                me.emit(event, true);
+                me.emit(event, data, true);
 
             });
         }

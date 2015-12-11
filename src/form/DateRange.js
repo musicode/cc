@@ -77,12 +77,16 @@ define(function (require, exports, module) {
 
         var startCalendar = createCalendar(
             me,
-            layerElement.find(me.option('startCalendarSelector')),
+            layerElement.find(
+                me.option('startCalendarSelector')
+            ),
             'startDate'
         );
         var endCalendar = createCalendar(
             me,
-            layerElement.find(me.option('endCalendarSelector')),
+            layerElement.find(
+                me.option('endCalendarSelector')
+            ),
             'endDate'
         );
 
@@ -133,15 +137,10 @@ define(function (require, exports, module) {
 
         popup
         .on('dispatch', function (e, data) {
-            me.emit(data.event, data.data, true);
-        });
 
-        me
-        .before('close', function (e, data) {
-
-            var event = data && data.event;
-            if (event) {
-                var target = event.target;
+            var event = e.originalEvent;
+            if (event.type === 'beforeclose') {
+                var target = event.originalEvent.target;
                 if (!contains(document, target) // 日历刷新后触发，所以元素没了
                     || contains(inputElement, target)
                     || contains(layerElement, target)
@@ -149,6 +148,8 @@ define(function (require, exports, module) {
                     return false;
                 }
             }
+
+            me.emit(event, data, true);
 
         });
 
@@ -203,23 +204,9 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')) {
-            return false;
-        }
-    };
-
-
     proto.close = function () {
         this.state('opened', false);
     };
-
-    proto._close = function () {
-        if (!this.is('opened')) {
-            return false;
-        }
-    };
-
 
     proto.dispose = function () {
 
@@ -240,7 +227,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     DateRange.propertyUpdater = {
 
@@ -267,29 +254,7 @@ define(function (require, exports, module) {
             return common.validateName(this, name);
         },
         value: function (value) {
-
-            var me = this;
-
-            value = common.validateValue(me, value);
-
-            var terms = split(value, SEPRATOR);
-            if (terms.length === 2) {
-                $.each(
-                    terms,
-                    function (index, item) {
-                        if (!me.execute('parse', item)) {
-                            value = '';
-                            return false;
-                        }
-                    }
-                );
-            }
-            else {
-                value = '';
-            }
-
-            return value;
-
+            return common.validateValue(this, value);
         }
 
     };
@@ -297,7 +262,13 @@ define(function (require, exports, module) {
     DateRange.stateUpdater = {
 
         opened: function (opened) {
-            this.inner('popup').state('opened', opened);
+            var popup = this.inner('popup');
+            if (opened) {
+                popup.open();
+            }
+            else {
+                popup.close();
+            }
         }
 
     };
