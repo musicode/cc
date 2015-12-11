@@ -60,7 +60,6 @@ define(function (require, exports) {
 
         me.once('aftersync', function () {
 
-            placeholder.set('placeholder', me.get('placeholder'));
             placeholder.option(
                 'watch',
                 {
@@ -69,8 +68,8 @@ define(function (require, exports) {
                     }
                 }
             );
+            placeholder.set('placeholder', me.get('placeholder'));
 
-            input.set('value', me.get('value'));
             input.option(
                 'watch',
                 {
@@ -79,6 +78,7 @@ define(function (require, exports) {
                     }
                 }
             );
+            input.set('value', me.get('value'));
 
         });
 

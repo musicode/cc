@@ -55,12 +55,6 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
-            spinbox.set({
-                value: me.get('value'),
-                minValue: me.get('minValue'),
-                maxValue: me.get('maxValue')
-            });
-
             spinbox.option(
                 'watch',
                 {
@@ -76,6 +70,12 @@ define(function (require, exports, module) {
                 }
             );
 
+            spinbox.set({
+                value: me.get('value'),
+                minValue: me.get('minValue'),
+                maxValue: me.get('maxValue')
+            });
+
         });
 
         me.inner({
@@ -85,7 +85,10 @@ define(function (require, exports, module) {
         });
 
         me.set({
-            name: me.option('name')
+            name: me.option('name'),
+            value: me.option('value'),
+            minValue: me.option('minValue'),
+            maxValue: me.option('maxValue')
         });
 
     };

@@ -123,7 +123,6 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
-            popup.state('opened', me.is('opened'));
             popup.option(
                 'watch',
                 {
@@ -132,6 +131,7 @@ define(function (require, exports, module) {
                     }
                 }
             );
+            me.state('opened', popup.is('opened'));
 
         });
 

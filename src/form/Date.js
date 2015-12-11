@@ -155,7 +155,6 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
-            calendar.set('value', me.get('value'));
             calendar.option(
                 'watch',
                 {
@@ -165,8 +164,8 @@ define(function (require, exports, module) {
                     }
                 }
             );
+            calendar.set('value', me.get('value'));
 
-            popup.state('opened', me.is('opened'));
             popup.option(
                 'watch',
                 {
@@ -175,6 +174,7 @@ define(function (require, exports, module) {
                     }
                 }
             );
+            me.state('opened', popup.is('opened'));
 
         });
 

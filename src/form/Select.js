@@ -102,9 +102,6 @@ define(function (require, exports, module) {
 
         me.once('aftersync', function () {
 
-            combobox.set('value', me.get('value'));
-            combobox.state('opened', combobox.is('opened'));
-
             combobox.option(
                 'watch',
                 {
@@ -116,6 +113,9 @@ define(function (require, exports, module) {
                     }
                 }
             );
+
+            combobox.set('value', me.get('value'));
+            me.state('opened', combobox.is('opened'));
 
         });
 
