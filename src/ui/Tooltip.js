@@ -170,7 +170,7 @@ define(function (require, exports, module) {
 
             switch (type) {
                 case 'beforeopen':
-                    return false;
+                    return;
                     break;
                 case 'afteropen':
                     type = 'aftershow';
@@ -191,8 +191,8 @@ define(function (require, exports, module) {
         })
         .before('open', function (e, data) {
 
-            var event = data && data.event;
-            if (!event) {
+            var event = e.originalEvent;
+            if (!event || !event.target) {
                 return;
             }
 
@@ -277,16 +277,14 @@ define(function (require, exports, module) {
 
             var update = function () {
 
-                var event = $.Event(data.event.originalEvent);
-                event.type = 'beforeshow';
+                e.type = 'beforeshow';
 
-                me.emit(event, true);
+                me.emit(e, true);
 
-                if (event.isDefaultPrevented()) {
+                if (e.isDefaultPrevented()) {
                     clean();
                     return;
                 }
-
 
                 mainElement.addClass(
                     me.option(placement + 'Class')
