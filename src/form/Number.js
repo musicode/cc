@@ -91,13 +91,8 @@ define(function (require, exports, module) {
     };
 
     proto.dispose = function () {
-
-        var me = this;
-
-        lifeUtil.dispose(me);
-
-        me.inner('spinbox').dispose();
-
+        lifeUtil.dispose(this);
+        this.inner('spinbox').dispose();
     };
 
     lifeUtil.extend(proto);

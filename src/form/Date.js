@@ -6,7 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var split = require('../function/split');
     var contains = require('../function/contains');
     var replaceWith = require('../function/replaceWith');
 

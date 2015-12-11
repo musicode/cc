@@ -53,7 +53,7 @@ define(function (require, exports, module) {
             'click' + me.namespace(),
             // 有时候会连续触发两次，因此用 debounce 解决
             debounce(
-                function (e) {
+                function () {
 
                     if (me.is('disabled')) {
                         return;

@@ -70,7 +70,6 @@ define(function (require, exports, module) {
     require('./function/toNumber');
     require('./function/toString');
     require('./function/ucFirst');
-    require('./function/values');
     require('./function/viewport');
     require('./function/viewportHeight');
     require('./function/viewportWidth');

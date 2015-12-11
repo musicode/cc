@@ -6,8 +6,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var createValues = require('../function/values');
     var lifeUtil = require('../util/life');
+    var Value = require('../util/Value');
+
     var common = require('./common');
     var Box = require('./Box');
 
@@ -75,12 +76,19 @@ define(function (require, exports, module) {
                         {
                             checked: function (checked) {
 
+                                var valueUtil = me.inner('value');
+                                var value = box.get('value');
+
+                                if (checked) {
+                                    valueUtil.add(value);
+                                }
+                                else {
+                                    valueUtil.remove(value);
+                                }
+
                                 me.set(
                                     'value',
-                                    me.inner('values')(
-                                        box.get('value'),
-                                        checked
-                                    )
+                                    valueUtil.get()
                                 );
 
                             }
@@ -94,8 +102,11 @@ define(function (require, exports, module) {
 
         me.inner({
             main: mainElement,
-            native: common.findNative(me, '> input[type="hidden"]'),
-            boxes: boxes
+            native: common.findNative(me, 'input[type="hidden"]'),
+            boxes: boxes,
+            value: new Value({
+                multiple: me.option('multiple')
+            })
         });
 
         me.set({
@@ -107,12 +118,10 @@ define(function (require, exports, module) {
 
     proto.dispose = function () {
 
-        var me = this;
-
-        lifeUtil.dispose(me);
+        lifeUtil.dispose(this);
 
         $.each(
-            me.inner('boxes'),
+            this.inner('boxes'),
             function (index, box) {
                 box.dispose();
             }
@@ -162,17 +171,11 @@ define(function (require, exports, module) {
         },
         value: function (value) {
 
-            var me = this;
+            var valueUtil = this.inner('value');
 
-            var values = createValues(
-                common.validateValue(me, value),
-                me.option('multiple'),
-                me.option('toggle')
-            );
+            valueUtil.set(value);
 
-            me.inner('values', values);
-
-            return values();
+            return valueUtil.get();
 
         }
     };

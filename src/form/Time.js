@@ -166,13 +166,9 @@ define(function (require, exports, module) {
     };
 
     proto.render = function () {
-
-        var me = this;
-
-        me.renderWith(
-            me.get('data')
+        this.renderWith(
+            this.get('data')
         );
-
     };
 
     proto.dispose = function () {

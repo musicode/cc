@@ -248,9 +248,7 @@ define(function (require) {
 
         value: function (value) {
 
-            var me = this;
-
-            var valueUtil = me.inner('value');
+            var valueUtil = this.inner('value');
 
             valueUtil.set(value);
 
