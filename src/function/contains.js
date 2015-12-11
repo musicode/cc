@@ -15,11 +15,11 @@ define(function (require, exports, module) {
      */
     return function (container, element) {
 
-        container = container && container.jquery
+        container = container.jquery
                   ? container[0]
                   : container;
 
-        element = element && element.jquery
+        element = element.jquery
                 ? element[0]
                 : element;
 

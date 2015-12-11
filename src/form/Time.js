@@ -118,10 +118,12 @@ define(function (require, exports, module) {
 
             if (event.type === 'beforeclose') {
                 var target = event.originalEvent.target;
-                if (contains(inputElement, target)
-                    || contains(layerElement, target)
-                ) {
-                    return false;
+                if (target) {
+                    if (contains(inputElement, target)
+                        || contains(layerElement, target)
+                    ) {
+                        return false;
+                    }
                 }
             }
 

@@ -141,11 +141,13 @@ define(function (require, exports, module) {
             var event = e.originalEvent;
             if (event.type === 'beforeclose') {
                 var target = event.originalEvent.target;
-                if (!contains(document, target) // 日历刷新后触发，所以元素没了
-                    || contains(inputElement, target)
-                    || contains(layerElement, target)
-                ) {
-                    return false;
+                if (target) {
+                    if (!contains(document, target) // 日历刷新后触发，所以元素没了
+                        || contains(inputElement, target)
+                        || contains(layerElement, target)
+                    ) {
+                        return false;
+                    }
                 }
             }
 

@@ -304,7 +304,10 @@ if (event.type !== 'dispatch') {
                 // event.originalEvent 通常是 DOM 事件
                 // 为了避免外部过多的判断，这里来保证
                 if (!event.originalEvent) {
-                    event.originalEvent = { };
+                    event.originalEvent = {
+                        preventDefault: $.noop,
+                        stopPropagation: $.noop
+                    };
                 }
 
                 var dispatchEvent = $.Event(event);

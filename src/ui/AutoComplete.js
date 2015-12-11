@@ -242,24 +242,26 @@ define(function (require, exports, module) {
                 var event = e.originalEvent;
                 var target = event.originalEvent.target;
 
-                switch (event.type) {
+                if (target) {
+                    switch (event.type) {
 
-                    case 'beforeopen':
-                        // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
-                        if (contains(inputElement, target)) {
-                            suggest();
-                            return false;
-                        }
-                        break;
+                        case 'beforeopen':
+                            // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
+                            if (contains(inputElement, target)) {
+                                suggest();
+                                return false;
+                            }
+                            break;
 
-                    case 'beforeclose':
-                        // 点击输入框或 menu 不需要隐藏
-                        if (contains(inputElement, target)
-                            || contains(menuElement, target)
-                        ) {
-                            return false;
-                        }
-                        break;
+                        case 'beforeclose':
+                            // 点击输入框或 menu 不需要隐藏
+                            if (contains(inputElement, target)
+                                || contains(menuElement, target)
+                            ) {
+                                return false;
+                            }
+                            break;
+                    }
                 }
 
                 me.emit(event, data, true);
