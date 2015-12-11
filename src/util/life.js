@@ -100,10 +100,10 @@ define(function (require, exports, module) {
 
             changes[ name ] = record;
 
-            var watch = me.option('watch');
-            if (watch && watch[ name ]) {
+            var watchSync = me.option('watchSync');
+            if (watchSync && watchSync[ name ]) {
                 me.execute(
-                    watch[ name ],
+                    watchSync[ name ],
                     [ value, oldValue, record ]
                 );
             }
@@ -575,31 +575,42 @@ if (event.type !== 'dispatch') {
 
             var me = this;
 
+            var update = function (changes, updater, complex) {
+
+                $.each(
+                    changes,
+                    function (name, change) {
+                        me.execute(
+                            updater[ name ],
+                            [
+                                change.newValue,
+                                change.oldValue,
+                                complex ? changes : change
+                            ]
+                        );
+                    }
+                );
+
+            };
+
             $.each(
                 [ 'property', 'state' ],
                 function (index, key) {
                     var changes = me.inner(key + 'Changes');
                     if (changes) {
 
+                        me.inner(key + 'Changes', null);
+
                         var staticUpdater = me.constructor[ key + 'Updater' ];
                         if (staticUpdater) {
-                            $.each(
-                                changes,
-                                function (name, change) {
-                                    var fn = staticUpdater[ name ];
-                                    me.execute(
-                                        fn,
-                                        [
-                                            change.newValue,
-                                            change.oldValue,
-                                            changes
-                                        ]
-                                    );
-                                }
-                            );
+                            update(changes, staticUpdater, true);
                         }
 
-                        me.inner(key + 'Changes', null);
+                        var watch = me.option('watch');
+                        if (watch) {
+                            update(changes, watch);
+                        }
+
                         me.emit(key + 'change', changes);
 
                     }

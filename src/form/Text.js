@@ -61,7 +61,7 @@ define(function (require, exports) {
         me.once('aftersync', function () {
 
             placeholder.option(
-                'watch',
+                'watchSync',
                 {
                     value: function (value) {
                         me.set('placeholder', value);
@@ -71,7 +71,7 @@ define(function (require, exports) {
             placeholder.set('placeholder', me.get('placeholder'));
 
             input.option(
-                'watch',
+                'watchSync',
                 {
                     value: function (value) {
                         me.set('value', value);

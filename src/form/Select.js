@@ -103,7 +103,7 @@ define(function (require, exports, module) {
         me.once('aftersync', function () {
 
             combobox.option(
-                'watch',
+                'watchSync',
                 {
                     value: function (value) {
                         me.set('value', value);

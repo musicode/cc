@@ -116,7 +116,7 @@ define(function (require, exports, module) {
                 switchDelay: me.option('navDelay'),
                 itemSelector: navSelector,
                 itemActiveClass: navActiveClass,
-                watch: {
+                watchSync: {
                     index: function (index) {
                         me.set('index', index);
                     }
@@ -128,7 +128,7 @@ define(function (require, exports, module) {
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
-            watch: {
+            watchSync: {
                 index: function (index) {
                     me.set('index', index);
                 },

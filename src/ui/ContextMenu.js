@@ -88,7 +88,7 @@ define(function (require, exports, module) {
                     }
                 );
             },
-            watch: {
+            watchSync: {
                 opened: function (opened) {
                     me.state('hidden', !opened);
                 }

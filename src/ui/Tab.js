@@ -54,7 +54,7 @@ define(function (require, exports, module) {
             switchDelay: me.option('navDelay'),
             itemSelector: navSelector,
             itemActiveClass: navActiveClass,
-            watch: {
+            watchSync: {
                 index: function (toIndex, fromIndex) {
 
                     me.set('index', toIndex);

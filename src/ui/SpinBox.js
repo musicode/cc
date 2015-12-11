@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             step: step,
             prevKey: 'down',
             nextKey: 'up',
-            watch: {
+            watchSync: {
                 index: function (index) {
                     me.set('value', index);
                 },

@@ -87,7 +87,7 @@ define(function (require, exports, module) {
                     options
                 );
             },
-            watch: {
+            watchSync: {
                 value: function (value) {
 
                     var pixel = slider.valueToPixel(value);

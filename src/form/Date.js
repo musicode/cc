@@ -156,7 +156,7 @@ define(function (require, exports, module) {
         me.once('aftersync', function () {
 
             calendar.option(
-                'watch',
+                'watchSync',
                 {
                     value: function (value) {
                         me.set('value', value);
@@ -167,7 +167,7 @@ define(function (require, exports, module) {
             calendar.set('value', me.get('value'));
 
             popup.option(
-                'watch',
+                'watchSync',
                 {
                     opened: function (opened) {
                         me.state('opened', opened);

@@ -100,7 +100,7 @@ define(function (require, exports, module) {
         me.once('aftersync', function () {
 
             popup.option(
-                'watch',
+                'watchSync',
                 {
                     opened: function (opened) {
                         me.state('opened', opened);

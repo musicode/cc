@@ -72,7 +72,7 @@ define(function (require, exports, module) {
                 boxes,
                 function (index, box) {
                     box.option(
-                        'watch',
+                        'watchSync',
                         {
                             checked: function (checked) {
 

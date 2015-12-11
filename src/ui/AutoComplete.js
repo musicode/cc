@@ -125,7 +125,7 @@ define(function (require, exports, module) {
             prevKey: 'up',
             nextKey: 'down',
             interval: me.option('interval'),
-            watch: {
+            watchSync: {
                 index: function (newIndex) {
 
                     updateItemActiveClass('removeClass');
@@ -190,7 +190,7 @@ define(function (require, exports, module) {
 
                 }
             },
-            watch: {
+            watchSync: {
                 value: function (value) {
                     iteratorData[ 0 ].data.text = value;
                     suggest();
@@ -228,7 +228,7 @@ define(function (require, exports, module) {
                         }
                     );
                 },
-                watch: {
+                watchSync: {
                     opened: function (opened) {
                         this.state('opened', opened);
                     }

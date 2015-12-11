@@ -56,7 +56,7 @@ define(function (require, exports, module) {
         me.once('aftersync', function () {
 
             spinbox.option(
-                'watch',
+                'watchSync',
                 {
                     value: function (value) {
                         me.set('value', value);
