@@ -47,8 +47,8 @@ define(function (require, exports, module) {
             step: me.option('step'),
             loop: me.option('loop'),
             watch: {
-                index: function (newIndex, oldIndex, changes) {
-                    me.set('index', newIndex, changes.index);
+                index: function (index) {
+                    me.set('index', index);
                 },
                 minIndex: function (minIndex) {
                     me.set('minIndex', minIndex);
@@ -63,12 +63,14 @@ define(function (require, exports, module) {
             me.emit(e, data);
         };
 
-        iterator
-            .before('prev', dispatchEvent)
-            .after('prev', dispatchEvent)
-            .before('next', dispatchEvent)
-            .after('next', dispatchEvent);
-
+        $.each(
+            exclude,
+            function (index, name) {
+                iterator
+                    .before(name, dispatchEvent)
+                    .after(name, dispatchEvent);
+            }
+        );
 
         var prevKey = me.option('prevKey');
         var nextKey = me.option('nextKey');
@@ -164,7 +166,9 @@ define(function (require, exports, module) {
         this.inner('keyboard').dispose();
     };
 
-    lifeUtil.extend(proto);
+    var exclude = [ 'start', 'pause', 'stop', 'prev', 'next' ];
+
+    lifeUtil.extend(proto, exclude);
 
     DOMIterator.propertyUpdater = {
         index: function (index) {

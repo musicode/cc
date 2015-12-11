@@ -134,8 +134,7 @@ define(function (require, exports, module) {
 
         me.set(
             'index',
-            toNumber(index, 0),
-            { action: 'prev' }
+            toNumber(index, 0)
         );
 
     };
@@ -171,8 +170,7 @@ define(function (require, exports, module) {
 
         me.set(
             'index',
-            toNumber(index, 0),
-            { action: 'next' }
+            toNumber(index, 0)
         );
 
     };

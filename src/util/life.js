@@ -81,7 +81,7 @@ define(function (require, exports, module) {
             var record = { };
             extend(record, options);
 
-            record.newValue = me[ getter ](name);
+            record.newValue = value;
             record.oldValue = oldValue;
 
             var changes = me.inner(singular + 'Changes');
@@ -99,6 +99,14 @@ define(function (require, exports, module) {
             }
 
             changes[ name ] = record;
+
+            var watch = me.option('watch');
+            if (watch && watch[ name ]) {
+                me.execute(
+                    watch[ name ],
+                    [ value, oldValue ]
+                );
+            }
 
             if (!me.inner(UPDATE_ASYNC)) {
                 me.inner(
@@ -558,22 +566,6 @@ if (event.type !== 'dispatch') {
 
             var me = this;
 
-            var createUpdater = function (updater, changes) {
-                return function (name, change) {
-                    var fn = updater[ name ];
-                    if ($.isFunction(fn)) {
-                        return fn.call(
-                            me,
-                            change.newValue,
-                            change.oldValue,
-                            changes
-                        );
-                    }
-                };
-            };
-
-            var watch = me.option('watch');
-
             $.each(
                 [ 'property', 'state' ],
                 function (index, key) {
@@ -584,14 +576,17 @@ if (event.type !== 'dispatch') {
                         if (staticUpdater) {
                             $.each(
                                 changes,
-                                createUpdater(staticUpdater, changes)
-                            );
-                        }
-
-                        if (watch) {
-                            $.each(
-                                changes,
-                                createUpdater(watch, changes)
+                                function (name, change) {
+                                    var fn = staticUpdater[ name ];
+                                    me.execute(
+                                        fn,
+                                        [
+                                            change.newValue,
+                                            change.oldValue,
+                                            changes
+                                        ]
+                                    );
+                                }
                             );
                         }
 

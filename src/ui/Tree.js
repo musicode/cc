@@ -101,12 +101,14 @@ define(function (require, exports, module) {
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
 
+        var idAttribute = instance.option('idAttribute');
+
         var labelSelector = me.option('labelSelector');
         if (labelSelector) {
-            mainElement.on(clickType, labelSelector, function (e) {
+            mainElement.on(clickType, labelSelector, function () {
                 var nodeElement = findNodeElement(me, $(this));
                 me.select(
-                    nodeElement.data('id')
+                    nodeElement.attr(idAttribute)
                 );
             });
         }
@@ -117,11 +119,10 @@ define(function (require, exports, module) {
 
             var expandedClass = me.option('expandedClass');
 
-            mainElement.on(clickType, toggleSelector, function (e) {
-
+            mainElement.on(clickType, toggleSelector, function () {
                 var nodeElement = findNodeElement(me, $(this));
                 if (nodeElement) {
-                    var id = nodeElement.data('id');
+                    var id = nodeElement.attr(idAttribute);
                     if (nodeElement.hasClass(expandedClass)) {
                         me.collapse(id);
                     }
@@ -129,7 +130,6 @@ define(function (require, exports, module) {
                         me.expand(id);
                     }
                 }
-
             });
         }
 
@@ -357,10 +357,8 @@ define(function (require, exports, module) {
 
     /**
      * 取消选中节点
-     *
-     * @param {string} id
      */
-    proto.unselect = function (id) {
+    proto.unselect = function () {
 
         this.set('value', '');
 

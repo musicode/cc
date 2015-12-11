@@ -136,12 +136,12 @@ define(function (require, exports, module) {
                             return;
                         }
 
-                        var options = {
+                        var data = {
                             offsetX: finderWidth / 2,
                             offsetY: finderHeight / 2
                         };
 
-                        if (!options.downHandler(options)) {
+                        if (!options.downHandler(data)) {
                             return;
                         }
 

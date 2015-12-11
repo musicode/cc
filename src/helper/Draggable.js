@@ -253,15 +253,8 @@ define(function (require, exports, module) {
 
         var dragHandler = function (e) {
 
-            var x = xCalculator(e);
-            var y = yCalculator(e);
-
-            if (point.left === x && point.top === y) {
-                return;
-            }
-
-            point.left = x;
-            point.top = y;
+            point.left = xCalculator(e);
+            point.top = yCalculator(e);
 
             var event;
 

@@ -218,12 +218,10 @@ define(function (require, exports, module) {
             }
         };
 
-        var context = me.option('context') || me;
-
-        context
+        me
         .before('dispose', function () {
 
-            context.off('statechange', stateChangeHandler);
+            me.off('statechange', stateChangeHandler);
 
             unbindShowEvent();
             unbindHideEvent();

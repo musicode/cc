@@ -85,16 +85,7 @@ define(function (require, exports, module) {
             }
         };
 
-        var updateScrollPosition = function (fn) {
-            processIndex(
-                activeIndex,
-                function (itemElement) {
-                    fn(menuElement, itemElement);
-                }
-            );
-        };
-
-        var updateActiveItemClass = function (action) {
+        var updateItemActiveClass = function (action) {
             if (itemActiveClass) {
                 processIndex(
                     activeIndex,
@@ -107,11 +98,20 @@ define(function (require, exports, module) {
             }
         };
 
-        var updateInputValue = function (index) {
+        var updateInputValue = function () {
             processIndex(
-                index,
+                activeIndex,
                 function (itemElement, itemData) {
                     inputElement.val(itemData.text);
+                }
+            );
+        };
+
+        var updateScrollPosition = function (fn) {
+            processIndex(
+                activeIndex,
+                function (itemElement) {
+                    fn(menuElement, itemElement);
                 }
             );
         };
@@ -126,28 +126,27 @@ define(function (require, exports, module) {
             nextKey: 'down',
             interval: me.option('interval'),
             watch: {
-                index: function (newIndex, oldIndex, changes) {
+                index: function (newIndex) {
 
-                    updateActiveItemClass('removeClass');
+                    updateItemActiveClass('removeClass');
+
                     activeIndex = newIndex;
-                    updateActiveItemClass('addClass');
 
-                    var action = changes.index.action;
-                    var scroll;
-
-                    if (action === 'prev') {
-                        updateInputValue(activeIndex);
-                        scroll = autoScrollUp;
-                    }
-                    else if (action === 'next') {
-                        updateInputValue(activeIndex);
-                    }
-
-                    updateScrollPosition(scroll || autoScrollDown);
+                    updateItemActiveClass('addClass');
 
                 }
             }
         });
+
+        iterator
+            .after('prev', function () {
+                updateInputValue();
+                updateScrollPosition(autoScrollUp);
+            })
+            .after('next', function () {
+                updateInputValue();
+                updateScrollPosition(autoScrollDown);
+            });
 
 
         var suggest = function () {
@@ -231,12 +230,7 @@ define(function (require, exports, module) {
                 },
                 watch: {
                     opened: function (opened) {
-                        if (opened) {
-                            me.open();
-                        }
-                        else {
-                            me.close();
-                        }
+                        this.state('opened', opened);
                     }
                 }
             });
@@ -245,10 +239,12 @@ define(function (require, exports, module) {
             popup
             .on('dispatch', function (e, data) {
 
-                var target = data.data.event.target;
-                var event = data.event;
+                var event = data.data.event;
+                var target = event.target;
 
-                switch (event.type) {
+                var type = data.event.type;
+
+                switch (type) {
 
                     case 'beforeopen':
                         // 点击输入框阻止显示，让 suggest 根据是否有数据来决定
@@ -268,9 +264,18 @@ define(function (require, exports, module) {
                         break;
                 }
 
-                me.emit(event, data.data, true);
+                event = $.Event(event.originalEvent);
+                event.type = type;
+
+                me.emit(event, true);
 
             });
+        }
+        else {
+            inputElement
+                .on('blur', function () {
+                    iterator.stop();
+                });
         }
 
         me
@@ -370,7 +375,7 @@ define(function (require, exports, module) {
                 index,
                 function (itemElement, itemData) {
 
-                    updateInputValue(index);
+                    updateInputValue();
 
                     me.close();
                     me.emit('select', itemData);
@@ -417,13 +422,6 @@ define(function (require, exports, module) {
 
         });
 
-        if (!popup) {
-            inputElement
-            .on('blur', function () {
-                iterator.stop();
-            });
-        }
-
         me.inner({
             iterator: iterator,
             input: input,
@@ -456,27 +454,9 @@ define(function (require, exports, module) {
         this.state('opened', true);
     };
 
-    proto._open = function () {
-        if (this.is('opened')
-            || !this.inner('popup')
-        ) {
-            return false;
-        }
-    };
-
-
     proto.close = function () {
         this.state('opened', false);
     };
-
-    proto._close = function () {
-        if (!this.is('opened')
-            || !this.inner('popup')
-        ) {
-            return false;
-        }
-    };
-
 
     proto.dispose = function () {
 
@@ -498,7 +478,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [ 'open', 'close' ]);
 
     AutoComplete.propertyUpdater = {
         data: function () {
@@ -510,7 +490,12 @@ define(function (require, exports, module) {
         opened: function (opened) {
             var popup = this.inner('popup');
             if (popup) {
-                popup.state('opened', opened);
+                if (opened) {
+                    popup.open();
+                }
+                else {
+                    popup.close();
+                }
             }
         }
     };
