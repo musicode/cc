@@ -187,6 +187,9 @@ define('cc/form/BoxGroup', [
             return common.validateName(this, name);
         },
         value: function (value) {
+            if (value == null) {
+                value = common.validateValue(this, value);
+            }
             var valueUtil = this.inner('value');
             valueUtil.set(value);
             return valueUtil.get();
@@ -6739,7 +6742,7 @@ define('cc/ui/Tree', [
         me.initStruct();
         var mainElement = me.option('mainElement');
         var clickType = 'click' + me.namespace();
-        var idAttribute = instance.option('idAttribute');
+        var idAttribute = me.option('idAttribute');
         var labelSelector = me.option('labelSelector');
         if (labelSelector) {
             mainElement.on(clickType, labelSelector, function () {
