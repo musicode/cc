@@ -192,7 +192,7 @@ define(function (require, exports, module) {
         .before('open', function (e, data) {
 
             var event = e.originalEvent;
-            if (!event || !event.target) {
+            if (!event || !event.target || !event.target.tagName) {
                 return;
             }
 
@@ -279,7 +279,7 @@ define(function (require, exports, module) {
 
                 e.type = 'beforeshow';
 
-                me.emit(e, true);
+                me.emit(e, data, true);
 
                 if (e.isDefaultPrevented()) {
                     clean();

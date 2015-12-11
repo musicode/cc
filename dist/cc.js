@@ -6482,7 +6482,7 @@ define('cc/ui/Tooltip', [
             var type = event.type;
             switch (type) {
             case 'beforeopen':
-                return false;
+                return;
                 break;
             case 'afteropen':
                 type = 'aftershow';
@@ -6498,8 +6498,8 @@ define('cc/ui/Tooltip', [
             event.type = type;
             me.emit(event, data, true);
         }).before('open', function (e, data) {
-            var event = data && data.event;
-            if (!event) {
+            var event = e.originalEvent;
+            if (!event || !event.target || !event.target.tagName) {
                 return;
             }
             var skinClass = me.inner('skinClass');
@@ -6555,10 +6555,9 @@ define('cc/ui/Tooltip', [
                 return false;
             }
             var update = function () {
-                var event = $.Event(data.event.originalEvent);
-                event.type = 'beforeshow';
-                me.emit(event, true);
-                if (event.isDefaultPrevented()) {
+                e.type = 'beforeshow';
+                me.emit(e, data, true);
+                if (e.isDefaultPrevented()) {
                     clean();
                     return;
                 }
