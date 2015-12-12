@@ -38,6 +38,10 @@
                     pageTemplate: '',
                     ellipsisTemplate: '',
 
+                    onbeforeinit: function () {
+                        console.log(arguments);
+                    },
+
                     ondebug: function (event, data) {
                         console.log(
                             event.type,

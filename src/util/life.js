@@ -580,7 +580,7 @@ if (event.type !== 'dispatch') {
                 $.each(
                     changes,
                     function (name, change) {
-                        me.execute(
+                        return me.execute(
                             updater[ name ],
                             [
                                 change.newValue,
