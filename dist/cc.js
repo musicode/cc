@@ -8967,7 +8967,7 @@ define('cc/util/life', [
             var me = this;
             var update = function (changes, updater, complex) {
                 $.each(changes, function (name, change) {
-                    me.execute(updater[name], [
+                    return me.execute(updater[name], [
                         change.newValue,
                         change.oldValue,
                         complex ? changes : change
