@@ -249,6 +249,13 @@ define(function (require, exports, module) {
                 result,
                 function (index, item) {
                     var errorElement = item.groupElement.find('[' + errorAttribute + '=' + item.name + ']');
+                    var animationOptions = {
+                        errorElement: errorElement,
+                        fieldElement: item.fieldElement,
+                        rule: item.rule,
+                        error: item.error
+                    };
+
                     if (item.error) {
 
                         errors.push(item);
@@ -267,19 +274,13 @@ define(function (require, exports, module) {
 
                         me.execute(
                             'showErrorAnimation',
-                            {
-                                errorElement: errorElement,
-                                fieldElement: item.fieldElement
-                            }
+                            animationOptions
                         );
                     }
                     else {
                         me.execute(
                             'hideErrorAnimation',
-                            {
-                                errorElement: errorElement,
-                                fieldElement: item.fieldElement
-                            }
+                            animationOptions
                         );
                     }
                 }

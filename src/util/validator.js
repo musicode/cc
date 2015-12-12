@@ -223,6 +223,7 @@ define(function (require, exports, module) {
                 var extend = function () {
 
                     if (failedRule) {
+                        result.rule = failedRule;
                         result.error = rule.errors[ failedRule ];
                     }
 

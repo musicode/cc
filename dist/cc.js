@@ -961,6 +961,12 @@ define('cc/form/Validator', [
             var errorTemplate = me.option('errorTemplate');
             $.each(result, function (index, item) {
                 var errorElement = item.groupElement.find('[' + errorAttribute + '=' + item.name + ']');
+                var animationOptions = {
+                    errorElement: errorElement,
+                    fieldElement: item.fieldElement,
+                    rule: item.rule,
+                    error: item.error
+                };
                 if (item.error) {
                     errors.push(item);
                     var html = me.execute('render', [
@@ -968,15 +974,9 @@ define('cc/form/Validator', [
                         errorTemplate
                     ]);
                     errorElement.html(html);
-                    me.execute('showErrorAnimation', {
-                        errorElement: errorElement,
-                        fieldElement: item.fieldElement
-                    });
+                    me.execute('showErrorAnimation', animationOptions);
                 } else {
-                    me.execute('hideErrorAnimation', {
-                        errorElement: errorElement,
-                        fieldElement: item.fieldElement
-                    });
+                    me.execute('hideErrorAnimation', animationOptions);
                 }
             });
             if (autoScroll && errors.length > 0) {
@@ -10105,6 +10105,7 @@ define('cc/util/validator', [
             }
             var extend = function () {
                 if (failedRule) {
+                    result.rule = failedRule;
                     result.error = rule.errors[failedRule];
                 }
                 if ($.isFunction(rule.after)) {
