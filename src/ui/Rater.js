@@ -131,41 +131,41 @@ define(function (require, exports, module) {
         };
 
         mainElement
-        .on('mouseenter' + namespace, itemSelector, function (e) {
+            .on('mouseenter' + namespace, itemSelector, function (e) {
 
-            activeItemElement = $(this);
+                activeItemElement = $(this);
 
-            if (supportHalf) {
-                activeItemElement.on(
-                    'mousemove' + namespace,
-                    debounce(moveHandler, 50)
+                if (supportHalf) {
+                    activeItemElement.on(
+                        'mousemove' + namespace,
+                        debounce(moveHandler, 50)
+                    );
+                }
+
+                me.preview(
+                    getValueByItem(e, activeItemElement)
                 );
-            }
 
-            me.preview(
-                getValueByItem(e, activeItemElement)
-            );
+            })
+            .on('mouseleave' + namespace, itemSelector, function (e) {
 
-        })
-        .on('mouseleave' + namespace, itemSelector, function (e) {
+                if (supportHalf) {
+                    activeItemElement.off(namespace);
+                }
 
-            if (supportHalf) {
-                activeItemElement.off(namespace);
-            }
+                activeItemElement = null;
 
-            activeItemElement = null;
+                me.preview();
 
-            me.preview();
+            })
+            .on('click' + namespace, itemSelector, function (e) {
 
-        })
-        .on('click' + namespace, itemSelector, function (e) {
+                me.set(
+                    'value',
+                    getValueByItem(e, activeItemElement || $(this))
+                );
 
-            me.set(
-                'value',
-                getValueByItem(e, activeItemElement || $(this))
-            );
-
-        });
+            });
 
     };
 
@@ -265,6 +265,14 @@ define(function (require, exports, module) {
                 this.error('count must be a number.');
             }
             return count;
+        },
+
+        value: function (value) {
+            return restrain(
+                toNumber(value, 0),
+                this.get('minValue'),
+                this.get('maxValue')
+            );
         },
 
         minValue: function (minValue) {

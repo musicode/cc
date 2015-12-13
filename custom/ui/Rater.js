@@ -14,7 +14,7 @@ define(function (require, exports, module) {
         itemSelector: 'i',
         valueAttribute: 'data-value',
 
-        mainTemplate: '<!-- for: ${list} as ${item} -->'
+        renderTemplate: '<!-- for: ${list} as ${item} -->'
                     +     '<i class="icon-star'
                     +         '<!-- if: ${item.class} -->'
                     +             ' ${item.class}'

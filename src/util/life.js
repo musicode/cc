@@ -424,39 +424,39 @@ if (event.type !== 'dispatch') {
 
             var me = this;
 
+            /**
+             * mainTemplate 会在 initStruct() 中用于改写主元素
+             * 它可以用来设置组件结构，但最好不要用于局部刷新，因为异步更新的关系，会短暂的出现原始模板
+             *
+             * renderTemplate 用于设置局部刷新的模板
+             * renderSelector 是一个可选项，如果布局刷新的是主元素，那么 renderSelector 可省略
+             *
+             */
+
             if (!template) {
-                template = me.option('mainTemplate');
-            }
-            if (!element) {
-                element = me.option('mainElement');
-            }
-
-            var renderSelector = me.option('renderSelector');
-            var renderTemplate = me.option('renderTemplate');
-
-            var renderElement;
-
-            if (!renderSelector || !renderTemplate) {
-                if (me.option('replace')) {
-                    me.error('replace must be false if not configure renderSelector and renderTemplate.');
+                template = me.option('renderTemplate');
+                if (!template) {
+                    template = me.option('mainTemplate');
                 }
-                renderElement = element;
-                renderTemplate = template;
             }
-            else {
-                renderElement = element.find(renderSelector);
+
+            if (!element) {
+                var renderSelector = me.option('renderSelector');
+                element = renderSelector
+                        ? element.find(renderSelector)
+                        : me.option('mainElement');
             }
 
             var html;
 
             if ($.isPlainObject(data) || $.isArray(data)) {
-                html = me.execute('render', [ data, renderTemplate ]);
+                html = me.execute('render', [ data, template ]);
             }
             else if ($.type(data) === 'string') {
                 html = data;
             }
 
-            renderElement.html(html);
+            element.html(html);
 
         },
 
