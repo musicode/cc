@@ -66,8 +66,8 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {jQuery} options.mainElement
-     * @property {string} options.value 选中的节点，值是节点 id
-     * @property {Object} options.data 节点数据
+     * @property {(string|number)=} options.value 选中的节点，值表示的是节点 id
+     * @property {Object|Array.<Object>} options.data 树形数据
      *
      * @property {string} options.nodeSelector 节点选择器，如果以每个节点都是一棵子树来看，叫做 treeSelector 似乎也可以
      *
@@ -78,9 +78,9 @@ define(function (require, exports, module) {
      * @property {string} options.nodeExpandedClass 节点展开状态时添加的 className
      * @property {string} options.nodeCollapsedClass 节点收起状态时添加的 className
      *
-     * @property {string} options.idAttribute
-     *
      * @property {string} options.nodeTemplate 节点模板
+     *
+     * @property {string} options.idAttribute
      * @property {Function} options.render 渲染模板
      * @property {Function} options.load 加载子节点数据
      */
@@ -114,11 +114,8 @@ define(function (require, exports, module) {
         }
 
         var toggleSelector = me.option('toggleSelector');
-        var nodeSelector = me.option('nodeSelector');
         if (toggleSelector) {
-
             var nodeExpandedClass = me.option('nodeExpandedClass');
-
             mainElement.on(clickType, toggleSelector, function () {
                 var nodeElement = findNodeElement(me, $(this));
                 if (nodeElement) {
@@ -532,8 +529,6 @@ define(function (require, exports, module) {
     function findNodeElement(instance, id) {
 
         var mainElement = instance.inner('main');
-
-        var nodeSelector = instance.option('nodeSelector');
         var nodeElement;
 
         if (id.jquery) {
@@ -560,7 +555,9 @@ define(function (require, exports, module) {
         }
 
         if (nodeElement && nodeElement.length === 1) {
-            nodeElement = nodeElement.closest(nodeSelector);
+            nodeElement = nodeElement.closest(
+                instance.option('nodeSelector')
+            );
             if (nodeElement.length === 1) {
                 return nodeElement;
             }
