@@ -536,12 +536,12 @@ define('cc/form/DateRange', [
             }
         });
         instance.once('aftersync', function () {
-            calendar.set('value', instance.get(propName));
             calendar.option('watchSync', {
                 value: function (value) {
                     instance.set(propName, value);
                 }
             });
+            calendar.set('value', instance.get(propName));
         });
         return calendar;
     }
@@ -3186,11 +3186,15 @@ define('cc/helper/Iterator', [
     'require',
     'exports',
     'module',
+    '../function/plus',
+    '../function/minus',
     '../function/toNumber',
     '../util/Timer',
     '../util/life'
 ], function (require, exports, module) {
     'use strict';
+    var plus = require('../function/plus');
+    var minus = require('../function/minus');
     var toNumber = require('../function/toNumber');
     var Timer = require('../util/Timer');
     var lifeUtil = require('../util/life');
@@ -3225,9 +3229,8 @@ define('cc/helper/Iterator', [
         me.inner('timer', timer);
     };
     proto.pause = function () {
-        var me = this;
-        me.inner('timer').dispose();
-        me.inner('timer', null);
+        this.inner('timer').dispose();
+        this.inner('timer', null);
     };
     proto._pause = function () {
         if (!this.inner('timer')) {
@@ -3241,7 +3244,7 @@ define('cc/helper/Iterator', [
     };
     proto.prev = function () {
         var me = this;
-        var index = me.get('index') - me.option('step');
+        var index = minus(me.get('index'), me.option('step'));
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
         if (!$.isNumeric(index) || (index < minIndex || index > maxIndex)) {
@@ -3251,13 +3254,13 @@ define('cc/helper/Iterator', [
     };
     proto._prev = function () {
         var me = this;
-        if (!me.option('loop') && me.get('index') - me.option('step') < me.get('minIndex')) {
+        if (!me.option('loop') && minus(me.get('index'), me.option('step')) < me.get('minIndex')) {
             return false;
         }
     };
     proto.next = function () {
         var me = this;
-        var index = me.get('index') + me.option('step');
+        var index = plus(me.get('index'), me.option('step'));
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
         if (!$.isNumeric(index) || (index > maxIndex || index < minIndex)) {
@@ -3267,7 +3270,7 @@ define('cc/helper/Iterator', [
     };
     proto._next = function () {
         var me = this;
-        if (!me.option('loop') && me.get('index') + me.option('step') > me.get('maxIndex')) {
+        if (!me.option('loop') && plus(me.get('index'), me.option('step')) > me.get('maxIndex')) {
             return false;
         }
     };
@@ -5585,16 +5588,16 @@ define('cc/ui/Pager', [
                 return;
             }
             var html = '';
+            var data = {
+                first: FIRST_PAGE,
+                last: count,
+                active: page
+            };
             var append = function () {
                 html += me.execute('render', [
                     data,
                     tpl
                 ]);
-            };
-            var data = {
-                first: FIRST_PAGE,
-                last: count,
-                active: page
             };
             var range = item.range;
             if (range) {
@@ -5756,9 +5759,9 @@ define('cc/ui/Rater', [
             var className = classMap[value];
             value = index + 1;
             list.push({
-                'value': value,
-                'class': className || '',
-                'hint': hintMap[value] || ''
+                value: value,
+                className: className || '',
+                hint: hintMap[value] || ''
             });
         });
         me.renderWith({ list: list });
@@ -5799,11 +5802,17 @@ define('cc/ui/Rater', [
             }
             return count;
         },
+        value: function (value) {
+            return restrain(toNumber(value, 0), this.get('minValue'), this.get('maxValue'));
+        },
         minValue: function (minValue) {
-            return toNumber(minValue, 0);
+            minValue = toNumber(minValue, -1);
+            return minValue < 0 ? 0 : minValue;
         },
         maxValue: function (maxValue) {
-            return toNumber(maxValue, this.option('count'));
+            var count = this.option('count');
+            maxValue = toNumber(maxValue, count + 1);
+            return maxValue > count ? count : maxValue;
         }
     };
     function refresh(instance, value) {
@@ -5878,13 +5887,16 @@ define('cc/ui/ScrollBar', [
             },
             watchSync: {
                 value: function (value) {
-                    var pixel = slider.valueToPixel(value);
+                    var pixel = this.valueToPixel(value);
                     panelElement.prop(props.scrollPosition, pixel * me.inner('ratio'));
                     me.set('value', value);
-                    me.emit('scroll');
                 }
             }
         });
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+        slider.on('beforedrag', dispatchEvent).on('drag', dispatchEvent).on('afterdrag', dispatchEvent);
         me.inner({
             main: slider.inner('main'),
             slider: slider
@@ -6087,6 +6099,10 @@ define('cc/ui/Slider', [
             drager: drager,
             wheels: wheels
         });
+        me.set({
+            minValue: me.option('minValue'),
+            maxValue: me.option('maxValue')
+        });
         me.refresh();
         var value = me.option('value');
         if ($.type(value) === 'number') {
@@ -6104,8 +6120,8 @@ define('cc/ui/Slider', [
         var maxPixel = trackElement[props.innerSize]() - thumbSize;
         var pixelToValue;
         var valueToPixel;
-        var minValue = me.option('minValue');
-        var maxValue = me.option('maxValue');
+        var minValue = me.get('minValue');
+        var maxValue = me.get('maxValue');
         var step = me.option('step');
         if ($.type(step) === 'number') {
             var stepPixel = divide(maxPixel, divide(minus(maxValue, minValue), step));
@@ -6185,8 +6201,8 @@ define('cc/ui/Slider', [
     };
     Slider.propertyValidator = {
         value: function (value) {
-            var minValue = this.option('minValue');
-            var maxValue = this.option('maxValue');
+            var minValue = this.get('minValue');
+            var maxValue = this.get('maxValue');
             return restrain(toNumber(value, minValue), minValue, maxValue);
         },
         minValue: function (minValue) {
@@ -6232,10 +6248,6 @@ define('cc/ui/SpinBox', [
     proto.init = function () {
         var me = this;
         me.initStruct();
-        var step = toNumber(me.option('step'), null);
-        if (step == null) {
-            me.error('step must be a number.');
-        }
         var mainElement = me.option('mainElement');
         var inputElement = mainElement.find(me.option('inputSelector'));
         var iterator = new Iterator({
@@ -6244,7 +6256,7 @@ define('cc/ui/SpinBox', [
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
             interval: me.option('interval'),
-            step: step,
+            step: me.option('step'),
             prevKey: 'down',
             nextKey: 'up',
             watchSync: {
@@ -6324,7 +6336,7 @@ define('cc/ui/SpinBox', [
             }
             if (!valid) {
                 var defaultValue = me.option('defaultValue');
-                if (defaultValue != null) {
+                if ($.type(defaultValue) === 'number') {
                     value = defaultValue;
                     options.force = true;
                 } else {
@@ -6404,9 +6416,8 @@ define('cc/ui/Tab', [
         });
     };
     proto.dispose = function () {
-        var me = this;
-        lifeUtil.dispose(me);
-        me.inner('switcher').dispose();
+        lifeUtil.dispose(this);
+        this.inner('switcher').dispose();
     };
     lifeUtil.extend(proto);
     Tab.propertyUpdater = {
@@ -6750,14 +6761,13 @@ define('cc/ui/Tree', [
             });
         }
         var toggleSelector = me.option('toggleSelector');
-        var nodeSelector = me.option('nodeSelector');
         if (toggleSelector) {
-            var expandedClass = me.option('expandedClass');
+            var nodeExpandedClass = me.option('nodeExpandedClass');
             mainElement.on(clickType, toggleSelector, function () {
                 var nodeElement = findNodeElement(me, $(this));
                 if (nodeElement) {
                     var id = nodeElement.attr(idAttribute);
-                    if (nodeElement.hasClass(expandedClass)) {
+                    if (nodeElement.hasClass(nodeExpandedClass)) {
                         me.collapse(id);
                     } else {
                         me.expand(id);
@@ -6815,7 +6825,7 @@ define('cc/ui/Tree', [
         var deferred = $.Deferred();
         var target;
         me.walk({
-            enter: function (node, cache) {
+            enter: function (node) {
                 if (node.id == id) {
                     target = node;
                     return false;
@@ -6884,12 +6894,12 @@ define('cc/ui/Tree', [
     proto.expand = function (id) {
         var me = this;
         me.grep(id).expanded = true;
-        findNodeElement(me, id).removeClass(me.option('collapsedClass')).addClass(me.option('expandedClass'));
+        findNodeElement(me, id).removeClass(me.option('nodeCollapsedClass')).addClass(me.option('nodeExpandedClass'));
     };
     proto.collapse = function (id) {
         var me = this;
         me.grep(id).expanded = false;
-        findNodeElement(me, id).removeClass(me.option('expandedClass')).addClass(me.option('collapsedClass'));
+        findNodeElement(me, id).removeClass(me.option('nodeExpandedClass')).addClass(me.option('nodeCollapsedClass'));
     };
     proto._select = proto._expand = proto._collapse = function (id) {
         var me = this;
@@ -6902,9 +6912,8 @@ define('cc/ui/Tree', [
     };
     proto._render = function (id) {
         if (id != null) {
-            var me = this;
-            var nodeData = me.grep(id);
-            if (nodeData && findNodeElement(me, id)) {
+            var nodeData = this.grep(id);
+            if (nodeData && findNodeElement(this, id)) {
                 return { node: nodeData };
             } else {
                 return false;
@@ -6931,8 +6940,8 @@ define('cc/ui/Tree', [
         },
         value: function (newValue, oldValue) {
             var me = this;
-            var activeClass = me.option('activeClass');
-            if (!activeClass) {
+            var nodeActiveClass = me.option('nodeActiveClass');
+            if (!nodeActiveClass) {
                 return;
             }
             var nodeData;
@@ -6942,7 +6951,7 @@ define('cc/ui/Tree', [
                 nodeElement = findNodeElement(me, oldValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = false;
-                    nodeElement.removeClass(activeClass);
+                    nodeElement.removeClass(nodeActiveClass);
                 }
             }
             if (newValue) {
@@ -6950,7 +6959,7 @@ define('cc/ui/Tree', [
                 nodeElement = findNodeElement(me, newValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = true;
-                    nodeElement.addClass(activeClass);
+                    nodeElement.addClass(nodeActiveClass);
                 }
             }
         }
@@ -6965,7 +6974,6 @@ define('cc/ui/Tree', [
     };
     function findNodeElement(instance, id) {
         var mainElement = instance.inner('main');
-        var nodeSelector = instance.option('nodeSelector');
         var nodeElement;
         if (id.jquery) {
             nodeElement = id;
@@ -6985,7 +6993,7 @@ define('cc/ui/Tree', [
             }
         }
         if (nodeElement && nodeElement.length === 1) {
-            nodeElement = nodeElement.closest(nodeSelector);
+            nodeElement = nodeElement.closest(instance.option('nodeSelector'));
             if (nodeElement.length === 1) {
                 return nodeElement;
             }
@@ -8656,8 +8664,7 @@ define('cc/util/life', [
     '../function/toBoolean',
     '../function/createEvent',
     '../function/replaceWith',
-    '../function/offsetParent',
-    './instance'
+    '../function/offsetParent'
 ], function (require, exports, module) {
     'use strict';
     var guid = require('../function/guid');
@@ -8669,7 +8676,6 @@ define('cc/util/life', [
     var createEvent = require('../function/createEvent');
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
-    var body = require('./instance').body;
     var instances = {};
     var UPDATE_ASYNC = '__update_async__';
     function createSettter(singular, complex, setter, getter, validate) {
@@ -8733,6 +8739,9 @@ define('cc/util/life', [
         };
     }
     var elementSharePool = {};
+    function initStructError() {
+        this.error('initStruct() can just call one time.');
+    }
     var methods = {
         initStruct: function () {
             var me = this;
@@ -8766,9 +8775,7 @@ define('cc/util/life', [
             if (parentSelector && !mainElement.parent().is(parentSelector)) {
                 mainElement.appendTo(parentSelector);
             }
-            me.initStruct = function () {
-                me.error('initStruct() can just call one time.');
-            };
+            me.initStruct = initStructError;
         },
         warn: function (msg) {
             if (typeof console !== 'undefined') {
@@ -8891,33 +8898,26 @@ define('cc/util/life', [
         renderWith: function (data, template, element) {
             var me = this;
             if (!template) {
-                template = me.option('mainTemplate');
+                template = me.option('renderTemplate');
+                if (!template) {
+                    template = me.option('mainTemplate');
+                }
             }
             if (!element) {
-                element = me.option('mainElement');
-            }
-            var renderSelector = me.option('renderSelector');
-            var renderTemplate = me.option('renderTemplate');
-            var renderElement;
-            if (!renderSelector || !renderTemplate) {
-                if (me.option('replace')) {
-                    me.error('replace must be false if not configure renderSelector and renderTemplate.');
-                }
-                renderElement = element;
-                renderTemplate = template;
-            } else {
-                renderElement = element.find(renderSelector);
+                var mainElement = me.option('mainElement');
+                var renderSelector = me.option('renderSelector');
+                element = renderSelector ? mainElement.find(renderSelector) : mainElement;
             }
             var html;
             if ($.isPlainObject(data) || $.isArray(data)) {
                 html = me.execute('render', [
                     data,
-                    renderTemplate
+                    template
                 ]);
             } else if ($.type(data) === 'string') {
                 html = data;
             }
-            renderElement.html(html);
+            element.html(html);
         },
         namespace: function () {
             return '.' + this.guid;
@@ -8999,6 +8999,16 @@ define('cc/util/life', [
         },
         _sync: function () {
             if (!this.inner(UPDATE_ASYNC)) {
+                return false;
+            }
+        },
+        _init: function () {
+            if (this.is('inited')) {
+                return false;
+            }
+        },
+        _dispose: function () {
+            if (this.is('disposed')) {
                 return false;
             }
         }
