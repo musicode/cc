@@ -298,7 +298,6 @@ define(function (require, exports, module) {
         });
         instance.once('aftersync', function () {
 
-            calendar.set('value', instance.get(propName));
             calendar.option(
                 'watchSync',
                 {
@@ -307,6 +306,7 @@ define(function (require, exports, module) {
                     }
                 }
             );
+            calendar.set('value', instance.get(propName));
 
         });
         return calendar;
