@@ -19,8 +19,8 @@ define(function (require, exports, module) {
             return new Date(text);
         },
 
-        inputSelector: 'input[type="text"]',
-        layerSelector: '.dropdown-menu',
+        inputSelector: ':text',
+        layerSelector: '> .menu',
         startCalendarSelector: '.calendar-start',
         endCalendarSelector: '.calendar-end',
 
@@ -30,8 +30,8 @@ define(function (require, exports, module) {
         prevSelector: '.fa-chevron-left',
         nextSelector: '.fa-chevron-right',
 
-        applySelector: '.footer > .btn-primary',
-        cancelSelector: '.footer > .btn-default',
+        applySelector: '.footer > .buttons > .primary',
+        cancelSelector: '.footer > .buttons > .link',
 
         showLayerTrigger: 'focus',
         hideLayerTrigger: 'blur,click',
@@ -42,12 +42,12 @@ define(function (require, exports, module) {
             options.layerElement.hide();
         },
 
-        calendarTemplate: '<div class="calendar-heading">'
+        calendarTemplate: '<div class="header">'
                         +     '<i class="fa fa-chevron-left"></i>'
                         +     '<strong>${year}年${month}月</strong>'
                         +     '<i class="fa fa-chevron-right"></i>'
                         + '</div>'
-                        + '<table class="calendar-body">'
+                        + '<table class="body">'
                         +     '<thead>'
                         +          '<tr>'
                         +              '<th>一</th>'
