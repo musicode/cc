@@ -16,8 +16,6 @@ define(function (require, exports, module) {
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
 
-    var body = require('./instance').body;
-
     var instances = { };
 
     var UPDATE_ASYNC = '__update_async__';
@@ -133,6 +131,10 @@ define(function (require, exports, module) {
 
     };
 
+    function initStructError() {
+        this.error('initStruct() can just call one time.');
+    }
+
     var methods = {
 
         /**
@@ -185,10 +187,7 @@ define(function (require, exports, module) {
                 mainElement.appendTo(parentSelector);
             }
 
-            // 只能执行一次
-            me.initStruct = function () {
-                me.error('initStruct() can just call one time.');
-            };
+            me.initStruct = initStructError;
 
         },
 
@@ -441,10 +440,11 @@ if (event.type !== 'dispatch') {
             }
 
             if (!element) {
+                var mainElement = me.option('mainElement');
                 var renderSelector = me.option('renderSelector');
                 element = renderSelector
-                        ? element.find(renderSelector)
-                        : me.option('mainElement');
+                        ? mainElement.find(renderSelector)
+                        : mainElement;
             }
 
             var html;
@@ -628,6 +628,18 @@ if (event.type !== 'dispatch') {
 
         _sync: function () {
             if (!this.inner(UPDATE_ASYNC)) {
+                return false;
+            }
+        },
+
+        _init: function () {
+            if (this.is('inited')) {
+                return false;
+            }
+        },
+
+        _dispose: function () {
+            if (this.is('disposed')) {
                 return false;
             }
         }

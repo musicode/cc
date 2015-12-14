@@ -213,17 +213,17 @@ define(function (require, exports, module) {
 
                 var html = '';
 
+                var data = {
+                    first: FIRST_PAGE,
+                    last: count,
+                    active: page
+                };
+
                 var append = function () {
                     html += me.execute(
                         'render',
                         [ data, tpl ]
                     );
-                };
-
-                var data = {
-                    first: FIRST_PAGE,
-                    last: count,
-                    active: page
                 };
 
                 var range = item.range;

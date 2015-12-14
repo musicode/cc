@@ -23,7 +23,7 @@ define(function (require) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {string} options.mainTemplate 因为要动态刷新，所以必须要传模板
+     * @property {string} options.renderTemplate 因为要动态刷新，所以必须要传模板
      *
      * @property {string=} options.value 选中的值，多选时以 `,` 分隔
      *

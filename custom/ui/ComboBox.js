@@ -7,7 +7,6 @@ define(function (require, exports, module) {
     ComboBox.defaultOptions = {
 
         itemSelector: '.item',
-        itemActiveClass: 'active',
 
         textAttribute: 'data-text',
         valueAttribute: 'data-value',

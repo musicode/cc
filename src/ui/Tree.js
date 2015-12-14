@@ -74,9 +74,9 @@ define(function (require, exports, module) {
      * @property {string} options.labelSelector 节点文本的选择器
      * @property {string} options.toggleSelector 节点展开收起开关选择器
      *
-     * @property {string} options.activeClass 节点选中状态时添加的 className
-     * @property {string} options.expandedClass 节点展开状态时添加的 className
-     * @property {string} options.collapsedClass 节点收起状态时添加的 className
+     * @property {string} options.nodeActiveClass 节点选中状态时添加的 className
+     * @property {string} options.nodeExpandedClass 节点展开状态时添加的 className
+     * @property {string} options.nodeCollapsedClass 节点收起状态时添加的 className
      *
      * @property {string} options.idAttribute
      *
@@ -117,13 +117,13 @@ define(function (require, exports, module) {
         var nodeSelector = me.option('nodeSelector');
         if (toggleSelector) {
 
-            var expandedClass = me.option('expandedClass');
+            var nodeExpandedClass = me.option('nodeExpandedClass');
 
             mainElement.on(clickType, toggleSelector, function () {
                 var nodeElement = findNodeElement(me, $(this));
                 if (nodeElement) {
                     var id = nodeElement.attr(idAttribute);
-                    if (nodeElement.hasClass(expandedClass)) {
+                    if (nodeElement.hasClass(nodeExpandedClass)) {
                         me.collapse(id);
                     }
                     else {
@@ -228,7 +228,7 @@ define(function (require, exports, module) {
         var target;
 
         me.walk({
-            enter: function (node, cache) {
+            enter: function (node) {
                 if (node.id == id) {
                     target = node;
                     return false;
@@ -242,14 +242,12 @@ define(function (require, exports, module) {
                 [
                     target,
                     function (error, data) {
-
                         if (error) {
                             deferred.reject(error);
                         }
                         else {
                             deferred.resolve(data);
                         }
-
                     }
                 ]
             );
@@ -377,10 +375,10 @@ define(function (require, exports, module) {
 
         findNodeElement(me, id)
             .removeClass(
-                me.option('collapsedClass')
+                me.option('nodeCollapsedClass')
             )
             .addClass(
-                me.option('expandedClass')
+                me.option('nodeExpandedClass')
             );
 
     };
@@ -398,10 +396,10 @@ define(function (require, exports, module) {
 
         findNodeElement(me, id)
             .removeClass(
-                me.option('expandedClass')
+                me.option('nodeExpandedClass')
             )
             .addClass(
-                me.option('collapsedClass')
+                me.option('nodeCollapsedClass')
             );
 
     };
@@ -426,11 +424,8 @@ define(function (require, exports, module) {
 
     proto._render = function (id) {
         if (id != null) {
-
-            var me = this;
-
-            var nodeData = me.grep(id);
-            if (nodeData && findNodeElement(me, id)) {
+            var nodeData = this.grep(id);
+            if (nodeData && findNodeElement(this, id)) {
                 return {
                     node: nodeData
                 };
@@ -483,8 +478,8 @@ define(function (require, exports, module) {
 
             var me = this;
 
-            var activeClass = me.option('activeClass');
-            if (!activeClass) {
+            var nodeActiveClass = me.option('nodeActiveClass');
+            if (!nodeActiveClass) {
                 return;
             }
 
@@ -496,7 +491,7 @@ define(function (require, exports, module) {
                 nodeElement = findNodeElement(me, oldValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = false;
-                    nodeElement.removeClass(activeClass);
+                    nodeElement.removeClass(nodeActiveClass);
                 }
             }
 
@@ -505,7 +500,7 @@ define(function (require, exports, module) {
                 nodeElement = findNodeElement(me, newValue);
                 if (nodeData && nodeElement) {
                     nodeData.active = true;
-                    nodeElement.addClass(activeClass);
+                    nodeElement.addClass(nodeActiveClass);
                 }
             }
 

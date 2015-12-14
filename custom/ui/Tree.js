@@ -11,9 +11,9 @@ define(function (require, exports, module) {
         labelSelector: '.tree-node > label',
         toggleSelector: '.tree-node > .fa',
 
-        activeClass: 'active',
-        expandedClass: 'expanded',
-        collapsedClass: 'collapsed',
+        nodeActiveClass: 'active',
+        nodeExpandedClass: 'expanded',
+        nodeCollapsedClass: 'collapsed',
 
         nodeSelector: '.tree',
         idAttribute: 'data-id',

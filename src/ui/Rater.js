@@ -19,7 +19,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {jQuery} options.mainTemplate 主元素模板，render 时会用到
+     * @property {jQuery} options.renderTemplate 局部刷新模板，render 时会用到
      *
      *
      * @property {number} options.value 当前星级
@@ -191,9 +191,9 @@ define(function (require, exports, module) {
                 value = index + 1;
 
                 list.push({
-                    'value': value,
-                    'class': className || '',
-                    'hint': hintMap[ value ] || ''
+                    value: value,
+                    className: className || '',
+                    hint: hintMap[ value ] || ''
                 });
 
             }
@@ -276,14 +276,14 @@ define(function (require, exports, module) {
         },
 
         minValue: function (minValue) {
-            return toNumber(minValue, 0);
+            minValue = toNumber(minValue, -1);
+            return minValue < 0 ? 0 : minValue;
         },
 
         maxValue: function (maxValue) {
-            return toNumber(
-                maxValue,
-                this.option('count')
-            );
+            var count = this.option('count');
+            maxValue = toNumber(maxValue, count + 1);
+            return maxValue > count ? count : maxValue;
         }
 
     };

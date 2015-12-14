@@ -38,19 +38,21 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement 滚动条主元素
      * @property {jQuery} options.panelElement 滚动面板元素
      *
-     * @property {number=} options.value 面板当前滚动的位置，不传则自动计算元素当前位置
+     * @property {number=} options.value 当前滚动位置，可选区间为 0 - 100，不传则自动计算元素当前位置
      *
-     * @property {string=} options.orientation 滚动方向，可选值有 horizontal vertical
+     * @property {string} options.orientation 滚动方向，可选值有 horizontal、vertical
      * @property {(number|Function)=} options.scrollStep 滚动的单位像素
+     * @property {string=} options.scrollStepType 滚轮事件触发的步进类型，可选值是 value、pixel，不传是 pixel
+     *
      * @property {number=} options.minWidth 滚动条的最小宽度，当 orientation 为 horizontal 时生效
      * @property {number=} options.minHeight 滚动条的最小高度，当 orientation 为 vertical 时生效
      *
-     * @property {string=} options.thumbSelector 滑块选择器
+     * @property {string} options.thumbSelector 滑块选择器
      * @property {string=} options.draggingClass 拖拽滑块时给 mainElement 添加的 className
      *
-     * @property {Function=} options.showAnimation
-     * @property {Function=} options.hideAnimation
-     * @property {Function=} options.scrollAnimation
+     * @property {Function} options.showAnimation
+     * @property {Function} options.hideAnimation
+     * @property {Function} options.scrollAnimation
      */
     function ScrollBar(options) {
         lifeUtil.init(this, options);
@@ -90,7 +92,7 @@ define(function (require, exports, module) {
             watchSync: {
                 value: function (value) {
 
-                    var pixel = slider.valueToPixel(value);
+                    var pixel = this.valueToPixel(value);
 
                     panelElement.prop(
                         props.scrollPosition,
@@ -99,11 +101,18 @@ define(function (require, exports, module) {
 
                     me.set('value', value);
 
-                    me.emit('scroll');
-
                 }
             }
         });
+
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+
+        slider
+            .on('beforedrag', dispatchEvent)
+            .on('drag', dispatchEvent)
+            .on('afterdrag', dispatchEvent);
 
         me.inner({
             main: slider.inner('main'),
@@ -212,7 +221,9 @@ define(function (require, exports, module) {
 
         hidden: function (hidden) {
             if ($.type(hidden) !== 'boolean') {
-                hidden = isHidden(this.inner('main'));
+                hidden = isHidden(
+                    this.inner('main')
+                );
             }
             return hidden;
         }

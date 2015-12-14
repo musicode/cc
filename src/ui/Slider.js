@@ -30,17 +30,17 @@ define(function (require, exports, module) {
      *
      * @property {jQuery} options.mainElement
      *
-     * @property {number=} options.value
-     * @property {number} options.minValue 开始位置对应的 value
-     * @property {number} options.maxValue 结束位置对应的 value
-     * @property {number=} options.step 步进值
+     * @property {number=} options.value 当前值，不传取 minValue
+     * @property {number} options.minValue value 的最小值，也可以说是开始位置对应的 value
+     * @property {number} options.maxValue value 的最大值，也可以说是结束位置对应的 value
+     * @property {number=} options.step value 步进值，不传则通过计算确定 step
      * @property {Function} options.slideAnimation 滑动动画
      *
      * @property {(number|Function)=} options.scrollStep 如果需要支持鼠标滚轮，可配置此参数
-     * @property {boolean} options.scrollStepType 滚动步进类型，可选值是 value pixel
+     * @property {string=} options.scrollStepType 滚轮事件触发的步进类型，可选值是 value、pixel，不传是 pixel
      *
-     * @property {string} options.orientation 方向，可选值有 horizontal vertical
-     * @property {boolean=} options.reverse 是否反向，默认是从左到右、从上到下，如果反向，则是从右到左、从下到上
+     * @property {string} options.orientation 滑动方向，可选值有 horizontal、vertical
+     * @property {boolean=} options.reverse 是否反向滑动，默认是从左到右、从上到下，如果反向，则是从右到左、从下到上
      *
      * @property {string} options.thumbSelector 滑块选择器
      * @property {string=} options.trackSelector 滑道选择器，不传表示 mainElement 是滑道
@@ -242,6 +242,10 @@ define(function (require, exports, module) {
             wheels: wheels
         });
 
+        me.set({
+            minValue: me.option('minValue'),
+            maxValue: me.option('maxValue')
+        });
 
 
         me.refresh();
@@ -297,8 +301,8 @@ define(function (require, exports, module) {
         var pixelToValue;
         var valueToPixel;
 
-        var minValue = me.option('minValue');
-        var maxValue = me.option('maxValue');
+        var minValue = me.get('minValue');
+        var maxValue = me.get('maxValue');
         var step = me.option('step');
 
         if ($.type(step) === 'number') {
@@ -454,8 +458,8 @@ define(function (require, exports, module) {
     Slider.propertyValidator = {
 
         value: function (value) {
-            var minValue = this.option('minValue');
-            var maxValue = this.option('maxValue');
+            var minValue = this.get('minValue');
+            var maxValue = this.get('maxValue');
             return restrain(
                 toNumber(value, minValue),
                 minValue,

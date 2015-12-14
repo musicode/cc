@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var plus = require('../function/plus');
+    var minus = require('../function/minus');
     var toNumber = require('../function/toNumber');
     var Timer = require('../util/Timer');
     var lifeUtil = require('../util/life');
@@ -77,12 +79,8 @@ define(function (require, exports, module) {
      * 停止自动遍历
      */
     proto.pause = function () {
-
-        var me = this;
-
-        me.inner('timer').dispose();
-        me.inner('timer', null);
-
+        this.inner('timer').dispose();
+        this.inner('timer', null);
     };
 
     proto._pause = function () {
@@ -115,7 +113,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.get('index') - me.option('step');
+        var index = minus(me.get('index'), me.option('step'));
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
@@ -137,7 +135,7 @@ define(function (require, exports, module) {
         var me = this;
 
         if (!me.option('loop')
-            && me.get('index') - me.option('step') < me.get('minIndex')
+            && minus(me.get('index'), me.option('step')) < me.get('minIndex')
         ) {
             return false;
         }
@@ -151,7 +149,7 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var index = me.get('index') + me.option('step');
+        var index = plus(me.get('index'), me.option('step'));
         var minIndex = me.get('minIndex');
         var maxIndex = me.get('maxIndex');
 
@@ -173,7 +171,7 @@ define(function (require, exports, module) {
         var me = this;
 
         if (!me.option('loop')
-            && me.get('index') + me.option('step') > me.get('maxIndex')
+            && plus(me.get('index'), me.option('step')) > me.get('maxIndex')
         ) {
             return false;
         }

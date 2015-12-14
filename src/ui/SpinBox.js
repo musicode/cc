@@ -16,18 +16,18 @@ define(function (require, exports, module) {
     var document = require('../util/instance').document;
 
     /**
-     * @constructor
+     *
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {number=} options.value
-     * @property {number} options.minValue
-     * @property {number} options.maxValue
+     * @property {number=} options.value 当前值
+     * @property {number} options.minValue value 的最小值
+     * @property {number} options.maxValue value 的最大值
      * @property {number=} options.defaultValue 默认值，当输入的值非法时，可用默认值替换错误值，如果不想替换，则不传
-     * @property {number} options.step
-     * @property {number} options.interval
-     * @property {string=} options.inputSelector 输入框选择器
-     * @property {string=} options.upSelector 向上按钮选择器
-     * @property {string=} options.downSelector 向下按钮选择器
+     * @property {number} options.step 步进值，按上下键或点击上下按钮可触发步进
+     * @property {number} options.interval 自动步进的时间间隔，单位是毫秒
+     * @property {string} options.inputSelector 输入框选择器
+     * @property {string} options.upSelector 向上按钮选择器
+     * @property {string} options.downSelector 向下按钮选择器
      */
     function SpinBox(options) {
         lifeUtil.init(this, options);
@@ -43,11 +43,6 @@ define(function (require, exports, module) {
 
         me.initStruct();
 
-        var step = toNumber(me.option('step'), null);
-        if (step == null) {
-            me.error('step must be a number.');
-        }
-
         var mainElement = me.option('mainElement');
         var inputElement = mainElement.find(
             me.option('inputSelector')
@@ -59,7 +54,7 @@ define(function (require, exports, module) {
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
             interval: me.option('interval'),
-            step: step,
+            step: me.option('step'),
             prevKey: 'down',
             nextKey: 'up',
             watchSync: {
@@ -164,7 +159,7 @@ define(function (require, exports, module) {
 
             if (!valid) {
                 var defaultValue = me.option('defaultValue');
-                if (defaultValue != null) {
+                if ($.type(defaultValue) === 'number') {
                     value = defaultValue;
                     options.force = true;
                 }

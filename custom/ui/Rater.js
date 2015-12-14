@@ -15,16 +15,16 @@ define(function (require, exports, module) {
         valueAttribute: 'data-value',
 
         renderTemplate: '<!-- for: ${list} as ${item} -->'
-                    +     '<i class="icon-star'
-                    +         '<!-- if: ${item.class} -->'
-                    +             ' ${item.class}'
-                    +         '<!-- /if -->"'
-                    +         ' data-value="${item.value}"'
-                    +         '<!-- if: ${item.hint} -->'
-                    +             ' data-title="${item.hint}"'
-                    +         '<!-- /if -->'
-                    +     '></i>'
-                    + '<!-- /for -->',
+                      +     '<i class="icon-star'
+                      +         '<!-- if: ${item.className} -->'
+                      +             ' ${item.className}'
+                      +         '<!-- /if -->'
+                      +         '" data-value="${item.value}"'
+                      +         '<!-- if: ${item.hint} -->'
+                      +             ' data-title="${item.hint}"'
+                      +         '<!-- /if -->'
+                      +     '></i>'
+                      + '<!-- /for -->',
 
         render: function (data, tpl) {
 
