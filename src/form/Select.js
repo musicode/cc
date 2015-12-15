@@ -120,7 +120,7 @@ define(function (require, exports, module) {
         });
 
 
-        var nativeElement = common.findNative(me, '> input[type="hidden"]');
+        var nativeElement = common.findNative(me, 'input[type="hidden"]');
 
         combobox
         .on('dispatch', function (e, data) {

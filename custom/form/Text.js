@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
     Text.defaultOptions = {
         nativeFirst: true,
-        inputSelector: 'input[type="text"]',
+        inputSelector: 'input[type="text"],textarea',
         labelSelector: '.placeholder',
         showAnimation: function (options) {
             options.labelElement.fadeIn(500);

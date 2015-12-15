@@ -26,7 +26,9 @@ define(function (require, exports, module) {
 
         skinAttribute: 'data-skin',
         placementAttribute: 'data-placement',
-        maxWidthAttribute: 'data-width',
+        maxWidthAttribute: 'data-max-width',
+        offsetXAttribute: 'data-offset-x',
+        offsetYAttribute: 'data-offset-y',
 
         topClass: 'top',
         rightClass: 'right',

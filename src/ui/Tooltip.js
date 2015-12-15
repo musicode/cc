@@ -78,6 +78,8 @@ define(function (require, exports, module) {
      * @property {string=} options.skinAttribute 配置皮肤属性，显示 tooltip 之前，会从触发元素上读取该属性，并添加该 className
      * @property {string=} options.placementAttribute 配置方位属性，显示 tooltip 之前，会从触发元素上读取该属性，并添加该 className
      * @property {string=} options.maxWidthAttribute 配置最大宽度属性，显示 tooltip 之前，会从触发元素上读取该属性，并设置 max-width
+     * @property {string=} options.offsetXAttribute 配置水平偏移属性，显示 tooltip 之前，会从触发元素上读取该属性，并设置偏移量
+     * @property {string=} options.offsetYAttribute 配置垂直偏移属性，显示 tooltip 之前，会从触发元素上读取该属性，并设置偏移量
      *
      * @property {Function=} options.update 更新提示浮层的内容
      *
@@ -260,7 +262,9 @@ define(function (require, exports, module) {
                 me.inner({
                     skinClass: null,
                     placement: null,
-                    maxWidth: null
+                    maxWidth: null,
+                    offsetX: null,
+                    offsetY: null
                 });
             };
 
@@ -311,10 +315,23 @@ define(function (require, exports, module) {
                     mainElement.css('max-width', maxWidth);
                 }
 
+                var offsetXAttribute = me.option('offsetXAttribute');
+                var offsetYAttribute = me.option('offsetYAttribute');
+
+                var offsetX = offsetXAttribute
+                            ? triggerElement.attr(offsetXAttribute)
+                            : null;
+
+                var offsetY = offsetYAttribute
+                            ? triggerElement.attr(offsetYAttribute)
+                            : null;
+
                 me.inner({
                     skinClass: skinClass,
                     placement: placement,
-                    maxWidth: maxWidth
+                    maxWidth: maxWidth,
+                    offsetX: offsetX,
+                    offsetY: offsetY
                 });
 
                 me.pin();
@@ -388,8 +405,11 @@ define(function (require, exports, module) {
         }
 
         var offset = placement + 'Offset';
-        options.offsetX += toNumber(me.option(offset + 'X'), 0);
-        options.offsetY += toNumber(me.option(offset + 'Y'), 0);
+        options.offsetX += toNumber(me.option(offset + 'X'), 0)
+                         + toNumber(me.inner('offsetX'), 0);
+        options.offsetY += toNumber(me.option(offset + 'Y'), 0)
+                         + toNumber(me.inner('offsetY'), 0);
+
 
         position[ target.name ](options);
 

@@ -699,7 +699,7 @@ define('cc/form/Select', [
             combobox.set('value', me.get('value'));
             me.state('opened', combobox.is('opened'));
         });
-        var nativeElement = common.findNative(me, '> input[type="hidden"]');
+        var nativeElement = common.findNative(me, 'input[type="hidden"]');
         combobox.on('dispatch', function (e, data) {
             var event = e.originalEvent;
             switch (event.type) {
@@ -6558,7 +6558,9 @@ define('cc/ui/Tooltip', [
                 me.inner({
                     skinClass: null,
                     placement: null,
-                    maxWidth: null
+                    maxWidth: null,
+                    offsetX: null,
+                    offsetY: null
                 });
             };
             if (!placement) {
@@ -6590,10 +6592,16 @@ define('cc/ui/Tooltip', [
                 if (maxWidth) {
                     mainElement.css('max-width', maxWidth);
                 }
+                var offsetXAttribute = me.option('offsetXAttribute');
+                var offsetYAttribute = me.option('offsetYAttribute');
+                var offsetX = offsetXAttribute ? triggerElement.attr(offsetXAttribute) : null;
+                var offsetY = offsetYAttribute ? triggerElement.attr(offsetYAttribute) : null;
                 me.inner({
                     skinClass: skinClass,
                     placement: placement,
-                    maxWidth: maxWidth
+                    maxWidth: maxWidth,
+                    offsetX: offsetX,
+                    offsetY: offsetY
                 });
                 me.pin();
                 window.on('resize' + namespace, debounce(function () {
@@ -6638,8 +6646,8 @@ define('cc/ui/Tooltip', [
             target.gap(options);
         }
         var offset = placement + 'Offset';
-        options.offsetX += toNumber(me.option(offset + 'X'), 0);
-        options.offsetY += toNumber(me.option(offset + 'Y'), 0);
+        options.offsetX += toNumber(me.option(offset + 'X'), 0) + toNumber(me.inner('offsetX'), 0);
+        options.offsetY += toNumber(me.option(offset + 'Y'), 0) + toNumber(me.inner('offsetY'), 0);
         position[target.name](options);
     };
     proto.dispose = function () {
@@ -9071,6 +9079,9 @@ define('cc/util/life', [
         extend(proto, methods);
     };
     exports.init = function (instance, options) {
+        if (!options) {
+            options = {};
+        }
         extend(options, instance.constructor.defaultOptions);
         options.onafterinit_ = function () {
             instance.state('inited', true);

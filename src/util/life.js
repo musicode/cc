@@ -778,6 +778,9 @@ if (event.type !== 'dispatch') {
     exports.init = function (instance, options) {
 
         // options 不要污染 instance，避免 API 的设计自由因 options 字段名受到影响
+        if (!options) {
+            options = { };
+        }
 
         extend(options, instance.constructor.defaultOptions);
 
