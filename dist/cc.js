@@ -4393,7 +4393,7 @@ define('cc/ui/AutoComplete', [
                 },
                 watchSync: {
                     opened: function (opened) {
-                        this.state('opened', opened);
+                        me.state('opened', opened);
                     }
                 }
             });
