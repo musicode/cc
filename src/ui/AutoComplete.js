@@ -230,7 +230,7 @@ define(function (require, exports, module) {
                 },
                 watchSync: {
                     opened: function (opened) {
-                        this.state('opened', opened);
+                        me.state('opened', opened);
                     }
                 }
             });

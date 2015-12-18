@@ -32,7 +32,7 @@ define(function (require, exports, module) {
     }
 
     Validator.defaultOptions = {
-        validateOnBlur: true,
+        validateOnBlur: false,
         scrollOffset: -100,
         groupSelector: '.group',
         errorAttribute: 'data-error-for',
