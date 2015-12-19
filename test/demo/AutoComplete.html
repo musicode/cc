@@ -14,9 +14,10 @@
 
     <div class="dropdown">
         <input type="text" class="input" />
-        <ul class="menu">
-
-        </ul>
+        <div class="menu">
+            123123
+            <div class="list"></div>
+        </div>
     </div>
 
     <script src="./js/jquery.js"></script>
@@ -35,6 +36,8 @@
                 window.autoComplete = new AutoComplete({
                     inputElement: $('.input'),
                     menuElement: $('.menu'),
+
+                    renderSelector: '.list',
 
                     render: function (data) {
 

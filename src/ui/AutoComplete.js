@@ -29,6 +29,8 @@ define(function (require, exports, module) {
      * @property {string} options.itemSelector 菜单项选择器
      * @property {string=} options.itemActiveClass 菜单项选中状态时的 className
      *
+     * @property {string=} options.valueAttribute 从菜单项读取 value 的属性名称
+     *
      * @property {boolean=} options.loop 是否循环遍历
      * @property {number} options.interval 长按上下键自动遍历的时间间隔
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
@@ -73,7 +75,7 @@ define(function (require, exports, module) {
             {
                 element: inputElement,
                 data: {
-                    text: inputElement.val()
+                    value: inputElement.val()
                 }
             }
         ];
@@ -102,7 +104,7 @@ define(function (require, exports, module) {
             processIndex(
                 activeIndex,
                 function (itemElement, itemData) {
-                    inputElement.val(itemData.text);
+                    inputElement.val(itemData.value);
                 }
             );
         };
@@ -153,7 +155,7 @@ define(function (require, exports, module) {
             me.execute(
                 'load',
                 [
-                    $.trim(iteratorData[ 0 ].data.text),
+                    $.trim(iteratorData[ 0 ].data.value),
                     function (error, data) {
                         if (data) {
                             me.set('data', data);
@@ -192,7 +194,7 @@ define(function (require, exports, module) {
             },
             watchSync: {
                 value: function (value) {
-                    iteratorData[ 0 ].data.text = value;
+                    iteratorData[ 0 ].data.value = value;
                     suggest();
                 }
             }
@@ -300,22 +302,30 @@ define(function (require, exports, module) {
 
             var maxIndex = 0;
 
+            var valueAttribute = me.option('valueAttribute');
+
             menuElement
             .find(itemSelector)
             .each(function () {
 
                 var itemElement = $(this);
 
-                var data = itemElement.data();
-                if (data.text == null) {
-                    data.text = itemElement.html();
+                var value;
+                if (valueAttribute) {
+                    value = itemElement.attr(valueAttribute);
+                }
+
+                if (!value) {
+                    value = itemElement.html();
                 }
 
                 maxIndex++;
 
                 iteratorData[ maxIndex ] = {
                     element: itemElement,
-                    data: data
+                    data: {
+                        value: value
+                    }
                 };
 
                 itemElement.data(ITEM_INDEX, maxIndex);

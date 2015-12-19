@@ -440,11 +440,12 @@ if (event.type !== 'dispatch') {
             }
 
             if (!element) {
-                var mainElement = me.option('mainElement');
-                var renderSelector = me.option('renderSelector');
-                element = renderSelector
-                        ? mainElement.find(renderSelector)
-                        : mainElement;
+                element = me.option('mainElement');
+            }
+
+            var renderSelector = me.option('renderSelector');
+            if (renderSelector) {
+                element = element.find(renderSelector);
             }
 
             var html;

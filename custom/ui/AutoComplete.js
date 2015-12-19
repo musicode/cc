@@ -8,7 +8,7 @@ define(function (require, exports, module) {
         loop: true,
         interval: 60,
         includeInput: true,
-        itemSelector: 'li',
+        itemSelector: '.item',
         showMenuTrigger: 'focus',
         hideMenuTrigger: 'click',
         showMenuAnimation: function (options) {

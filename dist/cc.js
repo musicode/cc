@@ -4287,7 +4287,7 @@ define('cc/ui/AutoComplete', [
         var activeIndex;
         var iteratorData = [{
                 element: inputElement,
-                data: { text: inputElement.val() }
+                data: { value: inputElement.val() }
             }];
         var processIndex = function (index, callback) {
             var item = iteratorData[index];
@@ -4306,7 +4306,7 @@ define('cc/ui/AutoComplete', [
         };
         var updateInputValue = function () {
             processIndex(activeIndex, function (itemElement, itemData) {
-                inputElement.val(itemData.text);
+                inputElement.val(itemData.value);
             });
         };
         var updateScrollPosition = function (fn) {
@@ -4340,7 +4340,7 @@ define('cc/ui/AutoComplete', [
         });
         var suggest = function () {
             me.execute('load', [
-                $.trim(iteratorData[0].data.text),
+                $.trim(iteratorData[0].data.value),
                 function (error, data) {
                     if (data) {
                         me.set('data', data);
@@ -4369,7 +4369,7 @@ define('cc/ui/AutoComplete', [
             },
             watchSync: {
                 value: function (value) {
-                    iteratorData[0].data.text = value;
+                    iteratorData[0].data.value = value;
                     suggest();
                 }
             }
@@ -4433,16 +4433,20 @@ define('cc/ui/AutoComplete', [
         }).after('render', function () {
             iteratorData.length = 1;
             var maxIndex = 0;
+            var valueAttribute = me.option('valueAttribute');
             menuElement.find(itemSelector).each(function () {
                 var itemElement = $(this);
-                var data = itemElement.data();
-                if (data.text == null) {
-                    data.text = itemElement.html();
+                var value;
+                if (valueAttribute) {
+                    value = itemElement.attr(valueAttribute);
+                }
+                if (!value) {
+                    value = itemElement.html();
                 }
                 maxIndex++;
                 iteratorData[maxIndex] = {
                     element: itemElement,
-                    data: data
+                    data: { value: value }
                 };
                 itemElement.data(ITEM_INDEX, maxIndex);
             });
@@ -8912,9 +8916,11 @@ define('cc/util/life', [
                 }
             }
             if (!element) {
-                var mainElement = me.option('mainElement');
-                var renderSelector = me.option('renderSelector');
-                element = renderSelector ? mainElement.find(renderSelector) : mainElement;
+                element = me.option('mainElement');
+            }
+            var renderSelector = me.option('renderSelector');
+            if (renderSelector) {
+                element = element.find(renderSelector);
             }
             var html;
             if ($.isPlainObject(data) || $.isArray(data)) {
