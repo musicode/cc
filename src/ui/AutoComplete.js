@@ -29,7 +29,7 @@ define(function (require, exports, module) {
      * @property {string} options.itemSelector 菜单项选择器
      * @property {string=} options.itemActiveClass 菜单项选中状态时的 className
      *
-     * @property {string=} options.valueAttribute 从菜单项读取 value 的属性名称
+     * @property {string=} options.valueAttribute 从菜单项读取 value 的属性名称，如果未传，会读取菜单项的 html
      *
      * @property {boolean=} options.loop 是否循环遍历
      * @property {number} options.interval 长按上下键自动遍历的时间间隔

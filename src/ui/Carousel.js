@@ -21,8 +21,8 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement 主元素
      *
      * @property {number} options.index 从第几个开始播放
-     * @property {number} options.minIndex index 的最小值
-     * @property {number} options.maxIndex index 的最大值
+     * @property {number} options.minIndex index 的最小值，不传默认是 0
+     * @property {number} options.maxIndex index 的最大值，不传默认从 DOM 读取切换项的数量
      *
      * @property {number} options.step 每次滚动几项，通常取决于一屏展现的数量
      *
@@ -34,7 +34,7 @@ define(function (require, exports, module) {
      *
      * @property {string=} options.navTrigger 有导航按钮时，触发切换的方式，可选值有 enter click
      * @property {number=} options.navDelay 当 navTrigger 是 enter 时，可以设置延时，单位是毫秒
-     * @property {Function=} options.navAnimation 切换动画
+     * @property {Function} options.navAnimation 切换动画
      *
      * @property {string=} options.navSelector 导航按钮选择器（一般会写序号的小按钮）
      * @property {string=} options.navActiveClass 当前 index 对应的导航按钮的 className
@@ -183,6 +183,10 @@ define(function (require, exports, module) {
         this.inner('iterator').pause();
     };
 
+    proto.stop = function () {
+        this.inner('iterator').stop();
+    };
+
     proto.dispose = function () {
 
         var me = this;
@@ -202,7 +206,7 @@ define(function (require, exports, module) {
 
     };
 
-    var exclude = [ 'prev', 'next', 'play', 'pause' ];
+    var exclude = [ 'prev', 'next', 'play', 'pause', 'stop' ];
 
     lifeUtil.extend(proto, exclude);
 
@@ -241,7 +245,9 @@ define(function (require, exports, module) {
 
         },
         minIndex: function (minIndex) {
-            this.inner('iterator').set('minIndex', minIndex);
+            var iterator = this.inner('iterator');
+            iterator.set('minIndex', minIndex);
+            iterator.option('defaultIndex', minIndex);
         },
         maxIndex: function (maxIndex) {
             this.inner('iterator').set('maxIndex', maxIndex);

@@ -62,7 +62,7 @@
 
             function (Carousel) {
 
-                new Carousel({
+                window.carousel = new Carousel({
 
                     mainElement: $('#carousel'),
 
@@ -80,6 +80,11 @@
                         var to = options.toIndex;
                     },
 
+                    watch: {
+                        index: function (index) {
+                            console.log(index);
+                        }
+                    },
                     ondebug: function (event, data) {
                         console.log(
                             event.type,

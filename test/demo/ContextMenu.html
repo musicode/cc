@@ -70,10 +70,10 @@
     <div class="container">
         <!-- 右键点击歌曲列表后出现的菜单 -->
         <div id="song-list-menu" class="context-menu">
-            <a data-action="play">播放</a>
-            <a data-action="like">收藏</a>
-            <a data-action="download">下载</a>
-            <a data-action="remove">删除</a>
+            <a href="#" data-action="play">播放</a>
+            <a href="#" data-action="like">收藏</a>
+            <a href="#" data-action="download">下载</a>
+            <a href="#" data-action="remove">删除</a>
         </div>
     </div>
 
@@ -128,7 +128,16 @@
                         //return false;
                     },
                     onbeforehide: function () {
-                        return false;
+                        //return false;
+                    },
+                    onafterinit: function () {
+                        this.inner('main').on(
+                            'click',
+                            'a',
+                            function (e) {
+                                return false;
+                            }
+                        );
                     }
                 });
 

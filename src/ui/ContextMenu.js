@@ -95,27 +95,21 @@ define(function (require, exports, module) {
             }
         });
 
+        var typeMap = {
+            beforeopen: 'beforeshow',
+            afteropen: 'aftershow',
+            beforeclose: 'beforehide',
+            afterclose: 'afterhide'
+        };
+
         popup.on('dispatch', function (e, data) {
 
             var event = e.originalEvent;
-            var type = event.type;
 
-            switch (type) {
-                case 'beforeopen':
-                    type = 'beforeshow';
-                    break;
-                case 'afteropen':
-                    type = 'aftershow';
-                    break;
-                case 'beforeclose':
-                    type = 'beforehide';
-                    break;
-                case 'afterclose':
-                    type = 'afterhide';
-                    break;
+            var type = typeMap[event.type];
+            if (type) {
+                event.type = type;
             }
-
-            event.type = type;
 
             me.emit(event, data, true);
 
@@ -132,7 +126,9 @@ define(function (require, exports, module) {
         .on('contextmenu' + namespace, function (e) {
 
             if (activeMenu) {
-                activeMenu.inner('popup').close(e);
+                var activePopup = activeMenu.inner('popup');
+                activePopup.close(e);
+                activePopup.sync();
             }
 
             contextEvent = e;
@@ -140,6 +136,7 @@ define(function (require, exports, module) {
             activeMenu = me;
 
             popup.open(e);
+            popup.sync();
 
             var pos = eventPage(e);
 

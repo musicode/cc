@@ -430,12 +430,16 @@ define(function (require, exports, module) {
      * @param {Object} config
      */
     function onTrigger(instance, config) {
-        onElement(
-            instance.option('triggerElement') || instanceUtil.body,
-            config.type,
-            config.handler,
-            instance.option('triggerSelector')
-        );
+        var triggerElement = instance.option('triggerElement');
+        var triggerSelector = instance.option('triggerSelector');
+        if (triggerElement || triggerSelector) {
+            onElement(
+                triggerElement || instanceUtil.body,
+                config.type,
+                config.handler,
+                triggerSelector
+            );
+        }
     }
 
     /**

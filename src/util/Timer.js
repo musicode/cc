@@ -19,6 +19,10 @@ define(function (require, exports, module) {
 
     var proto = Timer.prototype;
 
+    proto.execute = function () {
+        this.task();
+    };
+
     proto.start = function () {
 
         var me = this;
@@ -28,26 +32,11 @@ define(function (require, exports, module) {
         var interval = me.interval;
 
         var next = function () {
-            me.task();
+            me.execute();
             me.timer = setTimeout(next, interval);
         };
 
         me.timer = setTimeout(next, interval);
-
-    };
-
-    proto.startDelay = function (delay) {
-
-        var me = this;
-
-        setTimeout(
-            function () {
-                if (me.task) {
-                    me.start();
-                }
-            },
-            delay
-        );
 
     };
 

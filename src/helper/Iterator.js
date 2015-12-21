@@ -69,7 +69,7 @@ define(function (require, exports, module) {
             interval: interval
         });
 
-        timer.startDelay(interval);
+        timer.start();
 
         me.inner('timer', timer);
 

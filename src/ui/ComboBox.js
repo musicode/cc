@@ -18,30 +18,30 @@ define(function (require, exports, module) {
      * @property {jQuery=} options.mainElement 如果需要容器包着 buttonElement 和 menuElement, 可以设置主元素
      *                                         menuActiveClass 会优先作用于它，否则作用于 menuElement
      *
-     * @property {jQuery} options.buttonElement 点击触发下拉菜单显示的元素
+     * @property {jQuery} options.buttonElement 按钮元素
      * @property {jQuery} options.menuElement 下拉菜单元素
      * @property {string=} options.menuTemplate 菜单模板
      *
-     * @property {Array} options.data 下拉菜单的数据
+     * @property {Array.<Object>=} options.data 渲染下拉菜单的数据
      * @property {Function} options.render 渲染模板的函数
      *
      * @property {string=} options.value 当前选中的值
-     * @property {string=} options.defaultText 未选中值时默认显示的文本，如 请选择
+     * @property {string} options.defaultText 未选中值时默认显示的文本，如 请选择
      *
-     * @property {string=} options.itemSelector
-     * @property {string=} options.textAttribute
-     * @property {string=} options.valueAttribute
+     * @property {string} options.itemSelector 菜单项选择器
+     * @property {string=} options.textAttribute 菜单项文本属性名称
+     * @property {string} options.valueAttribute 菜单项值属性名称
      *
-     * @property {string=} options.itemActiveClass 菜单项选中状态的 class，可提升用户体验
-     * @property {string=} options.menuActiveClass 菜单展开状态的 class
+     * @property {string=} options.itemActiveClass 菜单项选中状态的 className，可提升用户体验
+     * @property {string=} options.menuActiveClass 菜单展开状态的 className
      *
-     * @property {string=} options.showMenuTrigger 显示的触发方式
-     * @property {number=} options.showMenuDelay 显示延时
-     * @property {Function=} options.showMenuAnimation 显示动画
+     * @property {string} options.showMenuTrigger 显示下拉菜单的触发方式
+     * @property {number=} options.showMenuDelay 显示下拉菜单的触发延时
+     * @property {Function} options.showMenuAnimation 显示下拉菜单的动画
      *
-     * @property {string=} options.hideMenuTrigger 隐藏的触发方式
-     * @property {number=} options.hideMenuDelay 隐藏延时
-     * @property {Function=} options.hideMenuAnimation 隐藏动画
+     * @property {string} options.hideMenuTrigger 隐藏下拉菜单的触发方式
+     * @property {number=} options.hideMenuDelay 隐藏下拉菜单的延时
+     * @property {Function} options.hideMenuAnimation 隐藏下拉菜单的动画
      *
      * @property {Function} options.setText 设置选中菜单项文本
      */
@@ -59,7 +59,6 @@ define(function (require, exports, module) {
 
         me.initStruct();
 
-        var mainElement = me.option('mainElement');
 
         var buttonElement = me.option('buttonElement');
         var menuElement = me.option('menuElement');
@@ -98,6 +97,7 @@ define(function (require, exports, module) {
             me.emit(e.originalEvent, data, true);
         });
 
+        var mainElement = me.option('mainElement');
         var menuActiveClass = me.option('menuActiveClass');
         if (menuActiveClass) {
             var element = mainElement || menuElement;
@@ -239,9 +239,7 @@ define(function (require, exports, module) {
                         if (itemActiveClass) {
                             itemElement.addClass(itemActiveClass);
                         }
-
                         text = getText(itemElement);
-
                         break;
                     case 0:
                         break;
