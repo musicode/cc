@@ -2336,7 +2336,7 @@ define('cc/helper/AjaxUploader', [
     proto.init = function () {
         var me = this;
         var fileElement = me.option('mainElement');
-        if (!fileElement.is(':file')) {
+        if (!fileElement.is('input[type="file"]')) {
             me.error('AjaxUploader mainElement must be <input type="file" />.');
         }
         var mainElement = $('<form></form>');
@@ -5412,18 +5412,15 @@ define('cc/ui/Dialog', [
     };
     proto.refresh = function () {
         var me = this;
-        var isResize = arguments[0];
         var options = {};
-        if (!isResize || me.option('positionOnResize')) {
-            var mainElement = me.inner('main');
-            options.mainElement = mainElement;
-            options.mainStyle = pinGlobal({
-                element: mainElement,
-                x: me.option('x'),
-                y: me.option('y'),
-                fixed: me.option('fixed')
-            });
-        }
+        var mainElement = me.inner('main');
+        options.mainElement = mainElement;
+        options.mainStyle = pinGlobal({
+            element: mainElement,
+            x: me.option('x'),
+            y: me.option('y'),
+            fixed: me.option('fixed')
+        });
         var maskElement = me.inner('mask');
         if (maskElement) {
             options.maskElement = maskElement;
@@ -5432,7 +5429,7 @@ define('cc/ui/Dialog', [
                 height: pageHeight()
             };
         }
-        me.execute(isResize ? 'resizeWindowAnimation' : 'refreshAnimation', options);
+        me.execute(arguments[0] ? 'resizeWindowAnimation' : 'refreshAnimation', options);
     };
     proto.dispose = function () {
         var me = this;
@@ -5767,8 +5764,9 @@ define('cc/ui/Rater', [
         var list = [];
         var hintMap = me.option('hint') || {};
         var classMap = {
-            '1': me.option('itemActiveClass'),
-            '0.5': me.option('itemHalfClass')
+            '1': me.option('itemFullClass'),
+            '0.5': me.option('itemHalfClass'),
+            '0': me.option('itemEmptyClass')
         };
         traverse(me.get('value'), me.get('count'), function (index, value) {
             var className = classMap[value];
@@ -5832,15 +5830,19 @@ define('cc/ui/Rater', [
     };
     function refresh(instance, value) {
         var items = instance.inner('main').find(instance.option('itemSelector'));
-        var itemActiveClass = instance.option('itemActiveClass');
+        var itemFullClass = instance.option('itemFullClass');
         var itemHalfClass = instance.option('itemHalfClass');
+        var itemEmptyClass = instance.option('itemEmptyClass');
         traverse(value, instance.get('count'), function (index, score) {
             var element = items.eq(index);
-            if (itemActiveClass) {
-                element[score === 1 ? 'addClass' : 'removeClass'](itemActiveClass);
+            if (itemFullClass) {
+                element[score === 1 ? 'addClass' : 'removeClass'](itemFullClass);
             }
             if (itemHalfClass) {
                 element[score === 0.5 ? 'addClass' : 'removeClass'](itemHalfClass);
+            }
+            if (itemEmptyClass) {
+                element[score === 0 ? 'addClass' : 'removeClass'](itemEmptyClass);
             }
         });
     }

@@ -58,7 +58,7 @@ define(function (require, exports, module) {
 
 
         // 确保是文件上传控件
-        if (!fileElement.is(':file')) {
+        if (!fileElement.is('input[type="file"]')) {
             me.error('AjaxUploader mainElement must be <input type="file" />.');
         }
 

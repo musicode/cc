@@ -37,8 +37,9 @@ define(function (require, exports, module) {
      *                                      '5': '很好'
      *                                  }
      *
-     * @property {string} options.itemActiveClass 星星选中状态的图标 className
+     * @property {string} options.itemFullClass 星星选中状态的图标 className
      * @property {string} options.itemHalfClass 星星半选中状态的图标 className
+     * @property {string} options.itemEmptyClass 星星未选中状态的图标 className
      *
      * @property {string} options.itemSelector
      * @property {string} options.valueAttribute
@@ -48,7 +49,7 @@ define(function (require, exports, module) {
      *     mainElement: $('.rater'),
      *     value: 2,                        // 当前选中 2 颗星
      *     count: 5,                        // 总共有 5 颗星
-     *     itemActiveClass: 'on',
+     *     itemFullClass: 'on',
      *     watch: {
      *         value: function (value) {
      *             console.log('value change');
@@ -177,8 +178,9 @@ define(function (require, exports, module) {
 
         var hintMap = me.option('hint') || { };
         var classMap = {
-            '1': me.option('itemActiveClass'),
-            '0.5': me.option('itemHalfClass')
+            '1': me.option('itemFullClass'),
+            '0.5': me.option('itemHalfClass'),
+            '0': me.option('itemEmptyClass')
         };
 
         traverse(
@@ -301,8 +303,9 @@ define(function (require, exports, module) {
             instance.option('itemSelector')
         );
 
-        var itemActiveClass = instance.option('itemActiveClass');
+        var itemFullClass = instance.option('itemFullClass');
         var itemHalfClass = instance.option('itemHalfClass');
+        var itemEmptyClass = instance.option('itemEmptyClass');
 
         traverse(
             value,
@@ -311,14 +314,19 @@ define(function (require, exports, module) {
 
                 var element = items.eq(index);
 
-                if (itemActiveClass) {
+                if (itemFullClass) {
                     element[ score === 1 ? 'addClass' : 'removeClass' ](
-                        itemActiveClass
+                        itemFullClass
                     );
                 }
                 if (itemHalfClass) {
                     element[ score === 0.5 ? 'addClass' : 'removeClass' ](
                         itemHalfClass
+                    );
+                }
+                if (itemEmptyClass) {
+                    element[ score === 0 ? 'addClass' : 'removeClass' ](
+                        itemEmptyClass
                     );
                 }
 

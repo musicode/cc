@@ -37,7 +37,6 @@ define(function (require, exports, module) {
      * @property {boolean=} options.fixed 对话框是否是 fixed 定位
      * @property {boolean=} options.modal 对话框是否模态
      * @property {boolean=} options.draggable 对话框是否可拖拽，拖拽位置需要用 draggableIncludeSelector 和 draggableExcludeSelector 配置
-     * @property {boolean=} options.positionOnResize 触发 resize 事件时是否重定位
      * @property {boolean=} options.removeClose 是否不需要关闭按钮
      * @property {boolean=} options.removeOnEmpty 当 title 或 content 为空时，是否隐藏 header 或 body 或 footer 元素
      * @property {boolean=} options.disposeOnHide 是否隐藏时销毁控件
@@ -296,22 +295,17 @@ define(function (require, exports, module) {
 
         var me = this;
 
-        var isResize = arguments[0];
         var options = { };
 
-        if (!isResize || me.option('positionOnResize')) {
+        var mainElement = me.inner('main');
 
-            var mainElement = me.inner('main');
-
-            options.mainElement = mainElement;
-            options.mainStyle = pinGlobal({
-                element: mainElement,
-                x: me.option('x'),
-                y: me.option('y'),
-                fixed: me.option('fixed')
-            });
-
-        }
+        options.mainElement = mainElement;
+        options.mainStyle = pinGlobal({
+            element: mainElement,
+            x: me.option('x'),
+            y: me.option('y'),
+            fixed: me.option('fixed')
+        });
 
         var maskElement = me.inner('mask');
         if (maskElement) {
@@ -323,7 +317,7 @@ define(function (require, exports, module) {
         }
 
         me.execute(
-            isResize ? 'resizeWindowAnimation' : 'refreshAnimation',
+            arguments[0] ? 'resizeWindowAnimation' : 'refreshAnimation',
             options
         );
 
