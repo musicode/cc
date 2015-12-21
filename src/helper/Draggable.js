@@ -88,7 +88,9 @@ define(function (require, exports, module) {
 
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
-        var bodyDraggingClass = me.option('bodyDraggingClass');
+        // 业务代码使用的组件基于 custom/ 的默认配置，因此组合使用时，外部是没法设置这个值的
+        // 这里给 bodyDraggingClass 一个默认值，便于全局控制选区的禁用
+        var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
 
         var beforeDragHandler = function (e) {
 

@@ -2795,7 +2795,7 @@ define('cc/helper/Draggable', [
         var rectElement = containerElement || pageElement;
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
-        var bodyDraggingClass = me.option('bodyDraggingClass');
+        var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
         var beforeDragHandler = function (e) {
             var coord;
             var isEvent = e[$.expando];
@@ -5259,6 +5259,7 @@ define('cc/ui/Dialog', [
     'require',
     'exports',
     'module',
+    '../function/contains',
     '../function/debounce',
     '../function/pageWidth',
     '../function/pageHeight',
@@ -5268,6 +5269,7 @@ define('cc/ui/Dialog', [
     '../util/instance'
 ], function (require, exports, module) {
     'use strict';
+    var contains = require('../function/contains');
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
@@ -5289,7 +5291,9 @@ define('cc/ui/Dialog', [
             if (!maskElement) {
                 maskElement = $(me.option('maskTemplate'));
             }
-            mainElement.before(maskElement);
+            if (!contains(maskElement, mainElement)) {
+                mainElement.before(maskElement);
+            }
         } else if (maskElement) {
             maskElement = null;
         }
@@ -5354,9 +5358,8 @@ define('cc/ui/Dialog', [
         }
         mainElement.css(style);
         var clickType = 'click' + me.namespace();
-        var hideHandler = $.proxy(me.hide, me);
         if (closeSelector) {
-            mainElement.on(clickType, closeSelector, hideHandler);
+            mainElement.on(clickType, closeSelector, $.proxy(me.hide, me));
         }
         if (me.option('disposeOnHide')) {
             me.on('statechange', function (e, change) {
@@ -5368,7 +5371,11 @@ define('cc/ui/Dialog', [
         }
         if (maskElement) {
             if (me.option('hideOnClickMask')) {
-                maskElement.on(clickType, hideHandler);
+                maskElement.on(clickType, function (e) {
+                    if (!contains(mainElement, e.target)) {
+                        me.hide();
+                    }
+                });
             }
             if (me.option('removeOnDispose')) {
                 me.after('dispose', function () {
@@ -5439,9 +5446,6 @@ define('cc/ui/Dialog', [
         mainElement.off(namespace);
         if (maskElement) {
             maskElement.off(namespace);
-            if (me.option('removeOnDispose')) {
-                maskElement.remove();
-            }
         }
     };
     lifeUtil.extend(proto);

@@ -6,6 +6,7 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var contains = require('../function/contains');
     var debounce = require('../function/debounce');
     var pageWidth = require('../function/pageWidth');
     var pageHeight = require('../function/pageHeight');
@@ -93,7 +94,11 @@ define(function (require, exports, module) {
 
             // 遮罩放到对话框前面
             // 这样在 z-index 相同的情况下，对话框还能位于遮罩上方
-            mainElement.before(maskElement);
+
+            // Bootstrap 的结构居然是 .mask > .dialog，这里可以兼容一下
+            if (!contains(maskElement, mainElement)) {
+                mainElement.before(maskElement);
+            }
 
         }
         else if (maskElement) {
@@ -212,10 +217,13 @@ define(function (require, exports, module) {
 
 
         var clickType = 'click' + me.namespace();
-        var hideHandler = $.proxy(me.hide, me);
 
         if (closeSelector) {
-            mainElement.on(clickType, closeSelector, hideHandler);
+            mainElement.on(
+                clickType,
+                closeSelector,
+                $.proxy(me.hide, me)
+            );
         }
 
         if (me.option('disposeOnHide')) {
@@ -232,7 +240,11 @@ define(function (require, exports, module) {
 
         if (maskElement) {
             if (me.option('hideOnClickMask')) {
-                maskElement.on(clickType, hideHandler);
+                maskElement.on(clickType, function (e) {
+                    if (!contains(mainElement, e.target)) {
+                        me.hide();
+                    }
+                });
             }
             if (me.option('removeOnDispose')) {
                 me.after('dispose', function () {
@@ -334,9 +346,6 @@ define(function (require, exports, module) {
         mainElement.off(namespace);
         if (maskElement) {
             maskElement.off(namespace);
-            if (me.option('removeOnDispose')) {
-                maskElement.remove();
-            }
         }
 
     };
@@ -409,6 +418,7 @@ define(function (require, exports, module) {
 
         }
     };
+
 
     return Dialog;
 
