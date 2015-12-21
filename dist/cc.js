@@ -3225,7 +3225,7 @@ define('cc/helper/Iterator', [
             task: $.proxy(fn, me),
             interval: interval
         });
-        timer.startDelay(interval);
+        timer.start();
         me.inner('timer', timer);
     };
     proto.pause = function () {
@@ -3787,7 +3787,11 @@ define('cc/helper/Popup', [
         }
     }
     function onTrigger(instance, config) {
-        onElement(instance.option('triggerElement') || instanceUtil.body, config.type, config.handler, instance.option('triggerSelector'));
+        var triggerElement = instance.option('triggerElement');
+        var triggerSelector = instance.option('triggerSelector');
+        if (triggerElement || triggerSelector) {
+            onElement(triggerElement || instanceUtil.body, config.type, config.handler, triggerSelector);
+        }
     }
     function offTrigger(instance, config) {
         offElement(instance.option('triggerElement') || instanceUtil.body, config.type, config.handler);
@@ -4872,6 +4876,9 @@ define('cc/ui/Carousel', [
     proto.pause = function () {
         this.inner('iterator').pause();
     };
+    proto.stop = function () {
+        this.inner('iterator').stop();
+    };
     proto.dispose = function () {
         var me = this;
         lifeUtil.dispose(me);
@@ -4886,7 +4893,8 @@ define('cc/ui/Carousel', [
         'prev',
         'next',
         'play',
-        'pause'
+        'pause',
+        'stop'
     ];
     lifeUtil.extend(proto, exclude);
     Carousel.propertyUpdater = {
@@ -4917,7 +4925,9 @@ define('cc/ui/Carousel', [
             }
         },
         minIndex: function (minIndex) {
-            this.inner('iterator').set('minIndex', minIndex);
+            var iterator = this.inner('iterator');
+            iterator.set('minIndex', minIndex);
+            iterator.option('defaultIndex', minIndex);
         },
         maxIndex: function (maxIndex) {
             this.inner('iterator').set('maxIndex', maxIndex);
@@ -4958,7 +4968,6 @@ define('cc/ui/ComboBox', [
     proto.init = function () {
         var me = this;
         me.initStruct();
-        var mainElement = me.option('mainElement');
         var buttonElement = me.option('buttonElement');
         var menuElement = me.option('menuElement');
         var popup = new Popup({
@@ -4983,6 +4992,7 @@ define('cc/ui/ComboBox', [
         popup.on('dispatch', function (e, data) {
             me.emit(e.originalEvent, data, true);
         });
+        var mainElement = me.option('mainElement');
         var menuActiveClass = me.option('menuActiveClass');
         if (menuActiveClass) {
             var element = mainElement || menuElement;
@@ -5170,24 +5180,18 @@ define('cc/ui/ContextMenu', [
                 }
             }
         });
+        var typeMap = {
+            beforeopen: 'beforeshow',
+            afteropen: 'aftershow',
+            beforeclose: 'beforehide',
+            afterclose: 'afterhide'
+        };
         popup.on('dispatch', function (e, data) {
             var event = e.originalEvent;
-            var type = event.type;
-            switch (type) {
-            case 'beforeopen':
-                type = 'beforeshow';
-                break;
-            case 'afteropen':
-                type = 'aftershow';
-                break;
-            case 'beforeclose':
-                type = 'beforehide';
-                break;
-            case 'afterclose':
-                type = 'afterhide';
-                break;
+            var type = typeMap[event.type];
+            if (type) {
+                event.type = type;
             }
-            event.type = type;
             me.emit(event, data, true);
         });
         me.inner({
@@ -5197,11 +5201,14 @@ define('cc/ui/ContextMenu', [
         var containerElement = me.option('containerElement') || body;
         containerElement.on('contextmenu' + namespace, function (e) {
             if (activeMenu) {
-                activeMenu.inner('popup').close(e);
+                var activePopup = activeMenu.inner('popup');
+                activePopup.close(e);
+                activePopup.sync();
             }
             contextEvent = e;
             activeMenu = me;
             popup.open(e);
+            popup.sync();
             var pos = eventPage(e);
             pin({
                 element: mainElement,
@@ -7352,23 +7359,18 @@ define('cc/util/Timer', [
         $.extend(this, options);
     }
     var proto = Timer.prototype;
+    proto.execute = function () {
+        this.task();
+    };
     proto.start = function () {
         var me = this;
         me.stop();
         var interval = me.interval;
         var next = function () {
-            me.task();
+            me.execute();
             me.timer = setTimeout(next, interval);
         };
         me.timer = setTimeout(next, interval);
-    };
-    proto.startDelay = function (delay) {
-        var me = this;
-        setTimeout(function () {
-            if (me.task) {
-                me.start();
-            }
-        }, delay);
     };
     proto.stop = function () {
         var me = this;
