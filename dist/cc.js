@@ -5918,8 +5918,24 @@ define('cc/ui/ScrollBar', [
             main: slider.inner('main'),
             slider: slider
         });
-        me.state({ hidden: me.option('hidden') });
+        me.state('hidden', me.option('hidden'));
         me.refresh();
+    };
+    proto.show = function () {
+        this.state('hidden', false);
+    };
+    proto._show = function () {
+        if (!this.is('hidden')) {
+            return false;
+        }
+    };
+    proto.hide = function () {
+        this.state('hidden', false);
+    };
+    proto._hide = function () {
+        if (this.is('hidden')) {
+            return false;
+        }
     };
     proto.refresh = function () {
         var me = this;
@@ -5931,7 +5947,7 @@ define('cc/ui/ScrollBar', [
         var contentSize = panelElement.prop(props.scrollSize);
         var ratio = getRaito(viewportSize, contentSize);
         if (ratio > 0 && ratio < 1) {
-            me.state('hidden', false);
+            me.show();
             var trackElement = slider.inner('track');
             var thumbElement = slider.inner('thumb');
             var trackSize = trackElement[props.innerSize]();
@@ -5943,7 +5959,7 @@ define('cc/ui/ScrollBar', [
             thumbElement[props.outerSize](Math.round(thumbSize));
             me.inner('ratio', getRaito(contentSize, trackSize));
         } else {
-            me.state('hidden', true);
+            me.hide();
         }
         slider.refresh();
     };

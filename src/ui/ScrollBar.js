@@ -119,17 +119,32 @@ define(function (require, exports, module) {
             slider: slider
         });
 
-        me.state({
-            hidden: me.option('hidden')
-        });
+        me.state('hidden', me.option('hidden'));
 
         me.refresh();
 
     };
 
-    /**
-     * 刷新滚动条
-     */
+    proto.show = function () {
+        this.state('hidden', false);
+    };
+
+    proto._show = function () {
+        if (!this.is('hidden')) {
+            return false;
+        }
+    };
+
+    proto.hide = function () {
+        this.state('hidden', false);
+    };
+
+    proto._hide = function () {
+        if (this.is('hidden')) {
+            return false;
+        }
+    };
+
     proto.refresh = function () {
 
         //
@@ -155,7 +170,7 @@ define(function (require, exports, module) {
         var ratio = getRaito(viewportSize, contentSize);
         if (ratio > 0 && ratio < 1) {
 
-            me.state('hidden', false);
+            me.show();
 
             var trackElement = slider.inner('track');
             var thumbElement = slider.inner('thumb');
@@ -179,7 +194,7 @@ define(function (require, exports, module) {
 
         }
         else {
-            me.state('hidden', true);
+            me.hide();
         }
 
         slider.refresh();
