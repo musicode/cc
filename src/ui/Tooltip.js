@@ -62,7 +62,7 @@ define(function (require, exports, module) {
      *
      * @constructor
      * @param {Object} options
-     * @property {jQuery} options.triggerElement 需要工具提示的元素
+     * @property {jQuery=} options.triggerElement 需要工具提示的元素
      * @property {string=} options.triggerSelector 如果传了选择器，可不传 triggerElement，转为使用事件代理
      *
      * @property {jQuery=} options.mainElement 提示浮层元素
@@ -83,30 +83,30 @@ define(function (require, exports, module) {
      *
      * @property {Function=} options.update 更新提示浮层的内容
      *
-     * @property {string=} options.showTrigger 显示的触发方式
+     * @property {string} options.showTrigger 显示的触发方式
      * @property {number=} options.showDelay 显示延时
-     * @property {Function=} options.showAnimation 显示动画
+     * @property {Function} options.showAnimation 显示动画
      *
-     * @property {string=} options.hideTrigger 隐藏的触发方式
+     * @property {string} options.hideTrigger 隐藏的触发方式
      * @property {number=} options.hideDelay 隐藏延时
-     * @property {Function=} options.hideAnimation 隐藏动画
+     * @property {Function} options.hideAnimation 隐藏动画
      *
      * @property {number=} options.gapX 提示层和触发元素之间的横向间距，如果为 0，提示会和元素贴在一起
      * @property {number=} options.gapY 提示层和触发元素之间的纵向间距，如果为 0，提示会和元素贴在一起
      *
-     * @property {Object=} options.topClass 设置上侧 class
-     * @property {Object=} options.rightClass 设置右侧 class
-     * @property {Object=} options.bottomClass 设置下侧 class
-     * @property {Object=} options.leftClass 设置左侧 class
+     * @property {string=} options.topClass 设置上侧 class
+     * @property {string=} options.rightClass 设置右侧 class
+     * @property {string=} options.bottomClass 设置下侧 class
+     * @property {string=} options.leftClass 设置左侧 class
      *
-     * @property {Object=} options.topOffsetX 设置上侧水平偏移量
-     * @property {Object=} options.topOffsetY 设置上侧垂直偏移量
-     * @property {Object=} options.rightOffsetX 设置右侧水平偏移量
-     * @property {Object=} options.rightOffsetY 设置右侧垂直偏移量
-     * @property {Object=} options.bottomOffsetX 设置下侧水平偏移量
-     * @property {Object=} options.bottomOffsetY 设置下侧垂直偏移量
-     * @property {Object=} options.leftOffsetX 设置左侧水平偏移量
-     * @property {Object=} options.leftOffsetY 设置左侧垂直偏移量
+     * @property {number=} options.topOffsetX 设置上侧水平偏移量
+     * @property {number=} options.topOffsetY 设置上侧垂直偏移量
+     * @property {number=} options.rightOffsetX 设置右侧水平偏移量
+     * @property {number=} options.rightOffsetY 设置右侧垂直偏移量
+     * @property {number=} options.bottomOffsetX 设置下侧水平偏移量
+     * @property {number=} options.bottomOffsetY 设置下侧垂直偏移量
+     * @property {number=} options.leftOffsetX 设置左侧水平偏移量
+     * @property {number=} options.leftOffsetY 设置左侧垂直偏移量
      *
      */
     function Tooltip(options) {
@@ -131,6 +131,12 @@ define(function (require, exports, module) {
             me.error('triggerElement、triggerSelector 至少传一个吧！');
         }
 
+        var hidden = me.option('hidden');
+        var opened;
+        if ($.type(hidden) === 'boolean') {
+            opened = !hidden;
+        }
+
         var popup = new Popup({
             layerElement: mainElement,
             triggerElement: triggerElement,
@@ -139,6 +145,7 @@ define(function (require, exports, module) {
             showLayerDelay: me.option('showDelay'),
             hideLayerTrigger: me.option('hideTrigger'),
             hideLayerDelay: me.option('hideDelay'),
+            opened: opened,
             showLayerAnimation: function () {
                 me.execute(
                     'showAnimation',

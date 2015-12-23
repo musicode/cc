@@ -30,7 +30,7 @@ define(function (require, exports, module) {
      *
      * @property {jQuery} options.mainElement
      *
-     * @property {number=} options.value 当前值，不传取 minValue
+     * @property {number=} options.value 当前值，不传自动计算 DOM 的位置
      * @property {number} options.minValue value 的最小值，也可以说是开始位置对应的 value
      * @property {number} options.maxValue value 的最大值，也可以说是结束位置对应的 value
      * @property {number=} options.step value 步进值，不传则通过计算确定 step
@@ -96,7 +96,7 @@ define(function (require, exports, module) {
                 pixel = me.inner('maxPixel') - pixel;
             }
 
-            setValue(
+            return setValue(
                 me.pixelToValue(pixel),
                 action
             );
@@ -109,7 +109,10 @@ define(function (require, exports, module) {
                 action: action
             };
 
+            var oldValue = me.get('value');
             me.set('value', value, options);
+
+            return oldValue !== me.get('value');
 
         };
 
@@ -203,18 +206,22 @@ define(function (require, exports, module) {
                 var action = 'scroll';
                 var value = me.get('value');
 
+                var result;
+
                 if (scrollStepType === 'value') {
-                    setValue(
+                    result = setValue(
                         value + offset,
                         action
                     );
                 }
                 else {
-                    setPixel(
+                    result = setPixel(
                         me.valueToPixel(value) + offset,
                         action
                     );
                 }
+
+                return !result;
 
             };
 
@@ -422,7 +429,7 @@ define(function (require, exports, module) {
             }
 
             if (me.option('reverse')) {
-                pixel = me.inner('maxPixel') - pixel - thumbSize;
+                pixel = me.inner('maxPixel') - pixel;
             }
 
             var thumbStyle = { };

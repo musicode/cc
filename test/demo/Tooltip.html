@@ -36,6 +36,8 @@
             function (Tooltip) {
 
                 window.tooltip = new Tooltip({
+                    hidden: true,
+                    share: false,
 //                    ondebug: function (event, data) {
 //                        console.log(
 //                            event.type,
@@ -55,6 +57,12 @@
                     },
                     onafterhide: function () {
                         console.log('afterhide', this.is('hidden'));
+                    },
+                    onbeforepin: function () {
+                        console.log('beforepin', this.is('hidden'));
+                    },
+                    onafterpin: function () {
+                        console.log('afterpin', this.is('hidden'));
                     }
                 });
 

@@ -6048,11 +6048,13 @@ define('cc/ui/Slider', [
             if (reverse) {
                 pixel = me.inner('maxPixel') - pixel;
             }
-            setValue(me.pixelToValue(pixel), action);
+            return setValue(me.pixelToValue(pixel), action);
         };
         var setValue = function (value, action) {
             var options = { action: action };
+            var oldValue = me.get('value');
             me.set('value', value, options);
+            return oldValue !== me.get('value');
         };
         var namespace = me.namespace();
         var drager = new Draggable({
@@ -6107,11 +6109,13 @@ define('cc/ui/Slider', [
                 }
                 var action = 'scroll';
                 var value = me.get('value');
+                var result;
                 if (scrollStepType === 'value') {
-                    setValue(value + offset, action);
+                    result = setValue(value + offset, action);
                 } else {
-                    setPixel(me.valueToPixel(value) + offset, action);
+                    result = setPixel(me.valueToPixel(value) + offset, action);
                 }
+                return !result;
             };
             var addWheel = function (element) {
                 wheelUtil.init(element);
@@ -6213,7 +6217,7 @@ define('cc/ui/Slider', [
                 barStyle[props.size] = pixel + thumbSize / 2;
             }
             if (me.option('reverse')) {
-                pixel = me.inner('maxPixel') - pixel - thumbSize;
+                pixel = me.inner('maxPixel') - pixel;
             }
             var thumbStyle = {};
             thumbStyle[props.position] = pixel;
@@ -6500,6 +6504,11 @@ define('cc/ui/Tooltip', [
         if (!triggerElement && !triggerSelector) {
             me.error('triggerElement\u3001triggerSelector 至少传一个吧\uFF01');
         }
+        var hidden = me.option('hidden');
+        var opened;
+        if ($.type(hidden) === 'boolean') {
+            opened = !hidden;
+        }
         var popup = new Popup({
             layerElement: mainElement,
             triggerElement: triggerElement,
@@ -6508,6 +6517,7 @@ define('cc/ui/Tooltip', [
             showLayerDelay: me.option('showDelay'),
             hideLayerTrigger: me.option('hideTrigger'),
             hideLayerDelay: me.option('hideDelay'),
+            opened: opened,
             showLayerAnimation: function () {
                 me.execute('showAnimation', { mainElement: mainElement });
             },
