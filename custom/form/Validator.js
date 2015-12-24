@@ -61,11 +61,15 @@ define(function (require, exports, module) {
 
             var fieldWidth = fieldElement.outerWidth();
             var fieldHeight = fieldElement.outerHeight();
-            var fieldPosition = fieldElement.position();
+
+            var left = fieldWidth + 8;
+            if (!$.contains(fieldElement[0], errorElement[0])) {
+                left + fieldElement.position().left;
+            }
 
             errorElement.css({
                 position: 'absolute',
-                left: fieldPosition.left + fieldWidth + 8,
+                left: left,
                 top: fieldHeight > height ? 5 : ((fieldHeight - height) / 2),
                 width: width + 1
             });

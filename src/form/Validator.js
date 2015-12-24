@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     var isHidden = require('../function/isHidden');
     var nextTick = require('../function/nextTick');
     var debounce = require('../function/debounce');
+    var toNumber = require('../function/toNumber');
     var lifeUtil = require('../util/life');
     var validator = require('../util/validator');
 
@@ -86,14 +87,13 @@ define(function (require, exports, module) {
      * @property {string=} options.errorTemplate 错误模板
      * @property {string=} options.errorAttribute 找到错误对应的提示元素的属性，如 data-error-for
      *
-     * @property {boolean} options.groupSelector 上面三个 className 作用于哪个元素，不传表示当前字段元素，
-     *                                           传了则用 field.closest(selector) 进行向上查找
+     * @property {string=} options.groupSelector
      * @property {Function=} options.showErrorAnimation
      * @property {Function=} options.hideErrorAnimation
      *
-     * @property {Object=} options.fields 配置字段
+     * @property {Object} options.fields 配置字段
      *
-     * @property {Function} options.render
+     * @property {Function=} options.render
      *
      */
     function Validator(options) {
@@ -115,27 +115,20 @@ define(function (require, exports, module) {
             'focusin' + namespace,
             function (e) {
 
-                var target = $(e.target);
+                var fieldElement = $(e.target);
+                var fieldName = fieldElement.prop('name');
 
-                var groupElement = target.closest(
-                    me.option('groupSelector')
-                );
-                if (groupElement.length === 1) {
-
-                    var errorAttribute = me.option('errorAttribute');
-                    var name = target.prop('name');
-
-                    var errorElement = groupElement.find('[' + errorAttribute + '="' + name + '"]');
-                    if (errorElement.length === 1) {
-                        me.execute(
-                            'hideErrorAnimation',
-                            {
-                                errorElement: errorElement,
-                                fieldElement: target
-                            }
-                        );
-                    }
-
+                var errorAttribute = me.option('errorAttribute');
+                if (fieldName && errorAttribute) {
+                    me.execute(
+                        'hideErrorAnimation',
+                        {
+                            errorElement: mainElement.find(
+                                '[' + errorAttribute + '="' + fieldName + '"]'
+                            ),
+                            fieldElement: fieldElement
+                        }
+                    );
                 }
 
             }
@@ -222,17 +215,23 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                var groupElement = fieldElement.closest(groupSelector);
-                if (isHidden(groupElement)) {
-                    return;
-                }
-
-                data[ name ] = {
+                var item = {
                     name: name,
                     value: $.trim(fieldElement.val()),
-                    fieldElement: fieldElement,
-                    groupElement: groupElement
+                    fieldElement: fieldElement
                 };
+
+                if (groupSelector) {
+                    var groupElement = fieldElement.closest(groupSelector);
+                    if (isHidden(groupElement)) {
+                        return;
+                    }
+                    if (groupElement.length === 1) {
+                        item.groupElement = groupElement;
+                    }
+                }
+
+                data[ name ] = item;
 
             }
         );
@@ -248,29 +247,37 @@ define(function (require, exports, module) {
             $.each(
                 result,
                 function (index, item) {
-                    var errorElement = item.groupElement.find('[' + errorAttribute + '=' + item.name + ']');
+
                     var animationOptions = {
-                        errorElement: errorElement,
-                        fieldElement: item.fieldElement,
-                        rule: item.rule,
-                        error: item.error
+                        fieldElement: item.fieldElement
                     };
 
-                    if (item.error) {
+                    var errorElement;
+                    if (errorAttribute) {
+                        errorElement = mainElement.find('[' + errorAttribute + '=' + item.name + ']');
+                        animationOptions.errorElement = errorElement;
+                    }
+
+                    var error = item.error;
+                    if (error) {
 
                         errors.push(item);
 
-                        var html = me.execute(
-                            'render',
-                            [
-                                {
-                                    error: item.error
-                                },
-                                errorTemplate
-                            ]
-                        );
+                        if (errorElement) {
+                            var html = me.execute(
+                                'render',
+                                [
+                                    {
+                                        error: error
+                                    },
+                                    errorTemplate
+                                ]
+                            );
+                            errorElement.html(html);
+                        }
 
-                        errorElement.html(html);
+                        animationOptions.rule = item.rule;
+                        animationOptions.error = error;
 
                         me.execute(
                             'showErrorAnimation',
@@ -293,12 +300,8 @@ define(function (require, exports, module) {
                     fieldElement = fieldElement.parent();
                 }
 
-                var top = fieldElement.offset().top;
-                var scrollOffset = me.option('scrollOffset');
-
-                if ($.type(scrollOffset) === 'number') {
-                    top += scrollOffset;
-                }
+                var top = fieldElement.offset().top
+                        + toNumber(me.option('scrollOffset'), 0);
 
                 window.scrollTo(
                     window.scrollX,
@@ -324,9 +327,10 @@ define(function (require, exports, module) {
         };
 
         if (result.then) {
-            result.then(function (data) {
+            return result.then(function (data) {
                 result = data;
                 validateComplete();
+                return errors.length === 0;
             });
         }
         else {

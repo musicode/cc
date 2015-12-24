@@ -78,7 +78,7 @@ define(function (require, exports, module) {
     require('./function/offsetWeek');
 
     require('./helper/AjaxUploader');
-    require('./helper/DOMIterator');
+    require('./helper/KeyboardIterator');
     require('./helper/Draggable');
     require('./helper/FlashUploader');
     require('./helper/Input');

@@ -28,11 +28,11 @@ define(function (require, exports, module) {
      * @property {string} options.nextKey next 操作对应的键名，键名参考 util/keyboard
      *
      */
-    function DOMIterator(options) {
+    function KeyboardIterator(options) {
         lifeUtil.init(this, options);
     }
 
-    var proto = DOMIterator.prototype;
+    var proto = KeyboardIterator.prototype;
 
     proto.init = function () {
 
@@ -170,7 +170,7 @@ define(function (require, exports, module) {
 
     lifeUtil.extend(proto, exclude);
 
-    DOMIterator.propertyUpdater = {
+    KeyboardIterator.propertyUpdater = {
         index: function (index) {
             this.inner('iterator').set('index', index);
         },
@@ -182,6 +182,6 @@ define(function (require, exports, module) {
         }
     };
 
-    return DOMIterator;
+    return KeyboardIterator;
 
 });

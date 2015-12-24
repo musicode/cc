@@ -874,6 +874,7 @@ define('cc/form/Validator', [
     '../function/isHidden',
     '../function/nextTick',
     '../function/debounce',
+    '../function/toNumber',
     '../util/life',
     '../util/validator'
 ], function (require, exports, module) {
@@ -881,6 +882,7 @@ define('cc/form/Validator', [
     var isHidden = require('../function/isHidden');
     var nextTick = require('../function/nextTick');
     var debounce = require('../function/debounce');
+    var toNumber = require('../function/toNumber');
     var lifeUtil = require('../util/life');
     var validator = require('../util/validator');
     function Validator(options) {
@@ -893,18 +895,14 @@ define('cc/form/Validator', [
         var mainElement = me.option('mainElement');
         var namespace = me.namespace();
         mainElement.on('focusin' + namespace, function (e) {
-            var target = $(e.target);
-            var groupElement = target.closest(me.option('groupSelector'));
-            if (groupElement.length === 1) {
-                var errorAttribute = me.option('errorAttribute');
-                var name = target.prop('name');
-                var errorElement = groupElement.find('[' + errorAttribute + '="' + name + '"]');
-                if (errorElement.length === 1) {
-                    me.execute('hideErrorAnimation', {
-                        errorElement: errorElement,
-                        fieldElement: target
-                    });
-                }
+            var fieldElement = $(e.target);
+            var fieldName = fieldElement.prop('name');
+            var errorAttribute = me.option('errorAttribute');
+            if (fieldName && errorAttribute) {
+                me.execute('hideErrorAnimation', {
+                    errorElement: mainElement.find('[' + errorAttribute + '="' + fieldName + '"]'),
+                    fieldElement: fieldElement
+                });
             }
         });
         mainElement.on('focusout' + namespace, debounce(function (e) {
@@ -943,16 +941,21 @@ define('cc/form/Validator', [
             if (!fieldElement.length || fieldElement.prop('disabled')) {
                 return;
             }
-            var groupElement = fieldElement.closest(groupSelector);
-            if (isHidden(groupElement)) {
-                return;
-            }
-            data[name] = {
+            var item = {
                 name: name,
                 value: $.trim(fieldElement.val()),
-                fieldElement: fieldElement,
-                groupElement: groupElement
+                fieldElement: fieldElement
             };
+            if (groupSelector) {
+                var groupElement = fieldElement.closest(groupSelector);
+                if (isHidden(groupElement)) {
+                    return;
+                }
+                if (groupElement.length === 1) {
+                    item.groupElement = groupElement;
+                }
+            }
+            data[name] = item;
         });
         var result = validator.validate(data, me.option('fields'));
         var errors = [];
@@ -960,20 +963,24 @@ define('cc/form/Validator', [
             var errorAttribute = me.option('errorAttribute');
             var errorTemplate = me.option('errorTemplate');
             $.each(result, function (index, item) {
-                var errorElement = item.groupElement.find('[' + errorAttribute + '=' + item.name + ']');
-                var animationOptions = {
-                    errorElement: errorElement,
-                    fieldElement: item.fieldElement,
-                    rule: item.rule,
-                    error: item.error
-                };
-                if (item.error) {
+                var animationOptions = { fieldElement: item.fieldElement };
+                var errorElement;
+                if (errorAttribute) {
+                    errorElement = mainElement.find('[' + errorAttribute + '=' + item.name + ']');
+                    animationOptions.errorElement = errorElement;
+                }
+                var error = item.error;
+                if (error) {
                     errors.push(item);
-                    var html = me.execute('render', [
-                        { error: item.error },
-                        errorTemplate
-                    ]);
-                    errorElement.html(html);
+                    if (errorElement) {
+                        var html = me.execute('render', [
+                            { error: error },
+                            errorTemplate
+                        ]);
+                        errorElement.html(html);
+                    }
+                    animationOptions.rule = item.rule;
+                    animationOptions.error = error;
                     me.execute('showErrorAnimation', animationOptions);
                 } else {
                     me.execute('hideErrorAnimation', animationOptions);
@@ -984,11 +991,7 @@ define('cc/form/Validator', [
                 if (fieldElement.is('input[type="hidden"]')) {
                     fieldElement = fieldElement.parent();
                 }
-                var top = fieldElement.offset().top;
-                var scrollOffset = me.option('scrollOffset');
-                if ($.type(scrollOffset) === 'number') {
-                    top += scrollOffset;
-                }
+                var top = fieldElement.offset().top + toNumber(me.option('scrollOffset'), 0);
                 window.scrollTo(window.scrollX, top);
             }
             nextTick(function () {
@@ -1001,9 +1004,10 @@ define('cc/form/Validator', [
             });
         };
         if (result.then) {
-            result.then(function (data) {
+            return result.then(function (data) {
                 result = data;
                 validateComplete();
+                return errors.length === 0;
             });
         } else {
             validateComplete();
@@ -2609,141 +2613,6 @@ define('cc/helper/AjaxUploader', [
     }
     return AjaxUploader;
 });
-define('cc/helper/DOMIterator', [
-    'require',
-    'exports',
-    'module',
-    './Keyboard',
-    './Iterator',
-    '../util/life',
-    '../util/keyboard'
-], function (require, exports, module) {
-    'use strict';
-    var Keyboard = require('./Keyboard');
-    var Iterator = require('./Iterator');
-    var lifeUtil = require('../util/life');
-    var keyboardUtil = require('../util/keyboard');
-    function DOMIterator(options) {
-        lifeUtil.init(this, options);
-    }
-    var proto = DOMIterator.prototype;
-    proto.init = function () {
-        var me = this;
-        var iterator = new Iterator({
-            index: me.option('index'),
-            minIndex: me.option('minIndex'),
-            maxIndex: me.option('maxIndex'),
-            defaultIndex: me.option('defaultIndex'),
-            interval: me.option('interval'),
-            step: me.option('step'),
-            loop: me.option('loop'),
-            watchSync: {
-                index: function (index) {
-                    me.set('index', index);
-                },
-                minIndex: function (minIndex) {
-                    me.set('minIndex', minIndex);
-                },
-                maxIndex: function (maxIndex) {
-                    me.set('maxIndex', maxIndex);
-                }
-            }
-        });
-        var dispatchEvent = function (e, data) {
-            me.emit(e, data);
-        };
-        $.each(exclude, function (index, name) {
-            iterator.before(name, dispatchEvent).after(name, dispatchEvent);
-        });
-        var prevKey = me.option('prevKey');
-        var nextKey = me.option('nextKey');
-        var shortcut = {};
-        shortcut[prevKey] = function (e, data) {
-            if (!data.isLongPress) {
-                iterator.prev();
-            }
-        };
-        shortcut[nextKey] = function (e, data) {
-            if (!data.isLongPress) {
-                iterator.next();
-            }
-        };
-        var mainElement = me.option('mainElement');
-        var keyboard = new Keyboard({
-            mainElement: mainElement,
-            shortcut: shortcut
-        });
-        var playing = false;
-        keyboard.before('longpress', function (e, data) {
-            var reserve;
-            var keyCode = data.keyCode;
-            if (keyCode === keyboardUtil[prevKey]) {
-                reserve = true;
-            } else if (keyCode === keyboardUtil[nextKey]) {
-                reserve = false;
-            }
-            if (reserve != null) {
-                playing = true;
-                me.start(reserve);
-            }
-        }).after('longpress', function () {
-            if (playing) {
-                playing = false;
-                me.pause();
-            }
-        });
-        if (mainElement.is('input[type="text"]')) {
-            keyboard.on('keydown', function (e) {
-                if (e.keyCode === keyboardUtil.up) {
-                    return false;
-                }
-            });
-        }
-        me.inner({
-            iterator: iterator,
-            keyboard: keyboard
-        });
-    };
-    proto.start = function (reserve) {
-        this.inner('iterator').start(reserve);
-    };
-    proto.pause = function () {
-        this.inner('iterator').pause();
-    };
-    proto.stop = function () {
-        this.inner('iterator').stop();
-    };
-    proto.prev = function () {
-        this.inner('iterator').prev();
-    };
-    proto.next = function () {
-        this.inner('iterator').next();
-    };
-    proto.dispose = function () {
-        this.inner('iterator').dispose();
-        this.inner('keyboard').dispose();
-    };
-    var exclude = [
-        'start',
-        'pause',
-        'stop',
-        'prev',
-        'next'
-    ];
-    lifeUtil.extend(proto, exclude);
-    DOMIterator.propertyUpdater = {
-        index: function (index) {
-            this.inner('iterator').set('index', index);
-        },
-        minIndex: function (minIndex) {
-            this.inner('iterator').set('minIndex', minIndex);
-        },
-        maxIndex: function (maxIndex) {
-            this.inner('iterator').set('maxIndex', maxIndex);
-        }
-    };
-    return DOMIterator;
-});
 define('cc/helper/Draggable', [
     'require',
     'exports',
@@ -3395,6 +3264,141 @@ define('cc/helper/Keyboard', [
         return result;
     }
     return Keyboard;
+});
+define('cc/helper/KeyboardIterator', [
+    'require',
+    'exports',
+    'module',
+    './Keyboard',
+    './Iterator',
+    '../util/life',
+    '../util/keyboard'
+], function (require, exports, module) {
+    'use strict';
+    var Keyboard = require('./Keyboard');
+    var Iterator = require('./Iterator');
+    var lifeUtil = require('../util/life');
+    var keyboardUtil = require('../util/keyboard');
+    function KeyboardIterator(options) {
+        lifeUtil.init(this, options);
+    }
+    var proto = KeyboardIterator.prototype;
+    proto.init = function () {
+        var me = this;
+        var iterator = new Iterator({
+            index: me.option('index'),
+            minIndex: me.option('minIndex'),
+            maxIndex: me.option('maxIndex'),
+            defaultIndex: me.option('defaultIndex'),
+            interval: me.option('interval'),
+            step: me.option('step'),
+            loop: me.option('loop'),
+            watchSync: {
+                index: function (index) {
+                    me.set('index', index);
+                },
+                minIndex: function (minIndex) {
+                    me.set('minIndex', minIndex);
+                },
+                maxIndex: function (maxIndex) {
+                    me.set('maxIndex', maxIndex);
+                }
+            }
+        });
+        var dispatchEvent = function (e, data) {
+            me.emit(e, data);
+        };
+        $.each(exclude, function (index, name) {
+            iterator.before(name, dispatchEvent).after(name, dispatchEvent);
+        });
+        var prevKey = me.option('prevKey');
+        var nextKey = me.option('nextKey');
+        var shortcut = {};
+        shortcut[prevKey] = function (e, data) {
+            if (!data.isLongPress) {
+                iterator.prev();
+            }
+        };
+        shortcut[nextKey] = function (e, data) {
+            if (!data.isLongPress) {
+                iterator.next();
+            }
+        };
+        var mainElement = me.option('mainElement');
+        var keyboard = new Keyboard({
+            mainElement: mainElement,
+            shortcut: shortcut
+        });
+        var playing = false;
+        keyboard.before('longpress', function (e, data) {
+            var reserve;
+            var keyCode = data.keyCode;
+            if (keyCode === keyboardUtil[prevKey]) {
+                reserve = true;
+            } else if (keyCode === keyboardUtil[nextKey]) {
+                reserve = false;
+            }
+            if (reserve != null) {
+                playing = true;
+                me.start(reserve);
+            }
+        }).after('longpress', function () {
+            if (playing) {
+                playing = false;
+                me.pause();
+            }
+        });
+        if (mainElement.is('input[type="text"]')) {
+            keyboard.on('keydown', function (e) {
+                if (e.keyCode === keyboardUtil.up) {
+                    return false;
+                }
+            });
+        }
+        me.inner({
+            iterator: iterator,
+            keyboard: keyboard
+        });
+    };
+    proto.start = function (reserve) {
+        this.inner('iterator').start(reserve);
+    };
+    proto.pause = function () {
+        this.inner('iterator').pause();
+    };
+    proto.stop = function () {
+        this.inner('iterator').stop();
+    };
+    proto.prev = function () {
+        this.inner('iterator').prev();
+    };
+    proto.next = function () {
+        this.inner('iterator').next();
+    };
+    proto.dispose = function () {
+        this.inner('iterator').dispose();
+        this.inner('keyboard').dispose();
+    };
+    var exclude = [
+        'start',
+        'pause',
+        'stop',
+        'prev',
+        'next'
+    ];
+    lifeUtil.extend(proto, exclude);
+    KeyboardIterator.propertyUpdater = {
+        index: function (index) {
+            this.inner('iterator').set('index', index);
+        },
+        minIndex: function (minIndex) {
+            this.inner('iterator').set('minIndex', minIndex);
+        },
+        maxIndex: function (maxIndex) {
+            this.inner('iterator').set('maxIndex', maxIndex);
+        }
+    };
+    return KeyboardIterator;
 });
 define('cc/helper/Placeholder', [
     'require',
@@ -4075,7 +4079,7 @@ define('cc/main', [
     './function/lastDateInWeek',
     './function/offsetWeek',
     './helper/AjaxUploader',
-    './helper/DOMIterator',
+    './helper/KeyboardIterator',
     './helper/Draggable',
     './helper/FlashUploader',
     './helper/Input',
@@ -4201,7 +4205,7 @@ define('cc/main', [
     require('./function/lastDateInWeek');
     require('./function/offsetWeek');
     require('./helper/AjaxUploader');
-    require('./helper/DOMIterator');
+    require('./helper/KeyboardIterator');
     require('./helper/Draggable');
     require('./helper/FlashUploader');
     require('./helper/Input');
@@ -4265,7 +4269,7 @@ define('cc/ui/AutoComplete', [
     '../function/autoScrollDown',
     '../helper/Input',
     '../helper/Popup',
-    '../helper/DOMIterator',
+    '../helper/KeyboardIterator',
     '../util/life'
 ], function (require, exports, module) {
     'use strict';
@@ -4274,7 +4278,7 @@ define('cc/ui/AutoComplete', [
     var autoScrollDown = require('../function/autoScrollDown');
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
-    var Iterator = require('../helper/DOMIterator');
+    var Iterator = require('../helper/KeyboardIterator');
     var lifeUtil = require('../util/life');
     function AutoComplete(options) {
         lifeUtil.init(this, options);
@@ -6266,7 +6270,7 @@ define('cc/ui/SpinBox', [
     '../function/minus',
     '../function/divide',
     '../function/toNumber',
-    '../helper/DOMIterator',
+    '../helper/KeyboardIterator',
     '../util/life',
     '../util/instance'
 ], function (require, exports, module) {
@@ -6274,7 +6278,7 @@ define('cc/ui/SpinBox', [
     var minus = require('../function/minus');
     var divide = require('../function/divide');
     var toNumber = require('../function/toNumber');
-    var Iterator = require('../helper/DOMIterator');
+    var Iterator = require('../helper/KeyboardIterator');
     var lifeUtil = require('../util/life');
     var document = require('../util/instance').document;
     function SpinBox(options) {
@@ -9187,6 +9191,7 @@ define('cc/util/localStorage', [
         } catch (e) {
         }
     }
+    exports.support = support;
     if (support) {
         exports.set = set;
         exports.get = get;

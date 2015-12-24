@@ -23,6 +23,10 @@ define(function (require, exports, module) {
      * @property {jQuery} options.viewportElement 显示原始图片的元素，这不是一个 <img />，只是把它当作显示图片的容器
      * @property {jQuery} options.finderElement 取景元素，会跟随鼠标移动
      * @property {string} options.imageUrl 原始图片地址
+     * @property {Function} options.showFinderAnimation
+     * @property {Function} options.hideFinderAnimation
+     * @property {Function} options.showViewportAnimation
+     * @property {Function} options.hideViewportAnimation
      */
     function Zoom(options) {
         lifeUtil.init(this, options);

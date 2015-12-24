@@ -12,7 +12,7 @@ define(function (require, exports, module) {
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
-    var Iterator = require('../helper/DOMIterator');
+    var Iterator = require('../helper/KeyboardIterator');
 
     var lifeUtil = require('../util/life');
 

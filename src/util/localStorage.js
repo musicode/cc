@@ -60,6 +60,8 @@ define(function (require, exports, module) {
 
     }
 
+    exports.support = support;
+
     if (support) {
         exports.set = set;
         exports.get = get;

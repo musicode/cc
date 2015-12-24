@@ -10,7 +10,7 @@ define(function (require, exports, module) {
     var divide = require('../function/divide');
     var toNumber = require('../function/toNumber');
 
-    var Iterator = require('../helper/DOMIterator');
+    var Iterator = require('../helper/KeyboardIterator');
 
     var lifeUtil = require('../util/life');
     var document = require('../util/instance').document;

@@ -2,9 +2,9 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var DOMIterator = require('cc/helper/DOMIterator');
+    var KeyboardIterator = require('cc/helper/KeyboardIterator');
 
-    DOMIterator.defaultOptions = {
+    KeyboardIterator.defaultOptions = {
         loop: true,
         interval: 100,
         step: 1,
@@ -15,6 +15,6 @@ define(function (require, exports, module) {
         nextKey: 'down'
     };
 
-    return DOMIterator;
+    return KeyboardIterator;
 
 });

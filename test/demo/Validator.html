@@ -176,7 +176,15 @@
             $('.btn-primary').click(
 
                 function () {
-                    console.log(validator.validate());
+                    var result = validator.validate();
+                    if ($.type(result) === 'boolean') {
+                        console.log(result);
+                    }
+                    else if (result.then) {
+                        result.then(function (result) {
+                            console.log(result);
+                        });
+                    }
                 }
             );
 
