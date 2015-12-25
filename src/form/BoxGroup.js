@@ -23,7 +23,7 @@ define(function (require, exports, module) {
      * @property {string=} options.value
      * @property {boolean=} options.multiple 是否可多选
      * @property {boolean=} options.toggle 是否可反选
-     * @property {string} options.boxTemplate
+     * @property {string=} options.boxTemplate
      * @property {string} options.boxSelector
      * @property {string=} options.boxCheckedClass
      * @property {string=} options.boxDisabledClass

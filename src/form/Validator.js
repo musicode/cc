@@ -53,16 +53,16 @@ define(function (require, exports, module) {
      *                 maxlength: 10,
      *                 pattern: 'number',
      *                 custom: function (data) {
-      *                    var value = data.value;
-      *                    ....
-      *                    return true/false/Promise;
-      *                }
+     *                     var value = data.value;
+     *                     ....
+     *                     return true/false/Promise;
+     *                 }
      *             },
      *
      *             // 与 rules 一一对应的错误信息
      *             errors: {
      *                 required: '请输入用户名',
-     *                 min: '最小为 3'，
+     *                 min: '最小为 3',
      *                 ...,
      *                 custom: '自定义错误'
      *             }
@@ -167,7 +167,7 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 验证表单的所有字段
+     * 验证表单字段
      *
      * @param {(Array.<string>|string)=} fields 可选，验证一个或多个字段
      *                                          如 ['username', 'password']

@@ -165,7 +165,7 @@ define(function (require, exports, module) {
         checked: function (checked) {
 
             if ($.type(checked) !== 'boolean') {
-                checked = common.prop(this, 'checked') === 'checked';
+                checked = common.prop(this, 'checked');
             }
 
             return checked;
@@ -175,7 +175,7 @@ define(function (require, exports, module) {
         disabled: function (disabled) {
 
             if ($.type(disabled) !== 'boolean') {
-                disabled = common.prop(this, 'disabled') === 'disabled';
+                disabled = common.prop(this, 'disabled');
             }
 
             return disabled;

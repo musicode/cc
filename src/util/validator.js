@@ -26,7 +26,7 @@ define(function (require, exports, module) {
         pattern: function (data, rules) {
             var pattern = rules.pattern;
             if ($.type(pattern) === 'string') {
-                pattern = buildInPatterns[ pattern ];
+                pattern = exports.buildInPatterns[ pattern ];
             }
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
@@ -77,10 +77,9 @@ define(function (require, exports, module) {
     /**
      * 内置常用正则
      *
-     * @inner
      * @type {Object}
      */
-    var buildInPatterns = {
+    exports.buildInPatterns = {
         int: /^\d+$/,
         number: /^-?[\d.]*$/,
         positive: /^[\d.]*$/,

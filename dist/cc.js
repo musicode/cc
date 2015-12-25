@@ -82,13 +82,13 @@ define('cc/form/Box', [
     Box.stateValidator = {
         checked: function (checked) {
             if ($.type(checked) !== 'boolean') {
-                checked = common.prop(this, 'checked') === 'checked';
+                checked = common.prop(this, 'checked');
             }
             return checked;
         },
         disabled: function (disabled) {
             if ($.type(disabled) !== 'boolean') {
-                disabled = common.prop(this, 'disabled') === 'disabled';
+                disabled = common.prop(this, 'disabled');
             }
             return disabled;
         }
@@ -10066,7 +10066,7 @@ define('cc/util/validator', [
         pattern: function (data, rules) {
             var pattern = rules.pattern;
             if ($.type(pattern) === 'string') {
-                pattern = buildInPatterns[pattern];
+                pattern = exports.buildInPatterns[pattern];
             }
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
@@ -10106,7 +10106,7 @@ define('cc/util/validator', [
             }
         }
     };
-    var buildInPatterns = {
+    exports.buildInPatterns = {
         int: /^\d+$/,
         number: /^-?[\d.]*$/,
         positive: /^[\d.]*$/,
