@@ -210,24 +210,28 @@ define(function (require, exports, module) {
 
             inputUtil.init(inputElement);
 
+            var refresh = function () {
+                var hidden = $.trim(inputElement.val()).length > 0;
+                if (hidden !== instance.is('hidden')) {
+                    // 为了触发 before 和 after 事件才调用实例方法
+                    // 而不是 instance.state(hidden)
+                    if (hidden) {
+                        instance.hide();
+                    }
+                    else {
+                        instance.show();
+                    }
+                }
+            };
+
+            refresh();
+
             var namespace = instance.namespace();
             mainElement
                 .on('click' + namespace, labelSelector, function () {
                     inputElement.focus();
                 })
-                .on(inputUtil.INPUT + namespace, inputSelector, function () {
-                    var hidden = $.trim(inputElement.val()).length > 0;
-                    if (hidden !== instance.is('hidden')) {
-                        // 为了触发 before 和 after 事件才调用实例方法
-                        // 而不是 instance.state(hidden)
-                        if (hidden) {
-                            instance.hide();
-                        }
-                        else {
-                            instance.show();
-                        }
-                    }
-                });
+                .on(inputUtil.INPUT + namespace, inputSelector, refresh);
 
         },
         show: function (instance) {

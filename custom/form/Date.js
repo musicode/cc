@@ -30,7 +30,7 @@ define(function (require, exports, module) {
         nextSelector: '.icon-chevron-right',
 
         showLayerTrigger: 'focus',
-        hideLayerTrigger: 'blur,click',
+        hideLayerTrigger: 'click',
         showLayerAnimation: function (options) {
             options.layerElement.show();
         },

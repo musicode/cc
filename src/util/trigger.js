@@ -1,3 +1,7 @@
+/**
+ * @file 事件触发器
+ * @author musicode
+ */
 define(function (require, exports, module) {
 
     'use strict';
@@ -61,9 +65,10 @@ define(function (require, exports, module) {
 
                     };
 
-                    startDelay(fn, options);
-
-                    startTimer();
+                    if (!options[ delayTimer ]) {
+                        startDelay(fn, options);
+                        startTimer();
+                    }
 
                 }
                 else {

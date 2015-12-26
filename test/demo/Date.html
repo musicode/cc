@@ -7,17 +7,14 @@
         <link rel="stylesheet" href="http://test.genshuixue.com/asset/css/static/app.css">
 
         <style>
-            .calendar {
-                display: none
-            }
         </style>
 
     </head>
     <body>
 
         <div class="form-date">
-            <input type="text" name="date" />
-            <div class="calendar"></div>
+            <input type="text" name="date" value="2015-12-31" />
+            <div class="calendar" style="display:none;"></div>
         </div>
 
         <script src="./js/jquery.js"></script>
@@ -36,7 +33,10 @@
 
                     new FormDate({
                         mainElement: $('.form-date'),
-                        value: '2015-09-26',
+                        //value: '2015-12-31',
+                        multiple: true,
+                        hideLayerTrigger: 'leave',
+                        hideLayerDelay: 1000,
                         ondebug: function (event, data) {
                             console.log(
                                 event.type,

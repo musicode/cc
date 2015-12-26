@@ -140,8 +140,9 @@ define(function (require, exports, module) {
 
             var event = e.originalEvent;
             if (event.type === 'beforeclose') {
-                var target = event.originalEvent.target;
-                if (target) {
+                var originalEvent = event.originalEvent;
+                var target = originalEvent.target;
+                if (originalEvent.type === 'click' && target) {
                     if (!contains(document, target) // 日历刷新后触发，所以元素没了
                         || contains(inputElement, target)
                         || contains(layerElement, target)

@@ -173,12 +173,9 @@ define('cc/form/BoxGroup', [
             if (!value) {
                 return;
             }
+            var valueUtil = me.inner('value');
             $.each(me.inner('boxes'), function (index, box) {
-                if (box.get('value') === value) {
-                    box.state('checked', true);
-                } else if (!me.option('multiple')) {
-                    box.state('checked', false);
-                }
+                box.state('checked', valueUtil.has(box.get('value')));
             });
         }
     };
@@ -271,8 +268,9 @@ define('cc/form/Date', [
         popup.on('dispatch', function (e, data) {
             var event = e.originalEvent;
             if (event.type === 'beforeclose') {
-                var target = event.originalEvent.target;
-                if (target) {
+                var originalEvent = event.originalEvent;
+                var target = originalEvent.target;
+                if (originalEvent.type === 'click' && target) {
                     if (!contains(document, target) || contains(inputElement, target) || contains(layerElement, target)) {
                         return false;
                     }
@@ -422,8 +420,9 @@ define('cc/form/DateRange', [
         popup.on('dispatch', function (e, data) {
             var event = e.originalEvent;
             if (event.type === 'beforeclose') {
-                var target = event.originalEvent.target;
-                if (target) {
+                var originalEvent = event.originalEvent;
+                var target = originalEvent.target;
+                if (originalEvent.type === 'click' && target) {
                     if (!contains(document, target) || contains(inputElement, target) || contains(layerElement, target)) {
                         return false;
                     }
@@ -3516,10 +3515,7 @@ define('cc/helper/Placeholder', [
                 label: mainElement.find(labelSelector)
             });
             inputUtil.init(inputElement);
-            var namespace = instance.namespace();
-            mainElement.on('click' + namespace, labelSelector, function () {
-                inputElement.focus();
-            }).on(inputUtil.INPUT + namespace, inputSelector, function () {
+            var refresh = function () {
                 var hidden = $.trim(inputElement.val()).length > 0;
                 if (hidden !== instance.is('hidden')) {
                     if (hidden) {
@@ -3528,7 +3524,12 @@ define('cc/helper/Placeholder', [
                         instance.show();
                     }
                 }
-            });
+            };
+            refresh();
+            var namespace = instance.namespace();
+            mainElement.on('click' + namespace, labelSelector, function () {
+                inputElement.focus();
+            }).on(inputUtil.INPUT + namespace, inputSelector, refresh);
         },
         show: function (instance) {
             instance.execute('showAnimation', { labelElement: instance.inner('label') });
@@ -9932,8 +9933,10 @@ define('cc/util/trigger', [
                             done();
                         }
                     };
-                    startDelay(fn, options);
-                    startTimer();
+                    if (!options[delayTimer]) {
+                        startDelay(fn, options);
+                        startTimer();
+                    }
                 } else {
                     done();
                 }

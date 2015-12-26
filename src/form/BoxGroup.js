@@ -146,16 +146,16 @@ define(function (require, exports, module) {
                 return;
             }
 
+            var valueUtil = me.inner('value');
+
             $.each(
                 me.inner('boxes'),
                 function (index, box) {
 
-                    if (box.get('value') === value) {
-                        box.state('checked', true);
-                    }
-                    else if (!me.option('multiple')) {
-                        box.state('checked', false);
-                    }
+                    box.state(
+                        'checked',
+                        valueUtil.has(box.get('value'))
+                    );
 
                 }
             );

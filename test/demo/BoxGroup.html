@@ -33,11 +33,11 @@
 
     <div class="checkbox-group">
         <label class="checkbox">
-            <input type="checkbox" name="city" value="beijing" /> 北京
+            <input type="checkbox" name="city" value="beijing" checked /> 北京
         </label>
 
         <label class="checkbox">
-            <input type="checkbox" name="city" value="shanghai" /> 上海
+            <input type="checkbox" name="city" value="shanghai" checked /> 上海
         </label>
 
         <label class="checkbox">
@@ -83,6 +83,7 @@
                     multiple: true,
                     toggle: true,
                     name: 'checkbox',
+                    value: 'beijing',
                     boxSelector: '.checkbox',
                     boxCheckedClass: 'checked',
                     boxDisabledClass: 'disabled',
@@ -97,6 +98,7 @@
                     mainElement: $('.radio-group'),
                     multiple: false,
                     name: 'radio',
+                    value: 'shanghai',
                     boxSelector: '.radio',
                     boxCheckedClass: 'checked',
                     boxDisabledClass: 'disabled',

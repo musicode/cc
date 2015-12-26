@@ -27,13 +27,13 @@ define(function (require, exports, module) {
      *
      * @property {Date=} options.today 服务器时间校正，避免客户端时间不准
      * @property {Date=} options.date 打开面板所在月份
-     * @property {string=} options.mode 视图类型，可选值包括 month, week
+     * @property {string} options.mode 视图类型，可选值包括 month, week
      * @property {boolean=} options.stable 是否稳定，即行数稳定，不会出现某月 4 行，某月 5 行的情况
      * @property {boolean=} options.multiple 是否可多选
      *
-     * @property {string=} options.showLayerTrigger 显示的触发方式
+     * @property {string} options.showLayerTrigger 显示的触发方式
      * @property {number=} options.showLayerDelay 显示延时
-     * @property {Function=} options.showLayerAnimation 显示动画
+     * @property {Function} options.showLayerAnimation 显示动画
      *
      * @property {string=} options.hideLayerTrigger 隐藏的触发方式
      * @property {number=} options.hideLayerDelay 隐藏延时
@@ -129,8 +129,9 @@ define(function (require, exports, module) {
             var event = e.originalEvent;
 
             if (event.type === 'beforeclose') {
-                var target = event.originalEvent.target;
-                if (target) {
+                var originalEvent = event.originalEvent;
+                var target = originalEvent.target;
+                if (originalEvent.type === 'click' && target) {
                     if (!contains(document, target) // 日历刷新后触发，所以元素没了
                         || contains(inputElement, target)
                         || contains(layerElement, target)
