@@ -34,7 +34,7 @@ define(function (require, exports, module) {
         cancelSelector: '.footer > .buttons > .link',
 
         showLayerTrigger: 'focus',
-        hideLayerTrigger: 'blur,click',
+        hideLayerTrigger: 'click',
         showLayerAnimation: function (options) {
             options.layerElement.show();
         },

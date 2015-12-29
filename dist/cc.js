@@ -412,7 +412,11 @@ define('cc/form/DateRange', [
         me.once('aftersync', function () {
             popup.option('watchSync', {
                 opened: function (opened) {
-                    me.state('opened', opened);
+                    if (opened) {
+                        me.open();
+                    } else {
+                        me.close();
+                    }
                 }
             });
             me.state('opened', popup.is('opened'));
@@ -458,7 +462,9 @@ define('cc/form/DateRange', [
         });
         me.set({
             name: me.option('name'),
-            value: me.option('value')
+            value: me.option('value'),
+            startDate: me.option('startDate'),
+            endDate: me.option('endDate')
         });
     };
     proto.open = function () {
@@ -480,17 +486,45 @@ define('cc/form/DateRange', [
         'open',
         'close'
     ]);
-    DateRange.propertyUpdater = {
-        name: function (name) {
-            common.prop(this, 'name', name);
-        },
-        value: function (value) {
-            var me = this;
-            common.prop(me, 'value', value);
-            var terms = split(value, SEPRATOR);
-            me.inner('startCalendar').set('value', terms[0]);
-            me.inner('endCalendar').set('value', terms[1]);
+    DateRange.propertyUpdater = {};
+    DateRange.propertyUpdater.name = DateRange.propertyUpdater.value = DateRange.propertyUpdater.startDate = DateRange.propertyUpdater.endDate = function (newValue, oldValue, changes) {
+        var me = this;
+        var nameChange = changes.name;
+        if (nameChange) {
+            common.prop(me, 'name', nameChange.newValue);
         }
+        var value;
+        var valueChange = changes.value;
+        if (valueChange) {
+            value = valueChange.newValue;
+        } else {
+            var startDate;
+            var endDate;
+            var startDateChange = changes.startDate;
+            if (startDateChange) {
+                startDate = startDateChange.newValue;
+            }
+            var endDateChange = changes.endDate;
+            if (endDateChange) {
+                endDate = endDateChange.newValue;
+            }
+            if ($.type(startDate) === 'string' || $.type(endDate) === 'string') {
+                value = [
+                    startDate || me.get('startDate'),
+                    endDate || me.get('endDate')
+                ].join(SEPRATOR);
+            }
+        }
+        if ($.type(value) === 'string') {
+            me.set('value', value, { silent: true });
+            common.prop(this, 'value', value);
+            var terms = split(value, SEPRATOR);
+            me.set({
+                startDate: terms[0],
+                endDate: terms[1]
+            });
+        }
+        return false;
     };
     DateRange.propertyValidator = {
         name: function (name) {
@@ -498,6 +532,14 @@ define('cc/form/DateRange', [
         },
         value: function (value) {
             return common.validateValue(this, value);
+        },
+        startDate: function (startDate) {
+            var date = this.execute('parse', startDate);
+            return $.type(date) === 'date' ? startDate : '';
+        },
+        endDate: function (endDate) {
+            var date = this.execute('parse', endDate);
+            return $.type(date) === 'date' ? endDate : '';
         }
     };
     DateRange.stateUpdater = {
@@ -535,11 +577,11 @@ define('cc/form/DateRange', [
             }
         });
         instance.once('aftersync', function () {
-            calendar.option('watchSync', {
-                value: function (value) {
-                    instance.set(propName, value);
-                }
-            });
+            var watch = {};
+            watch[propName] = function (value) {
+                calendar.set('value', value);
+            };
+            instance.option({ watchSync: watch });
             calendar.set('value', instance.get(propName));
         });
         return calendar;

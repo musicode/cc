@@ -9,6 +9,7 @@ define(function (require, exports, module) {
         interval: 60,
         includeInput: true,
         itemSelector: '.item',
+        valueAttribute: 'data-value',
         showMenuTrigger: 'focus',
         hideMenuTrigger: 'click',
         showMenuAnimation: function (options) {

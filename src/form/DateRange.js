@@ -127,7 +127,12 @@ define(function (require, exports, module) {
                 'watchSync',
                 {
                     opened: function (opened) {
-                        me.state('opened', opened);
+                        if (opened) {
+                            me.open();
+                        }
+                        else {
+                            me.close();
+                        }
                     }
                 }
             );
@@ -198,7 +203,9 @@ define(function (require, exports, module) {
 
         me.set({
             name: me.option('name'),
-            value: me.option('value')
+            value: me.option('value'),
+            startDate: me.option('startDate'),
+            endDate: me.option('endDate')
         });
 
     };
@@ -232,22 +239,66 @@ define(function (require, exports, module) {
 
     lifeUtil.extend(proto, [ 'open', 'close' ]);
 
-    DateRange.propertyUpdater = {
+    DateRange.propertyUpdater = { };
+    DateRange.propertyUpdater.name =
+    DateRange.propertyUpdater.value =
+    DateRange.propertyUpdater.startDate =
+    DateRange.propertyUpdater.endDate = function (newValue, oldValue, changes) {
 
-        name: function (name) {
-            common.prop(this, 'name', name);
-        },
-        value: function (value) {
+        var me = this;
 
-            var me = this;
+        var nameChange = changes.name;
+        if (nameChange) {
+            common.prop(me, 'name', nameChange.newValue);
+        }
 
-            common.prop(me, 'value', value);
+        var value;
 
-            var terms = split(value, SEPRATOR);
-            me.inner('startCalendar').set('value', terms[0]);
-            me.inner('endCalendar').set('value', terms[1]);
+        var valueChange = changes.value;
+        if (valueChange) {
+            value = valueChange.newValue;
+        }
+        else {
+
+            var startDate;
+            var endDate;
+
+            var startDateChange = changes.startDate;
+            if (startDateChange) {
+                startDate = startDateChange.newValue;
+            }
+
+            var endDateChange = changes.endDate;
+            if (endDateChange) {
+                endDate = endDateChange.newValue;
+            }
+
+            if ($.type(startDate) === 'string'
+                || $.type(endDate) === 'string'
+            ) {
+                value = [
+                    startDate || me.get('startDate'),
+                    endDate || me.get('endDate')
+                ].join(SEPRATOR);
+            }
 
         }
+
+        if ($.type(value) === 'string') {
+
+            me.set('value', value, { silent: true });
+
+            common.prop(this, 'value', value);
+
+            var terms = split(value, SEPRATOR);
+
+            me.set({
+                startDate: terms[0],
+                endDate: terms[1]
+            });
+        }
+
+        return false;
 
     };
 
@@ -258,6 +309,14 @@ define(function (require, exports, module) {
         },
         value: function (value) {
             return common.validateValue(this, value);
+        },
+        startDate: function (startDate) {
+            var date = this.execute('parse', startDate);
+            return $.type(date) === 'date' ? startDate : '';
+        },
+        endDate: function (endDate) {
+            var date = this.execute('parse', endDate);
+            return $.type(date) === 'date' ? endDate : '';
         }
 
     };
@@ -298,17 +357,14 @@ define(function (require, exports, module) {
             }
         });
         instance.once('aftersync', function () {
-
-            calendar.option(
-                'watchSync',
-                {
-                    value: function (value) {
-                        instance.set(propName, value);
-                    }
-                }
-            );
+            var watch = { };
+            watch[propName] = function (value) {
+                calendar.set('value', value);
+            };
+            instance.option({
+                watchSync: watch
+            });
             calendar.set('value', instance.get(propName));
-
         });
         return calendar;
     }
