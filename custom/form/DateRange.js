@@ -13,6 +13,7 @@ define(function (require, exports, module) {
         mode: 'month',
         multiple: false,
         stable: true,
+        separator: ' - ',
 
         valueAttribute: 'data-value',
         parse: function (text) {

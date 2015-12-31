@@ -390,7 +390,27 @@ define('cc/form/DateRange', [
         var inputElement = mainElement.find(me.option('inputSelector'));
         var layerElement = mainElement.find(me.option('layerSelector'));
         var startCalendar = createCalendar(me, layerElement.find(me.option('startCalendarSelector')), 'startDate');
+        startCalendar.on('valueadd', function (e, data) {
+            var endDate = endCalendar.get('value');
+            if (endDate) {
+                var startDate = me.execute('parse', data.value);
+                endDate = me.execute('parse', endDate);
+                if (startDate > endDate) {
+                    return false;
+                }
+            }
+        });
         var endCalendar = createCalendar(me, layerElement.find(me.option('endCalendarSelector')), 'endDate');
+        endCalendar.on('valueadd', function (e, data) {
+            var startDate = startCalendar.get('value');
+            if (startDate) {
+                var endDate = me.execute('parse', data.value);
+                startDate = me.execute('parse', startDate);
+                if (startDate > endDate) {
+                    return false;
+                }
+            }
+        });
         var popup = new Popup({
             triggerElement: inputElement,
             layerElement: layerElement,
@@ -442,7 +462,7 @@ define('cc/form/DateRange', [
                     startCalendar.get('value'),
                     endCalendar.get('value')
                 ];
-                me.set('value', list.join(SEPRATOR));
+                me.set('value', list.join(me.option('separator')));
                 me.close();
             });
         }
@@ -489,6 +509,7 @@ define('cc/form/DateRange', [
     DateRange.propertyUpdater = {};
     DateRange.propertyUpdater.name = DateRange.propertyUpdater.value = DateRange.propertyUpdater.startDate = DateRange.propertyUpdater.endDate = function (newValue, oldValue, changes) {
         var me = this;
+        var separator = me.option('separator');
         var nameChange = changes.name;
         if (nameChange) {
             common.prop(me, 'name', nameChange.newValue);
@@ -509,16 +530,24 @@ define('cc/form/DateRange', [
                 endDate = endDateChange.newValue;
             }
             if ($.type(startDate) === 'string' || $.type(endDate) === 'string') {
-                value = [
-                    startDate || me.get('startDate'),
-                    endDate || me.get('endDate')
-                ].join(SEPRATOR);
+                if (!startDate) {
+                    startDate = me.get('startDate');
+                }
+                if (!endDate) {
+                    endDate = me.get('endDate');
+                }
+                if (me.execute('parse', startDate) <= me.execute('parse', endDate)) {
+                    value = [
+                        startDate,
+                        endDate
+                    ].join(separator);
+                }
             }
         }
         if ($.type(value) === 'string') {
             me.set('value', value, { silent: true });
             common.prop(this, 'value', value);
-            var terms = split(value, SEPRATOR);
+            var terms = split(value, separator);
             me.set({
                 startDate: terms[0],
                 endDate: terms[1]
@@ -558,7 +587,7 @@ define('cc/form/DateRange', [
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
             parse: instance.option('parse'),
-            date: instance.option('startDate'),
+            date: instance.option(propName),
             today: instance.option('today'),
             stable: instance.option('stable'),
             firstDay: instance.option('firstDay'),
@@ -586,7 +615,6 @@ define('cc/form/DateRange', [
         });
         return calendar;
     }
-    var SEPRATOR = ' - ';
     return DateRange;
 });
 define('cc/form/Number', [
@@ -633,10 +661,10 @@ define('cc/form/Number', [
                     me.set('maxValue', maxValue);
                 }
             });
-            spinbox.set({
-                value: me.get('value'),
-                minValue: me.get('minValue'),
-                maxValue: me.get('maxValue')
+            me.set({
+                value: spinbox.get('value'),
+                minValue: spinbox.get('minValue'),
+                maxValue: spinbox.get('maxValue')
             });
         });
         me.inner({
@@ -644,12 +672,7 @@ define('cc/form/Number', [
             native: spinbox.inner('input'),
             spinbox: spinbox
         });
-        me.set({
-            name: me.option('name'),
-            value: me.option('value'),
-            minValue: me.option('minValue'),
-            maxValue: me.option('maxValue')
-        });
+        me.set({ name: me.option('name') });
     };
     proto.dispose = function () {
         lifeUtil.dispose(this);
@@ -662,6 +685,12 @@ define('cc/form/Number', [
         },
         value: function (value) {
             this.inner('spinbox').set('value', value);
+        },
+        minValue: function (minValue) {
+            this.inner('spinbox').set('minValue', minValue);
+        },
+        maxValue: function (maxValue) {
+            this.inner('spinbox').set('maxValue', maxValue);
         }
     };
     Number.propertyValidator = {
@@ -4650,16 +4679,24 @@ define('cc/ui/Calendar', [
             }
             mainElement.on(clickType, itemSelector, function () {
                 var value = $(this).attr(valueAttribute);
+                var event;
                 var valueUtil = me.inner('value');
                 if (valueUtil.has(value)) {
                     if (me.option('toggle')) {
+                        event = 'valuedel';
                         valueUtil.remove(value);
                     }
                 } else {
+                    event = 'valueadd';
                     valueUtil.add(value);
                 }
-                me.set('value', valueUtil.get());
-                me.sync();
+                if (event) {
+                    event = me.emit(event, { value: value });
+                    if (!event.isDefaultPrevented()) {
+                        me.set('value', valueUtil.get());
+                        me.sync();
+                    }
+                }
             });
         }
         var prevSelector = me.option('prevSelector');

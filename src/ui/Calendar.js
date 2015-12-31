@@ -78,23 +78,31 @@ define(function (require) {
             mainElement.on(clickType, itemSelector, function () {
 
                 var value = $(this).attr(valueAttribute);
+                var event;
 
                 var valueUtil = me.inner('value');
                 if (valueUtil.has(value)) {
                     if (me.option('toggle')) {
+                        event = 'valuedel';
                         valueUtil.remove(value);
                     }
                 }
                 else {
+                    event = 'valueadd';
                     valueUtil.add(value);
                 }
 
-                me.set(
-                    'value',
-                    valueUtil.get()
-                );
+                if (event) {
+                    event = me.emit(event, { value: value });
+                    if (!event.isDefaultPrevented()) {
+                        me.set(
+                            'value',
+                            valueUtil.get()
+                        );
 
-                me.sync();
+                        me.sync();
+                    }
+                }
 
             });
         }

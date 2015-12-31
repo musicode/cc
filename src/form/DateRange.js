@@ -6,15 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    /**
-     * 点击一个按钮弹出一个有两个日历组件的面板
-     *
-     * 主元素需要包含两个 <input type="hidden" />
-     * 一个是 startDate 一个是 endDate
-     *
-     * 选择日期，会改写相应的 input
-     */
-
     var split = require('../function/split');
     var contains = require('../function/contains');
 
@@ -32,6 +23,7 @@ define(function (require, exports, module) {
      * @property {jQuery} options.mainElement
      * @property {string} options.inputSelector
      * @property {string} options.layerSelector
+     * @property {string} options.separator
      *
      * @property {string=} options.showLayerTrigger 显示的触发方式
      * @property {number=} options.showLayerDelay 显示延时
@@ -41,7 +33,9 @@ define(function (require, exports, module) {
      * @property {number=} options.hideLayerDelay 隐藏延时
      * @property {Function=} options.hideLayerAnimation 隐藏动画
      *
-     * @property {string=} options.calendarSelector 日历选择器，layerElement 应该有两个日历元素
+     * @property {string=} options.startCalendarSelector 开始日历选择器
+     * @property {string=} options.endCalendarSelector 结束日历选择器
+     *
      * @property {string=} options.calendarTemplate 日历模板
      *
      * @property {string=} options.prevSelector 日历元素中的上个月的按钮选择器
@@ -82,6 +76,17 @@ define(function (require, exports, module) {
             ),
             'startDate'
         );
+        startCalendar.on('valueadd', function (e, data) {
+            var endDate = endCalendar.get('value');
+            if (endDate) {
+                var startDate = me.execute('parse', data.value);
+                endDate = me.execute('parse', endDate);
+                if (startDate > endDate) {
+                    return false;
+                }
+            }
+        });
+
         var endCalendar = createCalendar(
             me,
             layerElement.find(
@@ -89,6 +94,16 @@ define(function (require, exports, module) {
             ),
             'endDate'
         );
+        endCalendar.on('valueadd', function (e, data) {
+            var startDate = startCalendar.get('value');
+            if (startDate) {
+                var endDate = me.execute('parse', data.value);
+                startDate = me.execute('parse', startDate);
+                if (startDate > endDate) {
+                    return false;
+                }
+            }
+        });
 
 
         var popup = new Popup({
@@ -174,7 +189,7 @@ define(function (require, exports, module) {
                         startCalendar.get('value'),
                         endCalendar.get('value')
                     ];
-                    me.set('value', list.join(SEPRATOR));
+                    me.set('value', list.join(me.option('separator')));
                     me.close();
                 }
             );
@@ -246,6 +261,7 @@ define(function (require, exports, module) {
     DateRange.propertyUpdater.endDate = function (newValue, oldValue, changes) {
 
         var me = this;
+        var separator = me.option('separator');
 
         var nameChange = changes.name;
         if (nameChange) {
@@ -276,10 +292,15 @@ define(function (require, exports, module) {
             if ($.type(startDate) === 'string'
                 || $.type(endDate) === 'string'
             ) {
-                value = [
-                    startDate || me.get('startDate'),
-                    endDate || me.get('endDate')
-                ].join(SEPRATOR);
+                if (!startDate) {
+                    startDate = me.get('startDate');
+                }
+                if (!endDate) {
+                    endDate = me.get('endDate');
+                }
+                if (me.execute('parse', startDate) <= me.execute('parse', endDate)) {
+                    value = [ startDate, endDate ].join(separator);
+                }
             }
 
         }
@@ -290,7 +311,7 @@ define(function (require, exports, module) {
 
             common.prop(this, 'value', value);
 
-            var terms = split(value, SEPRATOR);
+            var terms = split(value, separator);
 
             me.set({
                 startDate: terms[0],
@@ -341,7 +362,7 @@ define(function (require, exports, module) {
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
             parse: instance.option('parse'),
-            date: instance.option('startDate'),
+            date: instance.option(propName),
             today: instance.option('today'),
             stable: instance.option('stable'),
             firstDay: instance.option('firstDay'),
@@ -369,7 +390,6 @@ define(function (require, exports, module) {
         return calendar;
     }
 
-    var SEPRATOR = ' - ';
 
     return DateRange;
 

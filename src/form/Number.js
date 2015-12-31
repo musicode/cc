@@ -70,10 +70,10 @@ define(function (require, exports, module) {
                 }
             );
 
-            spinbox.set({
-                value: me.get('value'),
-                minValue: me.get('minValue'),
-                maxValue: me.get('maxValue')
+            me.set({
+                value: spinbox.get('value'),
+                minValue: spinbox.get('minValue'),
+                maxValue: spinbox.get('maxValue')
             });
 
         });
@@ -85,10 +85,7 @@ define(function (require, exports, module) {
         });
 
         me.set({
-            name: me.option('name'),
-            value: me.option('value'),
-            minValue: me.option('minValue'),
-            maxValue: me.option('maxValue')
+            name: me.option('name')
         });
 
     };
@@ -101,23 +98,24 @@ define(function (require, exports, module) {
     lifeUtil.extend(proto);
 
     Number.propertyUpdater = {
-
         name: function (name) {
             common.prop(this, 'name', name);
         },
-
         value: function (value) {
             this.inner('spinbox').set('value', value);
+        },
+        minValue: function (minValue) {
+            this.inner('spinbox').set('minValue', minValue);
+        },
+        maxValue: function (maxValue) {
+            this.inner('spinbox').set('maxValue', maxValue);
         }
-
     };
 
     Number.propertyValidator = {
-
         name: function (name) {
             return common.validateName(this, name);
         }
-
     };
 
 
