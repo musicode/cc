@@ -64,7 +64,7 @@ define(function (require, exports, module) {
 
             var left = fieldWidth + 8;
             if (!$.contains(fieldElement[0], errorElement[0])) {
-                left + fieldElement.position().left;
+                left += fieldElement.position().left;
             }
 
             errorElement.css({

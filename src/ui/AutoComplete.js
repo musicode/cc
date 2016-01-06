@@ -123,9 +123,10 @@ define(function (require, exports, module) {
             minIndex: me.option('includeInput') ? 0 : 1,
             defaultIndex: 0,
             step: 1,
-            loop: me.option('loop'),
             prevKey: 'up',
             nextKey: 'down',
+            loop: me.option('loop'),
+            autoOnLongPress: true,
             interval: me.option('interval'),
             watchSync: {
                 index: function (newIndex) {

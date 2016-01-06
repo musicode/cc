@@ -212,15 +212,13 @@ define(function (require, exports, module) {
 
             var refresh = function () {
                 var hidden = $.trim(inputElement.val()).length > 0;
-                if (hidden !== instance.is('hidden')) {
-                    // 为了触发 before 和 after 事件才调用实例方法
-                    // 而不是 instance.state(hidden)
-                    if (hidden) {
-                        instance.hide();
-                    }
-                    else {
-                        instance.show();
-                    }
+                // 为了触发 before 和 after 事件才调用实例方法
+                // 而不是 instance.state(hidden)
+                if (hidden) {
+                    instance.hide();
+                }
+                else {
+                    instance.show();
                 }
             };
 

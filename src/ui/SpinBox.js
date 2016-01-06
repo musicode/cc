@@ -54,6 +54,7 @@ define(function (require, exports, module) {
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
             interval: me.option('interval'),
+            autoOnLongPress: true,
             step: me.option('step'),
             prevKey: 'down',
             nextKey: 'up',

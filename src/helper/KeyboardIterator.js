@@ -1,5 +1,5 @@
 /**
- * @file DOM 遍历器
+ * @file 按键遍历器
  * @author musicode
  */
 define(function (require, exports, module) {
@@ -24,6 +24,7 @@ define(function (require, exports, module) {
      * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
      * @property {number} options.step prev 和 next 的步进值
      * @property {boolean=} options.loop 是否可循环遍历
+     * @property {boolean=} options.autoOnLongPress 长按时是否自动遍历
      * @property {string} options.prevKey prev 操作对应的键名，键名参考 util/keyboard
      * @property {string} options.nextKey next 操作对应的键名，键名参考 util/keyboard
      *
@@ -93,35 +94,39 @@ define(function (require, exports, module) {
             shortcut: shortcut
         });
 
-        var playing = false;
+        if (me.option('autoOnLongPress')) {
 
-        keyboard
-        .before('longpress', function (e, data) {
+            var playing = false;
 
-            var reserve;
-            var keyCode = data.keyCode;
+            keyboard
+            .before('longpress', function (e, data) {
 
-            if (keyCode === keyboardUtil[ prevKey ]) {
-                reserve = true;
-            }
-            else if (keyCode === keyboardUtil[ nextKey ]) {
-                reserve = false;
-            }
+                var reserve;
+                var keyCode = data.keyCode;
 
-            if (reserve != null) {
-                playing = true;
-                me.start(reserve);
-            }
+                if (keyCode === keyboardUtil[ prevKey ]) {
+                    reserve = true;
+                }
+                else if (keyCode === keyboardUtil[ nextKey ]) {
+                    reserve = false;
+                }
 
-        })
-        .after('longpress', function () {
+                if (reserve != null) {
+                    playing = true;
+                    me.start(reserve);
+                }
 
-            if (playing) {
-                playing = false;
-                me.pause();
-            }
+            })
+            .after('longpress', function () {
 
-        });
+                if (playing) {
+                    playing = false;
+                    me.pause();
+                }
+
+            });
+
+        }
 
         if (mainElement.is('input[type="text"]')) {
             keyboard

@@ -872,31 +872,30 @@ define('cc/form/Text', [
         var placeholder = new Placeholder({
             mainElement: me.option('mainElement'),
             value: me.option('placeholder'),
+            hidden: true,
             nativeFirst: me.option('nativeFirst'),
             inputSelector: me.option('inputSelector'),
             labelSelector: me.option('labelSelector'),
             showAnimation: me.option('showAnimation'),
             hideAnimation: me.option('hideAnimation')
         });
+        placeholder.sync();
         var inputElement = placeholder.inner('input');
         var input = new Input({
             mainElement: inputElement,
             shortcut: me.option('shortcut'),
             value: me.option('value')
         });
-        me.once('aftersync', function () {
-            placeholder.option('watchSync', {
-                value: function (value) {
-                    me.set('placeholder', value);
-                }
-            });
-            placeholder.set('placeholder', me.get('placeholder'));
-            input.option('watchSync', {
-                value: function (value) {
-                    me.set('value', value);
-                }
-            });
-            input.set('value', me.get('value'));
+        input.sync();
+        placeholder.option('watchSync', {
+            value: function (value) {
+                me.set('placeholder', value);
+            }
+        });
+        input.option('watchSync', {
+            value: function (value) {
+                me.set('value', value);
+            }
         });
         me.inner({
             main: placeholder.inner('main'),
@@ -906,7 +905,8 @@ define('cc/form/Text', [
         });
         me.set({
             name: me.option('name'),
-            value: me.option('value')
+            value: input.get('value'),
+            placeholder: placeholder.get('value')
         });
     };
     proto.dispose = function () {
@@ -1008,7 +1008,7 @@ define('cc/form/Validator', [
         var data = {};
         $.each(fields, function (index, name) {
             var fieldElement = mainElement.find('[name="' + name + '"]');
-            if (!fieldElement.length || fieldElement.prop('disabled')) {
+            if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
                 return;
             }
             var item = {
@@ -3399,25 +3399,27 @@ define('cc/helper/KeyboardIterator', [
             mainElement: mainElement,
             shortcut: shortcut
         });
-        var playing = false;
-        keyboard.before('longpress', function (e, data) {
-            var reserve;
-            var keyCode = data.keyCode;
-            if (keyCode === keyboardUtil[prevKey]) {
-                reserve = true;
-            } else if (keyCode === keyboardUtil[nextKey]) {
-                reserve = false;
-            }
-            if (reserve != null) {
-                playing = true;
-                me.start(reserve);
-            }
-        }).after('longpress', function () {
-            if (playing) {
-                playing = false;
-                me.pause();
-            }
-        });
+        if (me.option('autoOnLongPress')) {
+            var playing = false;
+            keyboard.before('longpress', function (e, data) {
+                var reserve;
+                var keyCode = data.keyCode;
+                if (keyCode === keyboardUtil[prevKey]) {
+                    reserve = true;
+                } else if (keyCode === keyboardUtil[nextKey]) {
+                    reserve = false;
+                }
+                if (reserve != null) {
+                    playing = true;
+                    me.start(reserve);
+                }
+            }).after('longpress', function () {
+                if (playing) {
+                    playing = false;
+                    me.pause();
+                }
+            });
+        }
         if (mainElement.is('input[type="text"]')) {
             keyboard.on('keydown', function (e) {
                 if (e.keyCode === keyboardUtil.up) {
@@ -3524,7 +3526,7 @@ define('cc/helper/Placeholder', [
     };
     lifeUtil.extend(proto);
     Placeholder.propertyUpdater = {
-        value: function () {
+        value: function (value) {
             this.render();
         }
     };
@@ -3588,12 +3590,10 @@ define('cc/helper/Placeholder', [
             inputUtil.init(inputElement);
             var refresh = function () {
                 var hidden = $.trim(inputElement.val()).length > 0;
-                if (hidden !== instance.is('hidden')) {
-                    if (hidden) {
-                        instance.hide();
-                    } else {
-                        instance.show();
-                    }
+                if (hidden) {
+                    instance.hide();
+                } else {
+                    instance.show();
                 }
             };
             refresh();
@@ -4399,9 +4399,10 @@ define('cc/ui/AutoComplete', [
             minIndex: me.option('includeInput') ? 0 : 1,
             defaultIndex: 0,
             step: 1,
-            loop: me.option('loop'),
             prevKey: 'up',
             nextKey: 'down',
+            loop: me.option('loop'),
+            autoOnLongPress: true,
             interval: me.option('interval'),
             watchSync: {
                 index: function (newIndex) {
@@ -6377,6 +6378,7 @@ define('cc/ui/SpinBox', [
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
             interval: me.option('interval'),
+            autoOnLongPress: true,
             step: me.option('step'),
             prevKey: 'down',
             nextKey: 'up',
@@ -10111,7 +10113,7 @@ define('cc/util/url', [
         var origin = '';
         if (link.protocol && link.host) {
             origin = link.protocol + '//' + link.host;
-        } else if (/^(http[s]?:\/\/[^/]+)(?=\/)/.test(url)) {
+        } else if (/^(http[s]?:\/\/[^\/]+)(?=\/)/.test(url)) {
             origin = RegExp.$1;
         }
         var terms = origin.split(':');

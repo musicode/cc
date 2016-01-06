@@ -211,7 +211,7 @@ define(function (require, exports, module) {
             function (index, name) {
 
                 var fieldElement = mainElement.find('[name="' + name + '"]');
-                if (!fieldElement.length || fieldElement.prop('disabled')) {
+                if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
                     return;
                 }
 

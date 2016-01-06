@@ -43,12 +43,14 @@ define(function (require, exports) {
         var placeholder = new Placeholder({
             mainElement: me.option('mainElement'),
             value: me.option('placeholder'),
+            hidden: true,
             nativeFirst: me.option('nativeFirst'),
             inputSelector: me.option('inputSelector'),
             labelSelector: me.option('labelSelector'),
             showAnimation: me.option('showAnimation'),
             hideAnimation: me.option('hideAnimation')
         });
+        placeholder.sync();
 
         var inputElement = placeholder.inner('input');
 
@@ -57,30 +59,25 @@ define(function (require, exports) {
             shortcut: me.option('shortcut'),
             value: me.option('value')
         });
+        input.sync();
 
-        me.once('aftersync', function () {
-
-            placeholder.option(
-                'watchSync',
-                {
-                    value: function (value) {
-                        me.set('placeholder', value);
-                    }
+        placeholder.option(
+            'watchSync',
+            {
+                value: function (value) {
+                    me.set('placeholder', value);
                 }
-            );
-            placeholder.set('placeholder', me.get('placeholder'));
+            }
+        );
 
-            input.option(
-                'watchSync',
-                {
-                    value: function (value) {
-                        me.set('value', value);
-                    }
+        input.option(
+            'watchSync',
+            {
+                value: function (value) {
+                    me.set('value', value);
                 }
-            );
-            input.set('value', me.get('value'));
-
-        });
+            }
+        );
 
         me.inner({
             main: placeholder.inner('main'),
@@ -91,7 +88,8 @@ define(function (require, exports) {
 
         me.set({
             name: me.option('name'),
-            value: me.option('value')
+            value: input.get('value'),
+            placeholder: placeholder.get('value')
         });
 
     };
