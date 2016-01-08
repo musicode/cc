@@ -634,15 +634,19 @@ if (event.type !== 'dispatch') {
         },
 
         _init: function () {
-            if (this.is('inited')) {
+            var state = 'initCalled';
+            if (this.is(state)) {
                 return false;
             }
+            this.state(state, true);
         },
 
         _dispose: function () {
-            if (this.is('disposed')) {
+            var state = 'disposeCalled';
+            if (this.is(state)) {
                 return false;
             }
+            this.state(state, true);
         }
 
     };
@@ -791,6 +795,7 @@ if (event.type !== 'dispatch') {
         options.onafterdispose_ = function () {
 
             instance.state('disposed', true);
+            instance.$.off();
 
             var mainElement = instance.inner('main');
             if (instance.option('removeOnDispose') && mainElement) {
@@ -843,7 +848,6 @@ if (event.type !== 'dispatch') {
     exports.dispose = function (instance) {
 
         instance.sync();
-        instance.$.off();
 
         var mainElement = instance.inner('main');
         if (mainElement) {

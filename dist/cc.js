@@ -3526,7 +3526,7 @@ define('cc/helper/Placeholder', [
     };
     lifeUtil.extend(proto);
     Placeholder.propertyUpdater = {
-        value: function (value) {
+        value: function () {
             this.render();
         }
     };
@@ -9137,14 +9137,18 @@ define('cc/util/life', [
             }
         },
         _init: function () {
-            if (this.is('inited')) {
+            var state = 'initCalled';
+            if (this.is(state)) {
                 return false;
             }
+            this.state(state, true);
         },
         _dispose: function () {
-            if (this.is('disposed')) {
+            var state = 'disposeCalled';
+            if (this.is(state)) {
                 return false;
             }
+            this.state(state, true);
         }
     };
     function executeAspect(instance, name, args, type, event) {
@@ -9214,6 +9218,7 @@ define('cc/util/life', [
         };
         options.onafterdispose_ = function () {
             instance.state('disposed', true);
+            instance.$.off();
             var mainElement = instance.inner('main');
             if (instance.option('removeOnDispose') && mainElement) {
                 mainElement.remove();
@@ -9234,7 +9239,6 @@ define('cc/util/life', [
     };
     exports.dispose = function (instance) {
         instance.sync();
-        instance.$.off();
         var mainElement = instance.inner('main');
         if (mainElement) {
             mainElement.off();
