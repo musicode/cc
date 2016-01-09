@@ -876,8 +876,8 @@ define('cc/form/Text', [
             nativeFirst: me.option('nativeFirst'),
             inputSelector: me.option('inputSelector'),
             labelSelector: me.option('labelSelector'),
-            showAnimation: me.option('showAnimation'),
-            hideAnimation: me.option('hideAnimation')
+            showAnimation: me.option('showPlaceholderAnimation'),
+            hideAnimation: me.option('hidePlaceholderAnimation')
         });
         placeholder.sync();
         var inputElement = placeholder.inner('input');

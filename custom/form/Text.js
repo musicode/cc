@@ -8,10 +8,10 @@ define(function (require, exports, module) {
         nativeFirst: true,
         inputSelector: 'input[type="text"],textarea',
         labelSelector: '.placeholder',
-        showAnimation: function (options) {
+        showPlaceholderAnimation: function (options) {
             options.labelElement.fadeIn(500);
         },
-        hideAnimation: function (options) {
+        hidePlaceholderAnimation: function (options) {
             options.labelElement.hide();
         }
     };

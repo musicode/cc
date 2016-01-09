@@ -74,7 +74,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.showLayerAnimation 显示动画
      *
      * @property {string} options.hideLayerTrigger 隐藏的触发方式，可选值有 click leave blur context，可组合使用，以逗号分隔
-     * @property {number} options.hideLayerDelay 隐藏延时
+     * @property {number=} options.hideLayerDelay 隐藏延时
      * @property {Function} options.hideLayerAnimation 隐藏动画
      */
     function Popup(options) {
