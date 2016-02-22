@@ -10,6 +10,7 @@ define(function (require, exports, module) {
     var nextTick = require('../function/nextTick');
     var debounce = require('../function/debounce');
     var toNumber = require('../function/toNumber');
+    var waitPromises = require('../function/waitPromises');
     var lifeUtil = require('../util/life');
     var validator = require('../util/validator');
 
@@ -87,6 +88,7 @@ define(function (require, exports, module) {
      * @property {string=} options.errorTemplate 错误模板
      * @property {string=} options.errorAttribute 找到错误对应的提示元素的属性，如 data-error-for
      *
+     * @property {string=} options.formSelector 当出现多个表单共用一个验证器时，可提供此选项配置
      * @property {string=} options.groupSelector
      * @property {Function=} options.showErrorAnimation
      * @property {Function=} options.hideErrorAnimation
@@ -182,6 +184,7 @@ define(function (require, exports, module) {
         var me = this;
 
         var mainElement = me.option('mainElement');
+        var formSelector = me.option('formSelector');
         var groupSelector = me.option('groupSelector');
 
         if ($.type(fields) === 'string') {
@@ -204,39 +207,64 @@ define(function (require, exports, module) {
 
         }
 
-        var data = { };
+        var validate = function (container) {
+            var data = { };
+            $.each(
+                fields,
+                function (index, name) {
 
-        $.each(
-            fields,
-            function (index, name) {
-
-                var fieldElement = mainElement.find('[name="' + name + '"]');
-                if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
-                    return;
-                }
-
-                var item = {
-                    name: name,
-                    value: $.trim(fieldElement.val()),
-                    fieldElement: fieldElement
-                };
-
-                if (groupSelector) {
-                    var groupElement = fieldElement.closest(groupSelector);
-                    if (isHidden(groupElement)) {
+                    var fieldElement = container.find('[name="' + name + '"]');
+                    if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
                         return;
                     }
-                    if (groupElement.length === 1) {
-                        item.groupElement = groupElement;
+
+                    var item = {
+                        name: name,
+                        value: $.trim(fieldElement.val()),
+                        fieldElement: fieldElement
+                    };
+
+                    if (groupSelector) {
+                        var groupElement = fieldElement.closest(groupSelector);
+                        if (isHidden(groupElement)) {
+                            return;
+                        }
+                        if (groupElement.length === 1) {
+                            item.groupElement = groupElement;
+                        }
                     }
+
+                    data[ name ] = item;
+
                 }
+            );
+            return validator.validate(data, me.option('fields'));
+        };
 
-                data[ name ] = item;
-
+        var result = [ ];
+        var addResult = function (item) {
+            if ($.isArray(item) && item.length === 0) {
+                return;
             }
-        );
+            result.push(item);
+        };
 
-        var result = validator.validate(data, me.option('fields'));
+        if (formSelector) {
+            mainElement.find(formSelector).each(
+                function () {
+                    addResult(
+                        validate($(this))
+                    );
+                }
+            );
+        }
+        else {
+            addResult(
+                validate(mainElement)
+            );
+        }
+
+
         var errors = [ ];
 
         var validateComplete = function () {
@@ -244,8 +272,21 @@ define(function (require, exports, module) {
             var errorAttribute = me.option('errorAttribute');
             var errorTemplate = me.option('errorTemplate');
 
+            var fields = [ ];
             $.each(
                 result,
+                function (index, item) {
+                    $.each(
+                        item,
+                        function (index, item) {
+                            fields.push(item);
+                        }
+                    );
+                }
+            );
+
+            $.each(
+                fields,
                 function (index, item) {
 
                     var animationOptions = {
@@ -316,7 +357,7 @@ define(function (require, exports, module) {
                         me.emit(
                             'validatecomplete',
                             {
-                                fields: result,
+                                fields: fields,
                                 errors: errors
                             }
                         );
@@ -326,17 +367,14 @@ define(function (require, exports, module) {
 
         };
 
-        if (result.then) {
-            return result.then(function (data) {
-                result = data;
+
+        return waitPromises(
+            result,
+            function () {
                 validateComplete();
                 return errors.length === 0;
-            });
-        }
-        else {
-            validateComplete();
-            return errors.length === 0;
-        }
+            }
+        );
 
     };
 

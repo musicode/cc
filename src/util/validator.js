@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var allPromises = require('../function/allPromises');
+
     /**
      * 内置常用规则
      *
@@ -90,21 +92,6 @@ define(function (require, exports, module) {
         mobile: /^1[3-9]\d{9}$/,
         email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i
     };
-
-
-    function resolvePromises(promises) {
-
-        var deferred = $.Deferred();
-
-        $.when
-            .apply($, promises)
-            .done(function () {
-                deferred.resolve(arguments);
-            });
-
-        return deferred;
-
-    }
 
     /**
      *
@@ -238,7 +225,7 @@ define(function (require, exports, module) {
 
                     var promise =
 
-                    resolvePromises(promiseValues)
+                    allPromises(promiseValues)
                         .then(function (values) {
 
                             $.each(
@@ -270,7 +257,7 @@ define(function (require, exports, module) {
         );
 
         if (promises.length) {
-            return resolvePromises(promises)
+            return allPromises(promises)
                 .then(function () {
                     return list;
                 });

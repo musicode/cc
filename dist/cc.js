@@ -945,6 +945,7 @@ define('cc/form/Validator', [
     '../function/nextTick',
     '../function/debounce',
     '../function/toNumber',
+    '../function/waitPromises',
     '../util/life',
     '../util/validator'
 ], function (require, exports, module) {
@@ -953,6 +954,7 @@ define('cc/form/Validator', [
     var nextTick = require('../function/nextTick');
     var debounce = require('../function/debounce');
     var toNumber = require('../function/toNumber');
+    var waitPromises = require('../function/waitPromises');
     var lifeUtil = require('../util/life');
     var validator = require('../util/validator');
     function Validator(options) {
@@ -993,6 +995,7 @@ define('cc/form/Validator', [
     proto.validate = function (fields, autoScroll) {
         var me = this;
         var mainElement = me.option('mainElement');
+        var formSelector = me.option('formSelector');
         var groupSelector = me.option('groupSelector');
         if ($.type(fields) === 'string') {
             fields = [fields];
@@ -1005,34 +1008,56 @@ define('cc/form/Validator', [
                 fields.push(name);
             });
         }
-        var data = {};
-        $.each(fields, function (index, name) {
-            var fieldElement = mainElement.find('[name="' + name + '"]');
-            if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
-                return;
-            }
-            var item = {
-                name: name,
-                value: $.trim(fieldElement.val()),
-                fieldElement: fieldElement
-            };
-            if (groupSelector) {
-                var groupElement = fieldElement.closest(groupSelector);
-                if (isHidden(groupElement)) {
+        var validate = function (container) {
+            var data = {};
+            $.each(fields, function (index, name) {
+                var fieldElement = container.find('[name="' + name + '"]');
+                if (fieldElement.length !== 1 || fieldElement.prop('disabled')) {
                     return;
                 }
-                if (groupElement.length === 1) {
-                    item.groupElement = groupElement;
+                var item = {
+                    name: name,
+                    value: $.trim(fieldElement.val()),
+                    fieldElement: fieldElement
+                };
+                if (groupSelector) {
+                    var groupElement = fieldElement.closest(groupSelector);
+                    if (isHidden(groupElement)) {
+                        return;
+                    }
+                    if (groupElement.length === 1) {
+                        item.groupElement = groupElement;
+                    }
                 }
+                data[name] = item;
+            });
+            return validator.validate(data, me.option('fields'));
+        };
+        var result = [];
+        var addResult = function (item) {
+            if ($.isArray(item) && item.length === 0) {
+                return;
             }
-            data[name] = item;
-        });
-        var result = validator.validate(data, me.option('fields'));
+            result.push(item);
+        };
+        if (formSelector) {
+            mainElement.find(formSelector).each(function () {
+                addResult(validate($(this)));
+            });
+        } else {
+            addResult(validate(mainElement));
+        }
         var errors = [];
         var validateComplete = function () {
             var errorAttribute = me.option('errorAttribute');
             var errorTemplate = me.option('errorTemplate');
+            var fields = [];
             $.each(result, function (index, item) {
+                $.each(item, function (index, item) {
+                    fields.push(item);
+                });
+            });
+            $.each(fields, function (index, item) {
                 var animationOptions = { fieldElement: item.fieldElement };
                 var errorElement;
                 if (errorAttribute) {
@@ -1067,22 +1092,16 @@ define('cc/form/Validator', [
             nextTick(function () {
                 if (me.$) {
                     me.emit('validatecomplete', {
-                        fields: result,
+                        fields: fields,
                         errors: errors
                     });
                 }
             });
         };
-        if (result.then) {
-            return result.then(function (data) {
-                result = data;
-                validateComplete();
-                return errors.length === 0;
-            });
-        } else {
+        return waitPromises(result, function () {
             validateComplete();
             return errors.length === 0;
-        }
+        });
     };
     proto.dispose = function () {
         var me = this;
@@ -1145,6 +1164,22 @@ define('cc/form/common', [
             value = exports.prop(instance, 'value') || '';
         }
         return value;
+    };
+});
+define('cc/function/allPromises', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    return function (promises) {
+        var deferred = $.Deferred();
+        $.when.apply($, promises).then(function () {
+            deferred.resolve($.makeArray(arguments));
+        }, function () {
+            deferred.reject($.makeArray(arguments));
+        });
+        return deferred;
     };
 });
 define('cc/function/around', [
@@ -2386,6 +2421,35 @@ define('cc/function/viewportWidth', [
     'use strict';
     return function () {
         return window.innerWidth || document.documentElement.clientWidth;
+    };
+});
+define('cc/function/waitPromises', [
+    'require',
+    'exports',
+    'module',
+    './allPromises'
+], function (require, exports, module) {
+    'use strict';
+    var allPromises = require('./allPromises');
+    return function (array, callback) {
+        var promises = [];
+        var indexes = [];
+        $.each(array, function (index, item) {
+            if ($.isFunction(item.then)) {
+                promises.push(item);
+                indexes.push(index);
+            }
+        });
+        if (promises.length > 0) {
+            return allPromises(promises).then(function (data) {
+                $.each(data, function (index, item) {
+                    array[indexes[index]] = item;
+                });
+                callback();
+            });
+        } else {
+            return callback();
+        }
     };
 });
 define('cc/helper/AjaxUploader', [
@@ -4089,6 +4153,7 @@ define('cc/main', [
     './form/Select',
     './form/Text',
     './form/Validator',
+    './function/allPromises',
     './function/around',
     './function/autoScrollDown',
     './function/autoScrollUp',
@@ -4150,6 +4215,7 @@ define('cc/main', [
     './function/firstDateInWeek',
     './function/lastDateInWeek',
     './function/offsetWeek',
+    './function/waitPromises',
     './helper/AjaxUploader',
     './helper/KeyboardIterator',
     './helper/Draggable',
@@ -4215,6 +4281,7 @@ define('cc/main', [
     require('./form/Select');
     require('./form/Text');
     require('./form/Validator');
+    require('./function/allPromises');
     require('./function/around');
     require('./function/autoScrollDown');
     require('./function/autoScrollUp');
@@ -4276,6 +4343,7 @@ define('cc/main', [
     require('./function/firstDateInWeek');
     require('./function/lastDateInWeek');
     require('./function/offsetWeek');
+    require('./function/waitPromises');
     require('./helper/AjaxUploader');
     require('./helper/KeyboardIterator');
     require('./helper/Draggable');
@@ -10140,9 +10208,11 @@ define('cc/util/url', [
 define('cc/util/validator', [
     'require',
     'exports',
-    'module'
+    'module',
+    '../function/allPromises'
 ], function (require, exports, module) {
     'use strict';
+    var allPromises = require('../function/allPromises');
     var buildInRules = {
         required: function (data, rules) {
             if (data.value) {
@@ -10205,13 +10275,6 @@ define('cc/util/validator', [
         mobile: /^1[3-9]\d{9}$/,
         email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i
     };
-    function resolvePromises(promises) {
-        var deferred = $.Deferred();
-        $.when.apply($, promises).done(function () {
-            deferred.resolve(arguments);
-        });
-        return deferred;
-    }
     exports.validate = function (data, rules) {
         var list = [];
         var promises = [];
@@ -10268,7 +10331,7 @@ define('cc/util/validator', [
             };
             var index;
             if (promiseValues.length) {
-                var promise = resolvePromises(promiseValues).then(function (values) {
+                var promise = allPromises(promiseValues).then(function (values) {
                     $.each(values, function (index, value) {
                         if (value === false) {
                             failedRule = promiseNames[index];
@@ -10286,7 +10349,7 @@ define('cc/util/validator', [
             }
         });
         if (promises.length) {
-            return resolvePromises(promises).then(function () {
+            return allPromises(promises).then(function () {
                 return list;
             });
         }

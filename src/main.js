@@ -15,6 +15,7 @@ define(function (require, exports, module) {
     require('./form/Text');
     require('./form/Validator');
 
+    require('./function/allPromises');
     require('./function/around');
     require('./function/autoScrollDown');
     require('./function/autoScrollUp');
@@ -76,6 +77,7 @@ define(function (require, exports, module) {
     require('./function/firstDateInWeek');
     require('./function/lastDateInWeek');
     require('./function/offsetWeek');
+    require('./function/waitPromises');
 
     require('./helper/AjaxUploader');
     require('./helper/KeyboardIterator');
