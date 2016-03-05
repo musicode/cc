@@ -17,7 +17,7 @@ define(function (require, exports, module) {
     var buildInRules = {
 
         required: function (data, rules) {
-            if (data && data.value) {
+            if (data.value) {
                 return true;
             }
             else if (rules.required) {
@@ -140,10 +140,14 @@ define(function (require, exports, module) {
         var promises = [ ];
 
         $.each(
-            rules,
-            function (key, rule) {
+            data,
+            function (key, item) {
 
-                var item = data[ key ];
+                var rule = rules[ key ];
+
+                if (!rule) {
+                    return;
+                }
 
                 var result = $.extend({ }, item);
 
