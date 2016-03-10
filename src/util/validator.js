@@ -17,7 +17,7 @@ define(function (require, exports, module) {
     var buildInRules = {
 
         required: function (data, rules) {
-            if (data.value) {
+            if (data.value === 0 || data.value) {
                 return true;
             }
             else if (rules.required) {
