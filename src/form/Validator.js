@@ -94,6 +94,7 @@ define(function (require, exports, module) {
      * @property {Function=} options.hideErrorAnimation
      *
      * @property {Object} options.fields 配置字段
+     * @property {Array.<string>=} options.sequence 验证字段的顺序，可选
      *
      * @property {Function=} options.render
      *
@@ -238,7 +239,11 @@ define(function (require, exports, module) {
 
                 }
             );
-            return validator.validate(data, me.option('fields'));
+            return validator.validate(
+                data,
+                me.option('fields'),
+                me.option('sequence')
+            );
         };
 
         var result = [ ];

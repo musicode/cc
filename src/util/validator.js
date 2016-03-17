@@ -7,6 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var allPromises = require('../function/allPromises');
+    var keys = require('../function/keys');
 
     /**
      * 内置常用规则
@@ -133,16 +134,23 @@ define(function (require, exports, module) {
      *                               }
      *                           }
      *                       }
+     *
+     * @param {Array.<string>=} sequence 验证字段的顺序，可选
      */
-    exports.validate = function (data, rules) {
+    exports.validate = function (data, rules, sequence) {
 
         var list = [ ];
         var promises = [ ];
 
-        $.each(
-            data,
-            function (key, item) {
+        if (!$.isArray(sequence)) {
+            sequence = keys(data);
+        }
 
+        $.each(
+            sequence,
+            function (index, key) {
+
+                var item = data[ key ];
                 var rule = rules[ key ];
 
                 if (!rule) {

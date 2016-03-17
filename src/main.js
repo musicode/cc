@@ -39,6 +39,7 @@ define(function (require, exports, module) {
     require('./function/innerOffset');
     require('./function/isActiveElement');
     require('./function/isHidden');
+    require('./function/keys');
     require('./function/lpad');
     require('./function/minus');
     require('./function/offsetMinute');
