@@ -1031,7 +1031,7 @@ define('cc/form/Validator', [
                 }
                 data[name] = item;
             });
-            return validator.validate(data, me.option('fields'));
+            return validator.validate(data, me.option('fields'), me.option('sequence'));
         };
         var result = [];
         var addResult = function (item) {
@@ -1596,6 +1596,23 @@ define('cc/function/isHidden', [
     return function (element) {
         var display = element.css('display');
         return element.css('display') === 'none' || element.css('opacity') == 0 || element.css('visibility') === 'hidden';
+    };
+});
+define('cc/function/keys', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    return function (obj) {
+        if (Object.keys) {
+            return Object.keys(obj);
+        }
+        var result = [];
+        $.each(obj, function (key) {
+            result.push(key);
+        });
+        return result;
     };
 });
 define('cc/function/lastDateInMonth', [
@@ -4177,6 +4194,7 @@ define('cc/main', [
     './function/innerOffset',
     './function/isActiveElement',
     './function/isHidden',
+    './function/keys',
     './function/lpad',
     './function/minus',
     './function/offsetMinute',
@@ -4305,6 +4323,7 @@ define('cc/main', [
     require('./function/innerOffset');
     require('./function/isActiveElement');
     require('./function/isHidden');
+    require('./function/keys');
     require('./function/lpad');
     require('./function/minus');
     require('./function/offsetMinute');
@@ -10209,13 +10228,15 @@ define('cc/util/validator', [
     'require',
     'exports',
     'module',
-    '../function/allPromises'
+    '../function/allPromises',
+    '../function/keys'
 ], function (require, exports, module) {
     'use strict';
     var allPromises = require('../function/allPromises');
+    var keys = require('../function/keys');
     var buildInRules = {
         required: function (data, rules) {
-            if (data.value) {
+            if (data.value === 0 || data.value) {
                 return true;
             } else if (rules.required) {
                 return false;
@@ -10275,10 +10296,14 @@ define('cc/util/validator', [
         mobile: /^1[3-9]\d{9}$/,
         email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i
     };
-    exports.validate = function (data, rules) {
+    exports.validate = function (data, rules, sequence) {
         var list = [];
         var promises = [];
-        $.each(data, function (key, item) {
+        if (!$.isArray(sequence)) {
+            sequence = keys(data);
+        }
+        $.each(sequence, function (index, key) {
+            var item = data[key];
             var rule = rules[key];
             if (!rule) {
                 return;
