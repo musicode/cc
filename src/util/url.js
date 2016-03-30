@@ -20,13 +20,11 @@ define(function (require, exports, module) {
 
         if ($.type(queryStr) === 'string' && queryStr.indexOf('=') >= 0) {
 
-            var startIndex = queryStr.charAt(0) === '?' ? 1 : 0;
+            var firstChar = queryStr.charAt(0);
+            var startIndex = (firstChar === '?' || firstChar === '#') ? 1 : 0;
             if (startIndex > 0) {
                 queryStr = queryStr.substr(startIndex);
             }
-
-            // 避免把 hash 算入 value
-            queryStr = queryStr.split('#')[0];
 
             $.each(
                 split(queryStr, '&'),
