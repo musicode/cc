@@ -23,7 +23,7 @@ define(function (require, exports, module) {
      * @param {string=} options.accept 可上传的文件格式，如 'jpg,png'
      * @param {boolean=} options.multiple 是否支持多文件上传
      * @param {Object=} options.data 上传的其他数据
-     * @param {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件
+     * @param {Object=} options.header 请求头
      * @param {Function=} options.onLoaded
      * @param {Function=} options.onFileChange
      * @param {function(Object)=} options.onUploadStart
@@ -87,7 +87,7 @@ define(function (require, exports, module) {
             var result = [ ];
 
             $.each(
-                [ 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data', 'ignoreError' ],
+                [ 'movieName', 'action', 'accept', 'multiple', 'fileName', 'data', 'header' ],
                 function (index, key) {
                     var value = me[key];
                     if (value != null) {
@@ -144,15 +144,15 @@ define(function (require, exports, module) {
         /**
          * 上传
          */
-        upload: function () {
-            this.element.upload && this.element.upload();
+        upload: function (index) {
+            this.element.upload && this.element.upload(index);
         },
 
         /**
          * 取消上传
          */
-        cancel: function () {
-            this.element.cancel && this.element.cancel();
+        cancel: function (index) {
+            this.element.cancel && this.element.cancel(index);
         },
 
         /**

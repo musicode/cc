@@ -21,8 +21,10 @@ define(function (require, exports, module) {
 
     var getRatio = require('../function/ratio');
     var restrain = require('../function/restrain');
+    var nextTick = require('../function/nextTick');
 
     var lifeUtil = require('../util/life');
+    var eventUtil = require('../util/event');
     var mimeTypeUtil = require('../util/mimeType');
 
     /**
@@ -34,8 +36,8 @@ define(function (require, exports, module) {
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
+     * @property {Object=} options.header 请求头
      * @property {string=} options.fileName 上传文件的 name 值
-     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                            [ 'jpg', 'png' ]
      * @property {boolean=} options.useChunk 是否使用分片上传
@@ -89,7 +91,22 @@ define(function (require, exports, module) {
             'change' + me.namespace(),
             function () {
 
-                setFiles(me, fileElement.prop('files'));
+                $.each(
+                    me.getFiles(),
+                    function (index, fileItem) {
+                        fileItem.dispose();
+                    }
+                );
+
+                me.inner(
+                    'files',
+                    $.map(
+                        fileElement.prop('files'),
+                        function (file, index) {
+                            return new FileItem(file, index);
+                        }
+                    )
+                );
 
                 me.emit('filechange');
 
@@ -107,8 +124,7 @@ define(function (require, exports, module) {
          */
         me.inner({
             main: mainElement,
-            file: fileElement,
-            fileQueue: { }
+            file: fileElement
         });
 
         me.emit('ready');
@@ -128,7 +144,7 @@ define(function (require, exports, module) {
      *
      */
     proto.getFiles = function () {
-        return this.inner('fileQueue').files || [ ];
+        return this.inner('files') || [ ];
     };
 
     /**
@@ -171,60 +187,44 @@ define(function (require, exports, module) {
     /**
      * 上传文件
      */
-    proto.upload = function (fileItem) {
+    proto.upload = function (index) {
 
         var me = this;
-
-        var validStatus = me.option('useChunk')
-                        ? AjaxUploader.STATUS_UPLOADING
-                        : AjaxUploader.STATUS_WAITING;
-
-        fileItem = fileItem || getCurrentFileItem(me);
-        if (!fileItem || fileItem.status > validStatus) {
-            return;
+        var fileItem = me.getFiles()[index];
+        if (fileItem) {
+            if (
+                fileItem.upload({
+                    action: me.option('action'),
+                    fileName: me.option('fileName'),
+                    data: me.option('data'),
+                    header: me.option('header'),
+                    useChunk: me.option('useChunk'),
+                    chunkSize: me.option('chunkSize')
+                })
+            ) {
+                var dispatchEvent = function (e, data) {
+                    me.emit(e, data);
+                };
+                fileItem
+                    .on('uploadstart', dispatchEvent)
+                    .on('uploadprogress', dispatchEvent)
+                    .on('uploadsuccess', dispatchEvent)
+                    .on('uploaderror', dispatchEvent)
+                    .on('uploadcomplete', dispatchEvent);
+            }
         }
-
-        var xhr = new XMLHttpRequest();
-        fileItem.xhr = xhr;
-
-        $.each(
-            xhrEventHandler,
-            function (index, item) {
-                xhr['on' + item.type] = function (e) {
-                    item.handler(me, e);
-                };
-            }
-        );
-
-        $.each(
-            uploadEventHandler,
-            function (index, item) {
-                xhr.upload['on' + item.type] = function (e) {
-                    item.handler(me, e);
-                };
-            }
-        );
-
-        xhr.open('post', me.option('action'), true);
-
-        var upload = me.option('useChunk') ? uploadChunk : uploadFile;
-
-        upload(me, fileItem);
 
     };
 
     /**
      * 停止上传
      */
-    proto.stop = function () {
+    proto.stop = function (index) {
 
-        var me = this;
-        var fileItem = getCurrentFileItem(me);
-        if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
-            fileItem.xhr.abort();
+        var fileItem = this.getFiles()[index];
+        if (fileItem) {
+            fileItem.cancel();
         }
-
-        me.reset();
 
     };
 
@@ -259,7 +259,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, ['getFiles', 'setAction', 'setData']);
 
     /**
      * 是否支持分块上传
@@ -317,86 +317,6 @@ define(function (require, exports, module) {
      */
     AjaxUploader.ERROR_CHUNK_SIZE = -1;
 
-    /**
-     * 上传整个文件
-     *
-     * @inner
-     * @param {AjaxUploader} uploader
-     * @param {Object} fileItem
-     */
-    function uploadFile(uploader, fileItem) {
-
-        var formData = new FormData();
-
-        $.each(
-            uploader.option('data'),
-            function (key, value) {
-                formData.append(key, value);
-            }
-        );
-
-        formData.append(
-            uploader.option('fileName'),
-            fileItem.nativeFile
-        );
-
-        fileItem.xhr.send(formData);
-    }
-
-    /**
-     * 上传文件的一个分片
-     *
-     * @inner
-     * @param {AjaxUploader} uploader
-     * @param {Object} fileItem
-     */
-    function uploadChunk(uploader, fileItem) {
-
-        var file = fileItem.nativeFile;
-        // 碰到过传了几个分片之后，file.size 变成 0 的情况
-        // 因此 fileSize 从最初的格式化对象中取比较保险
-        var fileSize = fileItem.file.size;
-
-        var chunkInfo = fileItem.chunk;
-        if (!chunkInfo) {
-            chunkInfo =
-            fileItem.chunk = { index: 0, uploaded: 0 };
-        }
-
-        var chunkIndex = chunkInfo.index;
-
-        var chunkSize = uploader.option('chunkSize');
-        var start = chunkSize * chunkIndex;
-        var end = chunkSize * (chunkIndex + 1);
-        if (end > fileSize) {
-            end = fileSize;
-        }
-
-        // 正在上传分片的大小
-        chunkInfo.uploading = end - start;
-        if (chunkInfo.uploading <= 0) {
-            setTimeout(function () {
-                uploader.emit(
-                    'uploadError',
-                    {
-                        fileItem: fileItem,
-                        errorCode: AjaxUploader.ERROR_CHUNK_SIZE
-                    }
-                );
-            });
-            return;
-        }
-
-        var range = 'bytes ' + (start + 1) + '-' + end + '/' + fileSize;
-
-        var xhr = fileItem.xhr;
-
-        xhr.setRequestHeader('Content-Type', '');
-        xhr.setRequestHeader('X_FILENAME', encodeURIComponent(file.name));
-        xhr.setRequestHeader('Content-Range', range);
-
-        xhr.send(file.slice(start, end));
-    }
 
     /**
      * 事件处理函数
@@ -408,26 +328,21 @@ define(function (require, exports, module) {
 
         uploadStart: {
             type: 'loadstart',
-            handler: function (uploader, e) {
-
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e) {
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
-
-                uploader.emit(
+                fileItem.emit(
                     'uploadstart',
                     {
                         fileItem: fileItem
                     }
                 );
-
             }
         },
 
         uploadSuccess: {
             type: 'load',
-            handler: function (uploader, e) {
+            handler: function (fileItem, e) {
 
-                var fileItem = getCurrentFileItem(uploader);
                 var data = {
                     fileItem: fileItem,
                     responseText: fileItem.xhr.responseText
@@ -436,15 +351,16 @@ define(function (require, exports, module) {
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
 
-                    if (chunkInfo.uploaded < fileItem.file.size) {
+                    var fileSize = fileItem.file.size;
+                    if (chunkInfo.uploaded < fileSize) {
 
                         // 分片上传成功
-                        var event = uploader.emit('chunkuploadsuccess', data);
+                        var event = fileItem.emit('chunkuploadsuccess', data);
                         if (!event.isDefaultPrevented()) {
                             chunkInfo.index++;
                             chunkInfo.uploaded += chunkInfo.uploading;
-                            if (chunkInfo.uploaded < fileItem.file.size) {
-                                uploader.upload();
+                            if (chunkInfo.uploaded < fileSize) {
+                                fileItem.upload();
                             }
                         }
 
@@ -453,22 +369,20 @@ define(function (require, exports, module) {
                 }
 
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
+                fileItem.emit('uploadsuccess', data);
 
-                uploader.emit('uploadsuccess', data);
-
-                uploadComplete(uploader, fileItem);
+                uploadComplete(fileItem);
 
             }
         },
 
         uploadError: {
             type: 'error',
-            handler: function (uploader, e, errorCode) {
+            handler: function (fileItem, e, errorCode) {
 
-                var fileItem = getCurrentFileItem(uploader);
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
 
-                uploader.emit(
+                fileItem.emit(
                     'uploaderror',
                     {
                         fileItem: fileItem,
@@ -476,16 +390,16 @@ define(function (require, exports, module) {
                     }
                 );
 
-                uploadComplete(uploader, fileItem);
+                uploadComplete(fileItem);
             }
         },
 
         uploadStop: {
             type: 'abort',
-            handler: function (uploader, e) {
+            handler: function (fileItem, e) {
                 xhrEventHandler
                 .uploadError
-                .handler(uploader, e, AjaxUploader.ERROR_CANCEL);
+                .handler(fileItem, e, AjaxUploader.ERROR_CANCEL);
             }
         }
     };
@@ -494,9 +408,7 @@ define(function (require, exports, module) {
 
         uploadProgress: {
             type: 'progress',
-            handler: function (uploader, e) {
-
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e) {
 
                 var total = fileItem.file.size;
                 var uploaded = e.loaded;
@@ -506,7 +418,7 @@ define(function (require, exports, module) {
                     uploaded += chunkInfo.uploaded;
                 }
 
-                uploader.emit(
+                fileItem.emit(
                     'uploadprogress',
                     {
                         fileItem: fileItem,
@@ -526,10 +438,9 @@ define(function (require, exports, module) {
      * 上传完成后执行
      *
      * @inner
-     * @param {AjaxUploader} uploader
      * @param {Object} fileItem
      */
-    function uploadComplete(uploader, fileItem) {
+    function uploadComplete(fileItem) {
 
         var xhr = fileItem.xhr;
         if (xhr) {
@@ -551,70 +462,188 @@ define(function (require, exports, module) {
             delete fileItem.xhr;
         }
 
-        uploader.emit(
+        var options = fileItem.options;
+        if (options) {
+            delete fileItem.options;
+        }
+
+        fileItem.emit(
             'uploadcomplete',
             {
                 fileItem: fileItem
             }
         );
 
-        if (fileItem.status === AjaxUploader.STATUS_UPLOAD_SUCCESS
-            || (fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR
-                && uploader.option('ignoreError'))
-        ) {
-
-            var index = fileItem.index + 1;
-            var fileQueue = uploader.inner('fileQueue');
-
-            if (index < fileQueue.files.length) {
-                fileQueue.index = index;
-                uploader.upload();
-            }
-            else {
-                setFiles(uploader, [ ]);
-            }
-        }
     }
 
-    /**
-     * 设置选择的文件
-     *
-     * @inner
-     * @param {AjaxUploader} uploader
-     * @param {Array.<File>} files
-     */
-    function setFiles(uploader, files) {
+    function FileItem(nativeFile, index) {
+        this.index = index;
+        this.file = formatFile(nativeFile);
+        this.nativeFile = nativeFile;
+        this.status = AjaxUploader.STATUS_WAITING;
+    }
 
-        var fileQueue = uploader.inner('fileQueue');
+    var FileItemPrototype = FileItem.prototype;
 
-        fileQueue.index = 0;
-        fileQueue.files = $.map(
-            files,
-            function (nativeFile, index) {
-                return {
-                    index: index,
-                    file: formatFile(nativeFile),
-                    nativeFile: nativeFile,
-                    status: AjaxUploader.STATUS_WAITING
+    FileItemPrototype.upload = function (options) {
+
+        var me = this;
+
+        var validStatus = options.useChunk
+            ? AjaxUploader.STATUS_UPLOADING
+            : AjaxUploader.STATUS_WAITING;
+
+        if (me.status > validStatus) {
+            return;
+        }
+
+        if (!options) {
+            options = me.options;
+        }
+        else {
+            me.options = options;
+        }
+
+        var xhr = new XMLHttpRequest();
+        me.xhr = xhr;
+
+        $.each(
+            xhrEventHandler,
+            function (index, item) {
+                xhr['on' + item.type] = function (e) {
+                    item.handler(me, e);
                 };
             }
         );
-    }
 
-    /**
-     * 获取当前正在上传的文件
-     *
-     * @inner
-     * @param {AjaxUploader} uploader
-     * @return {?Object}
-     */
-    function getCurrentFileItem(uploader) {
-        var fileQueue = uploader.inner('fileQueue');
-        var index = fileQueue.index;
-        if (fileQueue.files && $.type(index) === 'number') {
-            return fileQueue.files[index];
+        $.each(
+            uploadEventHandler,
+            function (index, item) {
+                xhr.upload['on' + item.type] = function (e) {
+                    item.handler(me, e);
+                };
+            }
+        );
+
+        xhr.open('post', options.action, true);
+
+        if (options.useChunk) {
+            me.uploadFileChunk(options);
         }
-    }
+        else {
+            me.uploadFile(options);
+        }
+
+        return true;
+
+    };
+
+    FileItemPrototype.uploadFile = function (options) {
+
+        var me = this;
+        var formData = new FormData();
+
+        if (options.data) {
+            $.each(
+                options.data,
+                function (key, value) {
+                    formData.append(key, value);
+                }
+            );
+        }
+
+        formData.append(
+            options.fileName,
+            me.nativeFile
+        );
+
+        var xhr = me.xhr;
+        if (options.header) {
+            $.each(options.header, function (name, value) {
+                xhr.setRequestHeader(name, value);
+            });
+        }
+
+        xhr.send(formData);
+
+    };
+
+    FileItemPrototype.uploadFileChunk = function (options) {
+
+        var me = this;
+
+        var file = me.nativeFile;
+
+        // 碰到过传了几个分片之后，file.size 变成 0 的情况
+        // 因此 fileSize 从最初的格式化对象中取比较保险
+        var fileSize = me.file.size;
+
+        var chunkInfo = me.chunk;
+        if (!chunkInfo) {
+            chunkInfo =
+            me.chunk = {
+                index: 0,
+                uploaded: 0
+            };
+        }
+
+        var chunkIndex = chunkInfo.index;
+
+        var chunkSize = options.chunkSize;
+        var start = chunkSize * chunkIndex;
+        var end = chunkSize * (chunkIndex + 1);
+        if (end > fileSize) {
+            end = fileSize;
+        }
+
+        // 正在上传分片的大小
+        chunkInfo.uploading = end - start;
+        if (chunkInfo.uploading <= 0) {
+            nextTick(
+                function () {
+                    xhrEventHandler
+                    .uploadError
+                    .handler(me, {}, AjaxUploader.ERROR_CHUNK_SIZE);
+                }
+            );
+            return;
+        }
+
+
+        var xhr = me.xhr;
+
+        var header = {
+            'Content-Type': '',
+            'X_FILENAME': encodeURIComponent(file.name),
+            'Content-Range': 'bytes ' + (start + 1) + '-' + end + '/' + fileSize
+        };
+
+        if (options.header) {
+            $.extend(header, options.header);
+        }
+
+        $.each(header, function (name, value) {
+            xhr.setRequestHeader(name, value);
+        });
+
+        xhr.send(file.slice(start, end));
+
+    };
+
+    FileItemPrototype.cancel = function () {
+        var me = this;
+        if (me.status === AjaxUploader.STATUS_UPLOADING) {
+            me.xhr.abort();
+        }
+    };
+
+    FileItemPrototype.dispose = function () {
+        var me = this;
+        me.cancel();
+        me.off();
+    };
+
+    eventUtil.extend(FileItemPrototype);
 
     /**
      * 把 [ 'jpg', 'png' ] 格式的 accept 转为

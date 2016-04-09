@@ -16,6 +16,8 @@ define(function (require, exports, module) {
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
 
+    var eventUtil = require('./event');
+
     var instances = { };
 
     var UPDATE_ASYNC = '__update_async__';
@@ -212,30 +214,6 @@ define(function (require, exports, module) {
         },
 
         /**
-         * 绑定事件
-         */
-        on: function (event, data, handler) {
-            this.$.on(event, data, handler);
-            return this;
-        },
-
-        /**
-         * 绑定一次事件
-         */
-        once: function (event, data, handler) {
-            this.$.one(event, data, handler);
-            return this;
-        },
-
-        /**
-         * 解绑事件
-         */
-        off: function (event, handler) {
-            this.$.off(event, handler);
-            return this;
-        },
-
-        /**
          * DOM 事件代理
          */
         live: function (event, selector, handler) {
@@ -281,7 +259,8 @@ define(function (require, exports, module) {
              * 3. 执行 options.ontype_ 内部使用，确保有机会在最后执行一些逻辑
              */
 
-            context.$.trigger.apply(context.$, args);
+            var eventCore = context.get$();
+            eventCore.trigger.apply(eventCore, args);
 
             var ontype = 'on' + event.type;
 
@@ -770,6 +749,7 @@ if (event.type !== 'dispatch') {
         });
 
         extend(proto, methods);
+        eventUtil.extend(proto);
 
     };
 
@@ -795,7 +775,7 @@ if (event.type !== 'dispatch') {
         options.onafterdispose_ = function () {
 
             instance.state('disposed', true);
-            instance.$.off();
+            instance.off();
 
             var mainElement = instance.inner('main');
             if (instance.option('removeOnDispose') && mainElement) {
@@ -810,8 +790,7 @@ if (event.type !== 'dispatch') {
                 instance.changes =
                 instance.states =
                 instance.inners =
-                instance.guid =
-                instance.$ = null;
+                instance.guid = null;
             });
 
         };
@@ -830,9 +809,6 @@ if (event.type !== 'dispatch') {
 
         // 用 inners 属性管理内部属性
         instance.inners = { };
-
-        // 用 jQuery 实现事件系统
-        instance.$ = $({ });
 
         instance.init();
 

@@ -34,7 +34,7 @@ define(function (require, exports, module) {
      * @property {string} options.action 上传地址
      * @property {boolean=} options.multiple 是否支持多文件上传
      * @property {Object=} options.data 上传的其他数据
-     * @property {boolean=} options.ignoreError 多文件上传，当某个文件上传失败时，是否继续上传后面的文件，默认为 false
+     * @property {Object=} options.header 请求头
      * @property {Array.<string>=} options.accept 可上传的文件类型，如
      *                                            [ 'jpg', 'png' ]
      */
@@ -59,8 +59,8 @@ define(function (require, exports, module) {
             accept: me.option('accept'),
             multiple: me.option('multiple'),
             data: me.option('data'),
+            header: me.option('header'),
             fileName: me.option('fileName'),
-            ignoreError: me.option('ignoreError'),
             customSettings: {
                 uploader: me
             }
@@ -116,15 +116,15 @@ define(function (require, exports, module) {
     /**
      * 上传文件
      */
-    proto.upload = function () {
-        this.inner('supload').upload();
+    proto.upload = function (index) {
+        this.inner('supload').upload(index);
     };
 
     /**
      * 停止上传
      */
-    proto.stop = function () {
-        this.inner('supload').cancel();
+    proto.stop = function (index) {
+        this.inner('supload').cancel(index);
     };
 
     /**
@@ -154,7 +154,7 @@ define(function (require, exports, module) {
 
     };
 
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, ['getFiles', 'setAction', 'setData']);
 
     /**
      * 等待上传状态

@@ -26,15 +26,16 @@
 
                 var uploader = new AjaxUploader({
                     mainElement: $('#file'),
-                    action: 'http://localhost:8808/upload',
+                    action: 'http://localhost/v1/upload/image',
                     multiple: true,
+                    fileName: 'file',
                     accept: ['jpg', 'png', 'gif', 'bmp'],
                     onfilechange: function (event) {
                         this.setData({
                             name: 'zhujl',
                             age: 25
                         });
-                        this.upload();
+                        this.upload(0);
                     },
                     ondebug: function (event, data) {
                         console.log(
