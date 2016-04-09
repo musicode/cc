@@ -137,7 +137,10 @@ define(function (require, exports, module) {
                     break;
             }
 
-            me.emit(event, data, true);
+            me.dispatch(
+                me.emit(event, data),
+                data
+            );
 
         });
 

@@ -333,7 +333,7 @@ define(function (require, exports, module) {
                 fileItem.emit(
                     'uploadstart',
                     {
-                        fileItem: fileItem
+                        fileItem: fileItem.toPlainObject()
                     }
                 );
             }
@@ -344,7 +344,7 @@ define(function (require, exports, module) {
             handler: function (fileItem, e) {
 
                 var data = {
-                    fileItem: fileItem,
+                    fileItem: fileItem.toPlainObject(),
                     responseText: fileItem.xhr.responseText
                 };
 
@@ -385,7 +385,7 @@ define(function (require, exports, module) {
                 fileItem.emit(
                     'uploaderror',
                     {
-                        fileItem: fileItem,
+                        fileItem: fileItem.toPlainObject(),
                         errorCode: errorCode
                     }
                 );
@@ -421,7 +421,7 @@ define(function (require, exports, module) {
                 fileItem.emit(
                     'uploadprogress',
                     {
-                        fileItem: fileItem,
+                        fileItem: fileItem.toPlainObject(),
                         uploaded: uploaded,
                         total: total,
                         percent: 100 * restrain(getRatio(uploaded, total), 0, 1) + '%'
@@ -470,7 +470,7 @@ define(function (require, exports, module) {
         fileItem.emit(
             'uploadcomplete',
             {
-                fileItem: fileItem
+                fileItem: fileItem.toPlainObject()
             }
         );
 
@@ -635,6 +635,16 @@ define(function (require, exports, module) {
         if (me.status === AjaxUploader.STATUS_UPLOADING) {
             me.xhr.abort();
         }
+    };
+
+    FileItemPrototype.toPlainObject = function () {
+        var me = this;
+        return {
+            index: me.index,
+            file: me.file,
+            nativeFile: me.nativeFile,
+            status: me.status
+        };
     };
 
     FileItemPrototype.dispose = function () {

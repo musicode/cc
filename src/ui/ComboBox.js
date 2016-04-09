@@ -133,7 +133,10 @@ define(function (require, exports, module) {
 
                 var event = $.Event(e.originalEvent);
                 event.type = 'select';
-                me.emit(event, true);
+
+                me.dispatch(
+                    me.emit(event)
+                );
 
             }
         );

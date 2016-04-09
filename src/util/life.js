@@ -230,10 +230,9 @@ define(function (require, exports, module) {
          *
          * @param {Event|string} event 事件对象或事件名称
          * @param {Object=} data 事件数据
-         * @param {boolean=} dispatch 组合使用时，是否需要被转发
          * @return {Event}
          */
-        emit: function (event, data, dispatch) {
+        emit: function (event, data) {
 
             var me = this;
             var context = me.option('context') || me;
@@ -244,10 +243,6 @@ define(function (require, exports, module) {
             var args = [ event ];
             if ($.isPlainObject(data)) {
                 args.push(data);
-            }
-            else if (data === true && arguments.length === 2) {
-                data = null;
-                dispatch = true;
             }
 
             event.type = event.type.toLowerCase();
@@ -264,10 +259,6 @@ define(function (require, exports, module) {
 
             var ontype = 'on' + event.type;
 
-if (event.type !== 'dispatch') {
-    context.execute('ondebug', args);
-}
-
             if (!event.isPropagationStopped()
                 && context.execute(ontype, args) === false
             ) {
@@ -277,29 +268,34 @@ if (event.type !== 'dispatch') {
 
             context.execute(ontype + '_', args);
 
-            if (dispatch && !event.isPropagationStopped()) {
+            return event;
 
-                // event.originalEvent 通常是 DOM 事件
-                // 为了避免外部过多的判断，这里来保证
-                if (!event.originalEvent) {
-                    event.originalEvent = {
-                        preventDefault: $.noop,
-                        stopPropagation: $.noop
-                    };
-                }
+        },
 
-                var dispatchEvent = $.Event(event);
-                dispatchEvent.type = 'dispatch';
+        dispatch: function (event, data) {
 
-                me.emit(dispatchEvent, data);
-
-                if (dispatchEvent.isPropagationStopped()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
+            if (event.isPropagationStopped()) {
+                return;
             }
 
-            return event;
+            // event.originalEvent 通常是 DOM 事件
+            // 为了避免外部过多的判断，这里来保证
+            if (!event.originalEvent) {
+                event.originalEvent = {
+                    preventDefault: $.noop,
+                    stopPropagation: $.noop
+                };
+            }
+
+            var dispatchEvent = $.Event(event);
+            dispatchEvent.type = 'dispatch';
+
+            this.emit(dispatchEvent, data);
+
+            if (dispatchEvent.isPropagationStopped()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
 
         },
 
@@ -672,7 +668,10 @@ if (event.type !== 'dispatch') {
         event = $.Event(event);
         event.type = type + name;
 
-        instance.emit(event, result, dispatch);
+        instance.emit(event, result);
+        if (dispatch) {
+            instance.dispatch(event, result);
+        }
 
         if (event.isDefaultPrevented()) {
             return false;

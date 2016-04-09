@@ -125,7 +125,10 @@ define(function (require, exports, module) {
 
             }
 
-            me.emit(event, data, true);
+            me.dispatch(
+                me.emit(event, data),
+                data
+            );
 
         });
 

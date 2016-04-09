@@ -120,7 +120,9 @@ define(function (require, exports, module) {
 
 
 
-            me.emit(e, true);
+            me.dispatch(
+                me.emit(event)
+            );
 
 
 

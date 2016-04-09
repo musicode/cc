@@ -111,7 +111,10 @@ define(function (require, exports, module) {
                 event.type = type;
             }
 
-            me.emit(event, data, true);
+            me.dispatch(
+                me.emit(event, data),
+                data
+            );
 
         });
 
