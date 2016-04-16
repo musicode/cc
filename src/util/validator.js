@@ -26,13 +26,16 @@ define(function (require, exports, module) {
             }
         },
 
-        pattern: function (data, rules) {
+        pattern: function (data, rules, all) {
             var pattern = rules.pattern;
             if ($.type(pattern) === 'string') {
                 pattern = exports.buildInPatterns[ pattern ];
             }
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
+            }
+            else if ($.isFunction(pattern)) {
+                return pattern(data, rules, all);
             }
         },
 
