@@ -15,6 +15,7 @@ define(function (require, exports, module) {
 
             options.mainElement.on(
                 'mousedown' + namespace,
+                options.mainSelector,
                 function (e) {
                     options.downHandler(e);
                     document

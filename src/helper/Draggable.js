@@ -46,6 +46,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 需要拖拽的元素
+     * @property {jQuery} options.mainSelector 需要拖拽的元素的选择器，支持事件代理
      * @property {jQuery=} options.containerElement 限制拖拽范围的容器元素
      * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 className
      * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 添加的 className
@@ -73,10 +74,7 @@ define(function (require, exports, module) {
         var me = this;
 
         var mainElement = me.option('mainElement');
-
-        mainElement.css(
-            position(mainElement)
-        );
+        var mainSelector = me.option('mainSelector');
 
         me.inner({
             main: mainElement
@@ -96,6 +94,10 @@ define(function (require, exports, module) {
 
             var coord;
 
+            draggingElement = mainSelector
+                ? $(e.currentTarget)
+                : mainElement;
+
             var isEvent = e[ $.expando ];
             if (isEvent) {
 
@@ -108,8 +110,8 @@ define(function (require, exports, module) {
 
                 var target = e.target;
 
-                if (includeSelector && !hitTarget(mainElement, includeSelector, target)
-                    || excludeSelector && hitTarget(mainElement, excludeSelector, target)
+                if (includeSelector && !hitTarget(draggingElement, includeSelector, target)
+                    || excludeSelector && hitTarget(draggingElement, excludeSelector, target)
                 ) {
                     return;
                 }
@@ -130,52 +132,64 @@ define(function (require, exports, module) {
                 coord = globalCoord.mouse;
             }
 
+            me.emit(
+                'elementchange',
+                {
+                    mainElement: draggingElement
+                }
+            );
 
             // 重新取值比较靠谱
-            var style = position(mainElement);
+            var style = position(draggingElement);
+            draggingElement.css(style);
+
             var isFixed = style.position === 'fixed';
 
 
-
-            // =====================================================================
+            // =================================================================
             // 计算偏移量
-            // 这样方便 onDrag 时作为当前全局坐标的减数，减少计算量
-            // =====================================================================
+            // 这样方便 ondrag 时作为当前全局坐标的减数，减少计算量
+            // =================================================================
 
-            var mainOuterOffset = outerOffset(mainElement);
+            var draggingOuterOffset = outerOffset(draggingElement);
             var rectInnerOffset = innerOffset(rectElement);
 
             var offsetX;
             var offsetY;
 
             if (isEvent) {
-                offsetX = coord.absoluteX(e) - mainOuterOffset.x;
-                offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+                offsetX = coord.absoluteX(e) - draggingOuterOffset.x;
+                offsetY = coord.absoluteY(e) - draggingOuterOffset.y;
             }
             else {
                 offsetX = e.offsetX;
                 offsetY = e.offsetY;
             }
 
-            // 因为 onDrag 是用`全局坐标`减去`偏移量`
+            // 因为 ondrag 是用`全局坐标`减去`偏移量`
             // 所以偏移量应该是全局坐标的偏移量
-            var rectContainsElement = contains(rectElement, mainElement);
+            var rectContainsElement = contains(rectElement, draggingElement);
             if (rectContainsElement) {
                 offsetX += rectInnerOffset.x;
                 offsetY += rectInnerOffset.y;
                 if (!isFixed) {
-                    offsetX -= rectElement.scrollLeft();
-                    offsetY -= rectElement.scrollTop();
+                    var scrollLeft = rectElement.scrollLeft();
+                    var scrollTop = rectElement.scrollTop();
+                    if (offsetX > scrollLeft) {
+                        offsetX -= scrollLeft;
+                    }
+                    if (offsetY > scrollTop) {
+                        offsetY -= scrollTop;
+                    }
                 }
             }
 
 
 
 
-
-            // ====================================================
+            // =================================================================
             // 全局坐标计算函数
-            // ====================================================
+            // =================================================================
 
             point.left = style.left;
             point.top = style.top;
@@ -221,8 +235,8 @@ define(function (require, exports, module) {
                 }
             }
 
-            width = Math.max(0, width - mainElement.outerWidth(true));
-            height = Math.max(0, height - mainElement.outerHeight(true));
+            width = Math.max(0, width - draggingElement.outerWidth(true));
+            height = Math.max(0, height - draggingElement.outerHeight(true));
 
             var axis = me.option('axis');
 
@@ -264,7 +278,7 @@ define(function (require, exports, module) {
             // 只有坐标发生变动才算
             if (counter === 0) {
 
-                event = me.emit('beforedrag', point);
+                event = me.emit('beforedrag', $.extend({}, point));
                 if (event.isDefaultPrevented()) {
                     return;
                 }
@@ -272,7 +286,7 @@ define(function (require, exports, module) {
                 disableSelection();
 
                 if (draggingClass) {
-                    mainElement.addClass(draggingClass);
+                    draggingElement.addClass(draggingClass);
                 }
 
                 if (containerDraggingClass) {
@@ -287,12 +301,12 @@ define(function (require, exports, module) {
 
             counter++;
 
-            event = me.emit('drag', point);
+            event = me.emit('drag', $.extend({}, point));
             if (!event.isDefaultPrevented()) {
                 me.execute(
                     'dragAnimation',
                     {
-                        mainElement: mainElement,
+                        mainElement: draggingElement,
                         mainStyle: point
                     }
                 );
@@ -307,7 +321,7 @@ define(function (require, exports, module) {
                 enableSelection();
 
                 if (draggingClass) {
-                    mainElement.removeClass(draggingClass);
+                    draggingElement.removeClass(draggingClass);
                 }
 
                 if (containerDraggingClass) {
@@ -318,17 +332,19 @@ define(function (require, exports, module) {
                     bodyElement.removeClass(bodyDraggingClass);
                 }
 
-                me.emit('afterdrag', point);
+                me.emit('afterdrag', $.extend({}, point));
             }
 
             counter =
             xCalculator =
-            yCalculator = null;
+            yCalculator =
+            draggingElement = null;
 
         };
 
         me.execute('init', {
             mainElement: mainElement,
+            mainSelector: mainSelector,
             namespace: me.namespace(),
             downHandler: beforeDragHandler,
             moveHandler: dragHandler,
@@ -389,6 +405,14 @@ define(function (require, exports, module) {
      * @type {number}
      */
     var counter;
+
+    /**
+     * 当前正在拖拽的元素
+     *
+     * @inner
+     * @type {jQuery}
+     */
+    var draggingElement;
 
     /**
      * 坐标计算器
