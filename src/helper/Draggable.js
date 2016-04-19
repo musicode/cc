@@ -172,16 +172,6 @@ define(function (require, exports, module) {
             if (rectContainsElement) {
                 offsetX += rectInnerOffset.x;
                 offsetY += rectInnerOffset.y;
-                if (!isFixed) {
-                    var scrollLeft = rectElement.scrollLeft();
-                    var scrollTop = rectElement.scrollTop();
-                    if (offsetX > scrollLeft) {
-                        offsetX -= scrollLeft;
-                    }
-                    if (offsetY > scrollTop) {
-                        offsetY -= scrollTop;
-                    }
-                }
             }
 
 
