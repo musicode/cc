@@ -133,7 +133,7 @@ define(function (require, exports, module) {
             }
 
             me.emit(
-                'elementchange',
+                'elementselect',
                 {
                     mainElement: draggingElement
                 }
@@ -323,7 +323,15 @@ define(function (require, exports, module) {
                 }
 
                 me.emit('afterdrag', $.extend({}, point));
+
             }
+
+            me.emit(
+                'elementdeselect',
+                {
+                    mainElement: draggingElement
+                }
+            );
 
             counter =
             xCalculator =
