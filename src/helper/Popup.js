@@ -267,7 +267,7 @@ define(function (require, exports, module) {
             ) {
                 layerElement.data(POPUP_KEY).close();
                 nextTick(function () {
-                    if (me.$) {
+                    if (me.guid) {
                         me.open(e);
                     }
                 });

@@ -146,7 +146,7 @@ define(function (require, exports, module) {
             debounce(
                 function (e) {
                     var name = e.target.name;
-                    if (name && me.$) {
+                    if (name && me.guid) {
                         var config = me.option('fields')[name];
                         if (config) {
                             var local = config.validateOnBlur;
@@ -358,7 +358,7 @@ define(function (require, exports, module) {
 
             nextTick(
                 function () {
-                    if (me.$) {
+                    if (me.guid) {
                         me.emit(
                             'validatecomplete',
                             {

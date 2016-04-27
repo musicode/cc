@@ -350,7 +350,7 @@ define(function (require, exports, module) {
                     'resize' + namespace,
                     debounce(
                         function () {
-                            if (me.$) {
+                            if (me.guid) {
                                 me.pin();
                             }
                         },

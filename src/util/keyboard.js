@@ -172,7 +172,7 @@ define(function (require, exports, module) {
 
     }
 
-    $.extend(exports, charKey, functionKey, combinationKey);
+    $.extend(exports, charKey, deleteKey, functionKey, combinationKey);
 
     exports.charKey = charKey;
     exports.deleteKey = deleteKey;
