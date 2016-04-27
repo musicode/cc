@@ -371,6 +371,11 @@ define(function (require, exports, module) {
     function createShowHandler(instance, before) {
         return function (e) {
 
+            var target = $(this);
+            if (target.attr('disabled') === 'disabled') {
+                return;
+            }
+
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {
                     return;
@@ -392,6 +397,11 @@ define(function (require, exports, module) {
      */
     function createHideHandler(instance, before) {
         return function (e) {
+
+            var target = $(this);
+            if (target.attr('disabled') === 'disabled') {
+                return;
+            }
 
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {

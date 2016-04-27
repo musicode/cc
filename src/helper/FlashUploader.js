@@ -52,13 +52,16 @@ define(function (require, exports, module) {
 
         var mainElement = me.option('mainElement');
 
+        var action = me.option('action');
+        var data = me.option('data');
+
         var options = {
             element: mainElement[0],
             flashUrl: me.option('flashUrl'),
-            action: me.option('action'),
+            action: data,
             accept: me.option('accept'),
             multiple: me.option('multiple'),
-            data: me.option('data'),
+            data: data,
             header: me.option('header'),
             fileName: me.option('fileName'),
             customSettings: {
@@ -77,6 +80,11 @@ define(function (require, exports, module) {
             supload: new Supload(options)
         });
 
+        me.set({
+            action: action,
+            data: data
+        });
+
     };
 
     /**
@@ -86,24 +94,6 @@ define(function (require, exports, module) {
      */
     proto.getFiles = function () {
         return this.inner('supload').getFiles();
-    };
-
-    /**
-     * 设置上传地址
-     *
-     * @param {string} action
-     */
-    proto.setAction = function (action) {
-        this.inner('supload').setAction(action);
-    };
-
-    /**
-     * 设置上传数据
-     *
-     * @param {Object} data 需要一起上传的数据
-     */
-    proto.setData = function (data) {
-        this.inner('supload').setData(data);
     };
 
     /**

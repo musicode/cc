@@ -17,12 +17,15 @@ define(function (require, exports, module) {
      */
     var buildInRules = {
 
-        required: function (data, rules) {
+        required: function (data, rules, all) {
             if (data.value === 0 || data.value) {
                 return true;
             }
-            else if (rules.required) {
+            if (rules.required === true) {
                 return false;
+            }
+            if ($.isFunction(required)) {
+                return required(data, rules, all);
             }
         },
 
@@ -34,7 +37,7 @@ define(function (require, exports, module) {
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
             }
-            else if ($.isFunction(pattern)) {
+            if ($.isFunction(pattern)) {
                 return pattern(data, rules, all);
             }
         },

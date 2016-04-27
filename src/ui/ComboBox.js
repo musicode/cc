@@ -94,7 +94,8 @@ define(function (require, exports, module) {
         });
 
         popup.on('dispatch', function (e, data) {
-            me.emit(e.originalEvent, data, true);
+            var event = me.emit(e.originalEvent, data);
+            me.dispatch(event, data);
         });
 
         var mainElement = me.option('mainElement');

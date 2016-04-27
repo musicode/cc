@@ -100,13 +100,22 @@ define(function (require, exports, module) {
 
             changes[ name ] = record;
 
-            var watchSync = me.option('watchSync');
-            if (watchSync && watchSync[ name ]) {
-                me.execute(
-                    watchSync[ name ],
-                    [ value, oldValue, record ]
-                );
-            }
+            var watchChange = function (watch) {
+                if (watch && watch[ name ]) {
+                    me.execute(
+                        watch[ name ],
+                        [ value, oldValue, record ]
+                    );
+                }
+            };
+
+            watchChange(
+                me.inner('watchSync')
+            );
+
+            watchChange(
+                me.option('watchSync')
+            );
 
             if (!me.inner(UPDATE_ASYNC)) {
                 me.inner(

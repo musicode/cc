@@ -160,7 +160,9 @@ define(function (require, exports, module) {
             pressCounter = 0;
             prevKeyCode = null;
 
-            me.emit(e, true);
+            me.dispatch(
+                me.emit(e)
+            );
 
         });
 

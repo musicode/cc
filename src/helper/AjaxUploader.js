@@ -127,6 +127,11 @@ define(function (require, exports, module) {
             file: fileElement
         });
 
+        me.set({
+            action: me.option('action'),
+            data: me.option('data')
+        });
+
         me.emit('ready');
 
     };
@@ -148,35 +153,6 @@ define(function (require, exports, module) {
     };
 
     /**
-     * 设置上传地址
-     *
-     * @param {string} action
-     */
-    proto.setAction = function (action) {
-        this.option('action', action);
-    };
-
-    /**
-     * 设置上传数据
-     *
-     * @param {Object} data 需要一起上传的数据
-     */
-    proto.setData = function (data) {
-
-        var currentData = this.option('data');
-
-        if ($.isPlainObject(currentData)) {
-            $.extend(currentData, data);
-        }
-        else {
-            currentData = data;
-        }
-
-        this.option('data', currentData);
-
-    };
-
-    /**
      * 重置
      */
     proto.reset = function () {
@@ -194,9 +170,9 @@ define(function (require, exports, module) {
         if (fileItem) {
             if (
                 fileItem.upload({
-                    action: me.option('action'),
+                    action: me.get('action'),
+                    data: me.get('data'),
                     fileName: me.option('fileName'),
-                    data: me.option('data'),
                     header: me.option('header'),
                     useChunk: me.option('useChunk'),
                     chunkSize: me.option('chunkSize')

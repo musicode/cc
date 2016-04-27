@@ -293,7 +293,8 @@ define(function (require, exports, module) {
 
                 e.type = 'beforeshow';
 
-                me.emit(e, data, true);
+                me.emit(e, data);
+                me.dispatch(e, data);
 
                 if (e.isDefaultPrevented()) {
                     clean();
