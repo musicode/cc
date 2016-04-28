@@ -76,8 +76,17 @@ define(function (require, exports, module) {
             }
         );
 
+        var supload = new Supload(options);
         me.inner({
-            supload: new Supload(options)
+            supload: supload,
+            watchSync: {
+                action: function (action) {
+                    supload.setAction(action);
+                },
+                data: function (data) {
+                    supload.setData(data);
+                }
+            }
         });
 
         me.set({

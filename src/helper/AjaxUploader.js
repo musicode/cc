@@ -103,7 +103,10 @@ define(function (require, exports, module) {
                     $.map(
                         fileElement.prop('files'),
                         function (file, index) {
-                            return new FileItem(file, index);
+                            return new FileItem({
+                                nativeFile: file,
+                                index: index
+                            });
                         }
                     )
                 );
@@ -164,9 +167,12 @@ define(function (require, exports, module) {
      * 上传文件
      */
     proto.upload = function (index) {
-
         var me = this;
-        var fileItem = me.getFiles()[index];
+
+        var fileItem = $.type(index) === 'number'
+            ? me.getFiles()[index]
+            : new FileItem(index);
+
         if (fileItem) {
             if (
                 fileItem.upload({
@@ -452,11 +458,15 @@ define(function (require, exports, module) {
 
     }
 
-    function FileItem(nativeFile, index) {
-        this.index = index;
-        this.file = formatFile(nativeFile);
-        this.nativeFile = nativeFile;
-        this.status = AjaxUploader.STATUS_WAITING;
+    function FileItem(options) {
+        var me = this;
+        $.extend(me, options);
+        if (me.file == null) {
+            me.file = formatFile(me.nativeFile)
+        }
+        if (me.status == null) {
+            me.status = AjaxUploader.STATUS_WAITING;
+        }
     }
 
     var FileItemPrototype = FileItem.prototype;

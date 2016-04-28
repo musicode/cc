@@ -77,12 +77,41 @@ define(function (require, exports, module) {
                 return;
             }
 
-            // 批量更新
             var record = { };
             extend(record, options);
 
             record.newValue = value;
             record.oldValue = oldValue;
+
+            var change = { };
+            change[name] = record;
+
+            var watchChangeSync = function (watch) {
+                if (watch && watch[ name ]) {
+                    me.execute(
+                        watch[ name ],
+                        [ value, oldValue ]
+                    );
+                }
+            };
+
+            watchChangeSync(
+                me.inner('watchSync')
+            );
+            watchChangeSync(
+                me.option('watchSync')
+            );
+
+            if (options.sync) {
+                watchChangeSync(
+                    me.constructor[ singular + 'Updater' ]
+                );
+                watchChangeSync(
+                    me.option('watch')
+                );
+                me.emit(singular + 'change', change);
+                return;
+            }
 
             var changes = me.inner(singular + 'Changes');
             if (!changes) {
@@ -90,32 +119,7 @@ define(function (require, exports, module) {
                 me.inner(singular + 'Changes', changes);
             }
 
-            var oldRecord = changes[ name ];
-            if (oldRecord) {
-                if (oldRecord.oldValue === record.newValue) {
-                    delete changes[ name ];
-                    return;
-                }
-            }
-
-            changes[ name ] = record;
-
-            var watchChange = function (watch) {
-                if (watch && watch[ name ]) {
-                    me.execute(
-                        watch[ name ],
-                        [ value, oldValue, record ]
-                    );
-                }
-            };
-
-            watchChange(
-                me.inner('watchSync')
-            );
-
-            watchChange(
-                me.option('watchSync')
-            );
+            $.extend(changes, change);
 
             if (!me.inner(UPDATE_ASYNC)) {
                 me.inner(
