@@ -21,11 +21,9 @@ define(function (require, exports, module) {
             if (data.value === 0 || data.value) {
                 return true;
             }
-            if (rules.required === true) {
+            var required = rules.required;
+            if (required === true) {
                 return false;
-            }
-            if ($.isFunction(required)) {
-                return required(data, rules, all);
             }
         },
 
@@ -37,32 +35,33 @@ define(function (require, exports, module) {
             if (pattern instanceof RegExp) {
                 return pattern.test(data.value);
             }
-            if ($.isFunction(pattern)) {
-                return pattern(data, rules, all);
-            }
         },
 
         minlength: function (data, rules) {
-            if ($.isNumeric(rules.minlength)) {
-                return data.value.length >= + rules.minlength;
+            var minlength = rules.minlength;
+            if ($.isNumeric(minlength)) {
+                return data.value.length >= + minlength;
             }
         },
 
         maxlength: function (data, rules) {
-            if ($.isNumeric(rules.maxlength)) {
-                return data.value.length <= + rules.maxlength;
+            var maxlength = rules.maxlength;
+            if ($.isNumeric(maxlength)) {
+                return data.value.length <= + maxlength;
             }
         },
 
         min: function (data, rules) {
-            if ($.isNumeric(rules.min)) {
-                return data.value >= + rules.min;
+            var min = rules.min;
+            if ($.isNumeric(min)) {
+                return data.value >= + min;
             }
         },
 
         max: function (data, rules) {
-            if ($.isNumeric(rules.max)) {
-                return data.value <= + rules.max;
+            var max = rules.max;
+            if ($.isNumeric(max)) {
+                return data.value <= + max;
             }
         },
 
@@ -76,7 +75,7 @@ define(function (require, exports, module) {
 
         equals: function (data, rules, all) {
             var equals = rules.equals;
-            if (equals) {
+            if ($.type(equals) === 'string') {
                 return data.value === all[ equals ].value;
             }
         }
@@ -203,22 +202,16 @@ define(function (require, exports, module) {
                     }
                 };
 
-                if ($.isArray(rule.sequence)) {
-                    $.each(
-                        rule.sequence,
-                        function (index, name) {
-                            return validate(name, rule.rules[name]);
-                        }
-                    );
-                }
-                else {
-                    $.each(
-                        rule.rules,
-                        function (name, value) {
-                            return validate(name, value);
-                        }
-                    );
-                }
+                var sequence = $.isArray(rule.sequence)
+                    ? rule.sequence
+                    : keys(rule.rules);
+
+                $.each(
+                    sequence,
+                    function (index, name) {
+                        return validate(name, rule.rules[name]);
+                    }
+                );
 
                 var extend = function () {
 

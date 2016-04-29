@@ -254,7 +254,7 @@ define(function (require, exports, module) {
 
             var uploader = this.customSettings.uploader;
 
-            data.percent = 100  * getRatio(data.uploaded, data.total) + '%';
+            data.percent = (100  * getRatio(data.uploaded, data.total)).toFixed(2) + '%';
 
             uploader.emit('uploadprogress', data);
 

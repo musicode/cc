@@ -259,6 +259,10 @@ define(function (require, exports, module) {
 
         var dragHandler = function (e) {
 
+            if (!draggingElement) {
+                return;
+            }
+
             point.left = xCalculator(e);
             point.top = yCalculator(e);
 
@@ -305,6 +309,10 @@ define(function (require, exports, module) {
         };
 
         var afterDragHandler = function () {
+
+            if (!draggingElement) {
+                return;
+            }
 
             if (counter > 0) {
 

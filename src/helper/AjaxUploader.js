@@ -406,7 +406,7 @@ define(function (require, exports, module) {
                         fileItem: fileItem.toPlainObject(),
                         uploaded: uploaded,
                         total: total,
-                        percent: 100 * restrain(getRatio(uploaded, total), 0, 1) + '%'
+                        percent: (100 * restrain(getRatio(uploaded, total), 0, 1)).toFixed(2) + '%'
                     }
                 );
 

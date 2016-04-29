@@ -63,7 +63,9 @@ define(function (require, exports, module) {
 
             return {
                 index: index,
-                area: width * height
+                area: width > 0 && height > 0
+                    ? width * height
+                    : 0
             };
 
         });
