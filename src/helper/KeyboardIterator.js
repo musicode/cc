@@ -21,7 +21,8 @@ define(function (require, exports, module) {
      * @property {number} options.minIndex 最小索引
      * @property {number} options.maxIndex 最大索引
      * @property {number} options.defaultIndex 默认索引
-     * @property {number} options.interval 长按时的遍历时间间隔，单位毫秒，值越小遍历速度越快
+     * @property {number} options.timeout 长按时自动遍历启动的时间间隔，单位是毫秒
+     * @property {number} options.interval 长按时自动遍历切换的时间间隔，单位毫秒，值越小遍历速度越快
      * @property {number} options.step prev 和 next 的步进值
      * @property {boolean=} options.loop 是否可循环遍历
      * @property {boolean=} options.autoOnLongPress 长按时是否自动遍历
@@ -44,6 +45,7 @@ define(function (require, exports, module) {
             minIndex: me.option('minIndex'),
             maxIndex: me.option('maxIndex'),
             defaultIndex: me.option('defaultIndex'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),

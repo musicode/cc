@@ -49,6 +49,7 @@ define(function (require, exports, module) {
             upSelector: me.option('upSelector'),
             downSelector: me.option('downSelector'),
             inputSelector: me.option('inputSelector'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step')
         });

@@ -24,6 +24,7 @@ define(function (require, exports, module) {
      * @property {number} options.maxValue value 的最大值
      * @property {number=} options.defaultValue 默认值，当输入的值非法时，可用默认值替换错误值，如果不想替换，则不传
      * @property {number} options.step 步进值，按上下键或点击上下按钮可触发步进
+     * @property {number} options.timeout 启动自动步进的时间间隔，单位是毫秒
      * @property {number} options.interval 自动步进的时间间隔，单位是毫秒
      * @property {string} options.inputSelector 输入框选择器
      * @property {string} options.upSelector 向上按钮选择器
@@ -53,6 +54,7 @@ define(function (require, exports, module) {
             index: me.option('value'),
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             autoOnLongPress: true,
             step: me.option('step'),

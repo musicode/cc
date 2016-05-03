@@ -22,7 +22,8 @@ define(function (require, exports, module) {
      * @property {number} options.maxIndex 允许的最大索引值
      * @property {number} options.defaultIndex 默认索引值，调用 stop() 会重置为该索引
      * @property {number} options.step 前一个/后一个操作的步进值
-     * @property {number} options.interval 自动遍历的时间间隔，单位是毫秒，值越小遍历速度越快
+     * @property {number} options.timeout 自动遍历启动的时间间隔，单位是毫秒
+     * @property {number} options.interval 自动遍历切换的时间间隔，单位是毫秒，值越小遍历速度越快
      * @property {boolean=} options.loop 是否循环遍历
      */
     function Iterator(options) {
@@ -58,6 +59,7 @@ define(function (require, exports, module) {
         }
 
         var fn = reverse ? me.prev : me.next;
+        var timeout = me.option('timeout');
         var interval = me.option('interval');
 
         if ($.type(interval) !== 'number') {
@@ -66,6 +68,7 @@ define(function (require, exports, module) {
 
         timer = new Timer({
             task: $.proxy(fn, me),
+            timeout: timeout,
             interval: interval
         });
 

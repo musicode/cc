@@ -11,7 +11,8 @@ define(function (require, exports, module) {
      *
      * @param {Object} options
      * @property {Function} options.task 定时执行的函数
-     * @property {number} options.interval 定时器间隔
+     * @property {number} options.timeout 定时器启动间隔
+     * @property {number} options.interval 定时器执行间隔
      */
     function Timer(options) {
         $.extend(this, options);
@@ -29,6 +30,7 @@ define(function (require, exports, module) {
 
         me.stop();
 
+        var timeout = me.timeout;
         var interval = me.interval;
 
         var next = function () {
@@ -36,7 +38,10 @@ define(function (require, exports, module) {
             me.timer = setTimeout(next, interval);
         };
 
-        me.timer = setTimeout(next, interval);
+        if (timeout == null) {
+            timeout = interval;
+        }
+        me.timer = setTimeout(next, timeout);
 
     };
 

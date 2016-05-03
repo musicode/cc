@@ -26,6 +26,7 @@ define(function (require, exports, module) {
      *
      * @property {number} options.step 每次滚动几项，通常取决于一屏展现的数量
      *
+     * @property {number} options.timeout 自动播放时，启动的时间间隔，单位是毫秒
      * @property {number} options.interval 自动播放时，切换的时间间隔，单位是毫秒
      * @property {boolean=} options.loop 是否循环播放
      * @property {boolean=} options.reverse 是否反向，正向是从左到右，反向是从右到左
@@ -125,6 +126,7 @@ define(function (require, exports, module) {
         }
 
         var iterator = new Iterator({
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),

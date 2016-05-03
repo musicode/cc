@@ -32,7 +32,8 @@ define(function (require, exports, module) {
      * @property {string=} options.valueAttribute 从菜单项读取 value 的属性名称，如果未传，会读取菜单项的 html
      *
      * @property {boolean=} options.loop 是否循环遍历
-     * @property {number} options.interval 长按上下键自动遍历的时间间隔
+     * @property {number} options.timeout 长按上下键启动自动遍历的时间间隔
+     * @property {number} options.interval 长按上下键自动遍历切换的时间间隔
      * @property {boolean=} options.includeInput 上下遍历是否包含输入框
      * @property {boolean=} options.autoScroll 遍历时补全菜单是否自动滚动，当补全数据很多时开启体验更好
      *
@@ -127,6 +128,7 @@ define(function (require, exports, module) {
             nextKey: 'down',
             loop: me.option('loop'),
             autoOnLongPress: true,
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             watchSync: {
                 index: function (newIndex) {
