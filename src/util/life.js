@@ -90,7 +90,7 @@ define(function (require, exports, module) {
                 if (watch && watch[ name ]) {
                     me.execute(
                         watch[ name ],
-                        [ value, oldValue ]
+                        [ value, oldValue, record ]
                     );
                 }
             };

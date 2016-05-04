@@ -27,6 +27,7 @@ define(function (require, exports, module) {
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
+    var testTarget = require('../function/testTarget');
     var innerOffset = require('../function/innerOffset');
     var outerOffset = require('../function/outerOffset');
     var pageScrollLeft = require('../function/pageScrollLeft');
@@ -89,6 +90,7 @@ define(function (require, exports, module) {
         // 业务代码使用的组件基于 custom/ 的默认配置，因此组合使用时，外部是没法设置这个值的
         // 这里给 bodyDraggingClass 一个默认值，便于全局控制选区的禁用
         var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
+        var draggingStyle;
 
         var beforeDragHandler = function (e) {
 
@@ -110,8 +112,8 @@ define(function (require, exports, module) {
 
                 var target = e.target;
 
-                if (includeSelector && !hitTarget(draggingElement, includeSelector, target)
-                    || excludeSelector && hitTarget(draggingElement, excludeSelector, target)
+                if (includeSelector && !testTarget(target, includeSelector, draggingElement)
+                    || excludeSelector && testTarget(target, excludeSelector, draggingElement)
                 ) {
                     return;
                 }
@@ -140,10 +142,9 @@ define(function (require, exports, module) {
             );
 
             // 重新取值比较靠谱
-            var style = position(draggingElement);
-            draggingElement.css(style);
+            draggingStyle = position(draggingElement);
 
-            var isFixed = style.position === 'fixed';
+            var isFixed = draggingStyle.position === 'fixed';
 
 
             // =================================================================
@@ -181,8 +182,8 @@ define(function (require, exports, module) {
             // 全局坐标计算函数
             // =================================================================
 
-            point.left = style.left;
-            point.top = style.top;
+            point.left = draggingStyle.left;
+            point.top = draggingStyle.top;
 
             // 计算拖拽范围
             var x = rectContainsElement ? 0 : rectInnerOffset.x;
@@ -231,7 +232,7 @@ define(function (require, exports, module) {
             var axis = me.option('axis');
 
             xCalculator = axis === 'y'
-                        ? calculator.constant(style.left)
+                        ? calculator.constant(draggingStyle.left)
                         : calculator.variable(
                             // 全局坐标
                             coord[ isFixed ? 'fixedX' : 'absoluteX' ],
@@ -243,7 +244,7 @@ define(function (require, exports, module) {
                         );
 
             yCalculator = axis === 'x'
-                        ? calculator.constant(style.top)
+                        ? calculator.constant(draggingStyle.top)
                         : calculator.variable(
                             coord[ isFixed ? 'fixedY' : 'absoluteY' ],
                             offsetY,
@@ -263,6 +264,10 @@ define(function (require, exports, module) {
                 return;
             }
 
+            if (counter === 0 && draggingStyle) {
+                draggingElement.css(draggingStyle);
+                draggingStyle = null;
+            }
             point.left = xCalculator(e);
             point.top = yCalculator(e);
 
@@ -344,6 +349,7 @@ define(function (require, exports, module) {
             counter =
             xCalculator =
             yCalculator =
+            draggingStyle =
             draggingElement = null;
 
         };
@@ -489,39 +495,6 @@ define(function (require, exports, module) {
         };
 
     });
-
-    /**
-     * 是否命中目标
-     *
-     * element 只要有一个命中就返回 true
-     *
-     * @inner
-     * @param {jQuery} element
-     * @param {string|Array.<string>} selector
-     * @param {jQuery|HTMLElement} target
-     * @return {boolean}
-     */
-    function hitTarget(element, selector, target) {
-
-        var result = false;
-
-        if ($.isArray(selector)) {
-            selector = selector.join(',');
-        }
-
-        element
-        .find(selector)
-        .each(
-            function () {
-                if (result = contains(this, target)) {
-                    return false;
-                }
-            }
-        );
-
-        return result;
-    }
-
 
     return Draggable;
 

@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             nextKey: 'up',
             watchSync: {
                 index: function (index) {
-                    me.set('value', index);
+                    me.set('value', index, { action: 'press' });
                 },
                 minIndex: function (minIndex) {
                     me.set('minValue', minIndex);
@@ -100,7 +100,7 @@ define(function (require, exports, module) {
             })
             .on(blueType, function () {
                 var value = $.trim(inputElement.val());
-                me.set('value', value);
+                me.set('value', value, { action: 'blur' });
             });
 
         me.inner({
