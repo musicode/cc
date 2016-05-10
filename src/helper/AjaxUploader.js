@@ -127,7 +127,8 @@ define(function (require, exports, module) {
          */
         me.inner({
             main: mainElement,
-            file: fileElement
+            file: fileElement,
+            files: [ ]
         });
 
         me.set({
@@ -152,7 +153,7 @@ define(function (require, exports, module) {
      *
      */
     proto.getFiles = function () {
-        return this.inner('files') || [ ];
+        return this.inner('files');
     };
 
     /**
@@ -167,6 +168,7 @@ define(function (require, exports, module) {
      * 上传文件
      */
     proto.upload = function (index) {
+
         var me = this;
 
         var fileItem = $.type(index) === 'number'
@@ -203,7 +205,10 @@ define(function (require, exports, module) {
      */
     proto.stop = function (index) {
 
-        var fileItem = this.getFiles()[index];
+        var fileItem = $.type(index) === 'number'
+            ? me.getFiles()[index]
+            : new FileItem(index);
+
         if (fileItem) {
             fileItem.cancel();
         }
@@ -475,19 +480,19 @@ define(function (require, exports, module) {
 
         var me = this;
 
+        if (!options) {
+            options = me.options;
+        }
+        else {
+            me.options = options;
+        }
+
         var validStatus = options.useChunk
             ? AjaxUploader.STATUS_UPLOADING
             : AjaxUploader.STATUS_WAITING;
 
         if (me.status > validStatus) {
             return;
-        }
-
-        if (!options) {
-            options = me.options;
-        }
-        else {
-            me.options = options;
         }
 
         var xhr = new XMLHttpRequest();
@@ -625,12 +630,16 @@ define(function (require, exports, module) {
 
     FileItemPrototype.toPlainObject = function () {
         var me = this;
-        return {
+        var data = {
             index: me.index,
             file: me.file,
             nativeFile: me.nativeFile,
             status: me.status
         };
+        if (me.chunk) {
+            data.chunk = me.chunk;
+        }
+        return data;
     };
 
     FileItemPrototype.dispose = function () {

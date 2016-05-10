@@ -260,7 +260,7 @@ define(function (require, exports, module) {
 
         var dragHandler = function (e) {
 
-            if (!draggingElement) {
+            if (counter == null) {
                 return;
             }
 
@@ -315,7 +315,7 @@ define(function (require, exports, module) {
 
         var afterDragHandler = function () {
 
-            if (!draggingElement) {
+            if (counter == null) {
                 return;
             }
 
