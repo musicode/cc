@@ -166,14 +166,21 @@ define(function (require, exports, module) {
 
     /**
      * 上传文件
+     *
+     * @param {number} index
+     * @param {Object=} fileItem
      */
-    proto.upload = function (index) {
+    proto.upload = function (index, fileItem) {
 
         var me = this;
 
-        var fileItem = $.type(index) === 'number'
-            ? me.getFiles()[index]
-            : new FileItem(index);
+        if (!fileItem) {
+            fileItem = me.getFiles()[index];
+        }
+        else {
+            fileItem = new FileItem(fileItem);
+            me.getFiles()[index] = fileItem;
+        }
 
         if (fileItem) {
             if (
@@ -194,7 +201,8 @@ define(function (require, exports, module) {
                     .on('uploadprogress', dispatchEvent)
                     .on('uploadsuccess', dispatchEvent)
                     .on('uploaderror', dispatchEvent)
-                    .on('uploadcomplete', dispatchEvent);
+                    .on('uploadcomplete', dispatchEvent)
+                    .on('chunkuploadsuccess', dispatchEvent);
             }
         }
 
@@ -204,15 +212,10 @@ define(function (require, exports, module) {
      * 停止上传
      */
     proto.stop = function (index) {
-
-        var fileItem = $.type(index) === 'number'
-            ? me.getFiles()[index]
-            : new FileItem(index);
-
+        var fileItem = this.getFiles()[index];
         if (fileItem) {
             fileItem.cancel();
         }
-
     };
 
     /**
@@ -340,7 +343,6 @@ define(function (require, exports, module) {
 
                     var fileSize = fileItem.file.size;
                     if (chunkInfo.uploaded < fileSize) {
-
                         // 分片上传成功
                         var event = fileItem.emit('chunkuploadsuccess', data);
                         if (!event.isDefaultPrevented()) {
@@ -348,10 +350,12 @@ define(function (require, exports, module) {
                             chunkInfo.uploaded += chunkInfo.uploading;
                             if (chunkInfo.uploaded < fileSize) {
                                 fileItem.upload();
+                                return;
                             }
                         }
-
-                        return;
+                        else {
+                            return;
+                        }
                     }
                 }
 
