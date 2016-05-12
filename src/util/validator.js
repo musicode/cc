@@ -113,7 +113,7 @@ define(function (require, exports, module) {
      *                       {
      *                           key1: {
      *                               before: function () {
-     *                                  // 返回 false 可拦截 key1 的后续验证
+     *                                  // 返回 false 可拦截 key1 的后续验证，这取决于字段的验证顺序
      *                               },
      *                               after: function () {
      *                                  // 验证完做一些处理
@@ -162,7 +162,7 @@ define(function (require, exports, module) {
                     return;
                 }
 
-                var result = $.extend({ }, item);
+                var result = $.extend({ name: key }, item);
 
                 if ($.isFunction(rule.before)
                     && rule.before(data) === false

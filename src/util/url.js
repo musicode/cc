@@ -47,10 +47,14 @@ define(function (require, exports, module) {
     /**
      * 解析 url，返回格式遵循 location 属性的命名
      *
-     * @param {string} url
+     * @param {string=} url 如果不传，使用当前地址
      * @return {Object}
      */
     exports.parse = function (url) {
+
+        if (url == null) {
+            url = document.URL;
+        }
 
         var link = document.createElement('a');
         link.href = url;
