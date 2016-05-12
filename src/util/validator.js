@@ -17,7 +17,7 @@ define(function (require, exports, module) {
      */
     var buildInRules = {
 
-        required: function (data, rules, all) {
+        required: function (data, rules) {
             if (data.value === 0 || data.value) {
                 return true;
             }
@@ -27,7 +27,7 @@ define(function (require, exports, module) {
             }
         },
 
-        pattern: function (data, rules, all) {
+        pattern: function (data, rules) {
             var pattern = rules.pattern;
             if ($.type(pattern) === 'string') {
                 pattern = exports.buildInPatterns[ pattern ];
