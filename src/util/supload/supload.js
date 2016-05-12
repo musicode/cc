@@ -69,9 +69,9 @@ define(function (require, exports, module) {
             element.parentNode.replaceChild(swf, element);
             this.element = swf;
 
-            this.onLog = function (data) {
-                console.log(data);
-            };
+//            this.onLog = function (data) {
+//                console.log(data);
+//            };
 
             Supload.instances[instanceId] = this;
         },

@@ -17,7 +17,7 @@ define(function (require, exports, module) {
     /**
      *
      * @param {Object} options
-     * @property {Function} options.process 有两个参数 (item, callback)
+     * @property {Function} options.task 有两个参数 (item, callback)
      */
     function Queue(options) {
         $.extend(this, options);
@@ -49,7 +49,7 @@ define(function (require, exports, module) {
                     var item = list.shift();
                     if (item) {
                         me.waiting = waiting;
-                        me.process(item, waiting);
+                        me.task(item, waiting);
                     }
                 }
             };

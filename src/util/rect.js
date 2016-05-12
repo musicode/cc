@@ -9,11 +9,11 @@ define(function (require, exports, module) {
     /**
      * 元素列表转换为对应的矩形列表
      *
-     * @param {jQuery} elements
+     * @param {jQuery} element
      * @param {Object=} relativePosition
      * @return {Array.<Object>}
      */
-    exports.makeRectList = function (elements, relativePosition) {
+    exports.makeRectList = function (element, relativePosition) {
 
         if (!relativePosition) {
             relativePosition = { };
@@ -27,7 +27,7 @@ define(function (require, exports, module) {
             ? relativePosition.top
             : 0;
 
-        return elements.map(function () {
+        return element.map(function () {
             var element = $(this);
             var offset = element.offset();
             return {
