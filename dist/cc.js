@@ -276,7 +276,7 @@ define('cc/form/Date', [
                     }
                 }
             }
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         });
         var inputElement = mainElement.find(me.option('inputSelector'));
         inputUtil.init(inputElement);
@@ -452,7 +452,7 @@ define('cc/form/DateRange', [
                     }
                 }
             }
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         });
         var namespace = me.namespace();
         var applySelector = me.option('applySelector');
@@ -646,6 +646,7 @@ define('cc/form/Number', [
             upSelector: me.option('upSelector'),
             downSelector: me.option('downSelector'),
             inputSelector: me.option('inputSelector'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step')
         });
@@ -780,7 +781,7 @@ define('cc/form/Select', [
                 nativeElement.trigger('focusout');
                 break;
             }
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         });
         me.inner({
             main: mainElement,
@@ -979,7 +980,7 @@ define('cc/form/Validator', [
         });
         mainElement.on('focusout' + namespace, debounce(function (e) {
             var name = e.target.name;
-            if (name && me.$) {
+            if (name && me.guid) {
                 var config = me.option('fields')[name];
                 if (config) {
                     var local = config.validateOnBlur;
@@ -1090,7 +1091,7 @@ define('cc/form/Validator', [
                 window.scrollTo(window.scrollX, top);
             }
             nextTick(function () {
-                if (me.$) {
+                if (me.guid) {
                     me.emit('validatecomplete', {
                         fields: fields,
                         errors: errors
@@ -2265,6 +2266,53 @@ define('cc/function/split', [
         return result;
     };
 });
+define('cc/function/stringifyDate', [
+    'require',
+    'exports',
+    'module',
+    './lpad',
+    './simplifyDate'
+], function (require, exports, module) {
+    'use strict';
+    var lpad = require('./lpad');
+    var simplifyDate = require('./simplifyDate');
+    return function (date, sep) {
+        var result = simplifyDate(date);
+        if (result) {
+            return [
+                result.year,
+                lpad(result.month),
+                lpad(result.date)
+            ].join(sep || '-');
+        }
+        return '';
+    };
+});
+define('cc/function/stringifyTime', [
+    'require',
+    'exports',
+    'module',
+    './lpad',
+    './simplifyTime'
+], function (require, exports, module) {
+    'use strict';
+    var lpad = require('./lpad');
+    var simplifyTime = require('./simplifyTime');
+    return function (date, hasSecond) {
+        date = simplifyTime(date);
+        if (date) {
+            var list = [
+                lpad(date.hour),
+                lpad(date.minute)
+            ];
+            if (hasSecond) {
+                list.push(lpad(date.second));
+            }
+            return list.join(':');
+        }
+        return '';
+    };
+});
 define('cc/function/supportCanvas', [
     'require',
     'exports',
@@ -2333,6 +2381,32 @@ define('cc/function/supportWebSocket', [
     'use strict';
     return function () {
         return typeof window.WebSocket !== 'undefined';
+    };
+});
+define('cc/function/testTarget', [
+    'require',
+    'exports',
+    'module',
+    '../util/instance',
+    './contains'
+], function (require, exports, module) {
+    'use strict';
+    var instance = require('../util/instance');
+    var contains = require('./contains');
+    return function (target, selector, context) {
+        var result = false;
+        if ($.isArray(selector)) {
+            selector = selector.join(',');
+        }
+        if (!context) {
+            context = instance.document;
+        }
+        context.find(selector).each(function () {
+            if (result = contains(this, target)) {
+                return false;
+            }
+        });
+        return result;
     };
 });
 define('cc/function/toBoolean', [
@@ -2475,13 +2549,17 @@ define('cc/helper/AjaxUploader', [
     'module',
     '../function/ratio',
     '../function/restrain',
+    '../function/nextTick',
     '../util/life',
+    '../util/event',
     '../util/mimeType'
 ], function (require, exports, module) {
     'use strict';
     var getRatio = require('../function/ratio');
     var restrain = require('../function/restrain');
+    var nextTick = require('../function/nextTick');
     var lifeUtil = require('../util/life');
+    var eventUtil = require('../util/event');
     var mimeTypeUtil = require('../util/mimeType');
     function AjaxUploader(options) {
         lifeUtil.init(this, options);
@@ -2505,64 +2583,63 @@ define('cc/helper/AjaxUploader', [
             properties.multiple = true;
         }
         fileElement.prop(properties).on('change' + me.namespace(), function () {
-            setFiles(me, fileElement.prop('files'));
+            $.each(me.getFiles(), function (index, fileItem) {
+                fileItem.dispose();
+            });
+            me.inner('files', $.map(fileElement.prop('files'), function (file, index) {
+                return new FileItem({
+                    nativeFile: file,
+                    index: index
+                });
+            }));
             me.emit('filechange');
         });
         me.inner({
             main: mainElement,
             file: fileElement,
-            fileQueue: {}
+            files: []
+        });
+        me.set({
+            action: me.option('action'),
+            data: me.option('data')
         });
         me.emit('ready');
     };
     proto.getFiles = function () {
-        return this.inner('fileQueue').files || [];
-    };
-    proto.setAction = function (action) {
-        this.option('action', action);
-    };
-    proto.setData = function (data) {
-        var currentData = this.option('data');
-        if ($.isPlainObject(currentData)) {
-            $.extend(currentData, data);
-        } else {
-            currentData = data;
-        }
-        this.option('data', currentData);
+        return this.inner('files');
     };
     proto.reset = function () {
         this.inner('main')[0].reset();
     };
-    proto.upload = function (fileItem) {
+    proto.upload = function (index, fileItem) {
         var me = this;
-        var validStatus = me.option('useChunk') ? AjaxUploader.STATUS_UPLOADING : AjaxUploader.STATUS_WAITING;
-        fileItem = fileItem || getCurrentFileItem(me);
-        if (!fileItem || fileItem.status > validStatus) {
-            return;
+        if (!fileItem) {
+            fileItem = me.getFiles()[index];
+        } else {
+            fileItem = new FileItem(fileItem);
+            me.getFiles()[index] = fileItem;
         }
-        var xhr = new XMLHttpRequest();
-        fileItem.xhr = xhr;
-        $.each(xhrEventHandler, function (index, item) {
-            xhr['on' + item.type] = function (e) {
-                item.handler(me, e);
-            };
-        });
-        $.each(uploadEventHandler, function (index, item) {
-            xhr.upload['on' + item.type] = function (e) {
-                item.handler(me, e);
-            };
-        });
-        xhr.open('post', me.option('action'), true);
-        var upload = me.option('useChunk') ? uploadChunk : uploadFile;
-        upload(me, fileItem);
+        if (fileItem) {
+            if (fileItem.upload({
+                    action: me.get('action'),
+                    data: me.get('data'),
+                    fileName: me.option('fileName'),
+                    header: me.option('header'),
+                    useChunk: me.option('useChunk'),
+                    chunkSize: me.option('chunkSize')
+                })) {
+                var dispatchEvent = function (e, data) {
+                    me.emit(e, data);
+                };
+                fileItem.on('uploadstart', dispatchEvent).on('uploadprogress', dispatchEvent).on('uploadsuccess', dispatchEvent).on('uploaderror', dispatchEvent).on('uploadcomplete', dispatchEvent).on('chunkuploadsuccess', dispatchEvent);
+            }
+        }
     };
-    proto.stop = function () {
-        var me = this;
-        var fileItem = getCurrentFileItem(me);
-        if (fileItem && fileItem.status === AjaxUploader.STATUS_UPLOADING) {
-            fileItem.xhr.abort();
+    proto.stop = function (index) {
+        var fileItem = this.getFiles()[index];
+        if (fileItem) {
+            fileItem.cancel();
         }
-        me.reset();
     };
     proto.enable = function () {
         this.option('file').prop('disabled', false);
@@ -2576,7 +2653,11 @@ define('cc/helper/AjaxUploader', [
         me.stop();
         me.inner('file').off(me.namespace());
     };
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [
+        'getFiles',
+        'setAction',
+        'setData'
+    ]);
     AjaxUploader.supportChunk = typeof FileReader !== 'undefined';
     AjaxUploader.STATUS_WAITING = 0;
     AjaxUploader.STATUS_UPLOADING = 1;
@@ -2584,124 +2665,81 @@ define('cc/helper/AjaxUploader', [
     AjaxUploader.STATUS_UPLOAD_ERROR = 3;
     AjaxUploader.ERROR_CANCEL = 0;
     AjaxUploader.ERROR_CHUNK_SIZE = -1;
-    function uploadFile(uploader, fileItem) {
-        var formData = new FormData();
-        $.each(uploader.option('data'), function (key, value) {
-            formData.append(key, value);
-        });
-        formData.append(uploader.option('fileName'), fileItem.nativeFile);
-        fileItem.xhr.send(formData);
-    }
-    function uploadChunk(uploader, fileItem) {
-        var file = fileItem.nativeFile;
-        var fileSize = fileItem.file.size;
-        var chunkInfo = fileItem.chunk;
-        if (!chunkInfo) {
-            chunkInfo = fileItem.chunk = {
-                index: 0,
-                uploaded: 0
-            };
-        }
-        var chunkIndex = chunkInfo.index;
-        var chunkSize = uploader.option('chunkSize');
-        var start = chunkSize * chunkIndex;
-        var end = chunkSize * (chunkIndex + 1);
-        if (end > fileSize) {
-            end = fileSize;
-        }
-        chunkInfo.uploading = end - start;
-        if (chunkInfo.uploading <= 0) {
-            setTimeout(function () {
-                uploader.emit('uploadError', {
-                    fileItem: fileItem,
-                    errorCode: AjaxUploader.ERROR_CHUNK_SIZE
-                });
-            });
-            return;
-        }
-        var range = 'bytes ' + (start + 1) + '-' + end + '/' + fileSize;
-        var xhr = fileItem.xhr;
-        xhr.setRequestHeader('Content-Type', '');
-        xhr.setRequestHeader('X_FILENAME', encodeURIComponent(file.name));
-        xhr.setRequestHeader('Content-Range', range);
-        xhr.send(file.slice(start, end));
-    }
     var xhrEventHandler = {
         uploadStart: {
             type: 'loadstart',
-            handler: function (uploader, e) {
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e) {
                 fileItem.status = AjaxUploader.STATUS_UPLOADING;
-                uploader.emit('uploadstart', { fileItem: fileItem });
+                fileItem.emit('uploadstart', { fileItem: fileItem.toPlainObject() });
             }
         },
         uploadSuccess: {
             type: 'load',
-            handler: function (uploader, e) {
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e) {
                 var data = {
-                    fileItem: fileItem,
+                    fileItem: fileItem.toPlainObject(),
                     responseText: fileItem.xhr.responseText
                 };
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
-                    if (chunkInfo.uploaded < fileItem.file.size) {
-                        var event = uploader.emit('chunkuploadsuccess', data);
+                    var fileSize = fileItem.file.size;
+                    if (chunkInfo.uploaded < fileSize) {
+                        var event = fileItem.emit('chunkuploadsuccess', data);
                         if (!event.isDefaultPrevented()) {
                             chunkInfo.index++;
                             chunkInfo.uploaded += chunkInfo.uploading;
-                            if (chunkInfo.uploaded < fileItem.file.size) {
-                                uploader.upload();
+                            if (chunkInfo.uploaded < fileSize) {
+                                fileItem.upload();
+                                return;
                             }
+                        } else {
+                            return;
                         }
-                        return;
                     }
                 }
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
-                uploader.emit('uploadsuccess', data);
-                uploadComplete(uploader, fileItem);
+                fileItem.emit('uploadsuccess', data);
+                uploadComplete(fileItem);
             }
         },
         uploadError: {
             type: 'error',
-            handler: function (uploader, e, errorCode) {
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e, errorCode) {
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_ERROR;
-                uploader.emit('uploaderror', {
-                    fileItem: fileItem,
+                fileItem.emit('uploaderror', {
+                    fileItem: fileItem.toPlainObject(),
                     errorCode: errorCode
                 });
-                uploadComplete(uploader, fileItem);
+                uploadComplete(fileItem);
             }
         },
         uploadStop: {
             type: 'abort',
-            handler: function (uploader, e) {
-                xhrEventHandler.uploadError.handler(uploader, e, AjaxUploader.ERROR_CANCEL);
+            handler: function (fileItem, e) {
+                xhrEventHandler.uploadError.handler(fileItem, e, AjaxUploader.ERROR_CANCEL);
             }
         }
     };
     var uploadEventHandler = {
         uploadProgress: {
             type: 'progress',
-            handler: function (uploader, e) {
-                var fileItem = getCurrentFileItem(uploader);
+            handler: function (fileItem, e) {
                 var total = fileItem.file.size;
                 var uploaded = e.loaded;
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
                     uploaded += chunkInfo.uploaded;
                 }
-                uploader.emit('uploadprogress', {
-                    fileItem: fileItem,
+                fileItem.emit('uploadprogress', {
+                    fileItem: fileItem.toPlainObject(),
                     uploaded: uploaded,
                     total: total,
-                    percent: 100 * restrain(getRatio(uploaded, total), 0, 1) + '%'
+                    percent: (100 * restrain(getRatio(uploaded, total), 0, 1)).toFixed(2) + '%'
                 });
             }
         }
     };
-    function uploadComplete(uploader, fileItem) {
+    function uploadComplete(fileItem) {
         var xhr = fileItem.xhr;
         if (xhr) {
             $.each(xhrEventHandler, function (index, item) {
@@ -2712,37 +2750,135 @@ define('cc/helper/AjaxUploader', [
             });
             delete fileItem.xhr;
         }
-        uploader.emit('uploadcomplete', { fileItem: fileItem });
-        if (fileItem.status === AjaxUploader.STATUS_UPLOAD_SUCCESS || fileItem.status === AjaxUploader.STATUS_UPLOAD_ERROR && uploader.option('ignoreError')) {
-            var index = fileItem.index + 1;
-            var fileQueue = uploader.inner('fileQueue');
-            if (index < fileQueue.files.length) {
-                fileQueue.index = index;
-                uploader.upload();
-            } else {
-                setFiles(uploader, []);
-            }
+        var options = fileItem.options;
+        if (options) {
+            delete fileItem.options;
+        }
+        fileItem.emit('uploadcomplete', { fileItem: fileItem.toPlainObject() });
+    }
+    function FileItem(options) {
+        var me = this;
+        $.extend(me, options);
+        if (me.file == null) {
+            me.file = formatFile(me.nativeFile);
+        }
+        if (me.status == null) {
+            me.status = AjaxUploader.STATUS_WAITING;
         }
     }
-    function setFiles(uploader, files) {
-        var fileQueue = uploader.inner('fileQueue');
-        fileQueue.index = 0;
-        fileQueue.files = $.map(files, function (nativeFile, index) {
-            return {
-                index: index,
-                file: formatFile(nativeFile),
-                nativeFile: nativeFile,
-                status: AjaxUploader.STATUS_WAITING
+    var FileItemPrototype = FileItem.prototype;
+    FileItemPrototype.upload = function (options) {
+        var me = this;
+        if (!options) {
+            options = me.options;
+        } else {
+            me.options = options;
+        }
+        var validStatus = options.useChunk ? AjaxUploader.STATUS_UPLOADING : AjaxUploader.STATUS_WAITING;
+        if (me.status > validStatus) {
+            return;
+        }
+        var xhr = new XMLHttpRequest();
+        me.xhr = xhr;
+        $.each(xhrEventHandler, function (index, item) {
+            xhr['on' + item.type] = function (e) {
+                item.handler(me, e);
             };
         });
-    }
-    function getCurrentFileItem(uploader) {
-        var fileQueue = uploader.inner('fileQueue');
-        var index = fileQueue.index;
-        if (fileQueue.files && $.type(index) === 'number') {
-            return fileQueue.files[index];
+        $.each(uploadEventHandler, function (index, item) {
+            xhr.upload['on' + item.type] = function (e) {
+                item.handler(me, e);
+            };
+        });
+        xhr.open('post', options.action, true);
+        if (options.useChunk) {
+            me.uploadFileChunk(options);
+        } else {
+            me.uploadFile(options);
         }
-    }
+        return true;
+    };
+    FileItemPrototype.uploadFile = function (options) {
+        var me = this;
+        var formData = new FormData();
+        if (options.data) {
+            $.each(options.data, function (key, value) {
+                formData.append(key, value);
+            });
+        }
+        formData.append(options.fileName, me.nativeFile);
+        var xhr = me.xhr;
+        if (options.header) {
+            $.each(options.header, function (name, value) {
+                xhr.setRequestHeader(name, value);
+            });
+        }
+        xhr.send(formData);
+    };
+    FileItemPrototype.uploadFileChunk = function (options) {
+        var me = this;
+        var file = me.nativeFile;
+        var fileSize = me.file.size;
+        var chunkInfo = me.chunk;
+        if (!chunkInfo) {
+            chunkInfo = me.chunk = {
+                index: 0,
+                uploaded: 0
+            };
+        }
+        var chunkIndex = chunkInfo.index;
+        var chunkSize = options.chunkSize;
+        var start = chunkSize * chunkIndex;
+        var end = chunkSize * (chunkIndex + 1);
+        if (end > fileSize) {
+            end = fileSize;
+        }
+        chunkInfo.uploading = end - start;
+        if (chunkInfo.uploading <= 0) {
+            nextTick(function () {
+                xhrEventHandler.uploadError.handler(me, {}, AjaxUploader.ERROR_CHUNK_SIZE);
+            });
+            return;
+        }
+        var xhr = me.xhr;
+        var header = {
+            'Content-Type': '',
+            'X_FILENAME': encodeURIComponent(file.name),
+            'Content-Range': 'bytes ' + (start + 1) + '-' + end + '/' + fileSize
+        };
+        if (options.header) {
+            $.extend(header, options.header);
+        }
+        $.each(header, function (name, value) {
+            xhr.setRequestHeader(name, value);
+        });
+        xhr.send(file.slice(start, end));
+    };
+    FileItemPrototype.cancel = function () {
+        var me = this;
+        if (me.status === AjaxUploader.STATUS_UPLOADING) {
+            me.xhr.abort();
+        }
+    };
+    FileItemPrototype.toPlainObject = function () {
+        var me = this;
+        var data = {
+            index: me.index,
+            file: me.file,
+            nativeFile: me.nativeFile,
+            status: me.status
+        };
+        if (me.chunk) {
+            data.chunk = me.chunk;
+        }
+        return data;
+    };
+    FileItemPrototype.dispose = function () {
+        var me = this;
+        me.cancel();
+        me.off();
+    };
+    eventUtil.extend(FileItemPrototype);
     function formatAccept(accept) {
         var result = [];
         $.each(accept, function (index, name) {
@@ -2772,6 +2908,7 @@ define('cc/helper/Draggable', [
     '../function/restrain',
     '../function/position',
     '../function/contains',
+    '../function/testTarget',
     '../function/innerOffset',
     '../function/outerOffset',
     '../function/pageScrollLeft',
@@ -2789,6 +2926,7 @@ define('cc/helper/Draggable', [
     var restrain = require('../function/restrain');
     var position = require('../function/position');
     var contains = require('../function/contains');
+    var testTarget = require('../function/testTarget');
     var innerOffset = require('../function/innerOffset');
     var outerOffset = require('../function/outerOffset');
     var pageScrollLeft = require('../function/pageScrollLeft');
@@ -2808,7 +2946,7 @@ define('cc/helper/Draggable', [
     proto.init = function () {
         var me = this;
         var mainElement = me.option('mainElement');
-        mainElement.css(position(mainElement));
+        var mainSelector = me.option('mainSelector');
         me.inner({ main: mainElement });
         var containerElement = me.option('containerElement');
         var pageElement = page();
@@ -2816,14 +2954,16 @@ define('cc/helper/Draggable', [
         var draggingClass = me.option('draggingClass');
         var containerDraggingClass = me.option('containerDraggingClass');
         var bodyDraggingClass = me.option('bodyDraggingClass') || 'dragging';
+        var draggingStyle;
         var beforeDragHandler = function (e) {
             var coord;
+            draggingElement = mainSelector ? $(e.currentTarget) : mainElement;
             var isEvent = e[$.expando];
             if (isEvent) {
                 var includeSelector = me.option('includeSelector');
                 var excludeSelector = me.option('excludeSelector');
                 var target = e.target;
-                if (includeSelector && !hitTarget(mainElement, includeSelector, target) || excludeSelector && hitTarget(mainElement, excludeSelector, target)) {
+                if (includeSelector && !testTarget(target, includeSelector, draggingElement) || excludeSelector && testTarget(target, excludeSelector, draggingElement)) {
                     return;
                 }
                 $.each(globalCoord, function (key, value) {
@@ -2838,30 +2978,27 @@ define('cc/helper/Draggable', [
             if (!coord) {
                 coord = globalCoord.mouse;
             }
-            var style = position(mainElement);
-            var isFixed = style.position === 'fixed';
-            var mainOuterOffset = outerOffset(mainElement);
+            me.emit('elementselect', { mainElement: draggingElement });
+            draggingStyle = position(draggingElement);
+            var isFixed = draggingStyle.position === 'fixed';
+            var draggingOuterOffset = outerOffset(draggingElement);
             var rectInnerOffset = innerOffset(rectElement);
             var offsetX;
             var offsetY;
             if (isEvent) {
-                offsetX = coord.absoluteX(e) - mainOuterOffset.x;
-                offsetY = coord.absoluteY(e) - mainOuterOffset.y;
+                offsetX = coord.absoluteX(e) - draggingOuterOffset.x;
+                offsetY = coord.absoluteY(e) - draggingOuterOffset.y;
             } else {
                 offsetX = e.offsetX;
                 offsetY = e.offsetY;
             }
-            var rectContainsElement = contains(rectElement, mainElement);
+            var rectContainsElement = contains(rectElement, draggingElement);
             if (rectContainsElement) {
                 offsetX += rectInnerOffset.x;
                 offsetY += rectInnerOffset.y;
-                if (!isFixed) {
-                    offsetX -= rectElement.scrollLeft();
-                    offsetY -= rectElement.scrollTop();
-                }
             }
-            point.left = style.left;
-            point.top = style.top;
+            point.left = draggingStyle.left;
+            point.top = draggingStyle.top;
             var x = rectContainsElement ? 0 : rectInnerOffset.x;
             var y = rectContainsElement ? 0 : rectInnerOffset.y;
             var width;
@@ -2888,26 +3025,33 @@ define('cc/helper/Draggable', [
                     height = vHeight;
                 }
             }
-            width = Math.max(0, width - mainElement.outerWidth(true));
-            height = Math.max(0, height - mainElement.outerHeight(true));
+            width = Math.max(0, width - draggingElement.outerWidth(true));
+            height = Math.max(0, height - draggingElement.outerHeight(true));
             var axis = me.option('axis');
-            xCalculator = axis === 'y' ? calculator.constant(style.left) : calculator.variable(coord[isFixed ? 'fixedX' : 'absoluteX'], offsetX, x, x + width);
-            yCalculator = axis === 'x' ? calculator.constant(style.top) : calculator.variable(coord[isFixed ? 'fixedY' : 'absoluteY'], offsetY, y, y + height);
+            xCalculator = axis === 'y' ? calculator.constant(draggingStyle.left) : calculator.variable(coord[isFixed ? 'fixedX' : 'absoluteX'], offsetX, x, x + width);
+            yCalculator = axis === 'x' ? calculator.constant(draggingStyle.top) : calculator.variable(coord[isFixed ? 'fixedY' : 'absoluteY'], offsetY, y, y + height);
             counter = 0;
             return true;
         };
         var dragHandler = function (e) {
+            if (counter == null) {
+                return;
+            }
+            if (counter === 0 && draggingStyle) {
+                draggingElement.css(draggingStyle);
+                draggingStyle = null;
+            }
             point.left = xCalculator(e);
             point.top = yCalculator(e);
             var event;
             if (counter === 0) {
-                event = me.emit('beforedrag', point);
+                event = me.emit('beforedrag', $.extend({}, point));
                 if (event.isDefaultPrevented()) {
                     return;
                 }
                 disableSelection();
                 if (draggingClass) {
-                    mainElement.addClass(draggingClass);
+                    draggingElement.addClass(draggingClass);
                 }
                 if (containerDraggingClass) {
                     containerElement.addClass(containerDraggingClass);
@@ -2917,19 +3061,22 @@ define('cc/helper/Draggable', [
                 }
             }
             counter++;
-            event = me.emit('drag', point);
+            event = me.emit('drag', $.extend({}, point));
             if (!event.isDefaultPrevented()) {
                 me.execute('dragAnimation', {
-                    mainElement: mainElement,
+                    mainElement: draggingElement,
                     mainStyle: point
                 });
             }
         };
         var afterDragHandler = function () {
+            if (counter == null) {
+                return;
+            }
             if (counter > 0) {
                 enableSelection();
                 if (draggingClass) {
-                    mainElement.removeClass(draggingClass);
+                    draggingElement.removeClass(draggingClass);
                 }
                 if (containerDraggingClass) {
                     containerElement.removeClass(containerDraggingClass);
@@ -2937,12 +3084,14 @@ define('cc/helper/Draggable', [
                 if (bodyDraggingClass) {
                     bodyElement.removeClass(bodyDraggingClass);
                 }
-                me.emit('afterdrag', point);
+                me.emit('afterdrag', $.extend({}, point));
             }
-            counter = xCalculator = yCalculator = null;
+            me.emit('elementdeselect', { mainElement: draggingElement });
+            counter = xCalculator = yCalculator = draggingStyle = draggingElement = null;
         };
         me.execute('init', {
             mainElement: mainElement,
+            mainSelector: mainSelector,
             namespace: me.namespace(),
             downHandler: beforeDragHandler,
             moveHandler: dragHandler,
@@ -2959,6 +3108,7 @@ define('cc/helper/Draggable', [
     var xCalculator;
     var yCalculator;
     var counter;
+    var draggingElement;
     var calculator = {
         constant: function (value) {
             return function () {
@@ -2991,18 +3141,6 @@ define('cc/helper/Draggable', [
             }
         };
     });
-    function hitTarget(element, selector, target) {
-        var result = false;
-        if ($.isArray(selector)) {
-            selector = selector.join(',');
-        }
-        element.find(selector).each(function () {
-            if (result = contains(this, target)) {
-                return false;
-            }
-        });
-        return result;
-    }
     return Draggable;
 });
 define('cc/helper/FlashUploader', [
@@ -3028,39 +3166,50 @@ define('cc/helper/FlashUploader', [
     proto.init = function () {
         var me = this;
         var mainElement = me.option('mainElement');
+        var action = me.option('action');
+        var data = me.option('data');
         var options = {
             element: mainElement[0],
             flashUrl: me.option('flashUrl'),
-            action: me.option('action'),
+            action: data,
             accept: me.option('accept'),
             multiple: me.option('multiple'),
-            data: me.option('data'),
+            data: data,
+            header: me.option('header'),
             fileName: me.option('fileName'),
-            ignoreError: me.option('ignoreError'),
             customSettings: { uploader: me }
         };
         $.each(eventHandler, function (type, handler) {
             options['on' + ucFirst(type)] = handler;
         });
-        me.inner({ supload: new Supload(options) });
+        var supload = new Supload(options);
+        me.inner({
+            supload: supload,
+            watchSync: {
+                action: function (action) {
+                    supload.setAction(action);
+                },
+                data: function (data) {
+                    supload.setData(data);
+                }
+            }
+        });
+        me.set({
+            action: action,
+            data: data
+        });
     };
     proto.getFiles = function () {
         return this.inner('supload').getFiles();
     };
-    proto.setAction = function (action) {
-        this.inner('supload').setAction(action);
-    };
-    proto.setData = function (data) {
-        this.inner('supload').setData(data);
-    };
     proto.reset = function () {
         this.inner('supload').reset();
     };
-    proto.upload = function () {
-        this.inner('supload').upload();
+    proto.upload = function (index) {
+        this.inner('supload').upload(index);
     };
-    proto.stop = function () {
-        this.inner('supload').cancel();
+    proto.stop = function (index) {
+        this.inner('supload').cancel(index);
     };
     proto.enable = function () {
         this.inner('supload').enable();
@@ -3073,7 +3222,11 @@ define('cc/helper/FlashUploader', [
         lifeUtil.dispose(me);
         me.inner('supload').dispose();
     };
-    lifeUtil.extend(proto);
+    lifeUtil.extend(proto, [
+        'getFiles',
+        'setAction',
+        'setData'
+    ]);
     FlashUploader.STATUS_WAITING = Supload.STATUS_WAITING;
     FlashUploader.STATUS_UPLOADING = Supload.STATUS_UPLOADING;
     FlashUploader.STATUS_UPLOAD_SUCCESS = Supload.STATUS_UPLOAD_SUCCESS;
@@ -3096,7 +3249,7 @@ define('cc/helper/FlashUploader', [
         },
         uploadProgress: function (data) {
             var uploader = this.customSettings.uploader;
-            data.percent = 100 * getRatio(data.uploaded, data.total) + '%';
+            data.percent = (100 * getRatio(data.uploaded, data.total)).toFixed(2) + '%';
             uploader.emit('uploadprogress', data);
         },
         uploadSuccess: function (data) {
@@ -3164,7 +3317,7 @@ define('cc/helper/Input', [
                 }
                 break;
             }
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         });
         var namespace = me.namespace();
         mainElement.on('blur' + namespace, updateValue).on(inputUtil.INPUT + namespace, function () {
@@ -3237,12 +3390,14 @@ define('cc/helper/Iterator', [
             timer.dispose();
         }
         var fn = reverse ? me.prev : me.next;
+        var timeout = me.option('timeout');
         var interval = me.option('interval');
         if ($.type(interval) !== 'number') {
             me.error('interval must be a number.');
         }
         timer = new Timer({
             task: $.proxy(fn, me),
+            timeout: timeout,
             interval: interval
         });
         timer.start();
@@ -3348,7 +3503,7 @@ define('cc/helper/Keyboard', [
                 prevKeyCode = currentKeyCode;
                 pressCounter = 1;
             }
-            me.emit(e, true);
+            me.dispatch(me.emit(event));
             if (!shortcut) {
                 return;
             }
@@ -3368,7 +3523,7 @@ define('cc/helper/Keyboard', [
             }
             pressCounter = 0;
             prevKeyCode = null;
-            me.emit(e, true);
+            me.dispatch(me.emit(e));
         });
     };
     proto.dispose = function () {
@@ -3441,6 +3596,7 @@ define('cc/helper/KeyboardIterator', [
             minIndex: me.option('minIndex'),
             maxIndex: me.option('maxIndex'),
             defaultIndex: me.option('defaultIndex'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
@@ -3848,7 +4004,7 @@ define('cc/helper/Popup', [
             if (currTriggerElement && prevTriggerElement && currTriggerElement[0] !== prevTriggerElement[0]) {
                 layerElement.data(POPUP_KEY).close();
                 nextTick(function () {
-                    if (me.$) {
+                    if (me.guid) {
                         me.open(e);
                     }
                 });
@@ -3910,6 +4066,10 @@ define('cc/helper/Popup', [
     };
     function createShowHandler(instance, before) {
         return function (e) {
+            var target = $(this);
+            if (target.attr('disabled') === 'disabled') {
+                return;
+            }
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {
                     return;
@@ -3920,6 +4080,10 @@ define('cc/helper/Popup', [
     }
     function createHideHandler(instance, before) {
         return function (e) {
+            var target = $(this);
+            if (target.attr('disabled') === 'disabled') {
+                return;
+            }
             if ($.isFunction(before)) {
                 if (!before.call(this, e)) {
                     return;
@@ -4175,7 +4339,7 @@ define('cc/main', [
     './function/autoScrollDown',
     './function/autoScrollUp',
     './function/contains',
-    './function/offsetDate',
+    './function/createEvent',
     './function/debounce',
     './function/decimalLength',
     './function/decodeHTML',
@@ -4187,23 +4351,28 @@ define('cc/main', [
     './function/eventOffset',
     './function/eventPage',
     './function/extend',
+    './function/firstDateInMonth',
+    './function/firstDateInWeek',
     './function/float2Int',
     './function/guid',
-    './function/offsetHour',
     './function/imageDimension',
     './function/innerOffset',
     './function/isActiveElement',
     './function/isHidden',
     './function/keys',
+    './function/lastDateInMonth',
+    './function/lastDateInWeek',
     './function/lpad',
     './function/minus',
-    './function/offsetMinute',
-    './function/firstDateInMonth',
-    './function/lastDateInMonth',
-    './function/offsetMonth',
     './function/multiply',
     './function/nextTick',
+    './function/offsetDate',
+    './function/offsetHour',
+    './function/offsetMinute',
+    './function/offsetMonth',
     './function/offsetParent',
+    './function/offsetSecond',
+    './function/offsetWeek',
     './function/outerOffset',
     './function/page',
     './function/pageHeight',
@@ -4221,18 +4390,25 @@ define('cc/main', [
     './function/replaceWith',
     './function/restrain',
     './function/scrollBottom',
-    './function/offsetSecond',
     './function/simplifyDate',
     './function/simplifyTime',
+    './function/split',
+    './function/stringifyDate',
+    './function/stringifyTime',
+    './function/supportCanvas',
+    './function/supportFlash',
+    './function/supportInput',
+    './function/supportLocalStorage',
+    './function/supportPlaceholder',
+    './function/supportWebSocket',
+    './function/testTarget',
+    './function/toBoolean',
     './function/toNumber',
     './function/toString',
     './function/ucFirst',
     './function/viewport',
     './function/viewportHeight',
     './function/viewportWidth',
-    './function/firstDateInWeek',
-    './function/lastDateInWeek',
-    './function/offsetWeek',
     './function/waitPromises',
     './helper/AjaxUploader',
     './helper/KeyboardIterator',
@@ -4263,6 +4439,7 @@ define('cc/main', [
     './util/browser',
     './util/cookie',
     './util/etpl',
+    './util/event',
     './util/FiniteArray',
     './util/fullScreen',
     './util/input',
@@ -4274,9 +4451,11 @@ define('cc/main', [
     './util/mimeType',
     './util/newTab',
     './util/orientation',
+    './util/os',
     './util/position',
     './util/Queue',
     './util/Range',
+    './util/rect',
     './util/string',
     './util/support',
     './util/swipe',
@@ -4304,7 +4483,7 @@ define('cc/main', [
     require('./function/autoScrollDown');
     require('./function/autoScrollUp');
     require('./function/contains');
-    require('./function/offsetDate');
+    require('./function/createEvent');
     require('./function/debounce');
     require('./function/decimalLength');
     require('./function/decodeHTML');
@@ -4316,23 +4495,28 @@ define('cc/main', [
     require('./function/eventOffset');
     require('./function/eventPage');
     require('./function/extend');
+    require('./function/firstDateInMonth');
+    require('./function/firstDateInWeek');
     require('./function/float2Int');
     require('./function/guid');
-    require('./function/offsetHour');
     require('./function/imageDimension');
     require('./function/innerOffset');
     require('./function/isActiveElement');
     require('./function/isHidden');
     require('./function/keys');
+    require('./function/lastDateInMonth');
+    require('./function/lastDateInWeek');
     require('./function/lpad');
     require('./function/minus');
-    require('./function/offsetMinute');
-    require('./function/firstDateInMonth');
-    require('./function/lastDateInMonth');
-    require('./function/offsetMonth');
     require('./function/multiply');
     require('./function/nextTick');
+    require('./function/offsetDate');
+    require('./function/offsetHour');
+    require('./function/offsetMinute');
+    require('./function/offsetMonth');
     require('./function/offsetParent');
+    require('./function/offsetSecond');
+    require('./function/offsetWeek');
     require('./function/outerOffset');
     require('./function/page');
     require('./function/pageHeight');
@@ -4350,18 +4534,25 @@ define('cc/main', [
     require('./function/replaceWith');
     require('./function/restrain');
     require('./function/scrollBottom');
-    require('./function/offsetSecond');
     require('./function/simplifyDate');
     require('./function/simplifyTime');
+    require('./function/split');
+    require('./function/stringifyDate');
+    require('./function/stringifyTime');
+    require('./function/supportCanvas');
+    require('./function/supportFlash');
+    require('./function/supportInput');
+    require('./function/supportLocalStorage');
+    require('./function/supportPlaceholder');
+    require('./function/supportWebSocket');
+    require('./function/testTarget');
+    require('./function/toBoolean');
     require('./function/toNumber');
     require('./function/toString');
     require('./function/ucFirst');
     require('./function/viewport');
     require('./function/viewportHeight');
     require('./function/viewportWidth');
-    require('./function/firstDateInWeek');
-    require('./function/lastDateInWeek');
-    require('./function/offsetWeek');
     require('./function/waitPromises');
     require('./helper/AjaxUploader');
     require('./helper/KeyboardIterator');
@@ -4392,6 +4583,7 @@ define('cc/main', [
     require('./util/browser');
     require('./util/cookie');
     require('./util/etpl');
+    require('./util/event');
     require('./util/FiniteArray');
     require('./util/fullScreen');
     require('./util/input');
@@ -4403,9 +4595,11 @@ define('cc/main', [
     require('./util/mimeType');
     require('./util/newTab');
     require('./util/orientation');
+    require('./util/os');
     require('./util/position');
     require('./util/Queue');
     require('./util/Range');
+    require('./util/rect');
     require('./util/string');
     require('./util/support');
     require('./util/swipe');
@@ -4490,6 +4684,7 @@ define('cc/ui/AutoComplete', [
             nextKey: 'down',
             loop: me.option('loop'),
             autoOnLongPress: true,
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             watchSync: {
                 index: function (newIndex) {
@@ -4583,7 +4778,7 @@ define('cc/ui/AutoComplete', [
                         break;
                     }
                 }
-                me.emit(event, data, true);
+                me.dispatch(me.emit(event, data), data);
             });
         } else {
             inputElement.on('blur', function () {
@@ -5004,6 +5199,7 @@ define('cc/ui/Carousel', [
             });
         }
         var iterator = new Iterator({
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             step: me.option('step'),
             loop: me.option('loop'),
@@ -5162,7 +5358,8 @@ define('cc/ui/ComboBox', [
             }
         });
         popup.on('dispatch', function (e, data) {
-            me.emit(e.originalEvent, data, true);
+            var event = me.emit(e.originalEvent, data);
+            me.dispatch(event, data);
         });
         var mainElement = me.option('mainElement');
         var menuActiveClass = me.option('menuActiveClass');
@@ -5186,7 +5383,7 @@ define('cc/ui/ComboBox', [
             me.set('value', $(this).attr(valueAttribute));
             var event = $.Event(e.originalEvent);
             event.type = 'select';
-            me.emit(event, true);
+            me.dispatch(me.emit(event));
         });
         me.inner({
             main: mainElement,
@@ -5364,7 +5561,7 @@ define('cc/ui/ContextMenu', [
             if (type) {
                 event.type = type;
             }
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         });
         me.inner({
             popup: popup,
@@ -5685,7 +5882,7 @@ define('cc/ui/Pager', [
                     me.set('page', page);
                     var event = $.Event(e.originalEvent);
                     event.type = 'select';
-                    me.emit(event, true);
+                    me.dispatch(me.emit(event));
                 }
             });
         }
@@ -6464,6 +6661,7 @@ define('cc/ui/SpinBox', [
             index: me.option('value'),
             minIndex: me.option('minValue'),
             maxIndex: me.option('maxValue'),
+            timeout: me.option('timeout'),
             interval: me.option('interval'),
             autoOnLongPress: true,
             step: me.option('step'),
@@ -6471,7 +6669,7 @@ define('cc/ui/SpinBox', [
             nextKey: 'up',
             watchSync: {
                 index: function (index) {
-                    me.set('value', index);
+                    me.set('value', index, { action: 'press' });
                 },
                 minIndex: function (minIndex) {
                     me.set('minValue', minIndex);
@@ -6501,7 +6699,7 @@ define('cc/ui/SpinBox', [
             document.on(mouseupType, mouseupHandler);
         }).on(blueType, function () {
             var value = $.trim(inputElement.val());
-            me.set('value', value);
+            me.set('value', value, { action: 'blur' });
         });
         me.inner({
             main: mainElement,
@@ -6723,7 +6921,7 @@ define('cc/ui/Tooltip', [
                 break;
             }
             event.type = type;
-            me.emit(event, data, true);
+            me.dispatch(me.emit(event, data), data);
         }).before('open', function (e, data) {
             var event = e.originalEvent;
             if (!event || !event.target || !event.target.tagName) {
@@ -6785,7 +6983,8 @@ define('cc/ui/Tooltip', [
             }
             var update = function () {
                 e.type = 'beforeshow';
-                me.emit(e, data, true);
+                me.emit(e, data);
+                me.dispatch(e, data);
                 if (e.isDefaultPrevented()) {
                     clean();
                     return;
@@ -6821,7 +7020,7 @@ define('cc/ui/Tooltip', [
                 });
                 me.pin();
                 window.on('resize' + namespace, debounce(function () {
-                    if (me.$) {
+                    if (me.guid) {
                         me.pin();
                     }
                 }, 50));
@@ -7460,7 +7659,7 @@ define('cc/util/Queue', [
                     var item = list.shift();
                     if (item) {
                         me.waiting = waiting;
-                        me.process(item, waiting);
+                        me.task(item, waiting);
                     }
                 }
             };
@@ -7570,12 +7769,16 @@ define('cc/util/Timer', [
     proto.start = function () {
         var me = this;
         me.stop();
+        var timeout = me.timeout;
         var interval = me.interval;
         var next = function () {
             me.execute();
             me.timer = setTimeout(next, interval);
         };
-        me.timer = setTimeout(next, interval);
+        if (timeout == null) {
+            timeout = interval;
+        }
+        me.timer = setTimeout(next, timeout);
     };
     proto.stop = function () {
         var me = this;
@@ -8463,6 +8666,46 @@ define('cc/util/etpl', function () {
     etpl.Engine = Engine;
     return etpl;
 });
+define('cc/util/event', [
+    'require',
+    'exports',
+    'module',
+    '../function/extend',
+    '../function/createEvent'
+], function (require, exports, module) {
+    'use strict';
+    var extend = require('../function/extend');
+    var createEvent = require('../function/createEvent');
+    var methods = {
+        get$: function () {
+            var me = this;
+            if (!me.$) {
+                me.$ = $({});
+            }
+            return me.$;
+        },
+        on: function (event, data, handler) {
+            this.get$().on(event, data, handler);
+            return this;
+        },
+        once: function (event, data, handler) {
+            this.get$().one(event, data, handler);
+            return this;
+        },
+        off: function (event, handler) {
+            this.get$().off(event, handler);
+            return this;
+        },
+        emit: function (event, data) {
+            event = createEvent(event);
+            this.get$().trigger(event, data);
+            return event;
+        }
+    };
+    exports.extend = function (proto) {
+        extend(proto, methods);
+    };
+});
 define('cc/util/fullScreen', [
     'require',
     'exports',
@@ -8853,7 +9096,7 @@ define('cc/util/keyboard', [
         });
         return result;
     }
-    $.extend(exports, charKey, functionKey, combinationKey);
+    $.extend(exports, charKey, deleteKey, functionKey, combinationKey);
     exports.charKey = charKey;
     exports.deleteKey = deleteKey;
     exports.functionKey = functionKey;
@@ -8883,7 +9126,8 @@ define('cc/util/life', [
     '../function/toBoolean',
     '../function/createEvent',
     '../function/replaceWith',
-    '../function/offsetParent'
+    '../function/offsetParent',
+    './event'
 ], function (require, exports, module) {
     'use strict';
     var guid = require('../function/guid');
@@ -8895,6 +9139,7 @@ define('cc/util/life', [
     var createEvent = require('../function/createEvent');
     var replaceWith = require('../function/replaceWith');
     var offsetParent = require('../function/offsetParent');
+    var eventUtil = require('./event');
     var instances = {};
     var UPDATE_ASYNC = '__update_async__';
     function createSettter(singular, complex, setter, getter, validate) {
@@ -8929,27 +9174,31 @@ define('cc/util/life', [
             extend(record, options);
             record.newValue = value;
             record.oldValue = oldValue;
+            var change = {};
+            change[name] = record;
+            var watchChangeSync = function (watch) {
+                if (watch && watch[name]) {
+                    me.execute(watch[name], [
+                        value,
+                        oldValue,
+                        record
+                    ]);
+                }
+            };
+            watchChangeSync(me.inner('watchSync'));
+            watchChangeSync(me.option('watchSync'));
+            if (options.sync) {
+                watchChangeSync(me.constructor[singular + 'Updater']);
+                watchChangeSync(me.option('watch'));
+                me.emit(singular + 'change', change);
+                return;
+            }
             var changes = me.inner(singular + 'Changes');
             if (!changes) {
                 changes = {};
                 me.inner(singular + 'Changes', changes);
             }
-            var oldRecord = changes[name];
-            if (oldRecord) {
-                if (oldRecord.oldValue === record.newValue) {
-                    delete changes[name];
-                    return;
-                }
-            }
-            changes[name] = record;
-            var watchSync = me.option('watchSync');
-            if (watchSync && watchSync[name]) {
-                me.execute(watchSync[name], [
-                    value,
-                    oldValue,
-                    record
-                ]);
-            }
+            $.extend(changes, change);
             if (!me.inner(UPDATE_ASYNC)) {
                 me.inner(UPDATE_ASYNC, nextTick(function () {
                     me.sync(UPDATE_ASYNC);
@@ -9012,18 +9261,6 @@ define('cc/util/life', [
                 msg
             ].join(' '));
         },
-        on: function (event, data, handler) {
-            this.$.on(event, data, handler);
-            return this;
-        },
-        once: function (event, data, handler) {
-            this.$.one(event, data, handler);
-            return this;
-        },
-        off: function (event, handler) {
-            this.$.off(event, handler);
-            return this;
-        },
         live: function (event, selector, handler) {
             var me = this;
             var mainElement = me.inner('main');
@@ -9032,7 +9269,7 @@ define('cc/util/life', [
             }
             return me;
         },
-        emit: function (event, data, dispatch) {
+        emit: function (event, data) {
             var me = this;
             var context = me.option('context') || me;
             event = createEvent(event);
@@ -9040,37 +9277,35 @@ define('cc/util/life', [
             var args = [event];
             if ($.isPlainObject(data)) {
                 args.push(data);
-            } else if (data === true && arguments.length === 2) {
-                data = null;
-                dispatch = true;
             }
             event.type = event.type.toLowerCase();
-            context.$.trigger.apply(context.$, args);
+            var eventCore = context.get$();
+            eventCore.trigger.apply(eventCore, args);
             var ontype = 'on' + event.type;
-            if (event.type !== 'dispatch') {
-                context.execute('ondebug', args);
-            }
             if (!event.isPropagationStopped() && context.execute(ontype, args) === false) {
                 event.preventDefault();
                 event.stopPropagation();
             }
             context.execute(ontype + '_', args);
-            if (dispatch && !event.isPropagationStopped()) {
-                if (!event.originalEvent) {
-                    event.originalEvent = {
-                        preventDefault: $.noop,
-                        stopPropagation: $.noop
-                    };
-                }
-                var dispatchEvent = $.Event(event);
-                dispatchEvent.type = 'dispatch';
-                me.emit(dispatchEvent, data);
-                if (dispatchEvent.isPropagationStopped()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-            }
             return event;
+        },
+        dispatch: function (event, data) {
+            if (event.isPropagationStopped()) {
+                return;
+            }
+            if (!event.originalEvent) {
+                event.originalEvent = {
+                    preventDefault: $.noop,
+                    stopPropagation: $.noop
+                };
+            }
+            var dispatchEvent = $.Event(event);
+            dispatchEvent.type = 'dispatch';
+            this.emit(dispatchEvent, data);
+            if (dispatchEvent.isPropagationStopped()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
         },
         before: function (event, handler) {
             return this.on('before' + event.toLowerCase(), handler);
@@ -9258,7 +9493,10 @@ define('cc/util/life', [
         }
         event = $.Event(event);
         event.type = type + name;
-        instance.emit(event, result, dispatch);
+        instance.emit(event, result);
+        if (dispatch) {
+            instance.dispatch(event, result);
+        }
         if (event.isDefaultPrevented()) {
             return false;
         }
@@ -9294,6 +9532,7 @@ define('cc/util/life', [
             around(proto, name, beforeHandler, afterHandler);
         });
         extend(proto, methods);
+        eventUtil.extend(proto);
     };
     exports.init = function (instance, options) {
         if (!options) {
@@ -9305,14 +9544,14 @@ define('cc/util/life', [
         };
         options.onafterdispose_ = function () {
             instance.state('disposed', true);
-            instance.$.off();
+            instance.off();
             var mainElement = instance.inner('main');
             if (instance.option('removeOnDispose') && mainElement) {
                 mainElement.remove();
             }
             nextTick(function () {
                 delete instances[instance.guid];
-                instance.properties = instance.options = instance.changes = instance.states = instance.inners = instance.guid = instance.$ = null;
+                instance.properties = instance.options = instance.changes = instance.states = instance.inners = instance.guid = null;
             });
         };
         instances[instance.guid = guid()] = instance;
@@ -9320,7 +9559,6 @@ define('cc/util/life', [
         instance.options = options;
         instance.states = {};
         instance.inners = {};
-        instance.$ = $({});
         instance.init();
         return instance;
     };
@@ -9557,6 +9795,71 @@ define('cc/util/orientation', [
         }
     };
 });
+define('cc/util/os', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    var list = [
+        [
+            'iphone',
+            /iphone os ([\d_.]+)/
+        ],
+        [
+            'ipad',
+            /ipad; cpu os ([\d_.]+)/
+        ],
+        [
+            'itouch',
+            /itouch; cpu os ([\d_.]+)/
+        ],
+        [
+            'android',
+            /android ([\d_.]+)/
+        ],
+        [
+            'wp',
+            /windows phone ([\d_.]+)/
+        ],
+        [
+            'windows',
+            /windows nt ([\d_.]+)/
+        ],
+        [
+            'linux',
+            /linux/
+        ],
+        [
+            'mac',
+            /mac os x ([\d_.]+)/
+        ]
+    ];
+    function parseUA(ua) {
+        var name;
+        var version;
+        $.each(list, function (index, item) {
+            var match = item[1].exec(ua);
+            if (match) {
+                name = item[0];
+                version = match[1];
+                if (version) {
+                    version = version.replace(/_/g, '.');
+                }
+                return false;
+            }
+        });
+        return {
+            name: name || '',
+            version: version || ''
+        };
+    }
+    var result = parseUA(navigator.userAgent.toLowerCase());
+    if (result.name) {
+        result[result.name] = true;
+    }
+    return result;
+});
 define('cc/util/position', [
     'require',
     'exports',
@@ -9710,6 +10013,53 @@ define('cc/util/position', [
         });
     };
 });
+define('cc/util/rect', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    exports.makeRectList = function (element, relativePosition) {
+        if (!relativePosition) {
+            relativePosition = {};
+        }
+        var relativeLeft = $.type(relativePosition.left) === 'number' ? relativePosition.left : 0;
+        var relativeTop = $.type(relativePosition.top) === 'number' ? relativePosition.top : 0;
+        return element.map(function () {
+            var element = $(this);
+            var offset = element.offset();
+            return {
+                left: offset.left + relativeLeft,
+                top: offset.top + relativeTop,
+                width: element.outerWidth(),
+                height: element.outerHeight()
+            };
+        });
+    };
+    exports.sortByIntersectionArea = function (rect, rectList) {
+        var areaList = $.map(rectList, function (item, index) {
+            var left = Math.max(rect.left, item.left);
+            var top = Math.max(rect.top, item.top);
+            var right = Math.min(rect.left + rect.width, item.left + item.width);
+            var bottom = Math.min(rect.top + rect.height, item.top + item.height);
+            var width = right - left;
+            var height = bottom - top;
+            return {
+                index: index,
+                area: width > 0 && height > 0 ? width * height : 0
+            };
+        });
+        areaList.sort(function (a, b) {
+            if (a.area < b.area) {
+                return 1;
+            } else if (a.area > b.area) {
+                return -1;
+            }
+            return 0;
+        });
+        return areaList;
+    };
+});
 define('cc/util/string', [
     'require',
     'exports',
@@ -9796,9 +10146,6 @@ define('cc/util/supload/supload', [
             var swf = Supload.createSWF(instanceId, this.flashUrl, this.getFlashVars());
             element.parentNode.replaceChild(swf, element);
             this.element = swf;
-            this.onLog = function (data) {
-                console.log(data);
-            };
             Supload.instances[instanceId] = this;
         },
         getFlashVars: function () {
@@ -9811,7 +10158,7 @@ define('cc/util/supload/supload', [
                 'multiple',
                 'fileName',
                 'data',
-                'ignoreError'
+                'header'
             ], function (index, key) {
                 var value = me[key];
                 if (value != null) {
@@ -9838,11 +10185,11 @@ define('cc/util/supload/supload', [
         reset: function () {
             this.element.reset && this.element.reset();
         },
-        upload: function () {
-            this.element.upload && this.element.upload();
+        upload: function (index) {
+            this.element.upload && this.element.upload(index);
         },
-        cancel: function () {
-            this.element.cancel && this.element.cancel();
+        cancel: function (index) {
+            this.element.cancel && this.element.cancel(index);
         },
         enable: function () {
             this.element.enable && this.element.enable();
@@ -10180,11 +10527,11 @@ define('cc/util/url', [
     exports.parseQuery = function (queryStr) {
         var result = {};
         if ($.type(queryStr) === 'string' && queryStr.indexOf('=') >= 0) {
-            var startIndex = queryStr.charAt(0) === '?' ? 1 : 0;
+            var firstChar = queryStr.charAt(0);
+            var startIndex = firstChar === '?' || firstChar === '#' ? 1 : 0;
             if (startIndex > 0) {
                 queryStr = queryStr.substr(startIndex);
             }
-            queryStr = queryStr.split('#')[0];
             $.each(split(queryStr, '&'), function (index, item) {
                 var terms = split(item, '=');
                 if (terms.length === 2) {
@@ -10198,6 +10545,9 @@ define('cc/util/url', [
         return result;
     };
     exports.parse = function (url) {
+        if (url == null) {
+            url = document.URL;
+        }
         var link = document.createElement('a');
         link.href = url;
         url = link.href;
@@ -10223,6 +10573,20 @@ define('cc/util/url', [
             hash: link.hash
         };
     };
+    exports.mixin = function (query, url) {
+        if (url == null) {
+            url = document.URL;
+        }
+        var scheme = exports.parse(url);
+        var params = exports.parseQuery(scheme.search);
+        $.extend(params, query);
+        params = $.param(params);
+        url = scheme.origin + scheme.pathname;
+        if (params) {
+            url += '?' + params;
+        }
+        return url + scheme.hash;
+    };
 });
 define('cc/util/validator', [
     'require',
@@ -10238,7 +10602,9 @@ define('cc/util/validator', [
         required: function (data, rules) {
             if (data.value === 0 || data.value) {
                 return true;
-            } else if (rules.required) {
+            }
+            var required = rules.required;
+            if (required === true) {
                 return false;
             }
         },
@@ -10252,23 +10618,27 @@ define('cc/util/validator', [
             }
         },
         minlength: function (data, rules) {
-            if ($.isNumeric(rules.minlength)) {
-                return data.value.length >= +rules.minlength;
+            var minlength = rules.minlength;
+            if ($.isNumeric(minlength)) {
+                return data.value.length >= +minlength;
             }
         },
         maxlength: function (data, rules) {
-            if ($.isNumeric(rules.maxlength)) {
-                return data.value.length <= +rules.maxlength;
+            var maxlength = rules.maxlength;
+            if ($.isNumeric(maxlength)) {
+                return data.value.length <= +maxlength;
             }
         },
         min: function (data, rules) {
-            if ($.isNumeric(rules.min)) {
-                return data.value >= +rules.min;
+            var min = rules.min;
+            if ($.isNumeric(min)) {
+                return data.value >= +min;
             }
         },
         max: function (data, rules) {
-            if ($.isNumeric(rules.max)) {
-                return data.value <= +rules.max;
+            var max = rules.max;
+            if ($.isNumeric(max)) {
+                return data.value <= +max;
             }
         },
         step: function (data, rules) {
@@ -10280,7 +10650,7 @@ define('cc/util/validator', [
         },
         equals: function (data, rules, all) {
             var equals = rules.equals;
-            if (equals) {
+            if ($.type(equals) === 'string') {
                 return data.value === all[equals].value;
             }
         }
@@ -10308,7 +10678,7 @@ define('cc/util/validator', [
             if (!rule) {
                 return;
             }
-            var result = $.extend({}, item);
+            var result = $.extend({ name: key }, item);
             if ($.isFunction(rule.before) && rule.before(data) === false) {
                 list.push(result);
                 return;
@@ -10336,15 +10706,10 @@ define('cc/util/validator', [
                     return validateComplete(value(item, rule.rules, data));
                 }
             };
-            if ($.isArray(rule.sequence)) {
-                $.each(rule.sequence, function (index, name) {
-                    return validate(name, rule.rules[name]);
-                });
-            } else {
-                $.each(rule.rules, function (name, value) {
-                    return validate(name, value);
-                });
-            }
+            var sequence = $.isArray(rule.sequence) ? rule.sequence : keys(rule.rules);
+            $.each(sequence, function (index, name) {
+                return validate(name, rule.rules[name]);
+            });
             var extend = function () {
                 if (failedRule) {
                     result.rule = failedRule;
