@@ -522,12 +522,15 @@ define(function (require, exports, module) {
 
         xhr.open('post', options.action, true);
 
-        if (options.useChunk) {
-            me.uploadFileChunk(options);
-        }
-        else {
-            me.uploadFile(options);
-        }
+        // 上传可能是同步的，因此这里强制异步
+        nextTick(function () {
+            if (options.useChunk) {
+                me.uploadFileChunk(options);
+            }
+            else {
+                me.uploadFile(options);
+            }
+        });
 
         return true;
 
