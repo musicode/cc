@@ -7,14 +7,10 @@ define(function (require, exports, module) {
     'use strict';
 
     return function (numerator, denominator) {
-
         if (numerator >= 0 && denominator > 0) {
             return numerator / denominator;
         }
-        else {
-            return 0;
-        }
-
+        return 0;
     };
 
 });
