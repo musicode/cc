@@ -34,8 +34,12 @@ define(function (require, exports, module) {
         var interval = me.interval;
 
         var next = function () {
-            me.execute();
-            me.timer = setTimeout(next, interval);
+            if (me.execute() !== false) {
+                me.timer = setTimeout(next, interval);
+            }
+            else {
+                me.timer = null;
+            }
         };
 
         if (timeout == null) {
