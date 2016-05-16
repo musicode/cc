@@ -21,7 +21,7 @@ define(function (require, exports, module) {
     var proto = Timer.prototype;
 
     proto.execute = function () {
-        this.task();
+        return this.task();
     };
 
     proto.start = function () {
