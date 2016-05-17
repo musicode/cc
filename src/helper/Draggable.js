@@ -47,7 +47,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 需要拖拽的元素
-     * @property {jQuery} options.mainSelector 需要拖拽的元素的选择器，支持事件代理
+     * @property {string} options.mainSelector 需要拖拽的元素的选择器，支持事件代理
      * @property {jQuery=} options.containerElement 限制拖拽范围的容器元素
      * @property {string=} options.draggingClass 拖拽时给 mainElement 添加的 className
      * @property {string=} options.containerDraggingClass 拖拽时给 containerElement 添加的 className
