@@ -20,7 +20,11 @@ define(function (require, exports, module) {
             swf = plugins['Shockwave Flash'];
         }
         else if (document.all) {
-            swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+            try {
+                // 有些 IE 因为安全限制会报错
+                swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+            }
+            catch (e) {}
         }
 
         return !!swf;
