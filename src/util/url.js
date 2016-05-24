@@ -106,6 +106,11 @@ define(function (require, exports, module) {
      */
     exports.mixin = function (query, url, applyHash) {
 
+        if ($.type(url) === 'boolean' && arguments.length === 2) {
+            applyHash = url;
+            url = null;
+        }
+
         if (url == null) {
             url = document.URL;
         }
