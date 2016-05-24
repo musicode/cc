@@ -98,28 +98,40 @@ define(function (require, exports, module) {
 
     /**
      * 把参数混入一个 url
-     * 这种使用场景特别普遍，比如翻页，只需要传入 magic({ page: 1 })
+     * 这种使用场景特别普遍，比如翻页，只需要传入 mixin({ page: 1 })
      *
-     * @param {Object} query GET 参数
+     * @param {Object} query 混入的参数
      * @param {string=} url 如果不传，使用当前地址
+     * @param {boolean=} applyHash 是否应用于 hash
      */
-    exports.mixin = function (query, url) {
+    exports.mixin = function (query, url, applyHash) {
 
         if (url == null) {
             url = document.URL;
         }
 
         var scheme = exports.parse(url);
-        var params = exports.parseQuery(scheme.search);
+        var params = exports.parseQuery(applyHash ? scheme.hash : scheme.search);
         $.extend(params, query);
         params = $.param(params);
 
         url = scheme.origin + scheme.pathname;
-        if (params) {
+
+        if (applyHash) {
+            url += scheme.search;
+        }
+        else if (params) {
             url += '?' + params;
         }
 
-        return url + scheme.hash;
+        if (!applyHash) {
+            url += scheme.hash;
+        }
+        else if (params) {
+            url += '#' + params;
+        }
+
+        return url;
 
     };
 
