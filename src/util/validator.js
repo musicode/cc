@@ -217,7 +217,11 @@ define(function (require, exports, module) {
 
                     if (failedRule) {
                         result.rule = failedRule;
-                        result.error = rule.errors[ failedRule ];
+                        var error = rule.errors[ failedRule ];
+                        if ($.isFunction(error)) {
+                            error = error();
+                        }
+                        result.error = error;
                     }
 
                     if ($.isFunction(rule.after)) {
