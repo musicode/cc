@@ -219,7 +219,7 @@ define(function (require, exports, module) {
                         result.rule = failedRule;
                         var error = rule.errors[ failedRule ];
                         if ($.isFunction(error)) {
-                            error = error();
+                            error = error(item, rule.rules, data);
                         }
                         result.error = error;
                     }
