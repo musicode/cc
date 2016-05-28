@@ -72,6 +72,7 @@ define(function (require, exports, module) {
     require('./function/restrain');
     require('./function/scrollBottom');
     require('./function/simplifyDate');
+    require('./function/simplifySecond');
     require('./function/simplifyTime');
     require('./function/split');
     require('./function/stringifyDate');
