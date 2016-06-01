@@ -88,15 +88,7 @@ define(function (require, exports, module) {
      * @type {Object}
      */
     exports.buildInPatterns = {
-        int: /^\d+$/,
-        number: /^-?[\d.]*$/,
-        positive: /^[\d.]*$/,
-        negative: /^-[\d.]*$/,
-        char: /^[\w\u2E80-\u9FFF]+$/,
-        url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
-        tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
-        mobile: /^1[3-9]\d{9}$/,
-        email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i
+
     };
 
     /**
