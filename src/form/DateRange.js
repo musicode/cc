@@ -388,7 +388,14 @@ define(function (require, exports, module) {
             instance.option({
                 watchSync: watch
             });
-            calendar.set('value', instance.get(propName));
+
+            // 值和视图要保存一致
+            // 即值在几月，视图就要在几月
+            var value = instance.get(propName);
+            calendar.set({
+                date: instance.execute('parse', value),
+                value: value
+            });
         });
         return calendar;
     }
