@@ -392,10 +392,13 @@ define(function (require, exports, module) {
             // 值和视图要保存一致
             // 即值在几月，视图就要在几月
             var value = instance.get(propName);
-            calendar.set({
-                date: instance.execute('parse', value),
-                value: value
-            });
+            var date = instance.execute('parse', value)
+            if (date) {
+                calendar.set({
+                    date: date,
+                    value: value
+                });
+            }
         });
         return calendar;
     }
