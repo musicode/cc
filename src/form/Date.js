@@ -47,6 +47,8 @@ define(function (require, exports, module) {
      * @property {string=} options.prevSelector 上个月的按钮选择器
      * @property {string=} options.nextSelector 下个月的按钮选择器
      *
+     * @property {boolean=} options.renderOnClickAdjacency 点击相邻的日期是否要重新渲染
+     *
      * @property {Function=} options.render 渲染模板函数
      * @property {Function=} options.parse 把 value 解析成 Date
      */
@@ -92,6 +94,7 @@ define(function (require, exports, module) {
             itemSelector: me.option('itemSelector'),
             itemActiveClass: me.option('itemActiveClass'),
             valueAttribute: me.option('valueAttribute'),
+            renderOnClickAdjacency: me.option('renderOnClickAdjacency'),
             render: function (data, tpl) {
                 return me.execute('render', [ data, tpl ]);
             }

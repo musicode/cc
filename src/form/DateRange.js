@@ -44,6 +44,8 @@ define(function (require, exports, module) {
      * @property {string=} options.applySelector 确认按钮选择器
      * @property {string=} options.cancelSelector 取消按钮选择器
      *
+     * @property {boolean=} options.renderOnClickAdjacency 点击相邻的日期是否要重新渲染
+     *
      * @property {Function=} options.render 渲染模板函数
      * @property {Function=} options.parse 把 value 解析成 Date
      */
@@ -376,6 +378,7 @@ define(function (require, exports, module) {
             itemSelector: instance.option('itemSelector'),
             itemActiveClass: instance.option('itemActiveClass'),
             valueAttribute: instance.option('valueAttribute'),
+            renderOnClickAdjacency: instance.option('renderOnClickAdjacency'),
             render: function (data, tpl) {
                 return instance.execute('render', [data, tpl]);
             }

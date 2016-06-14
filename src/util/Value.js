@@ -52,6 +52,7 @@ define(function (require, exports, module) {
      * 添加一个值
      *
      * @param {string} value
+     * @return {boolean}
      */
     proto.add = function (value) {
 
@@ -81,6 +82,8 @@ define(function (require, exports, module) {
             }
         }
 
+        return true;
+
     };
 
 
@@ -89,12 +92,14 @@ define(function (require, exports, module) {
      * 删掉一个值
      *
      * @param {string} value
+     * @return {boolean}
      */
     proto.remove = function (value) {
         var list = this.list;
         var index = $.inArray(value, list);
         if (index >= 0) {
             list.splice(index, 1);
+            return true;
         }
     };
 

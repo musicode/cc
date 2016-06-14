@@ -46,6 +46,8 @@ define(function (require) {
      * @property {string=} options.prevSelector 上月/上周 选择器
      * @property {string=} options.nextSelector 下月/下周 选择器
      *
+     * @property {boolean=} options.renderOnClickAdjacency 点击相邻的日期是否要重新渲染
+     *
      * @property {Function} options.render 渲染模板
      * @property {Function=} options.parse 把字符串类型的 value 解析成 Date 类型
      *
@@ -78,7 +80,9 @@ define(function (require) {
             mainElement.on(clickType, itemSelector, function () {
 
                 var value = $(this).attr(valueAttribute);
+
                 var event;
+                var date;
 
                 var valueUtil = me.inner('value');
                 if (valueUtil.has(value)) {
@@ -89,17 +93,26 @@ define(function (require) {
                 }
                 else {
                     event = 'valueadd';
-                    valueUtil.add(value);
+                    if (valueUtil.add(value)) {
+                        if (me.option('renderOnClickAdjacency')) {
+                            date = me.execute('parse', value);
+                            if (inSameRange(me, date, me.get('date'))) {
+                                date = null;
+                            }
+                        }
+                    }
                 }
 
                 if (event) {
                     event = me.emit(event, { value: value });
                     if (!event.isDefaultPrevented()) {
-                        me.set(
-                            'value',
-                            valueUtil.get()
-                        );
-
+                        var batch = {
+                            value: valueUtil.get()
+                        };
+                        if (date) {
+                            batch.date = date;
+                        }
+                        me.set(batch);
                         me.sync();
                     }
                 }
@@ -194,13 +207,26 @@ define(function (require) {
     Calendar.propertyUpdater.date =
     Calendar.propertyUpdater.value = function (newValue, oldValue, change) {
 
+        // 渲染视图由 data 驱动
+        // 如果 date 变化了，而 data 没变
+        // 则由 date 推算出该日期对应的渲染数据
+
+        // 渲染完视图的过程中，因为选中的日期数据会带有 active 为 true 的属性
+        // 因此我们可以约定渲染完之后，视图已经是包含选中状态的了
+
+        // 以上，重新渲染是最大的杀器
+
         var me = this;
 
+        // 是否需要重新渲染
         var needRender;
+        if (change.data) {
+            needRender = change.data.newValue;
+        }
 
-        if (change.date) {
+        if (!needRender && change.date) {
             var date = change.date.newValue;
-            if (!inRange(me, date)) {
+            if (!inSameRange(me, date, change.date.oldValue)) {
                 needRender = true;
                 me.set(
                     'data',
@@ -212,20 +238,13 @@ define(function (require) {
             }
         }
 
-        if (!needRender && change.data) {
-            needRender = true;
-        }
-
         if (needRender) {
             me.render();
-        }
-
-        if (!needRender && !change.value) {
             return;
         }
-
-
-
+        else if (!change.value) {
+            return;
+        }
 
         var valueAttribute = me.option('valueAttribute');
         var itemActiveClass = me.option('itemActiveClass');
@@ -390,7 +409,7 @@ define(function (require) {
      * @param {Date} date
      * @return {boolean}
      */
-    function inRange(instance, date) {
+    function inViewRange(instance, date) {
 
         var data = instance.get('data');
 
@@ -398,6 +417,38 @@ define(function (require) {
             && date >= parseDate(data.start)
             && date < (parseDate(data.end).getTime() + DAY);
 
+    }
+
+    /**
+     * date 是否在当前真实的日期范围内
+     *
+     * @inner
+     * @param {Calendar} instance
+     * @param {Date} newDate
+     * @param {Date=} oldDate
+     * @return {boolean}
+     */
+    function inSameRange(instance, newDate, oldDate) {
+
+        if (!oldDate) {
+            return false;
+        }
+
+        var startDate;
+        var endDate;
+
+        if (instance.option('mode') === MODE_MONTH) {
+            startDate = firstDateInMonth(oldDate);
+            endDate = lastDateInMonth(oldDate);
+        }
+        else {
+            var firstDay = instance.option('firstDay');
+            startDate = firstDateInWeek(oldDate, firstDay);
+            endDate = lastDateInWeek(oldDate, firstDay);
+        }
+
+        return newDate >= startDate
+            && newDate < (endDate.getTime() + DAY);
     }
 
     /**
