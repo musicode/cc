@@ -611,7 +611,14 @@ define('cc/form/DateRange', [
                 calendar.set('value', value);
             };
             instance.option({ watchSync: watch });
-            calendar.set('value', instance.get(propName));
+            var value = instance.get(propName);
+            var date = instance.execute('parse', value);
+            if (date) {
+                calendar.set({
+                    date: date,
+                    value: value
+                });
+            }
         });
         return calendar;
     }
@@ -2159,9 +2166,8 @@ define('cc/function/ratio', [
     return function (numerator, denominator) {
         if (numerator >= 0 && denominator > 0) {
             return numerator / denominator;
-        } else {
-            return 0;
         }
+        return 0;
     };
 });
 define('cc/function/replaceWith', ['require'], function (require) {
@@ -2221,6 +2227,30 @@ define('cc/function/simplifyDate', [
             month: date.getMonth() + 1,
             date: date.getDate(),
             day: date.getDay()
+        };
+    };
+});
+define('cc/function/simplifySecond', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    return function (second) {
+        var MINUTE = 60;
+        var HOUR = 60 * MINUTE;
+        var DAY = 24 * HOUR;
+        var days = Math.floor(second / DAY);
+        second = second % DAY;
+        var hours = Math.floor(second / HOUR);
+        second = second % HOUR;
+        var minutes = Math.floor(second / MINUTE);
+        var seconds = second % MINUTE;
+        return {
+            days: days,
+            hours: hours,
+            minutes: minutes,
+            seconds: seconds
         };
     };
 });
@@ -2336,7 +2366,10 @@ define('cc/function/supportFlash', [
         if (plugins && plugins.length > 0) {
             swf = plugins['Shockwave Flash'];
         } else if (document.all) {
-            swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+            try {
+                swf = new ActiveXObject('ShockwaveFlash.ShockwaveFlash');
+            } catch (e) {
+            }
         }
         return !!swf;
     };
@@ -2791,11 +2824,13 @@ define('cc/helper/AjaxUploader', [
             };
         });
         xhr.open('post', options.action, true);
-        if (options.useChunk) {
-            me.uploadFileChunk(options);
-        } else {
-            me.uploadFile(options);
-        }
+        nextTick(function () {
+            if (options.useChunk) {
+                me.uploadFileChunk(options);
+            } else {
+                me.uploadFile(options);
+            }
+        });
         return true;
     };
     FileItemPrototype.uploadFile = function (options) {
@@ -4391,6 +4426,7 @@ define('cc/main', [
     './function/restrain',
     './function/scrollBottom',
     './function/simplifyDate',
+    './function/simplifySecond',
     './function/simplifyTime',
     './function/split',
     './function/stringifyDate',
@@ -4535,6 +4571,7 @@ define('cc/main', [
     require('./function/restrain');
     require('./function/scrollBottom');
     require('./function/simplifyDate');
+    require('./function/simplifySecond');
     require('./function/simplifyTime');
     require('./function/split');
     require('./function/stringifyDate');
@@ -7764,7 +7801,7 @@ define('cc/util/Timer', [
     }
     var proto = Timer.prototype;
     proto.execute = function () {
-        this.task();
+        return this.task();
     };
     proto.start = function () {
         var me = this;
@@ -7772,8 +7809,11 @@ define('cc/util/Timer', [
         var timeout = me.timeout;
         var interval = me.interval;
         var next = function () {
-            me.execute();
-            me.timer = setTimeout(next, interval);
+            if (me.execute() !== false) {
+                me.timer = setTimeout(next, interval);
+            } else {
+                me.timer = null;
+            }
         };
         if (timeout == null) {
             timeout = interval;
@@ -10573,19 +10613,30 @@ define('cc/util/url', [
             hash: link.hash
         };
     };
-    exports.mixin = function (query, url) {
+    exports.mixin = function (query, url, applyHash) {
+        if ($.type(url) === 'boolean' && arguments.length === 2) {
+            applyHash = url;
+            url = null;
+        }
         if (url == null) {
             url = document.URL;
         }
         var scheme = exports.parse(url);
-        var params = exports.parseQuery(scheme.search);
+        var params = exports.parseQuery(applyHash ? scheme.hash : scheme.search);
         $.extend(params, query);
         params = $.param(params);
         url = scheme.origin + scheme.pathname;
-        if (params) {
+        if (applyHash) {
+            url += scheme.search;
+        } else if (params) {
             url += '?' + params;
         }
-        return url + scheme.hash;
+        if (!applyHash) {
+            url += scheme.hash;
+        } else if (params) {
+            url += '#' + params;
+        }
+        return url;
     };
 });
 define('cc/util/validator', [
@@ -10655,17 +10706,7 @@ define('cc/util/validator', [
             }
         }
     };
-    exports.buildInPatterns = {
-        int: /^\d+$/,
-        number: /^-?[\d.]*$/,
-        positive: /^[\d.]*$/,
-        negative: /^-[\d.]*$/,
-        char: /^[\w\u2E80-\u9FFF]+$/,
-        url: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
-        tel: /^(?:(?:0\d{2,3}[- ]?[1-9]\d{6,7})|(?:[48]00[- ]?[1-9]\d{6}))$/,
-        mobile: /^1[3-9]\d{9}$/,
-        email: /^(?:[a-z0-9]+[_\-+.]+)*[a-z0-9]+@(?:([a-z0-9]+-?)*[a-z0-9]+.)+([a-z]{2,})+$/i
-    };
+    exports.buildInPatterns = {};
     exports.validate = function (data, rules, sequence) {
         var list = [];
         var promises = [];
@@ -10713,7 +10754,11 @@ define('cc/util/validator', [
             var extend = function () {
                 if (failedRule) {
                     result.rule = failedRule;
-                    result.error = rule.errors[failedRule];
+                    var error = rule.errors[failedRule];
+                    if ($.isFunction(error)) {
+                        error = error(item, rule.rules, data);
+                    }
+                    result.error = error;
                 }
                 if ($.isFunction(rule.after)) {
                     rule.after(result);
