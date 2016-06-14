@@ -16,8 +16,9 @@ define(function (require, exports, module) {
         stable: true,
 
         valueAttribute: 'data-value',
-        parse: function (text) {
-            return new Date(text);
+        parse: function (value) {
+            var date = new Date(value);
+            return date.getTime() > 0 ? date : null;
         },
 
         inputSelector: 'input[type="text"]',
