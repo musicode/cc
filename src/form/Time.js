@@ -10,7 +10,6 @@ define(function (require, exports, module) {
     var replaceWith = require('../function/replaceWith');
 
     var Popup = require('../helper/Popup');
-    var Calendar = require('../ui/Calendar');
 
     var lifeUtil = require('../util/life');
     var inputUtil = require('../util/input');
@@ -18,7 +17,7 @@ define(function (require, exports, module) {
     var common = require('./common');
 
     /**
-     * 表单日期选择器
+     * 表单时间选择器
      *
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素

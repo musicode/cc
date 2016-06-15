@@ -107,13 +107,13 @@ define(function (require) {
                 if (event) {
                     event = me.emit(event, { value: value });
                     if (!event.isDefaultPrevented()) {
-                        var batch = {
+                        var properties = {
                             value: valueUtil.get()
                         };
                         if (date) {
-                            batch.date = date;
+                            properties.date = date;
                         }
-                        me.set(batch);
+                        me.set(properties);
                         me.sync();
                     }
                 }

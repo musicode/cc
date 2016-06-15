@@ -40,6 +40,7 @@ define(function (require, exports, module) {
     require('./function/innerOffset');
     require('./function/isActiveElement');
     require('./function/isHidden');
+    require('./function/isValidDate');
     require('./function/keys');
     require('./function/lastDateInMonth');
     require('./function/lastDateInWeek');
