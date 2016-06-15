@@ -275,15 +275,14 @@ define(function (require, exports, module) {
         }
 
         var value;
+        var startDate;
+        var endDate;
 
         var valueChange = changes.value;
         if (valueChange) {
             value = valueChange.newValue;
         }
         else {
-
-            var startDate;
-            var endDate;
 
             var startDateChange = changes.startDate;
             if (startDateChange) {
@@ -315,10 +314,17 @@ define(function (require, exports, module) {
 
             var terms = split(value, separator);
             if (terms.length === 2) {
-                me.set({
-                    startDate: terms[0],
-                    endDate: terms[1]
-                });
+                startDate = parseDate(me, terms[0]);
+                endDate = parseDate(me, terms[1]);
+                if (startDate && endDate) {
+                    me.set({
+                        startDate: startDate,
+                        endDate: endDate
+                    });
+                }
+                else {
+                    value = '';
+                }
             }
             else {
                 value = '';
@@ -342,12 +348,10 @@ define(function (require, exports, module) {
             return common.validateValue(this, value);
         },
         startDate: function (startDate) {
-            var date = this.execute('parse', startDate);
-            return isValidDate(date) ? startDate : '';
+            return parseDate(this, startDate);
         },
         endDate: function (endDate) {
-            var date = this.execute('parse', endDate);
-            return isValidDate(date) === 'date' ? endDate : '';
+            return parseDate(this, endDate);
         }
 
     };
@@ -365,6 +369,11 @@ define(function (require, exports, module) {
         }
 
     };
+
+    function parseDate(instance, date) {
+        var obj = instance.execute('parse', date);
+        return isValidDate(obj) ? date : '';
+    }
 
     function createCalendar(instance, mainElement, propName) {
         var calendar = new Calendar({
