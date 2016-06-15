@@ -12,6 +12,7 @@ define(function (require) {
     var lastDateInWeek = require('../function/lastDateInWeek');
     var firstDateInMonth = require('../function/firstDateInMonth');
     var lastDateInMonth = require('../function/lastDateInMonth');
+    var isValidDate = require('../function/isValidDate');
     var parseDate = require('../function/parseDate');
     var simplifyDate = require('../function/simplifyDate');
 
@@ -143,8 +144,9 @@ define(function (require) {
             value: new Value({
                 multiple: me.option('multiple'),
                 validate: function (value) {
-                    var date = me.execute('parse', value);
-                    return $.type(date) === 'date';
+                    return isValidDate(
+                        me.execute('parse', value)
+                    );
                 }
             })
         });

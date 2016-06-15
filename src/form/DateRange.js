@@ -8,6 +8,7 @@ define(function (require, exports, module) {
 
     var split = require('../function/split');
     var contains = require('../function/contains');
+    var isValidDate = require('../function/isValidDate');
 
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
@@ -342,11 +343,11 @@ define(function (require, exports, module) {
         },
         startDate: function (startDate) {
             var date = this.execute('parse', startDate);
-            return $.type(date) === 'date' ? startDate : '';
+            return isValidDate(date) ? startDate : '';
         },
         endDate: function (endDate) {
             var date = this.execute('parse', endDate);
-            return $.type(date) === 'date' ? endDate : '';
+            return isValidDate(date) === 'date' ? endDate : '';
         }
 
     };
@@ -400,7 +401,7 @@ define(function (require, exports, module) {
             // 即值在几月，视图就要在几月
             var value = instance.get(propName);
             var date = instance.execute('parse', value)
-            if ($.type(date) === 'date') {
+            if (isValidDate(date)) {
                 calendar.set({
                     date: date,
                     value: value

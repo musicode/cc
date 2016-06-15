@@ -608,7 +608,9 @@ define(function (require, exports, module) {
 
             // 手动调的
             if (arguments[0] !== UPDATE_ASYNC) {
-                me.inner(UPDATE_ASYNC)();
+                me.execute(
+                    me.inner(UPDATE_ASYNC)
+                );
             }
 
             me.inner(UPDATE_ASYNC, false);
