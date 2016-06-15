@@ -19,7 +19,7 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 主元素
-     * @property {jQuery} options.renderTemplate 局部刷新模板，render 时会用到
+     * @property {string} options.renderTemplate 局部刷新模板，render 时会用到
      *
      *
      * @property {number} options.value 当前星级

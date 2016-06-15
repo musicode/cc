@@ -312,16 +312,20 @@ define(function (require, exports, module) {
 
         if ($.type(value) === 'string') {
 
-            me.set('value', value, { silent: true });
+            var terms = split(value, separator);
+            if (terms.length === 2) {
+                me.set({
+                    startDate: terms[0],
+                    endDate: terms[1]
+                });
+            }
+            else {
+                value = '';
+            }
 
+            me.set('value', value, { silent: true });
             common.prop(this, 'value', value);
 
-            var terms = split(value, separator);
-
-            me.set({
-                startDate: terms[0],
-                endDate: terms[1]
-            });
         }
 
         return false;
@@ -367,7 +371,6 @@ define(function (require, exports, module) {
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
             parse: instance.option('parse'),
-            date: instance.option(propName),
             today: instance.option('today'),
             stable: instance.option('stable'),
             firstDay: instance.option('firstDay'),
@@ -384,6 +387,7 @@ define(function (require, exports, module) {
             }
         });
         instance.once('aftersync', function () {
+
             var watch = { };
             watch[propName] = function (value) {
                 calendar.set('value', value);
@@ -396,7 +400,7 @@ define(function (require, exports, module) {
             // 即值在几月，视图就要在几月
             var value = instance.get(propName);
             var date = instance.execute('parse', value)
-            if (date) {
+            if ($.type(date) === 'date') {
                 calendar.set({
                     date: date,
                     value: value
