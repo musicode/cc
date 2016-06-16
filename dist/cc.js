@@ -244,6 +244,7 @@ define('cc/form/Date', [
             itemSelector: me.option('itemSelector'),
             itemActiveClass: me.option('itemActiveClass'),
             valueAttribute: me.option('valueAttribute'),
+            renderOnClickAdjacency: me.option('renderOnClickAdjacency'),
             render: function (data, tpl) {
                 return me.execute('render', [
                     data,
@@ -364,6 +365,7 @@ define('cc/form/DateRange', [
     'module',
     '../function/split',
     '../function/contains',
+    '../function/isValidDate',
     '../helper/Popup',
     '../ui/Calendar',
     '../util/life',
@@ -373,6 +375,7 @@ define('cc/form/DateRange', [
     'use strict';
     var split = require('../function/split');
     var contains = require('../function/contains');
+    var isValidDate = require('../function/isValidDate');
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
     var lifeUtil = require('../util/life');
@@ -515,12 +518,12 @@ define('cc/form/DateRange', [
             common.prop(me, 'name', nameChange.newValue);
         }
         var value;
+        var startDate;
+        var endDate;
         var valueChange = changes.value;
         if (valueChange) {
             value = valueChange.newValue;
         } else {
-            var startDate;
-            var endDate;
             var startDateChange = changes.startDate;
             if (startDateChange) {
                 startDate = startDateChange.newValue;
@@ -545,13 +548,23 @@ define('cc/form/DateRange', [
             }
         }
         if ($.type(value) === 'string') {
+            var terms = split(value, separator);
+            if (terms.length === 2) {
+                startDate = parseDate(me, terms[0]);
+                endDate = parseDate(me, terms[1]);
+                if (startDate && endDate) {
+                    me.set({
+                        startDate: startDate,
+                        endDate: endDate
+                    });
+                } else {
+                    value = '';
+                }
+            } else {
+                value = '';
+            }
             me.set('value', value, { silent: true });
             common.prop(this, 'value', value);
-            var terms = split(value, separator);
-            me.set({
-                startDate: terms[0],
-                endDate: terms[1]
-            });
         }
         return false;
     };
@@ -563,12 +576,10 @@ define('cc/form/DateRange', [
             return common.validateValue(this, value);
         },
         startDate: function (startDate) {
-            var date = this.execute('parse', startDate);
-            return $.type(date) === 'date' ? startDate : '';
+            return parseDate(this, startDate);
         },
         endDate: function (endDate) {
-            var date = this.execute('parse', endDate);
-            return $.type(date) === 'date' ? endDate : '';
+            return parseDate(this, endDate);
         }
     };
     DateRange.stateUpdater = {
@@ -581,13 +592,18 @@ define('cc/form/DateRange', [
             }
         }
     };
+    function parseDate(instance, date) {
+        var obj = instance.execute('parse', date);
+        return isValidDate(obj) ? date : '';
+    }
     function createCalendar(instance, mainElement, propName) {
+        var date = parseDate(instance, instance.get(propName));
         var calendar = new Calendar({
             mainElement: mainElement,
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
+            date: date ? date : null,
             parse: instance.option('parse'),
-            date: instance.option(propName),
             today: instance.option('today'),
             stable: instance.option('stable'),
             firstDay: instance.option('firstDay'),
@@ -598,6 +614,7 @@ define('cc/form/DateRange', [
             itemSelector: instance.option('itemSelector'),
             itemActiveClass: instance.option('itemActiveClass'),
             valueAttribute: instance.option('valueAttribute'),
+            renderOnClickAdjacency: instance.option('renderOnClickAdjacency'),
             render: function (data, tpl) {
                 return instance.execute('render', [
                     data,
@@ -613,7 +630,7 @@ define('cc/form/DateRange', [
             instance.option({ watchSync: watch });
             var value = instance.get(propName);
             var date = instance.execute('parse', value);
-            if (date) {
+            if (isValidDate(date)) {
                 calendar.set({
                     date: date,
                     value: value
@@ -1604,6 +1621,23 @@ define('cc/function/isHidden', [
     return function (element) {
         var display = element.css('display');
         return element.css('display') === 'none' || element.css('opacity') == 0 || element.css('visibility') === 'hidden';
+    };
+});
+define('cc/function/isValidDate', [
+    'require',
+    'exports',
+    'module'
+], function (require, exports, module) {
+    'use strict';
+    return function (date) {
+        if ($.type(date) !== 'date') {
+            return false;
+        }
+        var time = date.getTime();
+        if ($.type(time) === 'number') {
+            return ('' + time).length > 8;
+        }
+        return false;
     };
 });
 define('cc/function/keys', [
@@ -3013,7 +3047,7 @@ define('cc/helper/Draggable', [
             if (!coord) {
                 coord = globalCoord.mouse;
             }
-            me.emit('elementselect', { mainElement: draggingElement });
+            me.emit('pick', { mainElement: draggingElement });
             draggingStyle = position(draggingElement);
             var isFixed = draggingStyle.position === 'fixed';
             var draggingOuterOffset = outerOffset(draggingElement);
@@ -3121,7 +3155,7 @@ define('cc/helper/Draggable', [
                 }
                 me.emit('afterdrag', $.extend({}, point));
             }
-            me.emit('elementdeselect', { mainElement: draggingElement });
+            me.emit('drop', { mainElement: draggingElement });
             counter = xCalculator = yCalculator = draggingStyle = draggingElement = null;
         };
         me.execute('init', {
@@ -4394,6 +4428,7 @@ define('cc/main', [
     './function/innerOffset',
     './function/isActiveElement',
     './function/isHidden',
+    './function/isValidDate',
     './function/keys',
     './function/lastDateInMonth',
     './function/lastDateInWeek',
@@ -4539,6 +4574,7 @@ define('cc/main', [
     require('./function/innerOffset');
     require('./function/isActiveElement');
     require('./function/isHidden');
+    require('./function/isValidDate');
     require('./function/keys');
     require('./function/lastDateInMonth');
     require('./function/lastDateInWeek');
@@ -4965,6 +5001,7 @@ define('cc/ui/Calendar', [
     '../function/lastDateInWeek',
     '../function/firstDateInMonth',
     '../function/lastDateInMonth',
+    '../function/isValidDate',
     '../function/parseDate',
     '../function/simplifyDate',
     '../util/life',
@@ -4977,6 +5014,7 @@ define('cc/ui/Calendar', [
     var lastDateInWeek = require('../function/lastDateInWeek');
     var firstDateInMonth = require('../function/firstDateInMonth');
     var lastDateInMonth = require('../function/lastDateInMonth');
+    var isValidDate = require('../function/isValidDate');
     var parseDate = require('../function/parseDate');
     var simplifyDate = require('../function/simplifyDate');
     var lifeUtil = require('../util/life');
@@ -5000,6 +5038,7 @@ define('cc/ui/Calendar', [
             mainElement.on(clickType, itemSelector, function () {
                 var value = $(this).attr(valueAttribute);
                 var event;
+                var date;
                 var valueUtil = me.inner('value');
                 if (valueUtil.has(value)) {
                     if (me.option('toggle')) {
@@ -5008,12 +5047,23 @@ define('cc/ui/Calendar', [
                     }
                 } else {
                     event = 'valueadd';
-                    valueUtil.add(value);
+                    if (valueUtil.add(value)) {
+                        if (me.option('renderOnClickAdjacency')) {
+                            date = me.execute('parse', value);
+                            if (inSameRange(me, date, me.get('date'))) {
+                                date = null;
+                            }
+                        }
+                    }
                 }
                 if (event) {
                     event = me.emit(event, { value: value });
                     if (!event.isDefaultPrevented()) {
-                        me.set('value', valueUtil.get());
+                        var properties = { value: valueUtil.get() };
+                        if (date) {
+                            properties.date = date;
+                        }
+                        me.set(properties);
                         me.sync();
                     }
                 }
@@ -5032,8 +5082,7 @@ define('cc/ui/Calendar', [
             value: new Value({
                 multiple: me.option('multiple'),
                 validate: function (value) {
-                    var date = me.execute('parse', value);
-                    return $.type(date) === 'date';
+                    return isValidDate(me.execute('parse', value));
                 }
             })
         });
@@ -5069,20 +5118,20 @@ define('cc/ui/Calendar', [
     Calendar.propertyUpdater.data = Calendar.propertyUpdater.date = Calendar.propertyUpdater.value = function (newValue, oldValue, change) {
         var me = this;
         var needRender;
-        if (change.date) {
+        if (change.data) {
+            needRender = change.data.newValue;
+        }
+        if (!needRender && change.date) {
             var date = change.date.newValue;
-            if (!inRange(me, date)) {
+            if (!inSameRange(me, date, change.date.oldValue)) {
                 needRender = true;
                 me.set('data', createRenderData(me, date), { silent: true });
             }
         }
-        if (!needRender && change.data) {
-            needRender = true;
-        }
         if (needRender) {
             me.render();
-        }
-        if (!needRender && !change.value) {
+            return;
+        } else if (!change.value) {
             return;
         }
         var valueAttribute = me.option('valueAttribute');
@@ -5163,9 +5212,25 @@ define('cc/ui/Calendar', [
         }
         return data;
     }
-    function inRange(instance, date) {
+    function inViewRange(instance, date) {
         var data = instance.get('data');
         return data && date >= parseDate(data.start) && date < parseDate(data.end).getTime() + DAY;
+    }
+    function inSameRange(instance, newDate, oldDate) {
+        if (!oldDate) {
+            return false;
+        }
+        var startDate;
+        var endDate;
+        if (instance.option('mode') === MODE_MONTH) {
+            startDate = firstDateInMonth(oldDate);
+            endDate = lastDateInMonth(oldDate);
+        } else {
+            var firstDay = instance.option('firstDay');
+            startDate = firstDateInWeek(oldDate, firstDay);
+            endDate = lastDateInWeek(oldDate, firstDay);
+        }
+        return newDate >= startDate && newDate < endDate.getTime() + DAY;
     }
     function offsetCalendar(instance, offset) {
         var date = instance.get('date');
@@ -7881,12 +7946,14 @@ define('cc/util/Value', [
                 list.sort(me.sort);
             }
         }
+        return true;
     };
     proto.remove = function (value) {
         var list = this.list;
         var index = $.inArray(value, list);
         if (index >= 0) {
             list.splice(index, 1);
+            return true;
         }
     };
     proto.has = function (value) {
@@ -9489,7 +9556,7 @@ define('cc/util/life', [
                 }
             });
             if (arguments[0] !== UPDATE_ASYNC) {
-                me.inner(UPDATE_ASYNC)();
+                me.execute(me.inner(UPDATE_ASYNC));
             }
             me.inner(UPDATE_ASYNC, false);
         },

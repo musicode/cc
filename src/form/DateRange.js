@@ -283,7 +283,6 @@ define(function (require, exports, module) {
             value = valueChange.newValue;
         }
         else {
-
             var startDateChange = changes.startDate;
             if (startDateChange) {
                 startDate = startDateChange.newValue;
@@ -307,7 +306,6 @@ define(function (require, exports, module) {
                     value = [ startDate, endDate ].join(separator);
                 }
             }
-
         }
 
         if ($.type(value) === 'string') {
@@ -376,10 +374,14 @@ define(function (require, exports, module) {
     }
 
     function createCalendar(instance, mainElement, propName) {
+
+        var date = parseDate(instance, instance.get(propName));
+
         var calendar = new Calendar({
             mainElement: mainElement,
             mainTemplate: instance.option('calendarTemplate'),
             mode: instance.option('mode'),
+            date: date ? date : null,
             parse: instance.option('parse'),
             today: instance.option('today'),
             stable: instance.option('stable'),
@@ -409,7 +411,7 @@ define(function (require, exports, module) {
             // 值和视图要保存一致
             // 即值在几月，视图就要在几月
             var value = instance.get(propName);
-            var date = instance.execute('parse', value)
+            var date = instance.execute('parse', value);
             if (isValidDate(date)) {
                 calendar.set({
                     date: date,

@@ -135,7 +135,7 @@ define(function (require, exports, module) {
             }
 
             me.emit(
-                'elementselect',
+                'pick',
                 {
                     mainElement: draggingElement
                 }
@@ -340,7 +340,7 @@ define(function (require, exports, module) {
             }
 
             me.emit(
-                'elementdeselect',
+                'drop',
                 {
                     mainElement: draggingElement
                 }
