@@ -222,6 +222,18 @@ define(function (require) {
 
         // 是否需要重新渲染
         var needRender;
+
+        var renderByDate = function (date) {
+            needRender = true;
+            me.set(
+                'data',
+                createRenderData(me, date),
+                {
+                    silent: true
+                }
+            );
+        };
+
         if (change.data) {
             needRender = change.data.newValue;
         }
@@ -229,15 +241,15 @@ define(function (require) {
         if (!needRender && change.date) {
             var date = change.date.newValue;
             if (!inSameRange(me, date, change.date.oldValue)) {
-                needRender = true;
-                me.set(
-                    'data',
-                    createRenderData(me, date),
-                    {
-                        silent: true
-                    }
-                );
+                renderByDate(date);
             }
+        }
+
+        // 从没渲染过
+        if (!needRender && !me.get('data')) {
+            renderByDate(
+                me.get('date')
+            );
         }
 
         if (needRender) {
