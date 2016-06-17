@@ -20,10 +20,6 @@ define(function (require, exports, module) {
 
     var proto = Timer.prototype;
 
-    proto.execute = function () {
-        return this.task();
-    };
-
     proto.start = function () {
 
         var me = this;
@@ -34,11 +30,12 @@ define(function (require, exports, module) {
         var interval = me.interval;
 
         var next = function () {
-            if (me.execute() !== false) {
+            me.count++;
+            if (this.task() !== false) {
                 me.timer = setTimeout(next, interval);
             }
             else {
-                me.timer = null;
+                me.stop();
             }
         };
 
@@ -54,6 +51,7 @@ define(function (require, exports, module) {
         if (me.timer) {
             clearTimeout(me.timer);
             me.timer = null;
+            me.count = 0;
         }
     };
 
@@ -61,6 +59,7 @@ define(function (require, exports, module) {
         var me = this;
         me.stop();
         me.task =
+        me.timeout =
         me.interval = null;
     };
 
