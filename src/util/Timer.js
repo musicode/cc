@@ -31,7 +31,7 @@ define(function (require, exports, module) {
 
         var next = function () {
             me.count++;
-            if (this.task() !== false) {
+            if (me.task() !== false) {
                 me.timer = setTimeout(next, interval);
             }
             else {
