@@ -147,77 +147,83 @@ define(function (require, exports, module) {
             sequence,
             function (index, key) {
 
-                var item = data[ key ];
-                var rule = rules[ key ];
+                var fieldData = data[ key ];
+                var fieldConfig = rules[ key ];
 
-                if (!rule) {
+                if (!fieldConfig) {
                     return;
                 }
 
-                var result = $.extend({ name: key }, item);
+                var result = $.extend({ name: key }, fieldData);
 
-                if ($.isFunction(rule.before)
-                    && rule.before(data) === false
+                if ($.isFunction(fieldConfig.before)
+                    && fieldConfig.before(data) === false
                 ) {
                     list.push(result);
                     return;
                 }
 
 
-                var failedRule;
+                var fieldRules = fieldConfig.rules;
+                var fieldFailedRule;
 
                 var promiseNames = [ ];
                 var promiseValues = [ ];
 
-                var validate = function (name, value) {
-                    if (!$.isFunction(value)) {
-                        value = buildInRules[ name ];
-                    }
-                    if ($.isFunction(value)) {
-                        var validateComplete = function (result) {
-                            if (result === false) {
-                                failedRule = name;
-                            }
-                            else if (result && $.isFunction(result.then)) {
-                                result.then(validateComplete);
-                                promiseNames.push(name);
-                                promiseValues.push(result);
-                            }
-                            else if ($.type(result) !== 'boolean') {
-                                result = false;
-                            }
-                            return result;
-                        };
-                        return validateComplete(
-                            value(item, rule.rules, data)
-                        );
-                    }
-                };
+                if (fieldData.value !== '' || fieldRules.required) {
 
-                var sequence = $.isArray(rule.sequence)
-                    ? rule.sequence
-                    : keys(rule.rules);
+                    var validateComplete = function (name, result) {
+                        if (result === false) {
+                            fieldFailedRule = name;
+                        }
+                        else if (result && $.isFunction(result.then)) {
+                            result.then(validateComplete);
+                            promiseNames.push(name);
+                            promiseValues.push(result);
+                        }
+                        else if ($.type(result) !== 'boolean') {
+                            result = false;
+                        }
+                        return result;
+                    };
+                    var validate = function (name, value) {
+                        if (!$.isFunction(value)) {
+                            value = buildInRules[ name ];
+                        }
+                        if ($.isFunction(value)) {
+                            return validateComplete(
+                                name,
+                                value(fieldData, fieldRules, data)
+                            );
+                        }
+                    };
 
-                $.each(
-                    sequence,
-                    function (index, name) {
-                        return validate(name, rule.rules[name]);
-                    }
-                );
+                    var sequence = $.isArray(fieldConfig.sequence)
+                        ? fieldConfig.sequence
+                        : keys(fieldRules);
+
+                    $.each(
+                        sequence,
+                        function (index, name) {
+                            return validate(name, fieldRules[name]);
+                        }
+                    );
+
+                }
 
                 var extend = function () {
 
-                    if (failedRule) {
-                        result.rule = failedRule;
-                        var error = rule.errors[ failedRule ];
+                    if (fieldFailedRule) {
+                        result.rule = fieldFailedRule;
+                        var error = fieldConfig.errors[ fieldFailedRule ];
                         if ($.isFunction(error)) {
-                            error = error(item, rule.rules, data);
+                            error = error(fieldData, fieldRules, data);
                         }
                         result.error = error;
                     }
 
-                    if ($.isFunction(rule.after)) {
-                        rule.after(result);
+                    if ($.isFunction(fieldConfig.after)) {
+                        fieldConfig.after(result);
                     }
 
                 };
@@ -235,7 +241,7 @@ define(function (require, exports, module) {
                                 values,
                                 function (index, value) {
                                     if (value === false) {
-                                        failedRule = promiseNames[ index ];
+                                        fieldFailedRule = promiseNames[ index ];
                                         return false;
                                     }
                                 }
