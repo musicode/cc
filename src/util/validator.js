@@ -170,7 +170,11 @@ define(function (require, exports, module) {
                 var promiseNames = [ ];
                 var promiseValues = [ ];
 
-                if (fieldData.value !== '' || fieldRules.required) {
+                var required = fieldRules.required;
+                if ($.isFunction(required)) {
+                    required = required(fieldData, fieldRules, data);
+                }
+                if (fieldData.value !== '' || required === true) {
 
                     var validateComplete = function (name, result) {
                         if (result === false) {
