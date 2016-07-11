@@ -81,8 +81,8 @@ define(function (require, exports, module) {
      * @constructor
      * @param {Object} options
      * @property {jQuery} options.mainElement 表单元素
-     * @property {boolean=} options.validateOnBlur 是否实时验证（元素失焦验证），默认为 false
-     *
+     * @property {boolean=} options.validateOnBlur 是否实时验证（元素失焦验证）
+     * @property {boolean=} options.showFirstError 是否只显示第一个错误
      * @property {number=} options.scrollOffset 使用 autoScroll 时，为了避免顶部贴边，最好加上一些间距
      *
      * @property {string=} options.errorTemplate 错误模板
@@ -187,6 +187,7 @@ define(function (require, exports, module) {
         var mainElement = me.option('mainElement');
         var formSelector = me.option('formSelector');
         var groupSelector = me.option('groupSelector');
+        var showFirstError = me.options('showFirstError');
 
         if ($.type(fields) === 'string') {
             fields = [ fields ];
@@ -290,6 +291,8 @@ define(function (require, exports, module) {
                 }
             );
 
+            var hasShowError = false;
+
             $.each(
                 fields,
                 function (index, item) {
@@ -306,29 +309,31 @@ define(function (require, exports, module) {
 
                     var error = item.error;
                     if (error) {
-
                         errors.push(item);
+                        if (showFirstError && !hasShowError) {
+                            hasShowError = true;
 
-                        if (errorElement) {
-                            var html = me.execute(
-                                'render',
-                                [
-                                    {
-                                        error: error
-                                    },
-                                    errorTemplate
-                                ]
+                            if (errorElement) {
+                                var html = me.execute(
+                                    'render',
+                                    [
+                                        {
+                                            error: error
+                                        },
+                                        errorTemplate
+                                    ]
+                                );
+                                errorElement.html(html);
+                            }
+
+                            animationOptions.rule = item.rule;
+                            animationOptions.error = error;
+
+                            me.execute(
+                                'showErrorAnimation',
+                                animationOptions
                             );
-                            errorElement.html(html);
                         }
-
-                        animationOptions.rule = item.rule;
-                        animationOptions.error = error;
-
-                        me.execute(
-                            'showErrorAnimation',
-                            animationOptions
-                        );
                     }
                     else {
                         me.execute(
