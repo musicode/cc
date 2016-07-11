@@ -310,7 +310,7 @@ define(function (require, exports, module) {
                     var error = item.error;
                     if (error) {
                         errors.push(item);
-                        if (showFirstError && !hasShowError) {
+                        if (!showFirstError || !hasShowError) {
                             hasShowError = true;
 
                             if (errorElement) {
