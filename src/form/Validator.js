@@ -187,7 +187,7 @@ define(function (require, exports, module) {
         var mainElement = me.option('mainElement');
         var formSelector = me.option('formSelector');
         var groupSelector = me.option('groupSelector');
-        var showFirstError = me.options('showFirstError');
+        var showFirstError = me.option('showFirstError');
 
         if ($.type(fields) === 'string') {
             fields = [ fields ];
