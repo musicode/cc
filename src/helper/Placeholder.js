@@ -211,7 +211,7 @@ define(function (require, exports, module) {
             inputUtil.init(inputElement);
 
             var refresh = function () {
-                var hidden = $.trim(inputElement.val()).length > 0;
+                var hidden = inputElement.val().length > 0;
                 // 为了触发 before 和 after 事件才调用实例方法
                 // 而不是 instance.state(hidden)
                 if (hidden) {
