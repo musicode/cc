@@ -46,6 +46,7 @@ define(function (require, exports, module) {
      * @property {boolean=} options.nativeFirst 是否原生优先
      *                                          支持 placeholder 的浏览器，不管其表现如何，优先使用原生
      *
+     * @property {boolean} options.autoTrim 模拟实现时，判断为空是否自动 trim
      * @property {string} options.labelSelector 模拟实现时，查找显示占位文本元素的选择器
      * @property {string} options.inputSelector 模拟实现时，查找输入框元素的选择器
      * @property {Function} options.showAnimation 模拟实现时，使用的显示动画
@@ -211,10 +212,13 @@ define(function (require, exports, module) {
             inputUtil.init(inputElement);
 
             var refresh = function () {
-                var hidden = inputElement.val().length > 0;
+                var value = inputElement.val();
+                if (instance.option('autoTrim')) {
+                    value = $.trim(value);
+                }
                 // 为了触发 before 和 after 事件才调用实例方法
                 // 而不是 instance.state(hidden)
-                if (hidden) {
+                if (value) {
                     instance.hide();
                 }
                 else {
@@ -261,7 +265,12 @@ define(function (require, exports, module) {
                 instance.get('value')
             );
 
-            if ($.trim(inputElement.val())) {
+            var value = inputElement.val();
+            if (instance.option('autoTrim')) {
+                value = $.trim(value);
+            }
+
+            if (value) {
                 instance.hide();
             }
             else {

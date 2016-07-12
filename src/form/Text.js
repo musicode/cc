@@ -19,6 +19,7 @@ define(function (require, exports) {
      * @property {string=} options.name
      * @property {string=} options.value
      * @property {string=} options.placeholder
+     * @property {boolean=} options.autoTrim
      *
      * @property {string} options.inputSelector
      * @property {string} options.labelSelector
@@ -44,6 +45,7 @@ define(function (require, exports) {
             mainElement: me.option('mainElement'),
             value: me.option('placeholder'),
             hidden: true,
+            autoTrim: me.option('autoTrim'),
             nativeFirst: me.option('nativeFirst'),
             inputSelector: me.option('inputSelector'),
             labelSelector: me.option('labelSelector'),
