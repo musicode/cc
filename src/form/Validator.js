@@ -220,9 +220,14 @@ define(function (require, exports, module) {
                         return;
                     }
 
+                    var value = fieldElement.val();
+                    if (fieldElement.prop('type') !== 'password') {
+                        value = $.trim(value);
+                    }
+
                     var item = {
                         name: name,
-                        value: $.trim(fieldElement.val()),
+                        value: value,
                         fieldElement: fieldElement
                     };
 
