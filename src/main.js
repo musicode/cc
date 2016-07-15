@@ -132,6 +132,7 @@ define(function (require, exports, module) {
     require('./util/instance');
     require('./util/json');
     require('./util/keyboard');
+    require('./util/lazyLoader');
     require('./util/life');
     require('./util/localStorage');
     require('./util/mimeType');
