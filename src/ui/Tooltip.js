@@ -548,6 +548,36 @@ define(function (require, exports, module) {
                 options.offsetX *= -1;
                 options.offsetY = 0;
             }
+        },
+
+        topLeft: {
+            name: 'topLeft',
+            test: [testTop, testLeft],
+            gap: function (options) {
+                options.offsetX *= -1;
+                options.offsetY *= -1;
+            }
+        },
+
+        topRight: {
+            name: 'topRight',
+            test: [testTop, testRight],
+            gap: function (options) {
+                options.offsetY *= -1;
+            }
+        },
+
+        bottomLeft: {
+            name: 'bottomLeft',
+            test: [testBottom, testLeft],
+            gap: function (options) {
+                options.offsetX *= -1;
+            }
+        },
+
+        bottomRight: {
+            name: 'bottomRight',
+            test: [testBottom, testRight]
         }
 
     };
