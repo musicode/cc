@@ -67,10 +67,9 @@ define(function (require, exports, module) {
         me.initStruct();
 
         me.inner({
-            proxy: me.option('nativeFirst')
-                && supportPlaceholder
-                 ? nativeProxy
-                 : fakeProxy
+            proxy: me.option('nativeFirst') && supportPlaceholder
+                ? nativeProxy
+                : fakeProxy
         });
 
         executeProxyMethod(me, 'init');
@@ -202,38 +201,28 @@ define(function (require, exports, module) {
             var labelSelector = instance.option('labelSelector');
 
             var inputElement = mainElement.find(inputSelector);
+            var labelElement = mainElement.find(labelSelector);
+            inputElement.removeAttr('placeholder');
 
             instance.inner({
                 main: mainElement,
                 input: inputElement,
-                label: mainElement.find(labelSelector)
+                label: labelElement
             });
 
             inputUtil.init(inputElement);
 
-            var refresh = function () {
-                var value = inputElement.val();
-                if (instance.option('autoTrim')) {
-                    value = $.trim(value);
-                }
-                // 为了触发 before 和 after 事件才调用实例方法
-                // 而不是 instance.state(hidden)
-                if (value) {
-                    instance.hide();
-                }
-                else {
-                    instance.show();
-                }
-            };
+            var render = $.proxy(instance.render, instance);
 
-            refresh();
+            render();
 
             var namespace = instance.namespace();
             mainElement
                 .on('click' + namespace, labelSelector, function () {
                     inputElement.focus();
                 })
-                .on(inputUtil.INPUT + namespace, inputSelector, refresh);
+                .on('change' + namespace, inputSelector, render)
+                .on(inputUtil.INPUT + namespace, inputSelector, render);
 
         },
         show: function (instance) {
@@ -259,7 +248,6 @@ define(function (require, exports, module) {
         render: function (instance) {
 
             var inputElement = instance.inner('input');
-            inputElement.removeAttr('placeholder');
 
             instance.inner('label').html(
                 instance.get('value')
@@ -279,14 +267,9 @@ define(function (require, exports, module) {
 
         },
         dispose: function (instance) {
-
-            var inputElement = instance.inner('input');
-
-            inputUtil.dispose(inputElement);
-            inputElement.off(
-                instance.namespace()
+            inputUtil.dispose(
+                instance.inner('input')
             );
-
         },
         isHidden: function (instance) {
             return isHidden(

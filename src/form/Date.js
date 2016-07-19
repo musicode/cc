@@ -235,9 +235,13 @@ define(function (require, exports, module) {
         name: function (name) {
             common.prop(this, 'name', name);
         },
-        value: function (value) {
-            common.prop(this, 'value', value);
-            this.inner('calendar').set('value', value);
+        value: function (value, oldValue) {
+            var me = this;
+            common.prop(me, 'value', value);
+            me.inner('calendar').set('value', value);
+            if (!value && oldValue) {
+                me.state('opened', true);
+            }
         }
 
     };

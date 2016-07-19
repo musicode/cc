@@ -32,7 +32,10 @@ define(function (require, exports, module) {
                 return nativeElement.prop(name);
             }
             else {
-                nativeElement.prop(name, value);
+                // 为了避免光标跳动，如果相同就不要赋值了
+                if (nativeElement.prop(name) !== value) {
+                    nativeElement.prop(name, value);
+                }
                 // 触发 change 事件，便于 mvvm 框架捕获
                 if (name === 'value') {
                     nativeElement.trigger('change');

@@ -275,12 +275,14 @@ define(function (require, exports, module) {
         }
 
         var value;
+        var oldValue;
         var startDate;
         var endDate;
 
         var valueChange = changes.value;
         if (valueChange) {
             value = valueChange.newValue;
+            oldValue = valueChange.oldValue;
         }
         else {
             var startDateChange = changes.startDate;
@@ -331,6 +333,9 @@ define(function (require, exports, module) {
             me.set('value', value, { silent: true });
             common.prop(this, 'value', value);
 
+            if (!value && oldValue) {
+                me.state('opened', true);
+            }
         }
 
         return false;

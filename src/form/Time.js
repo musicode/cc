@@ -207,6 +207,7 @@ define(function (require, exports, module) {
         var valueChange = changes.value;
         if (valueChange) {
             var value = valueChange.newValue;
+            var oldValue = valueChange.oldValue;
 
             common.prop(me, 'value', value);
 
@@ -224,6 +225,10 @@ define(function (require, exports, module) {
                 if (itemElement.length === 1 && itemActiveClass) {
                     itemElement.addClass(itemActiveClass);
                 }
+            }
+
+            if (!value && oldValue) {
+                me.state('opened', true);
             }
         }
 
