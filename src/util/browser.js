@@ -20,6 +20,12 @@ define(function (require, exports, module) {
     'use strict';
 
     var list = [
+        [ 'wechat', /micromessenger/ ],
+        [ 'baidu', /baidubrowser/ ],
+        [ 'baidu', /bdbrowser/ ],
+        [ 'uc', /ucbrowser/ ],
+        [ 'uc', /ucweb/ ],
+        [ 'qq', /qqbrowser/ ],
         [ 'ie', /iemobile[ \/]([\d_.]+)/ ],
         // IE10- 所有版本都有的信息是 MSIE x.0
         [ 'ie', /msie[ \/]([\d_.]+)/ ],
