@@ -9,6 +9,7 @@ define(function (require, exports, module) {
     var contains = require('../function/contains');
     var autoScrollUp = require('../function/autoScrollUp');
     var autoScrollDown = require('../function/autoScrollDown');
+    var isActiveElement = require('../function/isActiveElement');
 
     var Input = require('../helper/Input');
     var Popup = require('../helper/Popup');
@@ -67,6 +68,8 @@ define(function (require, exports, module) {
         var autoScroll = me.option('autoScroll');
         var itemSelector = me.option('itemSelector');
         var itemActiveClass = me.option('itemActiveClass');
+
+        var namespace = me.namespace();
 
         // 当前选中的索引
         var activeIndex;
@@ -162,10 +165,14 @@ define(function (require, exports, module) {
                     function (error, data) {
                         if (data) {
                             me.set('data', data);
-                            me.open();
                         }
-                        else {
-                            me.close();
+                        if (isActiveElement(inputElement)) {
+                            if (data) {
+                                me.open();
+                            }
+                            else {
+                                me.close();
+                            }
                         }
                     }
                 ]
@@ -278,10 +285,17 @@ define(function (require, exports, module) {
         }
         else {
             inputElement
-                .on('blur', function () {
+                .on('blur' + namespace, function () {
                     iterator.stop();
                 });
         }
+
+        inputElement
+            .on('focus' + namespace, function () {
+                if (me.get('data')) {
+                    me.open();
+                }
+            });
 
         me
         .after('open', function () {
@@ -362,8 +376,6 @@ define(function (require, exports, module) {
 
         var scrollTimer;
         var mouseEnterElement;
-
-        var namespace = me.namespace();
 
         menuElement
         .on('scroll' + namespace, function () {
