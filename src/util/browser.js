@@ -22,6 +22,7 @@ define(function (require, exports, module) {
     var list = [
         [ 'wechat', /micromessenger/ ],
         [ 'baidu', /baidubrowser/ ],
+        [ 'baidu', /baiduboxapp/ ],
         [ 'baidu', /bdbrowser/ ],
         [ 'uc', /ucbrowser/ ],
         [ 'uc', /ucweb/ ],
