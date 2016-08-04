@@ -145,7 +145,7 @@ define(function (require, exports, module) {
             draggingStyle = position(draggingElement);
 
             var isFixed = draggingStyle.position === 'fixed';
-
+            var parentElement = draggingElement.offsetParent();
 
             // =================================================================
             // 计算偏移量
@@ -153,8 +153,10 @@ define(function (require, exports, module) {
             // =================================================================
 
             var draggingOuterOffset = outerOffset(draggingElement);
+            var parentInnerOffset = innerOffset(parentElement);
             var rectInnerOffset = innerOffset(rectElement);
 
+            // 拖拽点相对于拖拽元素的偏移量
             var offsetX;
             var offsetY;
 
@@ -169,14 +171,8 @@ define(function (require, exports, module) {
 
             // 因为 ondrag 是用`全局坐标`减去`偏移量`
             // 所以偏移量应该是全局坐标的偏移量
-            var rectContainsElement = contains(rectElement, draggingElement);
-            if (rectContainsElement) {
-                offsetX += rectInnerOffset.x;
-                offsetY += rectInnerOffset.y;
-            }
-
-
-
+            offsetX += parentInnerOffset.x;
+            offsetY += parentInnerOffset.y;
 
             // =================================================================
             // 全局坐标计算函数
@@ -186,8 +182,8 @@ define(function (require, exports, module) {
             point.top = draggingStyle.top;
 
             // 计算拖拽范围
-            var x = rectContainsElement ? 0 : rectInnerOffset.x;
-            var y = rectContainsElement ? 0 : rectInnerOffset.y;
+            var x;
+            var y;
             var width;
             var height;
 
@@ -198,19 +194,40 @@ define(function (require, exports, module) {
             // 当加入 fixed 定位时，情况又变复杂了
             // fixed 是 2 的一种特殊情况
 
-            var vHeight = viewportHeight();
+            var containerIsViewport = !containerElement
+                || containerElement.is('body')
+                || containerElement.is('html');
 
-            // 先处理 fixed 这种特殊情况
+            var viewWidth = viewportWidth();
+            var viewHeight = viewportHeight();
+            var viewTop = pageScrollTop();
+            var viewLeft = pageScrollLeft();
+            var viewRight = viewLeft + viewWidth;
+            var viewBottom = viewTop + viewHeight;
+
             if (isFixed) {
-                var byViewport = !containerElement || containerElement.is('body');
-                if (byViewport) {
-                    width = viewportWidth();
-                    height = vHeight;
+                if (containerIsViewport) {
+                    x = 0;
+                    y = 0;
+                }
+                else {
+                    x = restrain(rectInnerOffset.x, viewLeft, viewRight);
+                    y = restrain(rectInnerOffset.y, viewTop, viewBottom);
+                }
+            }
+            else {
+                if (containerIsViewport) {
+                    x = -1 * parentInnerOffset.x;
+                    y = -1 * parentInnerOffset.y;
+                }
+                else {
+                    x = rectInnerOffset.x;
+                    y = rectInnerOffset.y;
                 }
             }
 
-            if ($.type(width) !== 'number') {
-                if (rectContainsElement) {
+            if (width == null) {
+                if (contains(rectElement, draggingElement)) {
                     width = rectElement.prop('scrollWidth');
                     height = rectElement.prop('scrollHeight');
                 }
@@ -220,9 +237,21 @@ define(function (require, exports, module) {
                 }
             }
 
-            if (height < vHeight) {
-                if (rectElement.is('body') || rectElement.is('html')) {
-                    height = vHeight;
+            if (containerIsViewport) {
+                if (width < viewWidth) {
+                    width = viewWidth;
+                }
+                if (height < viewHeight) {
+                    height = viewHeight;
+                }
+            }
+
+            if (isFixed) {
+                if (x + width > viewRight) {
+                    width = viewRight - x;
+                }
+                if (y + height > viewBottom) {
+                    height = viewBottom - y;
                 }
             }
 
