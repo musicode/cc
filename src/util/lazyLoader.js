@@ -51,7 +51,7 @@ define(function (require, exports, module) {
                             return;
                         }
                         else {
-                            throw new Error('[lazyLoader] getImageUrl return a empty.');
+                            throw new Error('[lazyLoader] getImageUrl must return a string.');
                         }
                     }
                     if (loadComplete) {
