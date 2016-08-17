@@ -405,24 +405,25 @@ define(function (require, exports, module) {
         });
         instance.once('aftersync', function () {
 
-            var watch = { };
-            watch[propName] = function (value) {
-                calendar.set('value', value);
+            var watchSync = instance.option('watchSync') || { };
+            watchSync[propName] = function (value) {
+                // 值和视图要保存一致
+                // 即值在几月，视图就要在几月
+                var date = instance.execute('parse', value);
+                if (isValidDate(date)) {
+                    calendar.set({
+                        date: date,
+                        value: value
+                    });
+                }
             };
             instance.option({
-                watchSync: watch
+                watchSync: watchSync
             });
 
-            // 值和视图要保存一致
-            // 即值在几月，视图就要在几月
-            var value = instance.get(propName);
-            var date = instance.execute('parse', value);
-            if (isValidDate(date)) {
-                calendar.set({
-                    date: date,
-                    value: value
-                });
-            }
+            watchSync[propName](
+                instance.get(propName)
+            );
         });
         return calendar;
     }
