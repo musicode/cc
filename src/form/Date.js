@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     'use strict';
 
     var contains = require('../function/contains');
-    var replaceWith = require('../function/replaceWith');
+    var isValidDate = require('../function/isValidDate');
 
     var Popup = require('../helper/Popup');
     var Calendar = require('../ui/Calendar');
@@ -238,7 +238,13 @@ define(function (require, exports, module) {
         value: function (value, oldValue) {
             var me = this;
             common.prop(me, 'value', value);
-            me.inner('calendar').set('value', value);
+            var date = me.execute('parse', value);
+            if (isValidDate(date)) {
+                me.inner('calendar').set({
+                    value: value,
+                    date: date
+                });
+            }
             if (!value && oldValue) {
                 me.state('opened', true);
             }
