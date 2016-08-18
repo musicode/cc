@@ -10,34 +10,40 @@ define(function (require, exports, module) {
      * 元素列表转换为对应的矩形列表
      *
      * @param {jQuery} element
-     * @param {Object=} relativePosition
+     * @param {jQuery=} relativeContainer
      * @return {Array.<Object>}
      */
-    exports.makeRectList = function (element, relativePosition) {
+    exports.makeRectList = function (element, relativeContainer) {
 
-        if (!relativePosition) {
-            relativePosition = { };
+        var scrollLeft = 0;
+        var scrollTop = 0;
+
+        if (relativeContainer) {
+            scrollLeft = relativeContainer.scrollLeft();
+            scrollTop = relativeContainer.scrollTop();
         }
-
-        var relativeLeft = $.type(relativePosition.left) === 'number'
-            ? relativePosition.left
-            : 0;
-
-        var relativeTop = $.type(relativePosition.top) === 'number'
-            ? relativePosition.top
-            : 0;
 
         return element.map(function () {
             var element = $(this);
-            var offset = element.offset();
+            var left;
+            var top;
+            if (relativeContainer) {
+                var position = element.position();
+                left = position.left + scrollLeft;
+                top = position.top + scrollTop;
+            }
+            else {
+                var offset = element.offset();
+                left = offset.left;
+                top = offset.top;
+            }
             return {
-                left: offset.left + relativeLeft,
-                top: offset.top + relativeTop,
+                left: left,
+                top: top,
                 width: element.outerWidth(),
                 height: element.outerHeight()
             };
         });
-
     };
 
     /**
