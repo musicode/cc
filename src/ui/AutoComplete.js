@@ -252,7 +252,8 @@ define(function (require, exports, module) {
             .on('dispatch', function (e, data) {
 
                 var event = e.originalEvent;
-                var target = event.originalEvent.target;
+                var originalEvent = event.originalEvent;
+                var target = originalEvent.target;
 
                 if (target) {
                     switch (event.type) {
@@ -266,9 +267,12 @@ define(function (require, exports, module) {
                             break;
 
                         case 'beforeclose':
-                            // 点击输入框或 menu 不需要隐藏
-                            if (contains(inputElement, target)
-                                || contains(menuElement, target)
+                            if (contains(menuElement, target)) {
+                                return false;
+                            }
+                            if (originalEvent.type === 'click'
+                                && showMenuTrigger === 'focus'
+                                && contains(inputElement, target)
                             ) {
                                 return false;
                             }
@@ -290,12 +294,14 @@ define(function (require, exports, module) {
                 });
         }
 
-        inputElement
-            .on('focus' + namespace, function () {
-                if (me.get('data')) {
-                    me.open();
-                }
-            });
+        if (showMenuTrigger === 'focus') {
+            inputElement
+                .on('focus' + namespace, function () {
+                    if (me.get('data')) {
+                        me.open();
+                    }
+                });
+        }
 
         me
         .after('open', function () {
