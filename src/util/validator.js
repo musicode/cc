@@ -91,6 +91,16 @@ define(function (require, exports, module) {
 
     };
 
+    function list2Map(list) {
+        var map = { };
+        $.each(list, function (index, item) {
+            if (item.name) {
+                map[item.name] = item;
+            }
+        });
+        return map;
+    }
+
     /**
      *
      * @param {Object} data 待验证的数据，格式如下：
@@ -157,7 +167,7 @@ define(function (require, exports, module) {
                 var result = $.extend({ name: key }, fieldData);
 
                 if ($.isFunction(fieldConfig.before)
-                    && fieldConfig.before(data) === false
+                    && fieldConfig.before(data, list2Map(list)) === false
                 ) {
                     list.push(result);
                     return;
@@ -227,7 +237,7 @@ define(function (require, exports, module) {
                     }
 
                     if ($.isFunction(fieldConfig.after)) {
-                        fieldConfig.after(result);
+                        fieldConfig.after(result, list2Map(list));
                     }
 
                 };

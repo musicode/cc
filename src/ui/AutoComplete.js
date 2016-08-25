@@ -252,8 +252,7 @@ define(function (require, exports, module) {
             .on('dispatch', function (e, data) {
 
                 var event = e.originalEvent;
-                var originalEvent = event.originalEvent;
-                var target = originalEvent.target;
+                var target = event.originalEvent.target;
 
                 if (target) {
                     switch (event.type) {
@@ -270,8 +269,7 @@ define(function (require, exports, module) {
                             if (contains(menuElement, target)) {
                                 return false;
                             }
-                            if (originalEvent.type === 'click'
-                                && showMenuTrigger === 'focus'
+                            if (showMenuTrigger === 'focus'
                                 && contains(inputElement, target)
                             ) {
                                 return false;
