@@ -334,16 +334,15 @@ define(function (require, exports, module) {
             handler: function (fileItem, e) {
 
                 var data = {
-                    fileItem: fileItem.toPlainObject(),
                     responseText: fileItem.xhr.responseText
                 };
 
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
-
                     var fileSize = fileItem.file.size;
                     if (chunkInfo.uploaded < fileSize) {
                         // 分片上传成功
+                        data.fileItem = fileItem.toPlainObject();
                         var event = fileItem.emit('chunkuploadsuccess', data);
                         if (!event.isDefaultPrevented()) {
                             chunkInfo.index++;
@@ -360,6 +359,8 @@ define(function (require, exports, module) {
                 }
 
                 fileItem.status = AjaxUploader.STATUS_UPLOAD_SUCCESS;
+
+                data.fileItem = fileItem.toPlainObject();
                 fileItem.emit('uploadsuccess', data);
 
                 uploadComplete(fileItem);
