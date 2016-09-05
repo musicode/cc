@@ -239,10 +239,7 @@ define(function (require) {
         }
 
         if (!needRender && change.date) {
-            var date = change.date.newValue;
-            if (!inSameRange(me, date, change.date.oldValue)) {
-                renderByDate(date);
-            }
+            renderByDate(change.date.newValue);
         }
 
         // 从没渲染过
