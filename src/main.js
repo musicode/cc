@@ -19,6 +19,7 @@ define(function (require, exports, module) {
     require('./function/around');
     require('./function/autoScrollDown');
     require('./function/autoScrollUp');
+    require('./function/conditionalTask');
     require('./function/contains');
     require('./function/createEvent');
     require('./function/debounce');
