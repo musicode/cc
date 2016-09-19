@@ -21,9 +21,12 @@ define(function (require, exports, module) {
     exports.threshold = 20;
 
     /**
-     * 获取图片地址，data 来自图片元素上的 data-* 数据集合
+     * 获取图片地址
      *
      * @param {Object} data
+     * @property {string} data.src
+     * @property {number} data.width
+     * @property {number} data.height
      * @return {string}
      */
     exports.getImageUrl = function (data) {
@@ -45,14 +48,20 @@ define(function (require, exports, module) {
                 if (!element.prop('src')) {
                     var imageTop = element.offset().top;
                     if (imageTop - exports.threshold < scrollBottom) {
-                        var url = exports.getImageUrl(element.data());
-                        if (url) {
-                            element.prop('src', url);
-                            return;
-                        }
-                        else {
-                            throw new Error('[lazyLoader] getImageUrl must return a string.');
-                        }
+                        var data = element.data();
+                        element.prop({
+                            src: exports.getImageUrl({
+                                src: data.src,
+                                width: data.width,
+                                height: data.height
+                            }),
+                            srcset: exports.getImageUrl({
+                                src: data.src,
+                                width: data.width * 2,
+                                height: data.height * 2
+                            }) + ' 2x'
+                        });
+                        return;
                     }
                     if (loadComplete) {
                         loadComplete = false;
