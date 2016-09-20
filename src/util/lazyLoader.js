@@ -49,18 +49,23 @@ define(function (require, exports, module) {
                     var imageTop = element.offset().top;
                     if (imageTop - exports.threshold < scrollBottom) {
                         var data = element.data();
-                        element.prop({
-                            src: exports.getImageUrl({
-                                src: data.src,
-                                width: data.width,
-                                height: data.height
-                            }),
-                            srcset: exports.getImageUrl({
-                                src: data.src,
-                                width: data.width * 2,
-                                height: data.height * 2
-                            }) + ' 2x'
+                        var url1x = exports.getImageUrl({
+                            src: data.src,
+                            width: data.width,
+                            height: data.height
                         });
+                        var url2x = exports.getImageUrl({
+                            src: data.src,
+                            width: data.width * 2,
+                            height: data.height * 2
+                        });
+                        var props = {
+                            src: url1x
+                        };
+                        if (url2x !== url1x) {
+                            props.srcset = url2x + ' 2x';
+                        }
+                        element.prop(props);
                         return;
                     }
                     if (loadComplete) {

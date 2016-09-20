@@ -19,14 +19,16 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    // http://www.fynas.com/ua/search
     var list = [
         [ 'wechat', /micromessenger/ ],
+        [ 'baiduApp', /baiduboxapp/ ],
         [ 'baidu', /baidubrowser/ ],
-        [ 'baidu', /baiduboxapp/ ],
         [ 'baidu', /bdbrowser/ ],
         [ 'uc', /ucbrowser/ ],
         [ 'uc', /ucweb/ ],
         [ 'qq', /qqbrowser/ ],
+        [ 'qqApp', /qq/ ],
         [ 'ie', /iemobile[ \/]([\d_.]+)/ ],
         // IE10- 所有版本都有的信息是 MSIE x.0
         [ 'ie', /msie[ \/]([\d_.]+)/ ],
@@ -34,7 +36,8 @@ define(function (require, exports, module) {
         [ 'chrome', /chrome[ \/]([\d_.]+)/ ],
         [ 'firefox', /firefox[ \/]([\d_.]+)/ ],
         [ 'opera', /opera(?:.*version)?[ \/]([\d_.]+)/ ],
-        [ 'safari', /version[ \/]([\d_.]+) safari/ ]
+        [ 'safari', /version[ \/]([\d_.]+) safari/ ],
+        [ 'safari', /safari/ ]
     ];
 
     /**
