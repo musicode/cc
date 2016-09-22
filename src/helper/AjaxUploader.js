@@ -222,14 +222,14 @@ define(function (require, exports, module) {
      * 启用
      */
     proto.enable = function () {
-        this.option('file').prop('disabled', false);
+        this.inner('file').prop('disabled', false);
     };
 
     /**
      * 禁用
      */
     proto.disable = function () {
-        this.option('file').prop('disabled', true);
+        this.inner('file').prop('disabled', true);
     };
 
     /**

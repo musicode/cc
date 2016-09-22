@@ -21,6 +21,7 @@ define(function (require, exports, module) {
 
     // http://www.fynas.com/ua/search
     var list = [
+        [ 'alipay', /alipay/ ],
         [ 'wechat', /micromessenger/ ],
         [ 'baiduApp', /baiduboxapp/ ],
         [ 'baidu', /baidubrowser/ ],
