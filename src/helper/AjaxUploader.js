@@ -352,9 +352,6 @@ define(function (require, exports, module) {
                                 return;
                             }
                         }
-                        else {
-                            return;
-                        }
                     }
                 }
 
