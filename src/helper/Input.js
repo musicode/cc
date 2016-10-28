@@ -163,12 +163,9 @@ define(function (require, exports, module) {
 
         lifeUtil.dispose(me);
 
-        var mainElement = me.inner('main');
-        mainElement.off(
-            me.namespace()
+        inputUtil.dispose(
+            me.inner('main')
         );
-
-        inputUtil.dispose(mainElement);
 
         me.inner('keyboard').dispose();
 

@@ -202,10 +202,6 @@ define(function (require, exports, module) {
             switcher.dispose();
         }
 
-        me.inner('main').off(
-            me.namespace()
-        );
-
     };
 
     var exclude = [ 'prev', 'next', 'play', 'pause', 'stop' ];

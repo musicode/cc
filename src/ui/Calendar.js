@@ -193,10 +193,6 @@ define(function (require) {
 
         lifeUtil.dispose(me);
 
-        me.inner('main').off(
-            me.namespace()
-        );
-
         me.inner('value').dispose();
 
     };

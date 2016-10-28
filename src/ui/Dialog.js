@@ -333,13 +333,9 @@ define(function (require, exports, module) {
             me.hide();
         }
 
-        var mainElement = me.inner('main');
         var maskElement = me.inner('mask');
-        var namespace = me.namespace();
-
-        mainElement.off(namespace);
         if (maskElement) {
-            maskElement.off(namespace);
+            maskElement.off(me.namespace());
         }
 
     };

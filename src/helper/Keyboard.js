@@ -169,15 +169,7 @@ define(function (require, exports, module) {
     };
 
     proto.dispose = function () {
-
-        var me = this;
-
-        lifeUtil.dispose(me);
-
-        me.option('mainElement').off(
-            me.namespace()
-        );
-
+        lifeUtil.dispose(this);
     };
 
     lifeUtil.extend(proto);

@@ -839,9 +839,11 @@ define(function (require, exports, module) {
 
         instance.sync();
 
-        var mainElement = instance.inner('main');
+        var mainElement = instance.inner('main') || instance.option('mainElement');
         if (mainElement) {
-            mainElement.off();
+            mainElement.off(
+                instance.namespace()
+            );
         }
 
     };

@@ -119,10 +119,9 @@ define(function (require, exports, module) {
 
         me.inner('iterator').dispose();
 
-        var namespace = me.namespace();
-        document.off(namespace);
-
-        me.inner('main').off(namespace);
+        document.off(
+            me.namespace()
+        );
 
     };
 
