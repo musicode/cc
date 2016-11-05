@@ -29,7 +29,7 @@ define(function (require, exports, module) {
      * @property {string=} options.content 对话框内容模板
      * @property {string=} options.footer 对话框底部模板
      *
-     * @property {(number|number)=} options.width 对话框整体宽度
+     * @property {(number|string)=} options.width 对话框整体宽度
      * @property {(number|string)=} options.x 对话框的 x 位置，可以是 数字(10) 或 百分比(50%)
      * @property {(number|string)=} options.y 对话框的 y 位置，可以是 数字(10) 或 百分比(50%)
      *
