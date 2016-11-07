@@ -463,6 +463,8 @@ define(function (require, exports, module) {
             }
         );
 
+        fileItem.off();
+
     }
 
     function FileItem(options) {
