@@ -314,6 +314,13 @@ define(function (require, exports, module) {
                     }
                 }
 
+                // 确保 mainElement 是完整的展现在视口内
+                // 这样才不会因为边界问题导致宽高计算失败
+                var style = {
+                    left: 0,
+                    top: 0
+                };
+
                 maxWidth = '';
 
                 if (maxWidthAttribute) {
@@ -322,9 +329,12 @@ define(function (require, exports, module) {
                 if (!maxWidth) {
                     maxWidth = me.option('maxWidth');
                 }
+
                 if (maxWidth) {
-                    mainElement.css('max-width', maxWidth);
+                    style['max-width'] = maxWidth;
                 }
+
+                mainElement.css(style);
 
                 var offsetXAttribute = me.option('offsetXAttribute');
                 var offsetYAttribute = me.option('offsetYAttribute');
@@ -420,7 +430,6 @@ define(function (require, exports, module) {
                          + toNumber(me.inner('offsetX'), 0);
         options.offsetY += toNumber(me.option(offset + 'Y'), 0)
                          + toNumber(me.inner('offsetY'), 0);
-
 
         position[ target.name ](options);
 
