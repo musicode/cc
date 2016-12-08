@@ -34,6 +34,8 @@ define(function (require, exports, module) {
 
     var customElementStyle = customElement.style;
 
+    var cache = { };
+
     /**
      * 厂商前缀
      *
@@ -109,6 +111,48 @@ define(function (require, exports, module) {
      */
     exports.transform = function () {
         return testCSS('transform');
+    };
+
+    /**
+     * 是否支持 webp
+     *
+     * support.webp().then(
+     *     function () {
+     *         // 支持
+     *     },
+     *     function () {
+     *         // 不支持
+     *     }
+     * )
+     *
+     * @return {Promise}
+     */
+    exports.webp = function () {
+
+        if (cache.webp) {
+            return cache.webp;
+        }
+
+        var promise = $.Deferred();
+
+        var image = new Image();
+
+        image.onload =
+        image.onerror = function () {
+            if (image.height === 2) {
+                promise.resolve();
+            }
+            else {
+                promise.reject();
+            }
+        };
+
+        image.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
+
+        cache.webp = promise;
+
+        return promise;
+
     };
 
     /**
