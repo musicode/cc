@@ -143,7 +143,8 @@ define(function (require, exports, module) {
 
         needUpdate: function (width, height) {
             return this.status !== STATUS_SUCCESS
-                || (width !== this.width && height !== this.height);
+                || width !== this.width
+                || height !== this.height;
         },
 
         update: function (width, height) {
