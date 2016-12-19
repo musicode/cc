@@ -43,7 +43,7 @@ define(function (require, exports, module) {
      * @property {?boolean} options.hasWebp 是否有 webp 图片源
      * @property {?number} options.timeout 超时时间，单位是毫秒
      * @property {Function} options.compress 图片压缩，返回实际加载的图片 url
-     * @property {?Function} options.onRequest 开始加载
+     * @property {?Function} options.onLoading 开始加载
      * @property {?Function} options.onSuccess 加载成功
      * @property {?Function} options.onFailure 加载失败
      * @property {?Function} options.onTimeout 加载超时
@@ -98,8 +98,8 @@ define(function (require, exports, module) {
 
             me.status = STATUS_LOADING;
 
-            if (me.onRequest) {
-                me.onRequest();
+            if (me.onLoading) {
+                me.onLoading();
             }
 
             element
