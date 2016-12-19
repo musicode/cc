@@ -22,6 +22,7 @@ define(function (require, exports, module) {
     require('./function/conditionalTask');
     require('./function/contains');
     require('./function/createEvent');
+    require('./function/createTimer');
     require('./function/debounce');
     require('./function/decimalLength');
     require('./function/decodeHTML');
@@ -129,6 +130,7 @@ define(function (require, exports, module) {
     require('./util/event');
     require('./util/FiniteArray');
     require('./util/fullScreen');
+    require('./util/Image');
     require('./util/input');
     require('./util/instance');
     require('./util/json');
@@ -136,6 +138,7 @@ define(function (require, exports, module) {
     require('./util/lazyLoader');
     require('./util/life');
     require('./util/localStorage');
+    require('./util/Media');
     require('./util/mimeType');
     require('./util/newTab');
     require('./util/orientation');
