@@ -4,7 +4,7 @@
 
 **cc** 是一套`基于 jQuery`，`细粒度`，`可配置`，`可二次开发`的组件。
 
-**cc** 是 `combo` `component` 首字母的结合，意为组合式组件。
+**cc** 是 `composite` `component` 首字母的结合，意为组合式组件。
 
 ## 为什么基于 jQuery
 
