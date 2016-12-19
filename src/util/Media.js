@@ -43,6 +43,8 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
+            me.loadSuccess = { };
+
             var timeoutTimer;
             var callHook = function (status, name) {
                 if (timeoutTimer) {
@@ -50,12 +52,16 @@ define(function (require, exports, module) {
                     timeoutTimer = null;
                 }
                 if (status !== me.status) {
+                    if (status === STATUS_PLAYING) {
+                        me.loadSuccess[element.src] = true;
+                    }
                     me.status = status;
                     if ($.isFunction(me[name])) {
                         me[name]();
                     }
                 }
             };
+
 
             element.onplay = function () {
                 callHook(STATUS_LOADING, 'onLoading');
@@ -65,6 +71,7 @@ define(function (require, exports, module) {
                             || me.status !== STATUS_LOADING
                             || element.readyState > 0
                             || element.currentTime
+                            || !me.loadSuccess[element.src]
                         ) {
                             return;
                         }
@@ -73,7 +80,9 @@ define(function (require, exports, module) {
                     me.timeout
                 );
             };
-
+            element.oncanplay = function () {
+                me.loadSuccess[element.src] = true;
+            };
             element.onplaying = function () {
                 callHook(STATUS_PLAYING, 'onPlaying');
             };
@@ -92,7 +101,9 @@ define(function (require, exports, module) {
 
             // 报错，比如不支持的格式，或视频源不存在
             element.onerror = function () {
-                if (me.status === STATUS_LOADING) {
+                if (me.status === STATUS_LOADING
+                    && !me.loadSuccess[element.src]
+                ) {
                     callHook(STATUS_ERROR, 'onError');
                 }
             };
