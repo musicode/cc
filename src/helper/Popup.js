@@ -46,6 +46,7 @@ define(function (require, exports, module) {
      */
 
     var isHidden = require('../function/isHidden');
+    var debounce = require('../function/debounce');
     var contains = require('../function/contains');
     var nextTick = require('../function/nextTick');
 
@@ -105,7 +106,7 @@ define(function (require, exports, module) {
                     delay: me.option('showLayerDelay'),
                     startDelay: curry(showLayerTrigger, 'startDelay'),
                     endDelay: curry(showLayerTrigger, 'endDelay'),
-                    handler: curry(showLayerTrigger, 'handler'),
+                    handler: debounce(curry(showLayerTrigger, 'handler'), 100),
                     beforeHandler: function (e) {
 
                         var action = function () {
@@ -145,7 +146,7 @@ define(function (require, exports, module) {
                     delay: me.option('hideLayerDelay'),
                     startDelay: curry(hideLayerTrigger, 'startDelay'),
                     endDelay: curry(hideLayerTrigger, 'endDelay'),
-                    handler: curry(hideLayerTrigger, 'handler')
+                    handler: debounce(curry(hideLayerTrigger, 'handler'), 100)
                 };
 
             }
@@ -175,8 +176,8 @@ define(function (require, exports, module) {
 
 
 
-        var hasShowEvent = false;
-        var hasHideEvent = false;
+        var hasShowEvent;
+        var hasHideEvent;
 
         var bindShowEvent = function () {
             if (!hasShowEvent) {
