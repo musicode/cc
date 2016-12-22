@@ -46,12 +46,21 @@ define(function (require, exports, module) {
             me.loadSuccess = { };
 
             var timeoutTimer;
+            var prevTime;
+
             var callHook = function (status, name) {
                 if (timeoutTimer) {
                     clearTimeout(timeoutTimer);
                     timeoutTimer = null;
                 }
                 if (status !== me.status) {
+                    // 有些奇葩浏览器，会在触发 play 之后立即触发 pause
+                    // 简直无法理解...
+                    var now = $.now();
+                    if (prevTime && now - prevTime < 500) {
+                        return;
+                    }
+                    prevTime = now;
                     if (status === STATUS_PLAYING) {
                         me.loadSuccess[element.src] = true;
                     }
@@ -71,6 +80,7 @@ define(function (require, exports, module) {
                             || me.status !== STATUS_LOADING
                             || element.readyState > 0
                             || element.currentTime
+                            || !element.paused
                             || !me.loadSuccess[element.src]
                         ) {
                             return;
@@ -80,9 +90,11 @@ define(function (require, exports, module) {
                     me.timeout
                 );
             };
+
             element.oncanplay = function () {
                 me.loadSuccess[element.src] = true;
             };
+
             element.onplaying = function () {
                 callHook(STATUS_PLAYING, 'onPlaying');
             };
@@ -110,7 +122,9 @@ define(function (require, exports, module) {
 
             // 网络状况不佳，导致视频下载中断
             element.onstalled = function () {
-                if (me.status === STATUS_LOADING) {
+                if (me.status === STATUS_LOADING
+                    && !me.loadSuccess[element.src]
+                ) {
                     callHook(STATUS_STALLED, 'onStalled');
                 }
             };
