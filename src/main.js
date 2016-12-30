@@ -22,6 +22,7 @@ define(function (require, exports, module) {
     require('./function/conditionalTask');
     require('./function/contains');
     require('./function/createEvent');
+    require('./function/createGroup');
     require('./function/createTimer');
     require('./function/debounce');
     require('./function/decimalLength');

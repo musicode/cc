@@ -173,18 +173,22 @@ define(function (require, exports, module) {
                     return;
                 }
 
+                // 如果 rule 定义的是函数，需要惰性求值，然后用值覆盖函数
+                var fieldRules = $.extend({ }, fieldConfig.rules);
+                var getFieldRule = function (field) {
+                    var value = fieldRules[ field ];
+                    if ($.isFunction(value)) {
+                        value = fieldRules[ field ] = value(fieldData, fieldConfig.rules, data);
+                    }
+                    return value;
+                };
 
-                var fieldRules = fieldConfig.rules;
                 var fieldFailedRule;
 
                 var promiseNames = [ ];
                 var promiseValues = [ ];
 
-                var required = fieldRules.required;
-                if ($.isFunction(required)) {
-                    required = required(fieldData, fieldRules, data);
-                }
-                if (fieldData.value !== '' || required === true) {
+                if (fieldData.value !== '' || getFieldRule('required') === true) {
 
                     var validateComplete = function (name, result) {
                         if (result === false) {
@@ -219,7 +223,7 @@ define(function (require, exports, module) {
                     $.each(
                         sequence,
                         function (index, name) {
-                            return validate(name, fieldRules[name]);
+                            return validate(name, getFieldRule(name));
                         }
                     );
 

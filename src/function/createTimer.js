@@ -13,6 +13,12 @@ define(function (require, exports, module) {
      * stop();
      * ```
      *
+     * ```js
+     * var start = createTimer(after, 1000)
+     * var stop = start();
+     * stop();
+     * ```
+     *
      * 执行一个异步任务
      *
      * @param {Function} before
@@ -23,6 +29,12 @@ define(function (require, exports, module) {
 
         var timer;
 
+        if ($.type(after) === 'number') {
+            delay = after;
+            after = before;
+            before = null;
+        }
+
         var stop = function () {
             if (timer) {
                 clearTimeout(timer);
@@ -32,7 +44,9 @@ define(function (require, exports, module) {
 
         return function () {
             stop();
-            before();
+            if (before) {
+                before();
+            }
             timer = setTimeout(
                 function () {
                     timer = null;
