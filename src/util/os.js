@@ -35,6 +35,12 @@ define(function (require, exports, module) {
         [ 'mac', /mac os x ([\d_.]+)/ ]
     ];
 
+    var iosMap = {
+        iphone: 1,
+        ipad: 1,
+        itouch: 1
+    };
+
     /**
      * 获取 UA 的结构化信息
      *
@@ -72,6 +78,9 @@ define(function (require, exports, module) {
     var result = parseUA(navigator.userAgent.toLowerCase());
     if (result.name) {
         result[result.name] = true;
+        if (iosMap[result.name]) {
+            result.ios = true;
+        }
     }
 
     return result;
