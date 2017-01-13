@@ -91,6 +91,7 @@ define(function (require, exports, module) {
     require('./function/toBoolean');
     require('./function/toNumber');
     require('./function/toString');
+    require('./function/toTimestamp');
     require('./function/ucFirst');
     require('./function/viewport');
     require('./function/viewportHeight');
