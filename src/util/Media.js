@@ -104,11 +104,13 @@ define(function (require, exports, module) {
             };
 
             element.onplaying = function () {
-                callHook(STATUS_PLAYING, 'onPlaying');
+                if (me.status === STATUS_LOADING) {
+                    callHook(STATUS_PLAYING, 'onPlaying');
+                }
             };
 
             element.ontimeupdate = function () {
-                if (element.currentTime) {
+                if (element.currentTime && me.status === STATUS_LOADING) {
                     callHook(STATUS_PLAYING, 'onPlaying');
                 }
             };
