@@ -6,8 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var os = require('./os');
-
     var STATUS_WAITING = 0;
     var STATUS_LOADING = 1;
     var STATUS_PLAYING = 2;
@@ -78,9 +76,6 @@ define(function (require, exports, module) {
             element.onplay = function () {
                 // 刚创建直接调用 play()
                 // 在移动端是没法播的，必须人为交互一次
-                if ((os.ios || os.android) && $.now() - me.initTime < 50) {
-                    return;
-                }
                 callHook(STATUS_LOADING, 'onLoading');
                 timeoutTimer = setTimeout(
                     function () {
