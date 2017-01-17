@@ -6,6 +6,8 @@ define(function (require, exports, module) {
 
     'use strict';
 
+    var debounce = require('../function/debounce');
+
     var STATUS_WAITING = 0;
     var STATUS_LOADING = 1;
     var STATUS_PLAYING = 2;
@@ -49,39 +51,47 @@ define(function (require, exports, module) {
             var timeoutTimer;
             var prevTime;
 
-            var callHook = function (status, name) {
-                if (timeoutTimer) {
-                    clearTimeout(timeoutTimer);
-                    timeoutTimer = null;
-                }
-                if (status !== me.status) {
-                    // 有些奇葩浏览器，会在触发 play 之后立即触发 pause
-                    // 简直无法理解...
-                    var now = $.now();
-                    if (prevTime && now - prevTime < 500) {
-                        return;
-                    }
-                    prevTime = now;
-                    if (status === STATUS_PLAYING) {
-                        me.loadSuccess[element.src] = true;
-                    }
-                    me.status = status;
-                    if ($.isFunction(me[name])) {
-                        me[name]();
-                    }
+            var setStatus = function (status, name) {
+                me.status = status;
+                if ($.isFunction(me[name])) {
+                    me[name]();
                 }
             };
 
+            // 有些奇葩浏览器，会在触发 play 之后立即触发 pause
+            // 简直无法理解...
+            var callHook = debounce(
+                function (status, name) {
+                    if (timeoutTimer) {
+                        clearTimeout(timeoutTimer);
+                        timeoutTimer = null;
+                    }
+                    if (status !== me.status) {
+                        if (status === STATUS_PLAYING) {
+                            if (element.currentTime) {
+                                me.loadSuccess[element.src] = true;
+                            }
+                            else {
+                                // 移动端通常会触发了 playing
+                                // 其实并没有开始播放
+                                setStatus(STATUS_PAUSED, 'onPaused');
+                                return;
+                            }
+                        }
+                        setStatus(status, name);
+                    }
+                },
+                500,
+                true
+            );
+
 
             element.onplay = function () {
-                // 刚创建直接调用 play()
-                // 在移动端是没法播的，必须人为交互一次
                 callHook(STATUS_LOADING, 'onLoading');
                 timeoutTimer = setTimeout(
                     function () {
                         if (me.disposed
                             || me.status !== STATUS_LOADING
-                            || element.readyState > 0
                             || element.currentTime
                             || !element.paused
                             || !me.loadSuccess[element.src]
@@ -99,15 +109,11 @@ define(function (require, exports, module) {
             };
 
             element.onplaying = function () {
-                if (me.status === STATUS_LOADING) {
-                    callHook(STATUS_PLAYING, 'onPlaying');
-                }
+                callHook(STATUS_PLAYING, 'onPlaying');
             };
 
             element.ontimeupdate = function () {
-                if (element.currentTime && me.status === STATUS_LOADING) {
-                    callHook(STATUS_PLAYING, 'onPlaying');
-                }
+                callHook(STATUS_PLAYING, 'onPlaying');
             };
 
             element.onpause = function () {
@@ -147,11 +153,16 @@ define(function (require, exports, module) {
                             this.onSourceChange();
                         }
                     }
+                    else {
+                        element.src = '';
+                        element.src = source;
+                    }
                 }
                 else {
                     element.src = source;
                 }
             }
+            this.status = STATUS_WAITING;
             element.play();
         },
 
