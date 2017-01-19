@@ -674,11 +674,9 @@ define(function (require, exports, module) {
         $.each(
             accept,
             function (index, name) {
-                if (mimeTypeUtil[ name ]) {
-                    result.push(
-                        mimeTypeUtil[ name ]
-                    );
-                }
+                  result.push(
+                      mimeTypeUtil[ name ] || name
+                  );
             }
         );
 

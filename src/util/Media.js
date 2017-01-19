@@ -16,6 +16,11 @@ define(function (require, exports, module) {
     var STATUS_STALLED = 5;
     var STATUS_TIMEOUT = 6;
 
+    // 有些手机是 0.01....
+    function isEffectiveTime(time) {
+        return time > 0.1;
+    }
+
     /**
      * 封装 video/audio 标签
      *
@@ -68,7 +73,7 @@ define(function (require, exports, module) {
                     }
                     if (status !== me.status) {
                         if (status === STATUS_PLAYING) {
-                            if (element.currentTime) {
+                            if (isEffectiveTime(element.currentTime)) {
                                 me.loadSuccess[element.src] = true;
                             }
                             else {
@@ -92,7 +97,7 @@ define(function (require, exports, module) {
                     function () {
                         if (me.disposed
                             || me.status !== STATUS_LOADING
-                            || element.currentTime
+                            || isEffectiveTime(element.currentTime)
                             || !element.paused
                             || !me.loadSuccess[element.src]
                         ) {
