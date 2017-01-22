@@ -6,8 +6,6 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var debounce = require('../function/debounce');
-
     var STATUS_WAITING = 0;
     var STATUS_LOADING = 1;
     var STATUS_PLAYING = 2;
@@ -20,6 +18,8 @@ define(function (require, exports, module) {
     function isEffectiveTime(time) {
         return time > 0.1;
     }
+
+    var loadSuccess = { };
 
     /**
      * 封装 video/audio 标签
@@ -51,10 +51,10 @@ define(function (require, exports, module) {
             var element = me.element;
 
             me.initTime = $.now();
-            me.loadSuccess = { };
 
             var timeoutTimer;
             var prevTime;
+            var currentTime;
 
             var setStatus = function (status, name) {
                 me.status = status;
@@ -65,30 +65,33 @@ define(function (require, exports, module) {
 
             // 有些奇葩浏览器，会在触发 play 之后立即触发 pause
             // 简直无法理解...
-            var callHook = debounce(
-                function (status, name) {
-                    if (timeoutTimer) {
-                        clearTimeout(timeoutTimer);
-                        timeoutTimer = null;
+            var callHook = function (status, name) {
+                if (status === me.status) {
+                    return;
+                }
+                currentTime = $.now();
+                if (prevTime && currentTime - prevTime < 500) {
+                    return;
+                }
+                prevTime = currentTime;
+
+                if (timeoutTimer) {
+                    clearTimeout(timeoutTimer);
+                    timeoutTimer = null;
+                }
+                if (status === STATUS_PLAYING) {
+                    if (isEffectiveTime(element.currentTime)) {
+                        loadSuccess[element.src] = true;
                     }
-                    if (status !== me.status) {
-                        if (status === STATUS_PLAYING) {
-                            if (isEffectiveTime(element.currentTime)) {
-                                me.loadSuccess[element.src] = true;
-                            }
-                            else {
-                                // 移动端通常会触发了 playing
-                                // 其实并没有开始播放
-                                setStatus(STATUS_PAUSED, 'onPaused');
-                                return;
-                            }
-                        }
-                        setStatus(status, name);
+                    else {
+                        // 移动端通常会触发了 playing
+                        // 其实并没有开始播放
+                        setStatus(STATUS_PAUSED, 'onPaused');
+                        return;
                     }
-                },
-                500,
-                true
-            );
+                }
+                setStatus(status, name);
+            };
 
 
             element.onplay = function () {
@@ -99,7 +102,7 @@ define(function (require, exports, module) {
                             || me.status !== STATUS_LOADING
                             || isEffectiveTime(element.currentTime)
                             || !element.paused
-                            || !me.loadSuccess[element.src]
+                            || !loadSuccess[element.src]
                         ) {
                             return;
                         }
@@ -110,7 +113,7 @@ define(function (require, exports, module) {
             };
 
             element.oncanplay = function () {
-                me.loadSuccess[element.src] = true;
+                loadSuccess[element.src] = true;
             };
 
             element.onplaying = function () {
@@ -130,7 +133,7 @@ define(function (require, exports, module) {
             // 报错，比如不支持的格式，或视频源不存在
             element.onerror = function () {
                 if (me.status === STATUS_LOADING
-                    && !me.loadSuccess[element.src]
+                    && !loadSuccess[element.src]
                 ) {
                     callHook(STATUS_ERROR, 'onError');
                 }
@@ -139,7 +142,7 @@ define(function (require, exports, module) {
             // 网络状况不佳，导致视频下载中断
             element.onstalled = function () {
                 if (me.status === STATUS_LOADING
-                    && !me.loadSuccess[element.src]
+                    && !loadSuccess[element.src]
                 ) {
                     callHook(STATUS_STALLED, 'onStalled');
                 }
