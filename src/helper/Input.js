@@ -27,6 +27,8 @@ define(function (require, exports, module) {
 
 
     var toString = require('../function/toString');
+    var toNumber = require('../function/toNumber');
+    var nextTick = require('../function/nextTick');
 
     var lifeUtil = require('../util/life');
     var inputUtil = require('../util/input');
@@ -154,6 +156,84 @@ define(function (require, exports, module) {
         updateValue(
             me.option('value')
         );
+
+    };
+
+    proto.autoWidth = function () {
+
+        var me = this;
+        var mainElement = me.inner('main');
+
+        var updating;
+
+        me.on('propertychange', function (e, data) {
+            if (data.value && !updating && mainElement.scrollLeft() > 0) {
+                updating = true;
+                nextTick(
+                    function () {
+                        mainElement.width(
+                            mainElement.prop('scrollWidth')
+                        );
+                        updating = false;
+                    }
+                );
+            }
+        });
+
+    };
+
+    /**
+     * 自动变高
+     */
+    proto.autoHeight = function () {
+
+        var me = this;
+        var mainElement = me.inner('main');
+
+        // 自动变高必须设置 overflow-y: hidden
+        if (mainElement.css('overflow-y') !== 'hidden') {
+            mainElement.css('overflow-y', 'hidden');
+        }
+
+        var originHeight = mainElement.height();
+
+        var oldHeight = originHeight;
+        var newHeight;
+
+        var padding = mainElement.innerHeight() - originHeight;
+        var lineHeight;
+        var updating;
+
+        me.on('propertychange', function (e, data) {
+            if (data.value && !updating) {
+                updating = true;
+                nextTick(
+                    function () {
+                        // 把高度重置为原始值才能取到正确的 newHeight
+                        if (oldHeight !== originHeight) {
+                            oldHeight = originHeight;
+                            mainElement.height(originHeight);
+                        }
+
+                        // scrollHeight 包含上下 padding 和 height
+                        newHeight = mainElement.prop('scrollHeight') - padding;
+
+                        if (newHeight <= 0) {
+                            return;
+                        }
+
+                        if (lineHeight == null) {
+                            lineHeight = toNumber(mainElement.css('font-size'), 0);
+                        }
+                        if (Math.abs(newHeight - oldHeight) > lineHeight) {
+                            mainElement.height(newHeight);
+                            oldHeight = newHeight;
+                        }
+                        updating = false;
+                    }
+                );
+            }
+        });
 
     };
 
