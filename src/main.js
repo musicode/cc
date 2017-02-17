@@ -37,6 +37,7 @@ define(function (require, exports, module) {
     require('./function/extend');
     require('./function/firstDateInMonth');
     require('./function/firstDateInWeek');
+    require('./function/fixNumber');
     require('./function/float2Int');
     require('./function/guid');
     require('./function/imageDimension');
