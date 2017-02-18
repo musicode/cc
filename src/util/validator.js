@@ -9,6 +9,10 @@ define(function (require, exports, module) {
     var allPromises = require('../function/allPromises');
     var keys = require('../function/keys');
 
+    function isValidValue(value) {
+        return value === 0 || value;
+    }
+
     /**
      * 内置常用规则
      *
@@ -18,7 +22,7 @@ define(function (require, exports, module) {
     var buildInRules = {
 
         required: function (data, rules) {
-            if (data.value === 0 || data.value) {
+            if (isValidValue(data.value)) {
                 return true;
             }
             var required = rules.required;
@@ -175,10 +179,17 @@ define(function (require, exports, module) {
 
                 // 如果 rule 定义的是函数，需要惰性求值，然后用值覆盖函数
                 var fieldRules = $.extend({ }, fieldConfig.rules);
-                var getFieldRule = function (field) {
-                    var value = fieldRules[ field ];
+                var validateRule = function (name) {
+                    var value = fieldRules[ name ];
+                    if (!$.isFunction(value)
+                        && value === fieldConfig.rules[ name ]
+                        && $.type(name) === 'string'
+                        && name in buildInRules
+                    ) {
+                        value = buildInRules[ name ];
+                    }
                     if ($.isFunction(value)) {
-                        value = fieldRules[ field ] = value(fieldData, fieldConfig.rules, data);
+                        value = fieldRules[ name ] = value(fieldData, fieldConfig.rules, data);
                     }
                     return value;
                 };
@@ -188,33 +199,8 @@ define(function (require, exports, module) {
                 var promiseNames = [ ];
                 var promiseValues = [ ];
 
-                if (fieldData.value !== '' || getFieldRule('required') === true) {
-
-                    var validateComplete = function (name, result) {
-                        if (result === false) {
-                            fieldFailedRule = name;
-                        }
-                        else if (result && $.isFunction(result.then)) {
-                            result.then(validateComplete);
-                            promiseNames.push(name);
-                            promiseValues.push(result);
-                        }
-                        else if ($.type(result) !== 'boolean') {
-                            result = false;
-                        }
-                        return result;
-                    };
-                    var validate = function (name, value) {
-                        if (!$.isFunction(value)) {
-                            value = buildInRules[ name ];
-                        }
-                        if ($.isFunction(value)) {
-                            return validateComplete(
-                                name,
-                                value(fieldData, fieldRules, data)
-                            );
-                        }
-                    };
+                var required = validateRule('required');
+                if (required === true) {
 
                     var sequence = $.isArray(fieldConfig.sequence)
                         ? fieldConfig.sequence
@@ -223,10 +209,24 @@ define(function (require, exports, module) {
                     $.each(
                         sequence,
                         function (index, name) {
-                            return validate(name, getFieldRule(name));
+                            var value = validateRule(name);
+                            if (value === false) {
+                                fieldFailedRule = name;
+                            }
+                            else if (value && $.isFunction(value.then)) {
+                                promiseNames.push(name);
+                                promiseValues.push(value);
+                            }
+                            else if ($.type(value) !== 'boolean') {
+                                value = false;
+                            }
+                            return value;
                         }
                     );
 
+                }
+                else if (required === false) {
+                    fieldFailedRule = 'required';
                 }
 
                 var extend = function () {
