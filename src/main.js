@@ -23,6 +23,7 @@ define(function (require, exports, module) {
     require('./function/contains');
     require('./function/createEvent');
     require('./function/createGroup');
+    require('./function/createPromise');
     require('./function/createTimer');
     require('./function/debounce');
     require('./function/decimalLength');
