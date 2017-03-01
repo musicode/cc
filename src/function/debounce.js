@@ -23,17 +23,18 @@ define(function (require, exports, module) {
         return function () {
 
             if (!timer) {
+                var context = this;
 
                 var args = $.makeArray(arguments);
                 if (immediate) {
-                    fn.apply(null, args);
+                    fn.apply(context, args);
                 }
 
                 timer = setTimeout(
                     function () {
                         timer = null;
                         if (!immediate) {
-                            fn.apply(null, args);
+                            fn.apply(context, args);
                         }
                     },
                     delay
