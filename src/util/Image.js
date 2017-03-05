@@ -40,6 +40,7 @@ define(function (require, exports, module) {
      * @property {string} options.url 图片 url
      * @property {?number} options.width 图片显示宽度
      * @property {?number} options.height 图片显示高度
+     * @property {?number} options.quality 图片显示质量
      * @property {?boolean} options.hasWebp 是否有 webp 图片源
      * @property {?number} options.timeout 超时时间，单位是毫秒
      * @property {Function} options.compress 图片压缩，返回实际加载的图片 url
@@ -64,8 +65,9 @@ define(function (require, exports, module) {
             var me = this;
 
             var url = me.url;
-            var url1X = me.compress(url, me.width, me.height);
-            var url2X = me.compress(url, me.width * 2, me.height * 2);
+            var quality = me.quality;
+            var url1X = me.compress(url, me.width, me.height, quality);
+            var url2X = me.compress(url, me.width * 2, me.height * 2, quality);
 
             // 没必要 3X、4X 了，肉眼已无法分辨
 
@@ -141,17 +143,19 @@ define(function (require, exports, module) {
 
         },
 
-        needUpdate: function (width, height) {
+        needUpdate: function (width, height, quality) {
             return this.status !== STATUS_SUCCESS
                 || width !== this.width
-                || height !== this.height;
+                || height !== this.height
+                || quality !== this.quality;
         },
 
-        update: function (width, height) {
+        update: function (width, height, quality) {
             var me = this;
-            if (me.needUpdate(width, height)) {
+            if (me.needUpdate(width, height, quality)) {
                 me.width = width;
                 me.height = height;
+                me.quality = quality;
                 me.load();
             }
             else {
