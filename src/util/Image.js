@@ -6,12 +6,12 @@ define(function (require, exports, module) {
 
     'use strict';
 
-    var support = require('./support');
+    var supportWebp = require('../function/supportWebp');
 
-    var supportWebp;
+    var webpSupported;
 
-    support.webp().then(function () {
-        supportWebp = true;
+    supportWebp().then(function () {
+        webpSupported = true;
     });
 
     var namespace = '.cc_util_image';
@@ -24,7 +24,7 @@ define(function (require, exports, module) {
     var STATUS_ABORT = 5;
 
     function tryWebp(url) {
-        if (!supportWebp) {
+        if (!webpSupported) {
             return url;
         }
         var terms = url.split('.');
@@ -128,7 +128,7 @@ define(function (require, exports, module) {
             }
 
             var props = {
-                src: url1X,
+                src: url1X
             };
             if (url2X !== url1X) {
                 props.srcset = url2X + ' 2x';
