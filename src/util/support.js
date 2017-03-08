@@ -127,33 +127,7 @@ define(function (require, exports, module) {
      *
      * @return {Promise}
      */
-    exports.webp = function () {
-
-        if (cache.webp) {
-            return cache.webp;
-        }
-
-        var promise = $.Deferred();
-
-        var image = new Image();
-
-        image.onload =
-        image.onerror = function () {
-            if (image.height === 2) {
-                promise.resolve();
-            }
-            else {
-                promise.reject();
-            }
-        };
-
-        image.src = 'data:image/webp;base64,UklGRjoAAABXRUJQVlA4IC4AAACyAgCdASoCAAIALmk0mk0iIiIiIgBoSygABc6WWgAA/veff/0PP8bA//LwYAAA';
-
-        cache.webp = promise;
-
-        return promise;
-
-    };
+    exports.webp = require('../function/supportWebp');
 
     /**
      * 是否支持 web socket

@@ -88,6 +88,7 @@ define(function (require, exports, module) {
     require('./function/supportInput');
     require('./function/supportLocalStorage');
     require('./function/supportPlaceholder');
+    require('./function/supportWebp');
     require('./function/supportWebSocket');
     require('./function/testTarget');
     require('./function/toBoolean');
