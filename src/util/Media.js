@@ -196,6 +196,7 @@ define(function (require, exports, module) {
 
         remove: function () {
             var element = this.element;
+            element.pause();
             var parent = element.parentNode;
             if (parent) {
                 parent.removeChild(element);
@@ -204,7 +205,6 @@ define(function (require, exports, module) {
 
         dispose: function () {
             var me = this;
-            me.element.src = '';
             me.remove();
             me.disposed = true;
         }
