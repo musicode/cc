@@ -84,7 +84,6 @@ define(function (require, exports, module) {
         }
 
 
-
         fileElement
         .prop(properties)
         .on(

@@ -14,16 +14,17 @@ define(function (require, exports, module) {
      * @return {Function} 中断函数
      */
     return function (actions, interval) {
-        var index = actions.length - 1;
+
+        var index = 0;
         var timer;
 
         var handle = function () {
-            if (index >= 0) {
+            if (actions[index]) {
                 actions[index]();
                 timer = setTimeout(
                     function () {
                         timer = null;
-                        index--;
+                        index++;
                         handle();
                     },
                     interval
@@ -31,15 +32,14 @@ define(function (require, exports, module) {
             }
         };
 
-        if (index >= 0) {
-            handle();
-        }
+        handle();
 
         return function () {
             if (timer) {
                 clearTimeout(timer);
             }
         };
+
     }
 
 });
