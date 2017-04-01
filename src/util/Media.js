@@ -14,11 +14,6 @@ define(function (require, exports, module) {
     var STATUS_STALLED = 5;
     var STATUS_TIMEOUT = 6;
 
-    // 有些手机是 0.01....
-    function isEffectiveTime(time) {
-        return time > 0.1;
-    }
-
     var loadSuccess = { };
 
     /**
@@ -80,15 +75,7 @@ define(function (require, exports, module) {
                     timeoutTimer = null;
                 }
                 if (status === STATUS_PLAYING) {
-                    if (isEffectiveTime(element.currentTime)) {
-                        loadSuccess[element.src] = true;
-                    }
-                    else {
-                        // 移动端通常会触发了 playing
-                        // 其实并没有开始播放
-                        setStatus(STATUS_PAUSED, 'onPaused');
-                        return;
-                    }
+                    loadSuccess[element.src] = true;
                 }
                 setStatus(status, name);
             };
@@ -100,7 +87,6 @@ define(function (require, exports, module) {
                     function () {
                         if (me.disposed
                             || me.status !== STATUS_LOADING
-                            || isEffectiveTime(element.currentTime)
                             || !element.paused
                             || !loadSuccess[element.src]
                         ) {
