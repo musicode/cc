@@ -45,7 +45,8 @@ define(function (require, exports, module) {
             var me = this;
             var element = me.element;
 
-            me.initTime = $.now();
+            var namespace =
+            me.namespace = '.cc_util_media' + Math.random();
 
             var timeoutTimer;
             var prevTime;
@@ -80,59 +81,56 @@ define(function (require, exports, module) {
                 setStatus(status, name);
             };
 
+            var wrapper =
+            this.wrapper = $(element);
 
-            element.onplay = function () {
-                callHook(STATUS_LOADING, 'onLoading');
-                timeoutTimer = setTimeout(
-                    function () {
-                        if (me.disposed
-                            || me.status !== STATUS_LOADING
-                            || !element.paused
-                            || !loadSuccess[element.src]
-                        ) {
-                            return;
-                        }
-                        callHook(STATUS_TIMEOUT, 'onTimeout');
-                    },
-                    me.timeout
-                );
-            };
-
-            element.oncanplay = function () {
-                loadSuccess[element.src] = true;
-            };
-
-            element.onplaying = function () {
-                callHook(STATUS_PLAYING, 'onPlaying');
-            };
-
-            element.ontimeupdate = function () {
-                callHook(STATUS_PLAYING, 'onPlaying');
-            };
-
-            element.onpause = function () {
-                if (me.status === STATUS_PLAYING) {
-                    callHook(STATUS_PAUSED, 'onPaused');
-                }
-            };
-
-            // 报错，比如不支持的格式，或视频源不存在
-            element.onerror = function () {
-                if (me.status === STATUS_LOADING
-                    && !loadSuccess[element.src]
-                ) {
-                    callHook(STATUS_ERROR, 'onError');
-                }
-            };
-
-            // 网络状况不佳，导致视频下载中断
-            element.onstalled = function () {
-                if (me.status === STATUS_LOADING
-                    && !loadSuccess[element.src]
-                ) {
-                    callHook(STATUS_STALLED, 'onStalled');
-                }
-            };
+            wrapper
+                .on('play' + namespace, function () {
+                    callHook(STATUS_LOADING, 'onLoading');
+                    timeoutTimer = setTimeout(
+                        function () {
+                            if (me.disposed
+                                || me.status !== STATUS_LOADING
+                                || !element.paused
+                                || !loadSuccess[element.src]
+                                ) {
+                                return;
+                            }
+                            callHook(STATUS_TIMEOUT, 'onTimeout');
+                        },
+                        me.timeout
+                    );
+                })
+                .on('canplay' + namespace, function () {
+                    loadSuccess[element.src] = true;
+                })
+                .on('playing' + namespace, function () {
+                    callHook(STATUS_PLAYING, 'onPlaying');
+                })
+                .on('timeupdate' + namespace, function () {
+                    callHook(STATUS_PLAYING, 'onPlaying');
+                })
+                .on('pause' + namespace, function () {
+                    if (me.status === STATUS_PLAYING) {
+                        callHook(STATUS_PAUSED, 'onPaused');
+                    }
+                })
+                // 报错，比如不支持的格式，或视频源不存在
+                .on('error' + namespace, function () {
+                    if (me.status === STATUS_LOADING
+                        && !loadSuccess[element.src]
+                    ) {
+                        callHook(STATUS_ERROR, 'onError');
+                    }
+                })
+                // 网络状况不佳，导致视频下载中断
+                .on('stalled' + namespace, function () {
+                    if (me.status === STATUS_LOADING
+                        && !loadSuccess[element.src]
+                    ) {
+                        callHook(STATUS_STALLED, 'onStalled');
+                    }
+                });
 
         },
 
@@ -191,6 +189,7 @@ define(function (require, exports, module) {
 
         dispose: function () {
             var me = this;
+            me.wrapper.off(me.namespace);
             me.remove();
             me.disposed = true;
         }
