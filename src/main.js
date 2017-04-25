@@ -74,6 +74,7 @@ define(function (require, exports, module) {
     require('./function/plus');
     require('./function/position');
     require('./function/ratio');
+    require('./function/render');
     require('./function/replaceWith');
     require('./function/restrain');
     require('./function/scrollBottom');
