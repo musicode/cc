@@ -184,7 +184,7 @@ define(function (require, exports, module) {
         if (fileItem) {
             if (
                 fileItem.upload({
-                    action: me.get('action'),
+                    action: fileItem.action || me.get('action'),
                     data: me.get('data'),
                     fileName: me.option('fileName'),
                     header: me.option('header'),
