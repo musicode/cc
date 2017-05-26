@@ -33,6 +33,9 @@ define(function (require, exports, module) {
             x: options.x === '50%' ? '50%' : 0,
             y: options.y === '50%' ? '50%' : 0,
 
+            width: options.width,
+            height: options.height,
+
             attachment: {
                 element: viewport(),
                 width: viewportWidth(),
