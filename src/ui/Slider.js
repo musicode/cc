@@ -325,17 +325,20 @@ define(function (require, exports, module) {
             pixelToValue = function (pixel) {
                 return plus(
                     minValue,
-                    Math.round(
-                        divide(
-                            pixel,
-                            stepPixel
-                        )
+                    multiply(
+                        Math.round(
+                            divide(
+                                pixel,
+                                stepPixel
+                            )
+                        ),
+                        step
                     )
                 );
             };
             valueToPixel = function (value) {
                 return multiply(
-                    minus(value, minValue),
+                    divide(minus(value, minValue), step),
                     stepPixel
                 );
             };
