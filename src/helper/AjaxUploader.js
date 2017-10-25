@@ -403,6 +403,17 @@ define(function (require, exports, module) {
 
                 var chunkInfo = fileItem.chunk;
                 if (chunkInfo) {
+                    // 某些奇葩浏览器，uploaded 会比当前分片尺寸还大
+                    if (uploaded > chunkInfo.uploading) {
+                        nextTick(
+                            function () {
+                                xhrEventHandler
+                                .uploadError
+                                .handler(fileItem, {}, AjaxUploader.ERROR_CHUNK_SIZE);
+                            }
+                        );
+                        return;
+                    }
                     uploaded += chunkInfo.uploaded;
                 }
 
@@ -625,7 +636,8 @@ define(function (require, exports, module) {
             xhr.setRequestHeader(name, value);
         });
 
-        xhr.send(file.slice(start, end));
+        var blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice;
+        xhr.send(blobSlice.call(file, start, end));
 
     };
 

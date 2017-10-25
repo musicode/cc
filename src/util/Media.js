@@ -48,7 +48,6 @@ define(function (require, exports, module) {
             var namespace =
             me.namespace = '.cc_util_media' + Math.random();
 
-            var timeoutTimer;
             var prevTime;
             var currentTime;
 
@@ -62,7 +61,12 @@ define(function (require, exports, module) {
             // 有些奇葩浏览器，会在触发 play 之后立即触发 pause
             // 简直无法理解...
             var callHook = function (status, name) {
-                if (status === me.status) {
+                // 当 element.src = '' 时，读取出来是当前页面的 url
+                if (me.disposed
+                  || !element.src
+                  || element.src === location.href
+                  || status === me.status
+                ) {
                     return;
                 }
                 currentTime = $.now();
@@ -70,10 +74,9 @@ define(function (require, exports, module) {
                     return;
                 }
                 prevTime = currentTime;
-
-                if (timeoutTimer) {
-                    clearTimeout(timeoutTimer);
-                    timeoutTimer = null;
+                if (me.playTimer) {
+                    clearTimeout(me.playTimer);
+                    me.playTimer = null;
                 }
                 if (status === STATUS_PLAYING) {
                     loadSuccess[element.src] = true;
@@ -81,35 +84,34 @@ define(function (require, exports, module) {
                 setStatus(status, name);
             };
 
+            me.timeoutHandler = function () {
+                if (me.disposed
+                    || !element.paused
+                    || loadSuccess[element.src]
+                ) {
+                    return;
+                }
+                callHook(STATUS_TIMEOUT, 'onTimeout');
+            };
+
             var wrapper =
-            this.wrapper = $(element);
+            me.wrapper = $(element);
+
+            var playingHandler = function () {
+                callHook(STATUS_PLAYING, 'onPlaying');
+            };
 
             wrapper
                 .on('play' + namespace, function () {
-                    callHook(STATUS_LOADING, 'onLoading');
-                    timeoutTimer = setTimeout(
-                        function () {
-                            if (me.disposed
-                                || me.status !== STATUS_LOADING
-                                || !element.paused
-                                || !loadSuccess[element.src]
-                                ) {
-                                return;
-                            }
-                            callHook(STATUS_TIMEOUT, 'onTimeout');
-                        },
-                        me.timeout
-                    );
+                    if (me.status !== STATUS_PLAYING) {
+                        callHook(STATUS_LOADING, 'onLoading');
+                    }
                 })
                 .on('canplay' + namespace, function () {
                     loadSuccess[element.src] = true;
                 })
-                .on('playing' + namespace, function () {
-                    callHook(STATUS_PLAYING, 'onPlaying');
-                })
-                .on('timeupdate' + namespace, function () {
-                    callHook(STATUS_PLAYING, 'onPlaying');
-                })
+                .on('playing' + namespace, playingHandler)
+                .on('timeupdate' + namespace, playingHandler)
                 .on('pause' + namespace, function () {
                     if (me.status === STATUS_PLAYING) {
                         callHook(STATUS_PAUSED, 'onPaused');
@@ -117,49 +119,63 @@ define(function (require, exports, module) {
                 })
                 // 报错，比如不支持的格式，或视频源不存在
                 .on('error' + namespace, function () {
-                    if (me.status === STATUS_LOADING
-                        && !loadSuccess[element.src]
-                    ) {
+                    if (me.status !== STATUS_PLAYING) {
                         callHook(STATUS_ERROR, 'onError');
                     }
                 })
                 // 网络状况不佳，导致视频下载中断
                 .on('stalled' + namespace, function () {
-                    if (me.status === STATUS_LOADING
-                        && !loadSuccess[element.src]
-                    ) {
+                    if (me.status !== STATUS_PLAYING) {
                         callHook(STATUS_STALLED, 'onStalled');
                     }
                 });
-
         },
 
         play: function (source) {
-            var element = this.element;
+            var me = this;
+            var element = me.element;
             if (source) {
                 var currentSource = element.src;
                 if (currentSource) {
                     if (source !== currentSource) {
-                        element.src = source;
-                        if ($.isFunction(this.onSourceChange)) {
-                            this.onSourceChange();
+                        me.setSource(source)
+                        if ($.isFunction(me.onSourceChange)) {
+                            me.onSourceChange();
                         }
-                    }
-                    else {
-                        element.src = '';
-                        element.src = source;
                     }
                 }
                 else {
-                    element.src = source;
+                    me.setSource(source)
                 }
             }
-            this.status = STATUS_WAITING;
+            if (me.timeout) {
+                if (me.playTimer) {
+                    clearTimeout(me.playTimer);
+                }
+                me.playTimer = setTimeout(
+                    me.timeoutHandler,
+                    me.timeout
+                );
+            }
+            me.status = STATUS_WAITING;
             element.play();
         },
 
-        pause: function () {
-            this.element.pause();
+        setSource: function (source) {
+            try {
+                this.element.src = source;
+            }
+            catch (e) {
+
+            }
+        },
+
+        show: function () {
+            this.wrapper.show();
+        },
+
+        hide: function () {
+            this.wrapper.hide();
         },
 
         getWidth: function () {
@@ -189,7 +205,7 @@ define(function (require, exports, module) {
 
         dispose: function () {
             var me = this;
-            me.wrapper.off(me.namespace);
+            this.wrapper.off(this.namespace);
             me.remove();
             me.disposed = true;
         }

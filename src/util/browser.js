@@ -34,6 +34,7 @@ define(function (require, exports, module) {
         // IE10- 所有版本都有的信息是 MSIE x.0
         [ 'ie', /msie[ \/]([\d_.]+)/ ],
         [ 'ie', /trident[ \/]([\d_.]+)/, 4 ],
+        [ 'edge', /edge[ \/]([\d_.]+)/ ],
         [ 'chrome', /chrome[ \/]([\d_.]+)/ ],
         [ 'firefox', /firefox[ \/]([\d_.]+)/ ],
         [ 'opera', /opera(?:.*version)?[ \/]([\d_.]+)/ ],

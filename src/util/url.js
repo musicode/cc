@@ -9,7 +9,7 @@ define(function (require, exports, module) {
     var split = require('../function/split');
 
     /**
-     * 把查询字符串解析成对象，反向操作可用 $.param
+     * 把查询字符串解析成对象
      *
      * @param {string} queryStr 查询字符串，可直接把 location.search 扔进来解析
      * @return {Object}
@@ -42,6 +42,25 @@ define(function (require, exports, module) {
         }
 
         return result;
+    };
+
+    /**
+     * 把对象序列化成查询字符串
+     *
+     * @param {Object} query
+     * @return {string}
+     */
+    exports.stringifyQuery = function (query) {
+        var result = [ ];
+        if ($.isPlainObject(query)) {
+            $.each(
+                query,
+                function (key, value) {
+                    result.push(key + '=' + encodeURIComponent(value));
+                }
+            );
+        }
+        return result.join('&');
     };
 
     /**

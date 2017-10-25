@@ -24,7 +24,7 @@ define(function (require, exports, module) {
         var minutes = Math.floor(second / MINUTE);
 
         // 秒数
-        var seconds = Math.round(second % MINUTE);
+        var seconds = Math.floor(second % MINUTE);
 
         return {
             days: days,

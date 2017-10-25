@@ -226,7 +226,7 @@ define(function (require, exports, module) {
             }
 
 
-            triggerElement = $(event.currentTarget);
+            triggerElement = popup.inner('trigger');
 
             me.inner('trigger', triggerElement);
 
@@ -309,9 +309,15 @@ define(function (require, exports, module) {
 
                 if (skinAttribute) {
                     skinClass = triggerElement.attr(skinAttribute);
-                    if (skinClass) {
-                        mainElement.addClass(skinClass);
+                }
+                if (!skinClass) {
+                    var defaultSkinClass = me.option('skinClass');
+                    if (defaultSkinClass) {
+                        skinClass = defaultSkinClass;
                     }
+                }
+                if (skinClass) {
+                    mainElement.addClass(skinClass);
                 }
 
                 // 确保 mainElement 是完整的展现在视口内

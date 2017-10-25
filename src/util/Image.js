@@ -65,9 +65,8 @@ define(function (require, exports, module) {
             var me = this;
 
             var url = me.url;
-            var quality = me.quality;
-            var url1X = me.compress(url, me.width, me.height, quality);
-            var url2X = me.compress(url, me.width * 2, me.height * 2, quality);
+            var url1X = me.compress(url, me.width, me.height, me.quality, 1);
+            var url2X = me.compress(url, me.width, me.height, me.quality, 2);
 
             // 没必要 3X、4X 了，肉眼已无法分辨
 
@@ -77,6 +76,13 @@ define(function (require, exports, module) {
             }
 
             var element = me.element || (me.element = $('<img>'));
+
+            if (me.status === STATUS_SUCCESS && element.prop('src') === url1X) {
+                if (me.onSame) {
+                    me.onSame();
+                }
+                return;
+            }
 
             var removeTimer = function () {
                 if (me.timer) {
@@ -143,25 +149,56 @@ define(function (require, exports, module) {
 
         },
 
-        needUpdate: function (width, height, quality) {
-            return this.status !== STATUS_SUCCESS
-                || width !== this.width
-                || height !== this.height
-                || quality !== this.quality;
+        abort: function () {
+            var element = this.element;
+            if (element && element[0].abort) {
+                element[0].abort();
+            }
         },
 
         update: function (width, height, quality) {
             var me = this;
-            if (me.needUpdate(width, height, quality)) {
+            var status = me.status;
+
+            if (width !== me.width
+                || height !== me.height
+                || quality !== me.quality
+            ) {
+                if (status === STATUS_LOADING) {
+                    me.abort();
+                }
+                else if (status === STATUS_SUCCESS) {
+                    // 从大到小不用重新加载
+                    if (width < me.width && height < me.height) {
+                        if (me.onSame) {
+                            me.onSame();
+                        }
+                        return;
+                    }
+                }
                 me.width = width;
                 me.height = height;
                 me.quality = quality;
                 me.load();
             }
-            else {
+            else if (status === STATUS_SUCCESS) {
                 if (me.onSame) {
                     me.onSame();
                 }
+            }
+            else if (status === STATUS_LOADING) {
+                if (me.onLoading) {
+                    me.onLoading();
+                }
+            }
+            else if (status === STATUS_TIMEOUT
+                || status === STATUS_FAILURE
+            ) {
+                if (me.element) {
+                    me.element.remove();
+                    me.element = null;
+                }
+                me.load();
             }
         },
 

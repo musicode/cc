@@ -9,7 +9,7 @@ define(function (require, exports, module) {
     var lpad = require('./lpad');
     var simplifyTime = require('./simplifyTime');
 
-    return function (date, hasSecond) {
+    return function (date, hasSecond, sep) {
 
         date = simplifyTime(date);
 
@@ -23,7 +23,7 @@ define(function (require, exports, module) {
                     lpad(date.second)
                 );
             }
-            return list.join(':');
+            return list.join(sep || ':');
         }
 
         return '';

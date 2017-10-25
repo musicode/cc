@@ -30,7 +30,12 @@ define(function (require, exports, module) {
         var interval = me.interval;
 
         var next = function () {
-            me.count++;
+            if ($.type(me.count) === 'number') {
+              me.count++;
+            }
+            else {
+              me.count = 1;
+            }
             if (me.task() !== false) {
                 me.timer = setTimeout(next, interval);
             }

@@ -24,6 +24,7 @@ define(function (require, exports, module) {
             mainElement: options.element,
             containerElement: instance.body,
             mainDraggingClass: options.draggingClass,
+            bodyDraggingClass: options.bodyDraggingClass,
             includeSelector: options.includeSelector,
             excludeSelector: options.excludeSelector,
             dragAnimation: options.dragAnimation,

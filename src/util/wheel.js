@@ -24,15 +24,15 @@ define(function (require, exports, module) {
 
     var EVENT_WHEEL = 'cc-wheel';
 
-    var support = 'onmousewheel' in document.body
-                ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
-                : 'DOMMouseScroll';          // 火狐的老版本
-
     exports.WHEEL = EVENT_WHEEL;
 
     exports.init = function (element) {
 
         var namespace = '.' + guid();
+
+        var support = 'onmousewheel' in document.body
+                ? 'mousewheel'               // Webkit 和 IE 支持 mousewheel
+                : 'DOMMouseScroll';          // 火狐的老版本
 
         element
             .data(DATA_KEY, namespace)
