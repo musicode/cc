@@ -97,7 +97,7 @@ define(function (require, exports, module) {
 
             var coord;
 
-            draggingElement = mainSelector
+            var targetElement = mainSelector
                 ? $(e.currentTarget)
                 : mainElement;
 
@@ -113,8 +113,8 @@ define(function (require, exports, module) {
 
                 var target = e.target;
 
-                if (includeSelector && !testTarget(target, includeSelector, draggingElement)
-                    || excludeSelector && testTarget(target, excludeSelector, draggingElement)
+                if (includeSelector && !testTarget(target, includeSelector, targetElement)
+                    || excludeSelector && testTarget(target, excludeSelector, targetElement)
                 ) {
                     return;
                 }
@@ -135,6 +135,8 @@ define(function (require, exports, module) {
                 coord = globalCoord.mouse;
             }
 
+            draggingElement = targetElement;
+
             me.emit(
                 'pick',
                 {
@@ -148,6 +150,7 @@ define(function (require, exports, module) {
             point.left = draggingStyle.left;
             point.top = draggingStyle.top;
 
+            var isFixed = draggingStyle.position === 'fixed';
             var containerIsViewport = containerElement.is('html,body');
             var containerContainsElement = true;
             if (!containerIsViewport) {
@@ -182,8 +185,10 @@ define(function (require, exports, module) {
                     offsetX -= containerElement.scrollLeft();
                     offsetY -= containerElement.scrollTop();
                 }
-                offsetX += containerInnerOffset.x;
-                offsetY += containerInnerOffset.y;
+                if (!isFixed) {
+                    offsetX += containerInnerOffset.x;
+                    offsetY += containerInnerOffset.y;
+                }
             }
 
             // =================================================================
@@ -209,8 +214,6 @@ define(function (require, exports, module) {
             var viewLeft = pageScrollLeft();
             var viewRight = viewLeft + viewWidth;
             var viewBottom = viewTop + viewHeight;
-
-            var isFixed = draggingStyle.position === 'fixed';
 
             if (isFixed) {
                 if (containerIsViewport) {

@@ -10,7 +10,8 @@ define(function (require, exports, module) {
 
     var DATA_KEY = 'cc-util-swipe';
 
-    var EVENT_SWIPE = 'cc-swipe';
+    var EVENT_SWIPE_START = 'cc-swipe-start';
+    var EVENT_SWIPE_END = 'cc-swipe-end';
     var EVENT_SWIPING = 'cc-swiping';
 
     function getPoint(e) {
@@ -24,7 +25,8 @@ define(function (require, exports, module) {
 
     }
 
-    exports.SWIPE = EVENT_SWIPE;
+    exports.SWIPE_START = EVENT_SWIPE_START;
+    exports.SWIPE_END = EVENT_SWIPE_END;
     exports.SWIPING = EVENT_SWIPING;
 
     exports.init = function (element) {
@@ -88,7 +90,7 @@ define(function (require, exports, module) {
             var point = getPoint(e);
 
             if (point) {
-                trigger(e, EVENT_SWIPE, point);
+                trigger(e, EVENT_SWIPE_END, point);
             }
 
             element.off(eventGroup);
@@ -104,11 +106,14 @@ define(function (require, exports, module) {
 
                 if (point) {
 
+                    trigger(e, EVENT_SWIPE_START, point);
+
                     start.x = point.pageX;
                     start.y = point.pageY;
                     start.time = + new Date();
 
                     element.on(eventGroup);
+
                 }
 
             });

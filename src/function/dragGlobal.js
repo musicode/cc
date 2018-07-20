@@ -22,12 +22,15 @@ define(function (require, exports, module) {
 
         return new Draggable({
             mainElement: options.element,
-            containerElement: instance.body,
+            containerElement: options.containerElement || instance.body,
             mainDraggingClass: options.draggingClass,
             bodyDraggingClass: options.bodyDraggingClass,
             includeSelector: options.includeSelector,
             excludeSelector: options.excludeSelector,
             dragAnimation: options.dragAnimation,
+            onbeforedrag: options.onbeforedrag,
+            ondrag: options.ondrag,
+            onafterdrag: options.onafterdrag,
             init: function (options) {
 
                 var namespace = options.namespace;

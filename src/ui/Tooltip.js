@@ -291,6 +291,11 @@ define(function (require, exports, module) {
 
             var update = function () {
 
+                var trigger = me.inner('trigger')
+                if (trigger.is(':hidden')) {
+                    return;
+                }
+
                 e.type = 'beforeshow';
 
                 me.emit(e, data);

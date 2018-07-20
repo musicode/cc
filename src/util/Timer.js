@@ -36,7 +36,10 @@ define(function (require, exports, module) {
             else {
               me.count = 1;
             }
-            if (me.task() !== false) {
+
+            if (me.task() !== false
+                && me.timer
+            ) {
                 me.timer = setTimeout(next, interval);
             }
             else {

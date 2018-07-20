@@ -158,6 +158,7 @@ define(function (require, exports, module) {
                 );
             }
             me.status = STATUS_WAITING;
+            element.load();
             element.play();
         },
 

@@ -23,7 +23,8 @@ define(function (require, exports, module) {
                     function () {
                         return value;
                     }
-                );
+                )
+                .replace(/\n/g, '<br>');
             }
         );
 

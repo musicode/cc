@@ -23,21 +23,13 @@ define(function (require, exports, module) {
     var STATUS_TIMEOUT = 4;
     var STATUS_ABORT = 5;
 
-    function tryWebp(url) {
-        if (!webpSupported) {
-            return url;
-        }
-        var terms = url.split('.');
-        terms.pop();
-        terms.push('webp');
-        return terms.join('.');
-    }
-
     /**
      * 封装图片优化
      *
      * @param {Object} options
      * @property {string} options.url 图片 url
+     * @property {?string} options.template 图片模板
+     * @property {?Array<string>} options.hostFallbacks 图片备份 host
      * @property {?number} options.width 图片显示宽度
      * @property {?number} options.height 图片显示高度
      * @property {?number} options.quality 图片显示质量
@@ -64,20 +56,22 @@ define(function (require, exports, module) {
 
             var me = this;
 
+            var width = me.width;
+            var height = me.height;
+            var quality = me.quality;
+            var needWebp = webpSupported && me.hasWebp;
+
             var url = me.url;
-            var url1X = me.compress(url, me.width, me.height, me.quality, 1);
-            var url2X = me.compress(url, me.width, me.height, me.quality, 2);
+            var url1X = me.compress(url, width, height, quality, 1, needWebp);
+            var url2X = me.compress(url, width, height, quality, 2, needWebp);
 
             // 没必要 3X、4X 了，肉眼已无法分辨
 
-            if (me.hasWebp) {
-                url1X = tryWebp(url1X);
-                url2X = tryWebp(url2X);
-            }
+            var element = me.element || (me.element = $(me.template || '<img>'));
 
-            var element = me.element || (me.element = $('<img>'));
-
-            if (me.status === STATUS_SUCCESS && element.prop('src') === url1X) {
+            if (me.status === STATUS_SUCCESS
+                && element.prop('src') === url1X
+            ) {
                 if (me.onSame) {
                     me.onSame();
                 }
@@ -91,7 +85,29 @@ define(function (require, exports, module) {
                 }
             };
 
+            var hostFallbacks = me.hostFallbacks;
+            if (hostFallbacks && !hostFallbacks.length) {
+                hostFallbacks = null;
+            }
+
+            var hostIndex = -1;
+
             var loadComplete = function (status, hook) {
+
+                if (hook === 'onFailure' || hook === 'onTimeout' && hostFallbacks) {
+                    hostIndex++;
+                    if (hostFallbacks[hostIndex]) {
+                        var pattern = /(https?:\/\/)[^\/]+(\/.+)/;
+                        var replacement = '$1' + hostFallbacks[hostIndex] + '$2';
+                        loadImage(
+                            element,
+                            url.replace(pattern, replacement),
+                            url1X.replace(pattern, replacement),
+                            url2X.replace(pattern, replacement)
+                        );
+                        return;
+                    }
+                }
                 me.status = status;
                 removeTimer();
                 element.off(namespace);
@@ -111,41 +127,43 @@ define(function (require, exports, module) {
             }
 
             element
-                .one('load' + namespace, function () {
+                .on('load' + namespace, function () {
                     loadComplete(STATUS_SUCCESS, 'onSuccess');
                 })
-                .one('error' + namespace, function () {
+                .on('error' + namespace, function () {
                     loadComplete(STATUS_FAILURE, 'onFailure');
                 })
-                .one('abort' + namespace, function () {
+                .on('abort' + namespace, function () {
                     loadComplete(STATUS_ABORT, 'onAbort');
                 });
 
-            removeTimer();
+            var loadImage = function (element, url, url1X, url2X) {
 
-            if (me.timeout > 0) {
-                me.timer = setTimeout(
-                    function () {
-                        me.timer = null;
-                        loadComplete(STATUS_TIMEOUT, 'onTimeout');
-                    },
-                    me.timeout
-                );
-            }
+                removeTimer();
 
-            var props = {
-                src: url1X
+                if (me.timeout > 0) {
+                    me.timer = setTimeout(
+                        function () {
+                            me.timer = null;
+                            loadComplete(STATUS_TIMEOUT, 'onTimeout');
+                        },
+                        me.timeout
+                    );
+                }
+
+                element
+                .prop({
+                    src: url1X,
+                    srcset: url2X + ' 2x'
+                })
+                .attr({
+                    'data-raw': url,
+                    'data-real': window.devicePixelRatio > 1 ? url2X : url1X
+                });
+
             };
-            if (url2X !== url1X) {
-                props.srcset = url2X + ' 2x';
-            }
 
-            element
-            .prop(props)
-            .attr({
-                'data-raw': url,
-                'data-real': window.devicePixelRatio > 1 ? url2X : url1X
-            });
+            loadImage(element, url, url1X, url2X);
 
         },
 
@@ -198,6 +216,9 @@ define(function (require, exports, module) {
                     me.element.remove();
                     me.element = null;
                 }
+                me.load();
+            }
+            else if (status === STATUS_EMPTY) {
                 me.load();
             }
         },

@@ -59,13 +59,16 @@ define(function (require, exports, module) {
                 element.addClass(loadedClass);
             }
             : function (element) {
+                var containerWidth = element.parent().width();
                 var data = element.data();
                 var url1x = exports.getImageUrl({
+                    containerWidth: containerWidth,
                     src: data.src,
                     width: data.width,
                     height: data.height
                 });
                 var url2x = exports.getImageUrl({
+                    containerWidth: containerWidth * 2,
                     src: data.src,
                     width: data.width * 2,
                     height: data.height * 2

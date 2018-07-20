@@ -29,9 +29,9 @@ define(function (require, exports, module) {
             $.each(
                 split(queryStr, '&'),
                 function (index, item) {
-                    var terms = split(item, '=');
+                    var terms = item.split('=');
                     if (terms.length === 2) {
-                        var key = terms[0];
+                        var key = $.trim(terms[0]);
                         if (key) {
                             result[key] = decodeURIComponent(terms[1]);
                         }

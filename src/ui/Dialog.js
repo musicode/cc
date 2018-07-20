@@ -209,6 +209,11 @@ define(function (require, exports, module) {
 
         }
 
+        var styleOption = me.option('style');
+        if (styleOption) {
+            $.extend(style, styleOption);
+        }
+
         mainElement.css(style);
 
 
