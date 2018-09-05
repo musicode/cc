@@ -60,15 +60,18 @@ define(function (require, exports, module) {
             }
             : function (element) {
                 var containerWidth = element.parent().width();
+                var elementWidth = element.width();
                 var data = element.data();
                 var url1x = exports.getImageUrl({
                     containerWidth: containerWidth,
+                    elementWidth: elementWidth,
                     src: data.src,
                     width: data.width,
                     height: data.height
                 });
                 var url2x = exports.getImageUrl({
                     containerWidth: containerWidth * 2,
+                    elementWidth: elementWidth * 2,
                     src: data.src,
                     width: data.width * 2,
                     height: data.height * 2
